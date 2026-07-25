@@ -22,7 +22,7 @@ describe('renders user guide properly', () => {
 
         await userEvent.click(screen.getByRole('button', { name: /account security/i }));
 
-        expect(screen.getByText(/passwords must contain 15–64 characters/i)).toBeVisible();
+        expect(screen.getByText(/passwords must contain 8–64 characters/i)).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /dashboard/i }));
 

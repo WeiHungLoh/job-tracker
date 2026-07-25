@@ -948,12 +948,17 @@ test('normalizes email and validates the password policy', () => {
     assert.equal(normalizeEmail(null), undefined);
     assert.equal(
         getPasswordValidationError('x'.repeat(PASSWORD_MIN_LENGTH - 1)),
-        'Password must be at least 15 characters.'
+        'Password must be at least 8 characters.'
     );
     assert.equal(getPasswordValidationError('x'.repeat(PASSWORD_MIN_LENGTH)), undefined);
+    assert.equal(getPasswordValidationError('x'.repeat(PASSWORD_MAX_LENGTH)), undefined);
     assert.equal(
         getPasswordValidationError('x'.repeat(PASSWORD_MAX_LENGTH + 1)),
         'Password must be 64 characters or fewer.'
+    );
+    assert.equal(
+        getPasswordValidationError('😀'.repeat(16)),
+        undefined
     );
     assert.equal(
         getPasswordValidationError('😀'.repeat(Math.floor(PASSWORD_MAX_BYTES / 4) + 1)),
@@ -969,7 +974,7 @@ test('rejects a short sign-up password before accessing the database', async () 
     });
 
     assert.equal(response.status, 422);
-    assert.deepEqual(await response.json(), { message: 'Password must be at least 15 characters.' });
+    assert.deepEqual(await response.json(), { message: 'Password must be at least 8 characters.' });
 });
 
 test('validates calendar dates strictly', () => {

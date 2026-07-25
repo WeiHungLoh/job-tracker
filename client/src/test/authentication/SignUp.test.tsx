@@ -146,10 +146,10 @@ describe('User sign up flow', () => {
         );
 
         userEvent.type(screen.getByLabelText(/email/i), 'new-user@example.com');
-        userEvent.type(screen.getByLabelText(/^password$/i), 'too short');
+        userEvent.type(screen.getByLabelText(/^password$/i), 'short');
         userEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
-        await waitFor(() => expect(screen.getByText('Password must be at least 15 characters.')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Password must be at least 8 characters.')).toBeInTheDocument());
         expect(fetch.mock.calls.some(([url]) => String(url).endsWith('/authentication/users'))).toBe(false);
         expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
     });

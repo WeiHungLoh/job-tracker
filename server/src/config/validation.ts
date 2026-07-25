@@ -20,6 +20,6 @@ export const OFFER_DETAILS_MAX_LENGTHS = {
     notes: 1000,
 } as const;
 
-export const PASSWORD_MIN_LENGTH = 15;
+export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 64;
 export const PASSWORD_MAX_BYTES = 72;

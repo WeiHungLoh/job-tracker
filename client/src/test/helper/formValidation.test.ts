@@ -2,6 +2,7 @@ import {
     FIELD_MAX_LENGTHS,
     getPasswordValidationError,
     normalizeEmail,
+    PASSWORD_MAX_BYTES,
     PASSWORD_MAX_LENGTH,
     PASSWORD_MIN_LENGTH,
     validateApplicationForm,
@@ -15,12 +16,18 @@ describe('authentication form validation', () => {
 
     test('enforces password length without composition rules', () => {
         expect(getPasswordValidationError('x'.repeat(PASSWORD_MIN_LENGTH - 1))).toBe(
-            'Password must be at least 15 characters.'
+            'Password must be at least 8 characters.'
         );
+        expect(getPasswordValidationError('x'.repeat(PASSWORD_MIN_LENGTH))).toBeUndefined();
+        expect(getPasswordValidationError('x'.repeat(PASSWORD_MAX_LENGTH))).toBeUndefined();
         expect(getPasswordValidationError('words with spaces')).toBeUndefined();
         expect(getPasswordValidationError(`${'x'.repeat(63)}😀`)).toBeUndefined();
         expect(getPasswordValidationError('x'.repeat(PASSWORD_MAX_LENGTH + 1))).toBe(
             'Password must be 64 characters or fewer.'
+        );
+        expect(getPasswordValidationError('😀'.repeat(16))).toBeUndefined();
+        expect(getPasswordValidationError('x'.repeat(PASSWORD_MAX_BYTES - 16) + '😀'.repeat(5))).toBe(
+            'Password is too long when encoded. Use fewer Unicode characters.'
         );
         expect(getPasswordValidationError('😀'.repeat(19))).toBe(
             'Password is too long when encoded. Use fewer Unicode characters.'
