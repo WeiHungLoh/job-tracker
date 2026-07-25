@@ -179,6 +179,16 @@
     border-color: var(--colorToastErrorAccent);
 }
 
+.textField input.dateTimeInput {
+    max-width: 100%;
+    min-height: 40px;
+    margin: 0;
+    padding: var(--spaceControl) var(--spaceCompact);
+    appearance: none;
+    text-align: left;
+    text-align-last: left;
+}
+
 .fieldError {
     color: var(--colorToastErrorText);
     font-size: var(--fontSizeCompactControl);

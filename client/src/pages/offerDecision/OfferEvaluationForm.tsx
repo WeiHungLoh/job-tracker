@@ -283,6 +283,7 @@ const OfferEvaluationForm = ({
                         ref={decisionDeadlineInputRef}
                         {...getErrorProps(`decision-deadline-error-${application.job_id}`, errors.decision_deadline)}
                         aria-label={`${application.company_name} decision deadline`}
+                        className={styles.dateTimeInput}
                         id={`decision-deadline-${application.job_id}`}
                         max={MAX_DATETIME_LOCAL}
                         min={toDatetimeLocalInputValue(application.application_date) || MIN_DATETIME_LOCAL}

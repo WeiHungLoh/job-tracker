@@ -11,6 +11,7 @@ import type {
 } from '../../pages/offerDecision/models';
 import type { UserPreferences } from '../../components/userPreferences/models';
 import { render, testPreferences } from '../renderWithProviders';
+import offerEvaluationStyles from '../../pages/offerDecision/OfferEvaluation.module.css';
 
 const mockConfirm = vi.hoisted(() => vi.fn());
 
@@ -363,6 +364,7 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
         const deadlineInput = screen.getByLabelText('Acme decision deadline');
         expect(deadlineInput).toHaveAttribute('type', 'datetime-local');
+        expect(deadlineInput).toHaveClass(offerEvaluationStyles.dateTimeInput);
         expect(deadlineInput).toHaveAttribute(
             'min',
             toDatetimeLocalInputValue(activeData.applications[0].application_date)
