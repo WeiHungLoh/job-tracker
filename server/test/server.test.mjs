@@ -7,7 +7,7 @@ import { createApp } from '../dist/app.js';
 import { pool } from '../dist/db/connectDB.js';
 import { handleRouteError } from '../dist/http/responses.js';
 import jwt from 'jsonwebtoken';
-import { AUTH_EMAIL_IP_LIMIT, REQUEST_LIMIT } from '../dist/config/server.js';
+import { AUTHENTICATED_API_RATE_LIMIT, SIGN_IN_EMAIL_IP_LIMIT } from '../dist/config/server.js';
 import {
     FIELD_MAX_LENGTHS,
     INTERVIEW_DURATION_MINUTES_MAX,
@@ -1019,7 +1019,7 @@ test('returns 503 when authentication configuration is unavailable', async () =>
 test('rate limits repeated authentication attempts by IP and email', async () => {
     const limitedEmail = 'rate-limit-test';
 
-    for (let requestNumber = 0; requestNumber < AUTH_EMAIL_IP_LIMIT; requestNumber += 1) {
+    for (let requestNumber = 0; requestNumber < SIGN_IN_EMAIL_IP_LIMIT; requestNumber += 1) {
         const response = await fetch(`${baseUrl}/authentication/sessions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1067,26 +1067,22 @@ test('logs error details and returns a generic 500 response', () => {
     ]);
 });
 
-test('returns 429 after the request limit is exceeded', async () => {
-    const limitedServer = createApp().listen(0, '127.0.0.1');
-    await new Promise((resolve, reject) => {
-        limitedServer.once('listening', resolve);
-        limitedServer.once('error', reject);
-    });
-    const address = limitedServer.address();
-    const limitedBaseUrl = `http://127.0.0.1:${address.port}`;
+test('returns 429 after the authenticated API request limit is exceeded', async () => {
+    const token = createAccessToken(
+        { id: 900001, email: 'rate-limit-user@example.com' },
+        process.env.ACCESS_TOKEN_SECRET
+    );
 
-    try {
-        for (let requestNumber = 0; requestNumber < REQUEST_LIMIT; requestNumber += 1) {
-            const response = await fetch(`${limitedBaseUrl}/unknown-route`);
-            assert.equal(response.status, 404);
-        }
-        const response = await fetch(`${limitedBaseUrl}/unknown-route`);
-        assert.equal(response.status, 429);
-        assert.deepEqual(await response.json(), { message: 'Too many requests. Please try again later.' });
-    } finally {
-        await new Promise((resolve, reject) => {
-            limitedServer.close((error) => (error ? reject(error) : resolve()));
+    for (let requestNumber = 0; requestNumber < AUTHENTICATED_API_RATE_LIMIT; requestNumber += 1) {
+        const response = await fetch(`${baseUrl}/job-applications?jobStatuses=Unknown`, {
+            headers: { Cookie: `access_token=${token}` },
         });
+        assert.equal(response.status, 422);
     }
+
+    const response = await fetch(`${baseUrl}/job-applications?jobStatuses=Unknown`, {
+        headers: { Cookie: `access_token=${token}` },
+    });
+    assert.equal(response.status, 429);
+    assert.deepEqual(await response.json(), { message: 'Too many requests. Please try again later.' });
 });

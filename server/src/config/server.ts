@@ -15,9 +15,14 @@ export const ALLOWED_ORIGINS = new Set<string>(
     process.env.NODE_ENV === 'production' ? PRODUCTION_ORIGINS : [...PRODUCTION_ORIGINS, ...DEVELOPMENT_ORIGINS]
 );
 
-export const REQUEST_LIMIT = 400;
-export const REQUEST_WINDOW_MS = 15 * 60 * 1000;
+export const AUTHENTICATED_API_RATE_LIMIT = 400;
+export const AUTHENTICATED_API_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
-export const AUTH_EMAIL_IP_LIMIT = 10;
-export const AUTH_IP_LIMIT = 50;
-export const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+export const SIGN_IN_EMAIL_IP_LIMIT = 10;
+export const SIGN_IN_IP_LIMIT = 50;
+export const SIGN_IN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+export const SIGN_UP_HOURLY_IP_LIMIT = 5;
+export const SIGN_UP_HOURLY_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+export const SIGN_UP_DAILY_IP_LIMIT = 10;
+export const SIGN_UP_DAILY_RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;

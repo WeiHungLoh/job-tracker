@@ -17,9 +17,12 @@ import { clearAuthenticationCookies } from '../../auth/cookies.js';
 import { createAccessToken, createRefreshToken, verifyRefreshToken } from '../../auth/tokens.js';
 import authenticateAccessToken from '../../middleware/authenticateAccessToken.js';
 import {
-    authenticationEmailIpRateLimiter,
-    authenticationIpRateLimiter,
-} from '../../middleware/authenticationRateLimiters.js';
+    signInEmailIpRateLimiter,
+    signInIpRateLimiter,
+    signUpDailyIpRateLimiter,
+    signUpHourlyIpRateLimiter,
+} from '../../middleware/publicAuthRateLimiters.js';
+import authenticatedApiRateLimiter from '../../middleware/authenticatedApiRateLimiter.js';
 import { findUserInfo, insertUser } from '../../db/queries/users.js';
 import { handleRouteError, sendError } from '../../http/responses.js';
 import { getPasswordValidationError, isNonEmptyString, isValidEmail, normalizeEmail } from '../../http/validation.js';
@@ -31,8 +34,8 @@ const INVALID_PASSWORD_HASH = '$2b$10$vutiTM.IUgXcP281p9BfTeuBzw67GRJ1R55mZ.EBs2
 
 router.post(
     '/users',
-    authenticationIpRateLimiter,
-    authenticationEmailIpRateLimiter,
+    signUpHourlyIpRateLimiter,
+    signUpDailyIpRateLimiter,
     async (
         req: Request<Record<string, never>, SignUpResponse, CredentialsRequest>,
         res: Response<SignUpResponse>
@@ -66,8 +69,8 @@ router.post(
 
 router.post(
     '/sessions',
-    authenticationIpRateLimiter,
-    authenticationEmailIpRateLimiter,
+    signInIpRateLimiter,
+    signInEmailIpRateLimiter,
     async (
         req: Request<Record<string, never>, AuthenticationResponse, CredentialsRequest>,
         res: Response<AuthenticationResponse>
@@ -111,6 +114,7 @@ router.post(
 router.get(
     '/sessions/current',
     authenticateAccessToken,
+    authenticatedApiRateLimiter,
     (_req: Request<Record<string, never>, AuthenticationResponse>, res: Response<AuthenticationResponse>): void => {
         res.status(200).send({ message: 'Authenticated user.' });
     }
