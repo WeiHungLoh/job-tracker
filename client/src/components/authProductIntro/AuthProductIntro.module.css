@@ -312,43 +312,218 @@
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: top;
+}
+
+.fullPageAffordance {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    border: 1px solid rgb(255 255 255 / 38%);
+    border-radius: var(--radiusPill);
+    background-color: rgb(0 0 0 / 76%);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.fullPageAffordance svg {
+    width: 15px;
+    height: 15px;
 }
 
 .fullscreenBackdrop {
     position: fixed;
     z-index: 1400;
     inset: 0;
-    display: grid;
     overflow: hidden;
-    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
-        max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+        max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     background-color: rgb(0 0 0 / 90%);
+    box-sizing: border-box;
+}
+
+.fullscreenViewer {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 24%);
+    border-radius: 14px;
+    background-color: #111;
+    box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.fullscreenToolbar {
+    z-index: 2;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgb(255 255 255 / 20%);
+    background-color: #191919;
+    box-sizing: border-box;
+    color: #fff;
+}
+
+.fullscreenTitleGroup {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.fullscreenTitleGroup h2 {
+    margin: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fullscreenTitleGroup span {
+    flex: 0 0 auto;
+    color: rgb(255 255 255 / 72%);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.fullscreenZoomControls {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.fullscreenTextButton,
+.fullscreenIconButton,
+.fullscreenClose,
+.fullscreenNavigationButton {
+    border: 1px solid rgb(255 255 255 / 30%);
+    background-color: #272727;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+}
+
+.fullscreenTextButton {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.fullscreenTextButton[aria-pressed='true'] {
+    border-color: var(--colorPrimary);
+    background-color: var(--colorPrimary);
+    color: var(--colorBtnPrimaryText);
+}
+
+.fullscreenTextButton svg,
+.fullscreenNavigationButton svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+}
+
+.fullscreenIconButton,
+.fullscreenClose {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 9px;
     place-items: center;
 }
 
-.fullscreenPreview {
-    width: min(calc(100vw - 32px), calc(180svh - 194px), 1600px);
-    max-width: none;
-    border-color: rgb(255 255 255 / 24%);
-    box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+.fullscreenIconButton svg,
+.fullscreenClose svg {
+    width: 21px;
+    height: 21px;
+}
+
+.fullscreenZoomPercentage {
+    width: 48px;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    text-align: center;
+}
+
+.fullscreenTextButton:hover:not(:disabled),
+.fullscreenIconButton:hover:not(:disabled),
+.fullscreenClose:hover,
+.fullscreenNavigationButton:hover:not(:disabled) {
+    background-color: #363636;
+}
+
+.fullscreenTextButton:disabled,
+.fullscreenIconButton:disabled,
+.fullscreenNavigationButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
 }
 
 .fullscreenImageViewport {
     position: relative;
-    display: grid;
     width: 100%;
-    aspect-ratio: 2370 / 1318;
-    overflow: hidden;
-    background-color: #111;
-    place-items: center;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    padding: 16px;
+    background-color: #0d0d0d;
+    box-sizing: border-box;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    touch-action: pan-x pan-y;
 }
 
-.fullscreenImageViewport img {
+.fullscreenImageCanvas {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+    min-height: 100%;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.fullscreenImageCanvas img {
     display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    max-width: none;
+    flex: 0 0 auto;
+}
+
+.fullscreenImageError {
+    align-self: start;
+    padding: 24px;
+    margin: 0 auto;
+    color: #fff;
+    font-size: 0.9375rem;
+    text-align: center;
 }
 
 .previewLoadingOverlay {
@@ -360,36 +535,50 @@
     place-items: center;
 }
 
-.fullscreenClosePosition {
-    position: fixed;
-    z-index: 1401;
-    top: max(12px, env(safe-area-inset-top));
-    right: max(12px, env(safe-area-inset-right));
-}
-
 .fullscreenClose {
-    display: grid;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 1px solid rgb(255 255 255 / 45%);
-    border-radius: 50%;
-    background-color: rgb(0 0 0 / 72%);
-    color: #fff;
-    cursor: pointer;
-    font: inherit;
-    font-size: 2rem;
-    line-height: 1;
-    place-items: center;
+    flex: 0 0 40px;
+    margin-left: auto;
 }
 
-.fullscreenClose:hover {
-    background-color: rgb(255 255 255 / 18%);
+.fullscreenNavigation {
+    z-index: 2;
+    display: grid;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-top: 1px solid rgb(255 255 255 / 20%);
+    background-color: #191919;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.fullscreenNavigationButton {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.fullscreenDots {
+    display: flex;
+    min-width: 0;
+    justify-content: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 7px 3px;
 }
 
 .previewImageButton:focus-visible,
 .carouselArrow:focus-visible,
-.carouselDot:focus-visible {
+.carouselDot:focus-visible,
+.fullscreenTextButton:focus-visible,
+.fullscreenIconButton:focus-visible,
+.fullscreenNavigationButton:focus-visible {
     position: relative;
     z-index: 1;
 }
@@ -397,7 +586,10 @@
 .previewImageButton:focus-visible,
 .carouselArrow:focus-visible,
 .carouselDot:focus-visible,
-.fullscreenClose:focus-visible {
+.fullscreenClose:focus-visible,
+.fullscreenTextButton:focus-visible,
+.fullscreenIconButton:focus-visible,
+.fullscreenNavigationButton:focus-visible {
     outline: 3px solid var(--colorPrimaryFocusOutline);
     outline-offset: -3px;
 }
@@ -447,10 +639,26 @@
     flex-shrink: 0;
 }
 
+.carouselPosition {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+    justify-items: center;
+}
+
 .carouselDots {
     display: flex;
+    max-width: 100%;
     justify-content: center;
     gap: 9px;
+}
+
+.carouselCounter {
+    color: var(--colorTextSecondary);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .carouselDot {
@@ -558,9 +766,13 @@
         justify-self: start;
     }
 
-    .fullscreenPreview {
-        width: min(calc(100vw - 32px), calc(180svh - 194px));
-        max-width: none;
+    .fullscreenToolbar {
+        align-items: flex-start;
+    }
+
+    .fullscreenZoomControls {
+        order: 3;
+        width: 100%;
     }
 }
 
@@ -598,6 +810,94 @@
 
     .benefitList li:last-child {
         border-bottom: 0;
+    }
+
+    .carouselControls {
+        grid-template-columns: 34px minmax(0, 1fr) 34px;
+        gap: 6px;
+        padding-right: 6px;
+        padding-left: 6px;
+    }
+
+    .carouselDots {
+        gap: 6px;
+    }
+
+    .carouselDot {
+        width: 8px;
+        height: 8px;
+    }
+
+    .fullPageAffordance {
+        right: 8px;
+        bottom: 8px;
+    }
+
+    .fullscreenBackdrop {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+            env(safe-area-inset-left);
+    }
+
+    .fullscreenViewer {
+        border-width: 0;
+        border-radius: 0;
+    }
+
+    .fullscreenToolbar {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .fullscreenTitleGroup {
+        max-width: calc(100% - 52px);
+    }
+
+    .fullscreenZoomControls {
+        gap: 4px;
+        justify-content: flex-start;
+    }
+
+    .fullscreenTextButton {
+        min-height: 36px;
+        padding: 0 8px;
+        font-size: 0.75rem;
+    }
+
+    .fullscreenIconButton,
+    .fullscreenClose {
+        width: 38px;
+        height: 38px;
+    }
+
+    .fullscreenImageViewport {
+        padding: 10px;
+    }
+
+    .fullscreenNavigation {
+        gap: 6px;
+        padding: 7px 8px;
+    }
+
+    .fullscreenNavigationButton {
+        min-width: 40px;
+        padding: 0 7px;
+    }
+
+    .fullscreenNavigationButton span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        border: 0;
+        margin: -1px;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .fullscreenDots {
+        justify-content: center;
+        gap: 7px;
     }
 }
 

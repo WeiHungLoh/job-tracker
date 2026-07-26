@@ -164,7 +164,7 @@ describe('User sign in flow', () => {
         expect(screen.getByText('Keep interview details attached to the right application')).toBeInTheDocument();
         expect(
             screen.getByRole('img', {
-                name: /job tracker dashboard showing application and interview statistics/i,
+                name: /job tracker dashboard showing application, interview and priority statistics/i,
             })
         ).toHaveAttribute('src', expect.stringContaining('light-dashboard.png'));
         expect(screen.getByText('jobtracker.weihungloh.com/dashboard')).toBeInTheDocument();
@@ -185,14 +185,17 @@ describe('User sign in flow', () => {
         );
 
         const previews = [
+            ['application/add', 'light-add-application.png'],
             ['application/view', 'light-list-application.png'],
             ['application/view', 'light-board-application.png'],
             ['interview/view', 'light-list-interview.png'],
             ['interview/view', 'light-board-interview.png'],
+            ['offer-decisions', 'light-offer-comparison.png'],
             ['application/archive', 'light-list-archived-application.png'],
             ['application/archive', 'light-board-archived-application.png'],
             ['interview/archive', 'light-list-archived-interview.png'],
             ['interview/archive', 'light-board-archived-interview.png'],
+            ['offer-decisions/archive', 'light-archived-offer-comparison.png'],
             ['dashboard', 'light-dashboard.png'],
         ];
 
@@ -213,7 +216,7 @@ describe('User sign in flow', () => {
         const carousel = screen.getByRole('region', { name: /job tracker product preview/i });
         carousel.focus();
         fireEvent.keyDown(carousel, { key: 'ArrowRight' });
-        expect(screen.getByText('jobtracker.weihungloh.com/application/view')).toBeInTheDocument();
+        expect(screen.getByText('jobtracker.weihungloh.com/application/add')).toBeInTheDocument();
 
         fireEvent.keyDown(carousel, { key: 'ArrowLeft' });
         expect(screen.getByText('jobtracker.weihungloh.com/dashboard')).toBeInTheDocument();
@@ -230,15 +233,15 @@ describe('User sign in flow', () => {
 
         expect(
             screen.getByRole('img', {
-                name: /job tracker dashboard showing application and interview statistics/i,
+                name: /job tracker dashboard showing application, interview and priority statistics/i,
             })
         ).toHaveAttribute('src', expect.stringContaining('dark-dashboard.png'));
 
         userEvent.click(screen.getByRole('button', { name: /next preview/i }));
-        expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-list-application.png'));
+        expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-add-application.png'));
 
         userEvent.click(screen.getByRole('button', { name: /next preview/i }));
-        expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-board-application.png'));
+        expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-list-application.png'));
     });
 
     test('keeps carousel navigation available in fullscreen and supports both close methods', async () => {
@@ -248,21 +251,21 @@ describe('User sign in flow', () => {
             </MemoryRouter>
         );
 
-        const imageButton = screen.getByRole('button', { name: /open dashboard preview in fullscreen/i });
+        const imageButton = screen.getByRole('button', { name: /open dashboard screenshot in fullscreen/i });
         userEvent.click(imageButton);
 
-        const dialog = screen.getByRole('dialog', { name: /job tracker product preview fullscreen/i });
+        const dialog = screen.getByRole('dialog', { name: /dashboard screenshot viewer/i });
         expect(document.body).toHaveStyle({ overflow: 'hidden' });
         expect(document.documentElement).toHaveStyle({ overflow: 'hidden' });
         expect(within(dialog).getByRole('button', { name: /close fullscreen preview/i })).toHaveFocus();
 
-        userEvent.click(within(dialog).getByRole('button', { name: /next preview/i }));
-        expect(within(dialog).getByText('jobtracker.weihungloh.com/application/view')).toBeInTheDocument();
+        userEvent.click(within(dialog).getByRole('button', { name: /next screenshot/i }));
+        expect(screen.getByRole('dialog', { name: /add application screenshot viewer/i })).toBeInTheDocument();
 
-        userEvent.click(within(dialog).getByRole('button', { name: /jump to list archived interview/i }));
-        expect(within(dialog).getByText('jobtracker.weihungloh.com/interview/archive')).toBeInTheDocument();
+        userEvent.click(screen.getByRole('button', { name: /show list archived interview/i }));
+        expect(screen.getByRole('dialog', { name: /list archived interview screenshot viewer/i })).toBeInTheDocument();
 
-        userEvent.click(within(dialog).getByRole('button', { name: /close fullscreen preview/i }));
+        userEvent.click(screen.getByRole('button', { name: /close fullscreen preview/i }));
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         await waitFor(() => expect(imageButton).toHaveFocus());
         expect(document.body).not.toHaveStyle({ overflow: 'hidden' });
@@ -287,7 +290,7 @@ describe('User sign in flow', () => {
         ).not.toBeInTheDocument();
         expect(
             screen.queryByRole('img', {
-                name: /job tracker dashboard showing application and interview statistics/i,
+                name: /job tracker dashboard showing application, interview and priority statistics/i,
             })
         ).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /see how it works/i })).not.toBeInTheDocument();

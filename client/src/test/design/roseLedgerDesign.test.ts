@@ -663,6 +663,22 @@ describe('Rose Ledger visual contract', () => {
         expect(authProductIntro).toContain('.carouselDot:focus-visible {\n    outline-offset: 2px;\n}');
     });
 
+    it('keeps product previews compact while the fullscreen viewer scrolls on both axes', () => {
+        const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authProductIntro).toMatch(
+            /\.previewImageButton img\s*\{[^}]*object-fit:\s*cover;[^}]*object-position:\s*top;/s
+        );
+        expect(authProductIntro).toMatch(
+            /\.fullscreenViewer\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\) auto;/s
+        );
+        expect(authProductIntro).toMatch(
+            /\.fullscreenImageViewport\s*\{[^}]*min-width:\s*0;[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s
+        );
+        expect(authProductIntro).toMatch(/\.fullscreenToolbar\s*\{[^}]*flex-wrap:\s*wrap;/s);
+        expect(authProductIntro).not.toContain('linear-gradient');
+    });
+
     it('keeps offer filter config and demo status badge ownership with their runtime features', () => {
         const offerModels = readSource('src/pages/offerDecision/models.ts');
         const offerConfig = readSource('src/pages/offerDecision/offerDecisionConfig.ts');
@@ -819,6 +835,14 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(attentionCenter).not.toMatch(
             /border-top|gradient\(|box-shadow|background:\s*color-mix|\.status\s*\{|colorBtnDestructive|colorError/i
+        );
+    });
+
+    it('keeps fullscreen carousel dots centered on mobile', () => {
+        const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authProductIntro).toMatch(
+            /@media \(max-width: 600px\)\s*\{[\s\S]*?\.fullscreenDots\s*\{[^}]*justify-content:\s*center;/s
         );
     });
 

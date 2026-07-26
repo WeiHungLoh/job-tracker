@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, Ref } from 'react';
-import { createPortal } from 'react-dom';
-import { MdChevronLeft, MdChevronRight } from 'react-icons/md';
+import { MdChevronLeft, MdChevronRight, MdOpenInFull } from 'react-icons/md';
+import darkAddApplicationPreview from '../../../images/dark-add-application.png';
+import darkArchivedOfferComparisonPreview from '../../../images/dark-archived-offer-comparison.png';
 import darkBoardApplicationPreview from '../../../images/dark-board-application.png';
 import darkBoardArchivedApplicationPreview from '../../../images/dark-board-archived-application.png';
 import darkBoardArchivedInterviewPreview from '../../../images/dark-board-archived-interview.png';
@@ -11,6 +12,9 @@ import darkListApplicationPreview from '../../../images/dark-list-application.pn
 import darkListArchivedApplicationPreview from '../../../images/dark-list-archived-application.png';
 import darkListArchivedInterviewPreview from '../../../images/dark-list-archived-interview.png';
 import darkListInterviewPreview from '../../../images/dark-list-interview.png';
+import darkOfferComparisonPreview from '../../../images/dark-offer-comparison.png';
+import lightAddApplicationPreview from '../../../images/light-add-application.png';
+import lightArchivedOfferComparisonPreview from '../../../images/light-archived-offer-comparison.png';
 import lightBoardApplicationPreview from '../../../images/light-board-application.png';
 import lightBoardArchivedApplicationPreview from '../../../images/light-board-archived-application.png';
 import lightBoardArchivedInterviewPreview from '../../../images/light-board-archived-interview.png';
@@ -20,11 +24,13 @@ import lightListApplicationPreview from '../../../images/light-list-application.
 import lightListArchivedApplicationPreview from '../../../images/light-list-archived-application.png';
 import lightListArchivedInterviewPreview from '../../../images/light-list-archived-interview.png';
 import lightListInterviewPreview from '../../../images/light-list-interview.png';
+import lightOfferComparisonPreview from '../../../images/light-offer-comparison.png';
 import LoadingSpinner from '../loadingSpinner/LoadingSpinner';
 import { routes } from '../../routes';
 import type { Theme } from '../theme/models';
 import { useTheme } from '../theme/ThemeContext';
 import styles from './AuthProductIntro.module.css';
+import ProductPreviewFullscreenViewer from './ProductPreviewFullscreenViewer';
 
 const PRODUCT_HOST = 'jobtracker.weihungloh.com';
 
@@ -38,67 +44,88 @@ type ProductPreview = {
 
 const productPreviews: readonly ProductPreview[] = [
     {
-        alt: 'Job Tracker dashboard showing application and interview statistics',
+        alt: 'Job Tracker Dashboard showing application, interview and priority statistics',
         darkImage: darkDashboardPreview,
         label: 'Dashboard',
         lightImage: lightDashboardPreview,
         route: routes.dashboard,
     },
     {
-        alt: 'Job Tracker application list showing applications, statuses, interviews and notes',
+        alt: 'Job Tracker Add Application form',
+        darkImage: darkAddApplicationPreview,
+        label: 'Add Application',
+        lightImage: lightAddApplicationPreview,
+        route: routes.addApplication,
+    },
+    {
+        alt: 'Job Tracker List Application page showing applications, statuses, interviews and notes',
         darkImage: darkListApplicationPreview,
-        label: 'List application',
+        label: 'List Application',
         lightImage: lightListApplicationPreview,
         route: routes.viewApplications,
     },
     {
-        alt: 'Job Tracker application board showing applications grouped by status',
+        alt: 'Job Tracker Board Application page showing applications grouped by status',
         darkImage: darkBoardApplicationPreview,
-        label: 'Board application',
+        label: 'Board Application',
         lightImage: lightBoardApplicationPreview,
         route: routes.viewApplications,
     },
     {
-        alt: 'Job Tracker interview list showing scheduled job interviews',
+        alt: 'Job Tracker List Interview page showing scheduled job interviews',
         darkImage: darkListInterviewPreview,
-        label: 'List interview',
+        label: 'List Interview',
         lightImage: lightListInterviewPreview,
         route: routes.viewInterviews,
     },
     {
-        alt: 'Job Tracker interview board showing scheduled job interviews',
+        alt: 'Job Tracker Board Interview page showing scheduled job interviews',
         darkImage: darkBoardInterviewPreview,
-        label: 'Board interview',
+        label: 'Board Interview',
         lightImage: lightBoardInterviewPreview,
         route: routes.viewInterviews,
     },
     {
-        alt: 'Job Tracker archived application list',
+        alt: 'Job Tracker Offer Comparison page showing evaluated job offers',
+        darkImage: darkOfferComparisonPreview,
+        label: 'Offer Comparison',
+        lightImage: lightOfferComparisonPreview,
+        route: routes.offerDecisions,
+    },
+    {
+        alt: 'Job Tracker List Archived Application page',
         darkImage: darkListArchivedApplicationPreview,
-        label: 'List archived application',
+        label: 'List Archived Application',
         lightImage: lightListArchivedApplicationPreview,
         route: routes.archivedApplications,
     },
     {
-        alt: 'Job Tracker archived application board',
+        alt: 'Job Tracker Board Archived Application page',
         darkImage: darkBoardArchivedApplicationPreview,
-        label: 'Board archived application',
+        label: 'Board Archived Application',
         lightImage: lightBoardArchivedApplicationPreview,
         route: routes.archivedApplications,
     },
     {
-        alt: 'Job Tracker archived interview list',
+        alt: 'Job Tracker List Archived Interview page',
         darkImage: darkListArchivedInterviewPreview,
-        label: 'List archived interview',
+        label: 'List Archived Interview',
         lightImage: lightListArchivedInterviewPreview,
         route: routes.archivedInterviews,
     },
     {
-        alt: 'Job Tracker archived interview board',
+        alt: 'Job Tracker Board Archived Interview page',
         darkImage: darkBoardArchivedInterviewPreview,
-        label: 'Board archived interview',
+        label: 'Board Archived Interview',
         lightImage: lightBoardArchivedInterviewPreview,
         route: routes.archivedInterviews,
+    },
+    {
+        alt: 'Job Tracker Archived Offer Comparison page showing previous offer evaluations',
+        darkImage: darkArchivedOfferComparisonPreview,
+        label: 'Archived Offer Comparison',
+        lightImage: lightArchivedOfferComparisonPreview,
+        route: routes.archivedOfferDecisions,
     },
 ];
 
@@ -167,48 +194,65 @@ type CarouselControlsProps = {
 };
 
 const CarouselControls = memo(
-    ({ activeIndex, isNavigationLoading, onSelect, onShowNext, onShowPrevious }: CarouselControlsProps) => (
-        <div className={styles.carouselControls}>
-            <button
-                type='button'
-                className={styles.carouselArrow}
-                onClick={onShowPrevious}
-                disabled={isNavigationLoading}
-            >
-                <MdChevronLeft className={styles.carouselArrowIcon} aria-hidden='true' focusable='false' />
-                <span className={styles.visuallyHidden}>Previous preview</span>
-            </button>
+    ({ activeIndex, isNavigationLoading, onSelect, onShowNext, onShowPrevious }: CarouselControlsProps) => {
+        const previousLabel =
+            productPreviews[(activeIndex - 1 + productPreviews.length) % productPreviews.length].label;
+        const nextLabel = productPreviews[(activeIndex + 1) % productPreviews.length].label;
 
-            <div className={styles.carouselDots} aria-label='Jump to a product preview'>
-                {productPreviews.map((preview, index) => (
-                    <button
-                        key={preview.label}
-                        type='button'
-                        className={`${styles.carouselDot} ${index === activeIndex ? styles.activeCarouselDot : ''}`}
-                        onClick={() => onSelect(index)}
-                        disabled={isNavigationLoading}
-                        aria-label={`Jump to ${preview.label}`}
-                        aria-current={index === activeIndex ? 'true' : undefined}
-                    />
-                ))}
+        return (
+            <div className={styles.carouselControls}>
+                <button
+                    type='button'
+                    className={styles.carouselArrow}
+                    onClick={onShowPrevious}
+                    disabled={isNavigationLoading}
+                >
+                    <MdChevronLeft className={styles.carouselArrowIcon} aria-hidden='true' focusable='false' />
+                    <span className={styles.visuallyHidden}>Previous preview: {previousLabel}</span>
+                </button>
+
+                <div className={styles.carouselPosition}>
+                    <div className={styles.carouselDots} aria-label='Jump to a product preview'>
+                        {productPreviews.map((preview, index) => (
+                            <button
+                                key={preview.label}
+                                type='button'
+                                className={`${styles.carouselDot} ${
+                                    index === activeIndex ? styles.activeCarouselDot : ''
+                                }`}
+                                onClick={() => onSelect(index)}
+                                disabled={isNavigationLoading}
+                                aria-label={`Jump to ${preview.label}`}
+                                aria-current={index === activeIndex ? 'true' : undefined}
+                            />
+                        ))}
+                    </div>
+                    <span className={styles.carouselCounter}>
+                        {activeIndex + 1} of {productPreviews.length}
+                    </span>
+                </div>
+
+                <button
+                    type='button'
+                    className={styles.carouselArrow}
+                    onClick={onShowNext}
+                    disabled={isNavigationLoading}
+                >
+                    <MdChevronRight className={styles.carouselArrowIcon} aria-hidden='true' focusable='false' />
+                    <span className={styles.visuallyHidden}>Next preview: {nextLabel}</span>
+                </button>
             </div>
-
-            <button type='button' className={styles.carouselArrow} onClick={onShowNext} disabled={isNavigationLoading}>
-                <MdChevronRight className={styles.carouselArrowIcon} aria-hidden='true' focusable='false' />
-                <span className={styles.visuallyHidden}>Next preview</span>
-            </button>
-        </div>
-    )
+        );
+    }
 );
 
 CarouselControls.displayName = 'CarouselControls';
 
 type PreviewFrameProps = {
     activeIndex: number;
-    imageButtonRef?: Ref<HTMLButtonElement>;
+    imageButtonRef: Ref<HTMLButtonElement>;
     isNavigationLoading: boolean;
-    isFullscreen?: boolean;
-    onImageClick?: () => void;
+    onImageClick: () => void;
     onImageLoad: (src: string) => void;
     onSelect: (index: number) => void;
     onShowNext: () => void;
@@ -221,7 +265,6 @@ const PreviewFrame = memo(
         activeIndex,
         imageButtonRef,
         isNavigationLoading,
-        isFullscreen = false,
         onImageClick,
         onImageLoad,
         onSelect,
@@ -233,7 +276,7 @@ const PreviewFrame = memo(
         const image = getPreviewImage(activePreview, theme);
 
         return (
-            <div className={`${styles.preview} ${isFullscreen ? styles.fullscreenPreview : ''}`}>
+            <div className={styles.preview}>
                 <div className={styles.browserBar} aria-hidden='true'>
                     <span />
                     <span />
@@ -244,43 +287,30 @@ const PreviewFrame = memo(
                     </div>
                 </div>
 
-                {onImageClick ? (
-                    <button
-                        ref={imageButtonRef}
-                        type='button'
-                        className={styles.previewImageButton}
-                        onClick={onImageClick}
-                        aria-label={`Open ${activePreview.label} preview in fullscreen`}
-                    >
-                        <img
-                            src={image}
-                            alt={activePreview.alt}
-                            decoding='async'
-                            loading='eager'
-                            onLoad={() => onImageLoad(image)}
-                        />
-                        {isNavigationLoading ? (
-                            <span className={styles.previewLoadingOverlay}>
-                                <LoadingSpinner size={32} title='Loading preview' variant='light' />
-                            </span>
-                        ) : null}
-                    </button>
-                ) : (
-                    <div className={styles.fullscreenImageViewport}>
-                        <img
-                            src={image}
-                            alt={activePreview.alt}
-                            decoding='async'
-                            loading='eager'
-                            onLoad={() => onImageLoad(image)}
-                        />
-                        {isNavigationLoading ? (
-                            <span className={styles.previewLoadingOverlay}>
-                                <LoadingSpinner size={32} title='Loading preview' variant='light' />
-                            </span>
-                        ) : null}
-                    </div>
-                )}
+                <button
+                    ref={imageButtonRef}
+                    type='button'
+                    className={styles.previewImageButton}
+                    onClick={onImageClick}
+                    aria-label={`Open ${activePreview.label} screenshot in fullscreen`}
+                >
+                    <img
+                        src={image}
+                        alt={activePreview.alt}
+                        decoding='async'
+                        loading='eager'
+                        onLoad={() => onImageLoad(image)}
+                    />
+                    <span className={styles.fullPageAffordance}>
+                        <MdOpenInFull aria-hidden='true' focusable='false' />
+                        View full page
+                    </span>
+                    {isNavigationLoading ? (
+                        <span className={styles.previewLoadingOverlay}>
+                            <LoadingSpinner size={32} title='Loading preview' variant='light' />
+                        </span>
+                    ) : null}
+                </button>
 
                 <CarouselControls
                     activeIndex={activeIndex}
@@ -304,9 +334,15 @@ const ProductPreviewCarousel = () => {
     const [loadedImages, setLoadedImages] = useState(() => new Set(loadedPreviewImages));
     const imageButtonRef = useRef<HTMLButtonElement>(null);
     const navigationRequestIdRef = useRef(0);
+    const restoreFocusRef = useRef(false);
+    const isMountedRef = useRef(true);
 
     const markImageLoaded = useCallback((src: string) => {
         loadedPreviewImages.add(src);
+        if (!isMountedRef.current) {
+            return;
+        }
+
         setLoadedImages((currentLoadedImages) => {
             if (currentLoadedImages.has(src)) {
                 return currentLoadedImages;
@@ -358,7 +394,7 @@ const ProductPreviewCarousel = () => {
             setIsNavigationLoading(true);
 
             void preloadPreviewImage(nextImage).then(() => {
-                if (navigationRequestIdRef.current !== requestId) {
+                if (!isMountedRef.current || navigationRequestIdRef.current !== requestId) {
                     return;
                 }
 
@@ -399,65 +435,33 @@ const ProductPreviewCarousel = () => {
     }, []);
 
     const closeFullscreen = useCallback(() => {
+        restoreFocusRef.current = true;
         setIsFullscreen(false);
-        window.setTimeout(() => imageButtonRef.current?.focus(), 0);
     }, []);
 
     const adjacentPreviewIndexes = useMemo(() => getAdjacentPreviewIndexes(activeIndex), [activeIndex]);
+    const activePreview = productPreviews[activeIndex];
+    const activeImage = getPreviewImage(activePreview, theme);
+    const previewLabels = useMemo(() => productPreviews.map((preview) => preview.label), []);
 
     useEffect(() => {
         preloadImages(adjacentPreviewIndexes);
     }, [adjacentPreviewIndexes, preloadImages]);
 
     useEffect(() => {
-        if (!isFullscreen) {
-            return;
+        if (!isFullscreen && restoreFocusRef.current) {
+            restoreFocusRef.current = false;
+            imageButtonRef.current?.focus();
         }
+    }, [isFullscreen]);
 
-        const previousBodyOverflow = document.body.style.overflow;
-        const previousDocumentOverflow = document.documentElement.style.overflow;
-        const appRoot = document.getElementById('root');
-        const previousRootAriaHidden = appRoot?.getAttribute('aria-hidden');
-        const wasRootInert = appRoot?.hasAttribute('inert');
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        appRoot?.setAttribute('aria-hidden', 'true');
-        appRoot?.setAttribute('inert', '');
-
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                closeFullscreen();
-                return;
-            }
-
-            if (event.key === 'ArrowLeft') {
-                event.preventDefault();
-                showPreviousPreview();
-                return;
-            }
-
-            if (event.key === 'ArrowRight') {
-                event.preventDefault();
-                showNextPreview();
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.body.style.overflow = previousBodyOverflow;
-            document.documentElement.style.overflow = previousDocumentOverflow;
-            if (!wasRootInert) {
-                appRoot?.removeAttribute('inert');
-            }
-            if (previousRootAriaHidden === null) {
-                appRoot?.removeAttribute('aria-hidden');
-            } else if (previousRootAriaHidden !== undefined) {
-                appRoot?.setAttribute('aria-hidden', previousRootAriaHidden);
-            }
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [closeFullscreen, isFullscreen, showNextPreview, showPreviousPreview]);
+    useEffect(
+        () => () => {
+            isMountedRef.current = false;
+            navigationRequestIdRef.current += 1;
+        },
+        []
+    );
 
     return (
         <>
@@ -482,39 +486,21 @@ const ProductPreviewCarousel = () => {
                 />
             </div>
 
-            {isFullscreen
-                ? createPortal(
-                      <div
-                          className={styles.fullscreenBackdrop}
-                          role='dialog'
-                          aria-modal='true'
-                          aria-label='Job Tracker product preview fullscreen'
-                      >
-                          <div className={styles.fullscreenClosePosition}>
-                              <button
-                                  type='button'
-                                  className={styles.fullscreenClose}
-                                  onClick={closeFullscreen}
-                                  aria-label='Close fullscreen preview'
-                                  autoFocus
-                              >
-                                  ×
-                              </button>
-                          </div>
-                          <PreviewFrame
-                              activeIndex={activeIndex}
-                              isNavigationLoading={isNavigationLoading}
-                              isFullscreen
-                              onImageLoad={markImageLoaded}
-                              onSelect={selectPreview}
-                              onShowNext={showNextPreview}
-                              onShowPrevious={showPreviousPreview}
-                              theme={theme}
-                          />
-                      </div>,
-                      document.body
-                  )
-                : null}
+            {isFullscreen ? (
+                <ProductPreviewFullscreenViewer
+                    activeIndex={activeIndex}
+                    alt={activePreview.alt}
+                    image={activeImage}
+                    isNavigationLoading={isNavigationLoading}
+                    label={activePreview.label}
+                    labels={previewLabels}
+                    onClose={closeFullscreen}
+                    onImageLoad={markImageLoaded}
+                    onSelect={selectPreview}
+                    onShowNext={showNextPreview}
+                    onShowPrevious={showPreviousPreview}
+                />
+            ) : null}
         </>
     );
 };
