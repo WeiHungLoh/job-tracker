@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { ACCESS_TOKEN_COOKIE_OPTIONS, REFRESH_TOKEN_COOKIE_OPTIONS } from '../dist/config/auth.js';
+import { hashRefreshToken } from '../dist/auth/refreshTokenHash.js';
 import { createAccessToken, createRefreshToken } from '../dist/auth/tokens.js';
 import { createApp } from '../dist/app.js';
 import { pool } from '../dist/db/connectDB.js';
@@ -31,7 +32,11 @@ import {
 process.env.ACCESS_TOKEN_SECRET = 'test-only-secret';
 process.env.REFRESH_TOKEN_SECRET = 'different-test-only-refresh-secret';
 
-const TEST_USER = { id: 1, email: 'test@example.com' };
+const TEST_USER = {
+    id: 1,
+    email: 'test@example.com',
+    sessionId: 'e4ae55d6-93f6-46f5-8d27-f5f09f58cd33',
+};
 
 const getSetCookieHeader = (response) => {
     return response.headers.get('set-cookie') ?? '';
@@ -165,19 +170,36 @@ test('creates access and refresh tokens with the configured expiration times', (
 });
 
 test('refreshes an access token without requiring an access token', async () => {
+    const originalQuery = pool.query;
     const refreshToken = createRefreshToken(TEST_USER, process.env.REFRESH_TOKEN_SECRET);
-    const response = await fetch(`${baseUrl}/authentication/sessions/refresh`, {
-        method: 'POST',
-        headers: { Cookie: `refresh_token=${refreshToken}` },
+    pool.query = async () => ({
+        rows: [
+            {
+                session_id: TEST_USER.sessionId,
+                user_id: TEST_USER.id,
+                refresh_token_hash: hashRefreshToken(refreshToken),
+                created_at: new Date(),
+                expires_at: new Date(Date.now() + 60_000),
+            },
+        ],
     });
-    const setCookieHeader = getSetCookieHeader(response);
 
-    assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { message: 'Access token refreshed.' });
-    assert.match(setCookieHeader, /access_token=/);
-    assert.match(setCookieHeader, /Max-Age=900/);
-    assert.match(setCookieHeader, /HttpOnly/);
-    assert.match(setCookieHeader, /SameSite=Strict/);
+    try {
+        const response = await fetch(`${baseUrl}/authentication/sessions/refresh`, {
+            method: 'POST',
+            headers: { Cookie: `refresh_token=${refreshToken}` },
+        });
+        const setCookieHeader = getSetCookieHeader(response);
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(await response.json(), { message: 'Access token refreshed.' });
+        assert.match(setCookieHeader, /access_token=/);
+        assert.match(setCookieHeader, /Max-Age=900/);
+        assert.match(setCookieHeader, /HttpOnly/);
+        assert.match(setCookieHeader, /SameSite=Strict/);
+    } finally {
+        pool.query = originalQuery;
+    }
 });
 
 test('clears both cookies when the refresh token is missing', async () => {
@@ -485,17 +507,30 @@ test('returns 401 and clears an expired access token', async () => {
 });
 
 test('returns 401 and clears both cookies for an expired refresh token', async () => {
+    const originalQuery = pool.query;
+    let cleanupQuery;
+    pool.query = async (sql, values) => {
+        cleanupQuery = { sql: String(sql), values };
+        return { rows: [], rowCount: 1 };
+    };
     const token = jwt.sign({ ...TEST_USER, tokenType: 'refresh' }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: -1 });
-    const response = await fetch(`${baseUrl}/authentication/sessions/refresh`, {
-        method: 'POST',
-        headers: { Cookie: `refresh_token=${token}` },
-    });
-    const setCookieHeader = getSetCookieHeader(response);
 
-    assert.equal(response.status, 401);
-    assert.deepEqual(await response.json(), { message: 'Invalid or expired refresh token. Please sign in.' });
-    assert.match(setCookieHeader, /access_token=;/);
-    assert.match(setCookieHeader, /refresh_token=;/);
+    try {
+        const response = await fetch(`${baseUrl}/authentication/sessions/refresh`, {
+            method: 'POST',
+            headers: { Cookie: `refresh_token=${token}` },
+        });
+        const setCookieHeader = getSetCookieHeader(response);
+
+        assert.equal(response.status, 401);
+        assert.deepEqual(await response.json(), { message: 'Invalid or expired refresh token. Please sign in.' });
+        assert.match(setCookieHeader, /access_token=;/);
+        assert.match(setCookieHeader, /refresh_token=;/);
+        assert.match(cleanupQuery.sql, /refresh_token_hash = \$1/);
+        assert.match(cleanupQuery.sql, /expires_at <= CURRENT_TIMESTAMP/);
+    } finally {
+        pool.query = originalQuery;
+    }
 });
 
 test('returns 404 for an unknown route', async () => {
@@ -956,10 +991,7 @@ test('normalizes email and validates the password policy', () => {
         getPasswordValidationError('x'.repeat(PASSWORD_MAX_LENGTH + 1)),
         'Password must be 64 characters or fewer.'
     );
-    assert.equal(
-        getPasswordValidationError('😀'.repeat(16)),
-        undefined
-    );
+    assert.equal(getPasswordValidationError('😀'.repeat(16)), undefined);
     assert.equal(
         getPasswordValidationError('😀'.repeat(Math.floor(PASSWORD_MAX_BYTES / 4) + 1)),
         'Password is too long when encoded. Use fewer Unicode characters.'
@@ -1074,7 +1106,11 @@ test('logs error details and returns a generic 500 response', () => {
 
 test('returns 429 after the authenticated API request limit is exceeded', async () => {
     const token = createAccessToken(
-        { id: 900001, email: 'rate-limit-user@example.com' },
+        {
+            id: 900001,
+            email: 'rate-limit-user@example.com',
+            sessionId: 'fbdeefbe-7635-4e6d-8454-666498e7b968',
+        },
         process.env.ACCESS_TOKEN_SECRET
     );
 

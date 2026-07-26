@@ -3,8 +3,25 @@ import { ACCESS_TOKEN_DURATION_SECONDS, REFRESH_TOKEN_DURATION_SECONDS } from '.
 import jwt from 'jsonwebtoken';
 
 const AUTHENTICATION_TOKEN_ALGORITHM = 'HS256';
+const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type AuthenticationTokenType = 'access' | 'refresh';
+
+const isValidAuthenticatedUser = (user: {
+    id: unknown;
+    email: unknown;
+    sessionId: unknown;
+}): user is AuthenticatedUser => {
+    return (
+        typeof user.id === 'number' &&
+        Number.isInteger(user.id) &&
+        user.id > 0 &&
+        typeof user.email === 'string' &&
+        user.email.length > 0 &&
+        typeof user.sessionId === 'string' &&
+        SESSION_ID_PATTERN.test(user.sessionId)
+    );
+};
 
 const createAuthenticationToken = (
     user: AuthenticatedUser,
@@ -12,6 +29,10 @@ const createAuthenticationToken = (
     tokenType: AuthenticationTokenType,
     expiresIn: number
 ): string => {
+    if (!isValidAuthenticatedUser(user)) {
+        throw new jwt.JsonWebTokenError('Authentication session payload is invalid');
+    }
+
     return jwt.sign({ ...user, tokenType }, secret, {
         algorithm: AUTHENTICATION_TOKEN_ALGORITHM,
         expiresIn,
@@ -30,13 +51,16 @@ const verifyAuthenticationToken = (
     if (
         typeof payload === 'string' ||
         payload.tokenType !== expectedTokenType ||
-        typeof payload.id !== 'number' ||
-        typeof payload.email !== 'string'
+        !isValidAuthenticatedUser({
+            id: payload.id,
+            email: payload.email,
+            sessionId: payload.sessionId,
+        })
     ) {
         throw new jwt.JsonWebTokenError('Token payload is invalid');
     }
 
-    return { id: payload.id, email: payload.email };
+    return { id: payload.id, email: payload.email, sessionId: payload.sessionId };
 };
 
 export const createAccessToken = (user: AuthenticatedUser, secret: string): string => {

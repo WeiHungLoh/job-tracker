@@ -1,10 +1,12 @@
 import { createApp } from './app.js';
 import { connectDB } from './db/connectDB.js';
+import { deleteExpiredAuthenticationSessions } from './db/queries/authenticationSessions.js';
 import createTables from './db/queries/createTables.js';
 
 const startServer = async (): Promise<void> => {
     await connectDB();
     await createTables();
+    await deleteExpiredAuthenticationSessions();
 
     const app = createApp();
     const port = Number(process.env.PORT ?? 5005);

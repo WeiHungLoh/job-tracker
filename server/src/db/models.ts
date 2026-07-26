@@ -205,6 +205,14 @@ export type User = {
     hashed_password: string;
 };
 
+export type AuthenticationSession = {
+    session_id: string;
+    user_id: number;
+    refresh_token_hash: string;
+    created_at: Date;
+    expires_at: Date;
+};
+
 export type UserPreferences = {
     application_job_statuses: JobStatus[];
     application_show_notes: boolean;

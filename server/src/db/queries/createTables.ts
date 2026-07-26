@@ -43,6 +43,17 @@ const createTables = async (): Promise<void> => {
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
         )`;
 
+    const createAuthenticationSessionsTable = `
+        CREATE TABLE IF NOT EXISTS authentication_sessions (
+            session_id UUID PRIMARY KEY,
+            user_id INTEGER NOT NULL
+                REFERENCES users(user_id)
+                ON DELETE CASCADE,
+            refresh_token_hash TEXT NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMPTZ NOT NULL
+        )`;
+
     const createJobAppTable = `CREATE TABLE IF NOT EXISTS job_applications (
             job_id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -209,6 +220,14 @@ const createTables = async (): Promise<void> => {
     const createInterviewJobIdIndex = `CREATE INDEX IF NOT EXISTS interviews_job_id_idx
         ON interviews (job_id)`;
 
+    const createAuthenticationSessionsUserIdIndex = `
+        CREATE INDEX IF NOT EXISTS authentication_sessions_user_id_idx
+        ON authentication_sessions (user_id)`;
+
+    const createAuthenticationSessionsExpiresAtIndex = `
+        CREATE INDEX IF NOT EXISTS authentication_sessions_expires_at_idx
+        ON authentication_sessions (expires_at)`;
+
     const populateUserPreferences = `
         INSERT INTO user_preferences (user_id)
         SELECT users.user_id
@@ -221,6 +240,7 @@ const createTables = async (): Promise<void> => {
 
     const setupQueries = [
         createUsersTable,
+        createAuthenticationSessionsTable,
         createJobAppTable,
         createOfferEvaluationTable,
         createInterviewTable,
@@ -231,6 +251,8 @@ const createTables = async (): Promise<void> => {
         createJobApplicationArchiveIndex,
         createInterviewArchiveIndex,
         createInterviewJobIdIndex,
+        createAuthenticationSessionsUserIdIndex,
+        createAuthenticationSessionsExpiresAtIndex,
     ];
 
     for (const query of setupQueries) {

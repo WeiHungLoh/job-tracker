@@ -37,7 +37,11 @@ after(async () => {
 
 const getProtectedResponse = async (userId, ip) => {
     const token = createAccessToken(
-        { id: userId, email: `user-${userId}@example.com` },
+        {
+            id: userId,
+            email: `user-${userId}@example.com`,
+            sessionId: `00000000-0000-4000-8000-${String(userId).padStart(12, '0')}`,
+        },
         process.env.ACCESS_TOKEN_SECRET
     );
     return fetch(`${baseUrl}/job-applications?jobStatuses=Unknown`, {
