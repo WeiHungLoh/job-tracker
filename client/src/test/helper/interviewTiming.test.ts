@@ -109,6 +109,7 @@ describe('interview timing', () => {
     });
 
     test('returns valid conflicts in chronological order without mutating the active interview input', () => {
+        const currentTime = new Date(2026, 6, 25, 12, 0);
         const interviews = [
             { ...interview(new Date(2026, 6, 25, 15, 0), 60), interview_id: 3 },
             { ...interview(new Date(2026, 6, 25, 14, 30), 60), interview_id: 2 },
@@ -118,7 +119,7 @@ describe('interview timing', () => {
         const originalOrder = interviews.map(({ interview_id }) => interview_id);
 
         expect(
-            findInterviewSchedulingConflicts(interviews, interview(new Date(2026, 6, 25, 14, 45), 45)).map(
+            findInterviewSchedulingConflicts(interviews, interview(new Date(2026, 6, 25, 14, 45), 45), currentTime).map(
                 ({ interview_id }) => interview_id
             )
         ).toEqual([2, 3]);

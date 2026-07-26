@@ -4,7 +4,7 @@ import ClosedOutcomesChart from './charts/closedOutcomes/ClosedOutcomesChart';
 import DashboardStats from './overview/dashboardStats/DashboardStats';
 import UpcomingInterviews from './overview/upcomingInterviews/UpcomingInterviews';
 import AttentionCenter from './attentionCenter/AttentionCenter';
-import type { DashboardContentProps } from './models';
+import type { DashboardContentProps } from './dashboardTypes';
 import styles from './Dashboard.module.css';
 import useCurrentTime from '../../hooks/useCurrentTime';
 
@@ -14,7 +14,11 @@ const DashboardContent = ({
     interviews,
     weeklyApplications,
     isLoading,
+    onAddInterview,
+    offerEvaluations = [],
     onInterviewSelect,
+    onOpenOfferComparison,
+    onOpenOfferDecisionApplication,
     onStatusSelect,
 }: DashboardContentProps) => {
     const currentTime = useCurrentTime();
@@ -36,6 +40,10 @@ const DashboardContent = ({
                     currentTime={currentTime}
                     interviews={interviews}
                     isLoading={isLoading}
+                    onAddInterview={onAddInterview}
+                    offerEvaluations={offerEvaluations}
+                    onOpenOfferComparison={onOpenOfferComparison}
+                    onOpenOfferDecisionApplication={onOpenOfferDecisionApplication}
                 />
             </section>
             <section className={styles.trendSection}>

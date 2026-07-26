@@ -43,7 +43,10 @@ import EmptyState from '../../../../../components/emptyState/EmptyState';
 import { routes } from '../../../../../routes';
 import { createApplicationEmptyState } from '../../../../application/applicationEmptyState';
 import { getApplicationsInBoardOrder } from '../../../../application/applicationBoard/applicationBoardUtils';
-import { getDashboardJobStatus } from '../../../../dashboard/navigation';
+import {
+    getDashboardApplicationId,
+    getDashboardJobStatus,
+} from '../../../../dashboard/dashboardNavigation';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
 import { shouldAutoScrollAfterStatusChange } from '../../../../application/applicationSorting';
 import usePendingIds from '../../../../../hooks/usePendingIds';
@@ -58,6 +61,7 @@ const DemoViewApplication = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const dashboardJobStatusRef = useRef(getDashboardJobStatus(location.state));
+    const dashboardApplicationIdRef = useRef(getDashboardApplicationId(location.state));
     const [editingApplicationId, setEditingApplicationId] = useState<number | null>(null);
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
     const confirm = useConfirm();
@@ -118,11 +122,37 @@ const DemoViewApplication = () => {
         }
 
         dashboardJobStatusRef.current = null;
+        const preferenceUpdates: {
+            application_job_statuses?: JobStatus[];
+            application_view_mode?: CollectionViewMode;
+        } = {};
         if (selectedJobStatuses.length !== 1 || selectedJobStatuses[0] !== dashboardJobStatus) {
-            void updatePreferences({ application_job_statuses: [dashboardJobStatus] });
+            preferenceUpdates.application_job_statuses = [dashboardJobStatus];
         }
+        if (dashboardApplicationIdRef.current && isBoardView) {
+            preferenceUpdates.application_view_mode = 'list';
+        }
+        if (Object.keys(preferenceUpdates).length > 0) {
+            void updatePreferences(preferenceUpdates);
+        }
+        if (!dashboardApplicationIdRef.current) {
+            navigate(location.pathname, { replace: true, state: null });
+        }
+    }, [isBoardView, location.pathname, navigate, selectedJobStatuses, updatePreferences]);
+
+    useEffect(() => {
+        const targetApplicationId = dashboardApplicationIdRef.current;
+        if (isBoardView || !targetApplicationId) {
+            return;
+        }
+
+        if (visibleApplicationIds.includes(String(targetApplicationId))) {
+            scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+        }
+
+        dashboardApplicationIdRef.current = null;
         navigate(location.pathname, { replace: true, state: null });
-    }, [location.pathname, navigate, selectedJobStatuses, updatePreferences]);
+    }, [isBoardView, location.pathname, navigate, visibleApplicationIds]);
 
     const closeStatusEditor = () => {
         setEditingApplicationId(null);

@@ -45,7 +45,7 @@ import { createApplicationEmptyState } from '../../applicationEmptyState';
 import SortOptions from '../../../../components/activityControls/sortOptions/SortOptions';
 import { shouldAutoScrollAfterStatusChange, sortApplications } from '../../applicationSorting';
 import { getApplicationsInBoardOrder } from '../../applicationBoard/applicationBoardUtils';
-import { getDashboardJobStatus } from '../../../dashboard/navigation';
+import { getDashboardApplicationId, getDashboardJobStatus } from '../../../dashboard/dashboardNavigation';
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useAutosaveNotes from '../../../../hooks/useAutosaveNotes';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
@@ -57,6 +57,7 @@ const ViewApplication = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const dashboardJobStatusRef = useRef(getDashboardJobStatus(location.state));
+    const dashboardApplicationIdRef = useRef(getDashboardApplicationId(location.state));
     const [applications, setApplications] = useState<JobApplication[]>([]);
     const [editingApplicationId, setEditingApplicationId] = useState<number | null>(null);
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
@@ -236,13 +237,23 @@ const ViewApplication = () => {
 
         const fetchData = async () => {
             const dashboardJobStatus = dashboardJobStatusRef.current;
+            const dashboardApplicationId = dashboardApplicationIdRef.current;
             const initialJobStatuses = dashboardJobStatus ? [dashboardJobStatus] : selectedJobStatuses;
 
             try {
-                const preferenceUpdate =
+                const preferenceUpdates: UpdateUserPreferencesRequest = {};
+                if (
                     dashboardJobStatus &&
                     (selectedJobStatuses.length !== 1 || selectedJobStatuses[0] !== dashboardJobStatus)
-                        ? updatePreferences({ application_job_statuses: initialJobStatuses }).catch(
+                ) {
+                    preferenceUpdates.application_job_statuses = initialJobStatuses;
+                }
+                if (dashboardApplicationId && isBoardView) {
+                    preferenceUpdates.application_view_mode = 'list';
+                }
+                const preferenceUpdate =
+                    Object.keys(preferenceUpdates).length > 0
+                        ? updatePreferences(preferenceUpdates).catch(
                               (error: unknown) => {
                                   showErrorToast(
                                       getErrorToastMessage(
@@ -266,7 +277,7 @@ const ViewApplication = () => {
             } catch (error) {
                 showErrorToast(getErrorToastMessage(error, 'Unable to load job application data. Please try again.'));
             } finally {
-                if (dashboardJobStatusRef.current) {
+                if (dashboardJobStatusRef.current && !dashboardApplicationIdRef.current) {
                     dashboardJobStatusRef.current = null;
                     navigate(location.pathname, { replace: true, state: null });
                 }
@@ -281,6 +292,21 @@ const ViewApplication = () => {
             isActive = false;
         };
     }, []);
+
+    useEffect(() => {
+        const targetApplicationId = dashboardApplicationIdRef.current;
+        if (isLoading || isBoardView || !targetApplicationId) {
+            return;
+        }
+
+        if (applications.some((application) => application.job_id === targetApplicationId)) {
+            scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+        }
+
+        dashboardApplicationIdRef.current = null;
+        dashboardJobStatusRef.current = null;
+        navigate(location.pathname, { replace: true, state: null });
+    }, [applications, isBoardView, isLoading, location.pathname, navigate]);
 
     useEffect(() => {
         const targetApplicationId = location.hash.substring(1);

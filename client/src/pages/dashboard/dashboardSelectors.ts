@@ -1,7 +1,7 @@
 import type { JobStatusCount, WeeklyApplicationCount } from '../application/models';
 import type { JobInterview } from '../interview/models';
 import { getUpcomingInterviews as getUpcomingInterviewsByTiming } from '../../helper/interviewTiming';
-import type { StatusCountMap } from './models';
+import type { StatusCountMap } from './dashboardTypes';
 
 export const getStatusCountMap = (statusCounts: JobStatusCount[]): StatusCountMap => {
     const countByStatus: StatusCountMap = {};

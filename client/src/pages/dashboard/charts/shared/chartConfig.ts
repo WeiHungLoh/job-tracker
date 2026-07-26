@@ -11,7 +11,7 @@ import type {
 } from 'chart.js';
 import type { Theme } from '../../../../components/theme/models';
 import { JOB_STATUSES, type JobStatus } from '../../../application/models';
-import type { DashboardStatusSelectHandler, StatusCountMap } from '../../models';
+import type { DashboardStatusSelectHandler, StatusCountMap } from '../../dashboardTypes';
 
 export const TITLE_FONT = { size: 16, weight: 'bold' } as const;
 export const TITLE_PADDING = { top: 20, bottom: 20 };

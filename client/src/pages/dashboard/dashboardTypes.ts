@@ -1,8 +1,10 @@
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../application/models';
 import type { JobInterview } from '../interview/models';
+import type { OfferEvaluation } from '../offerDecision/models';
 
 export type DashboardInterviewSelectHandler = (interviewId: number) => void;
 export type DashboardStatusSelectHandler = (status: JobStatus) => void;
+export type DashboardApplicationActionHandler = (application: JobApplication) => void;
 export type StatusCountMap = Partial<Record<JobStatus, number>>;
 
 export type DashboardDataProps = {
@@ -13,13 +15,17 @@ export type DashboardDataProps = {
 };
 
 export type DashboardNavigationProps = {
+    onAddInterview?: DashboardApplicationActionHandler;
     onInterviewSelect?: DashboardInterviewSelectHandler;
+    onOpenOfferComparison?: DashboardApplicationActionHandler;
+    onOpenOfferDecisionApplication?: DashboardApplicationActionHandler;
     onStatusSelect?: DashboardStatusSelectHandler;
 };
 
 export type DashboardContentProps = DashboardDataProps &
     DashboardNavigationProps & {
         applications: JobApplication[];
+        offerEvaluations?: OfferEvaluation[];
     };
 export type DashboardStatsProps = DashboardDataProps & {
     currentTime?: Date;

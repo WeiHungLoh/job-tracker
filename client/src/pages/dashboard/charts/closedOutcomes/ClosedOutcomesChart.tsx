@@ -5,7 +5,7 @@ import DashboardCard from '../../shared/dashboardCard/DashboardCard';
 import LoadingSpinner from '../../../../components/loadingSpinner/LoadingSpinner';
 import StatusLegend from '../shared/StatusLegend';
 import type { JobStatus } from '../../../application/models';
-import type { StatusChartProps } from '../../models';
+import type { StatusChartProps } from '../../dashboardTypes';
 import {
     createInteractiveStatusBarChartOptions,
     createStatusBarChartData,

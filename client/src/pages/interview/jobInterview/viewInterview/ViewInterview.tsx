@@ -26,7 +26,7 @@ import CollectionViewToggle from '../../../../components/activityControls/collec
 import type { CollectionViewMode } from '../../../../components/activityControls/collectionViewToggle/models';
 import SkeletonInterviewBoard from '../../../../components/skeletonLoader/skeletonInterviewBoard/SkeletonInterviewBoard';
 import InterviewGrid from '../../interviewGrid/InterviewGrid';
-import { getDashboardInterviewId } from '../../../dashboard/navigation';
+import { getDashboardInterviewId } from '../../../dashboard/dashboardNavigation';
 import { scrollAndHighlight } from '../../../../helper/highlightElement';
 import CheckboxFilter from '../../../../components/activityControls/checkboxFilter/CheckboxFilter';
 import {

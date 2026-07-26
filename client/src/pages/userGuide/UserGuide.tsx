@@ -51,24 +51,40 @@ const guideSections: readonly UserGuideSection[] = [
                     </li>
                     <li>
                         <strong>Needs attention:</strong> Shows up to six applications that may require action, ordered
-                        by urgency.
+                        by urgency, and suggests one next action for each selected application.
                         <ul>
                             <li>
                                 Interview applications appear when every scheduled interview has ended and at least
                                 seven full days have passed since the latest interview ended. The number of days is
                                 calculated from the latest interview&apos;s end time, including its duration, and
-                                applications waiting longer are ranked higher.
+                                applications waiting longer are ranked higher. These items can generate a copyable
+                                post-interview template.
                             </li>
-                            <li>Applications marked as Interview with no scheduled interview prompt you to add one.</li>
-                            <li>Applications at Offer appear after Interview-related items.</li>
+                            <li>
+                                Applications marked as Interview with no scheduled interview prompt you to add one. The
+                                action opens Add Interview without creating an interview automatically.
+                            </li>
+                            <li>
+                                Evaluated offers with a decision deadline in the next 72 hours appear first. The action
+                                opens Job Applications in List view, filters to Offer, then scrolls to and highlights
+                                the exact application so you can record it as Accepted or Declined. Evaluated offers
+                                more than 72 hours away and offers with a passed deadline do not appear.
+                            </li>
+                            <li>
+                                Unevaluated offers appear next regardless of deadline because their deadline has not
+                                been recorded yet. The action opens active Offer Comparison so you can add the offer
+                                details and decision deadline.
+                            </li>
                             <li>
                                 Applied applications with no linked interview appear after seven days, with older
-                                applications ranked higher.
+                                applications ranked higher. These items can generate a copyable application follow-up
+                                template.
                             </li>
                         </ul>
                         <p>
-                            This card is advisory and read-only. Future and ongoing interviews remain in the Upcoming
-                            Interviews card.
+                            Follow-up templates are generated locally and are not sent or saved. Replace bracketed
+                            placeholders before using a template. Copying a message does not mark an application as
+                            followed up. Future and ongoing interviews remain in the Upcoming Interviews card.
                         </p>
                     </li>
                     <li>

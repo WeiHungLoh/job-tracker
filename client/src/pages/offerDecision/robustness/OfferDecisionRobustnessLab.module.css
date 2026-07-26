@@ -3,7 +3,7 @@
     padding: var(--spaceCard);
     border: 1px solid var(--colorCardBorder);
     border-radius: var(--radiusControl);
-    background-color: var(--colorControlMutedSurface);
+    background-color: var(--colorCardBg);
     color: var(--colorText);
 }
 

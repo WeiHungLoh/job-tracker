@@ -1038,6 +1038,45 @@ describe('Job application viewing flow', () => {
         expect(applicationListRequestCount()).toBe(1);
     });
 
+    test('forces List view and highlights the exact offer selected from Needs Attention', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const initialPreferences: UserPreferences = {
+            ...mockPreferences,
+            application_view_mode: 'board',
+            application_job_statuses: ['Applied'],
+        };
+        const updatePreferences = vi.fn(async (updatedPreferences: UpdateUserPreferencesRequest) => ({
+            ...initialPreferences,
+            ...updatedPreferences,
+        }));
+
+        render(
+            <MemoryRouter
+                initialEntries={[
+                    {
+                        pathname: '/application/view',
+                        state: { dashboardJobStatus: 'Offer', dashboardApplicationId: 1 },
+                    },
+                ]}
+            >
+                <ViewApplication />
+                <LocationStateProbe />
+            </MemoryRouter>,
+            { initialPreferences, updatePreferences }
+        );
+
+        await waitFor(() =>
+            expect(updatePreferences).toHaveBeenCalledWith({
+                application_job_statuses: ['Offer'],
+                application_view_mode: 'list',
+            })
+        );
+        await waitFor(() => expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything()));
+        expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
+        await waitFor(() => expect(screen.getByTestId('location-state')).toHaveTextContent('null'));
+        scrollAndHighlight.mockRestore();
+    });
+
     test('does not resave an already-selected dashboard status', async () => {
         const updatePreferences = vi.fn();
         const offerUrl = `${import.meta.env.VITE_API_URL}/job-applications?jobStatuses=Offer`;

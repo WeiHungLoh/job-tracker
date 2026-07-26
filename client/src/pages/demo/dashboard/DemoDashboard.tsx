@@ -1,11 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import DashboardContent from '../../dashboard/DashboardContent';
-import type { JobStatus } from '../../application/models';
+import type { JobApplication, JobStatus } from '../../application/models';
 import type {
     DashboardApplicationNavigationState,
     DashboardInterviewNavigationState,
-} from '../../dashboard/navigation';
-import { selectJobStatusCounts, selectWeeklyApplications } from '../state/demoSelectors';
+} from '../../dashboard/dashboardNavigation';
+import {
+    selectJobStatusCounts,
+    selectOfferDecisionWorkspace,
+    selectWeeklyApplications,
+} from '../state/demoSelectors';
 import { useDemo } from '../context/DemoContext';
 import { routes } from '../../../routes';
 
@@ -13,6 +17,14 @@ const DemoDashboard = () => {
     const { state } = useDemo();
     const statusCounts = selectJobStatusCounts(state);
     const weeklyApplications = selectWeeklyApplications(state);
+    const offerDecisionWorkspace = selectOfferDecisionWorkspace(state);
+    const applications = state.applications.map((application) => ({
+        ...application,
+        has_offer_evaluation: Boolean(state.offerEvaluations[application.job_id]),
+    }));
+    const offerEvaluations = offerDecisionWorkspace.applications.flatMap((application) =>
+        application.evaluation ? [application.evaluation] : []
+    );
     const navigate = useNavigate();
 
     const handleStatusSelect = (status: JobStatus) => {
@@ -25,14 +37,34 @@ const DemoDashboard = () => {
         navigate(routes.demoViewInterviews, { state: navigationState });
     };
 
+    const handleAddInterview = (application: JobApplication) => {
+        navigate(routes.demoAddInterview, { state: { app: application } });
+    };
+
+    const handleOpenOfferComparison = () => {
+        navigate(routes.demoOfferDecisions);
+    };
+
+    const handleOpenOfferDecisionApplication = (application: JobApplication) => {
+        const navigationState: DashboardApplicationNavigationState = {
+            dashboardJobStatus: 'Offer',
+            dashboardApplicationId: application.job_id,
+        };
+        navigate(routes.demoViewApplications, { state: navigationState });
+    };
+
     return (
         <DashboardContent
-            applications={state.applications}
+            applications={applications}
+            offerEvaluations={offerEvaluations}
             statusCounts={statusCounts}
             interviews={state.interviews}
             weeklyApplications={weeklyApplications}
             isLoading={false}
+            onAddInterview={handleAddInterview}
             onInterviewSelect={handleInterviewSelect}
+            onOpenOfferComparison={handleOpenOfferComparison}
+            onOpenOfferDecisionApplication={handleOpenOfferDecisionApplication}
             onStatusSelect={handleStatusSelect}
         />
     );

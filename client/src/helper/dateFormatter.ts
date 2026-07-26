@@ -29,6 +29,13 @@ export const parseDatetimeLocal = (value: string): Date => {
 
 const padDateTimePart = (value: number): string => String(value).padStart(2, '0');
 
+export const formatLongDate = (value: string | Date): string =>
+    new Date(value).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+
 export const toDatetimeLocalInputValue = (value: string): string => {
     if (!value) {
         return '';

@@ -21,7 +21,7 @@ import EmptyState from '../../../../../components/emptyState/EmptyState';
 import { createInterviewEmptyState } from '../../../../interview/interviewEmptyState';
 import CollectionViewToggle from '../../../../../components/activityControls/collectionViewToggle/CollectionViewToggle';
 import InterviewGrid from '../../../../interview/interviewGrid/InterviewGrid';
-import { getDashboardInterviewId } from '../../../../dashboard/navigation';
+import { getDashboardInterviewId } from '../../../../dashboard/dashboardNavigation';
 import { scrollAndHighlight } from '../../../../../helper/highlightElement';
 import CheckboxFilter from '../../../../../components/activityControls/checkboxFilter/CheckboxFilter';
 import {

@@ -13,7 +13,7 @@ import formatDate from '../../../../helper/dateFormatter';
 import { Line } from 'react-chartjs-2';
 import DashboardCard from '../../shared/dashboardCard/DashboardCard';
 import LoadingSpinner from '../../../../components/loadingSpinner/LoadingSpinner';
-import type { ApplicationsLineChartProps } from '../../models';
+import type { ApplicationsLineChartProps } from '../../dashboardTypes';
 import styles from './ApplicationsLineChart.module.css';
 import { useTheme } from '../../../../components/theme/ThemeContext';
 import {

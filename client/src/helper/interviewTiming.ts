@@ -1,3 +1,5 @@
+import { formatLongDate } from './dateFormatter';
+
 export const INTERVIEW_DURATION_MINUTES_MIN = 1;
 export const INTERVIEW_DURATION_MINUTES_MAX = 1440;
 export const DEFAULT_INTERVIEW_DURATION_MINUTES = 60;
@@ -24,13 +26,6 @@ export type InterviewTiming = {
 
 const invalidDate = () => new Date(Number.NaN);
 
-const formatLocalDate = (date: Date): string =>
-    date.toLocaleString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
-
 const formatLocalTime = (date: Date): string => {
     const hours = date.getHours();
     const twelveHour = hours % 12 || 12;
@@ -47,12 +42,10 @@ const isSameLocalDate = (firstDate: Date, secondDate: Date): boolean =>
 
 const formatInterviewRange = (start: Date, end: Date): string => {
     if (isSameLocalDate(start, end)) {
-        return `${formatLocalDate(start)} from ${formatLocalTime(start)} to ${formatLocalTime(end)}`;
+        return `${formatLongDate(start)} from ${formatLocalTime(start)} to ${formatLocalTime(end)}`;
     }
 
-    return `${formatLocalDate(start)} at ${formatLocalTime(start)} to ${formatLocalDate(end)} at ${formatLocalTime(
-        end
-    )}`;
+    return `${formatLongDate(start)} at ${formatLocalTime(start)} to ${formatLongDate(end)} at ${formatLocalTime(end)}`;
 };
 
 export const getInterviewTiming = (interview: InterviewTimingSource, now = new Date()): InterviewTiming => {

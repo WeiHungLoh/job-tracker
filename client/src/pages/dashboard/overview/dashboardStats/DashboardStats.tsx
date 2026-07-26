@@ -3,7 +3,7 @@ import LoadingSpinner from '../../../../components/loadingSpinner/LoadingSpinner
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import styles from './DashboardStats.module.css';
-import type { DashboardStatsProps } from '../../models';
+import type { DashboardStatsProps } from '../../dashboardTypes';
 import type { JobStatus } from '../../../application/models';
 import { getStatusCountMap, getTotalStatusCount, getUpcomingInterviews } from '../../dashboardSelectors';
 

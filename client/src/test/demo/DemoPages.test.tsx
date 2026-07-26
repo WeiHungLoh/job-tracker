@@ -1,5 +1,5 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import DemoAddApplication from '../../pages/demo/application/jobApplication/addApplication/DemoAddApplication';
 import DemoAddInterview from '../../pages/demo/interview/jobInterview/addInterview/DemoAddInterview';
@@ -120,6 +120,59 @@ const DemoRouteHarness = () => (
         <Route path={`${routes.demoRoot}/*`} element={<DemoRoutes />} />
     </Routes>
 );
+
+const PrepareUnscheduledDemoInterview = () => {
+    const { dispatch } = useDemo();
+
+    useEffect(() => {
+        dispatch({ type: 'DELETE_ALL_INTERVIEWS' });
+        dispatch({
+            type: 'UPDATE_APPLICATION_STATUS',
+            payload: { jobId: 102, jobStatus: 'Interview' },
+        });
+    }, [dispatch]);
+
+    return null;
+};
+
+const PrepareUnevaluatedDemoOffer = () => {
+    const { dispatch, state } = useDemo();
+
+    useEffect(() => {
+        if (state.offerEvaluations[112]) {
+            dispatch({ type: 'DELETE_OFFER_EVALUATION', payload: { jobId: 112 } });
+        }
+    }, [dispatch, state.offerEvaluations]);
+
+    return null;
+};
+
+const PrepareDueDemoOffer = () => {
+    const { dispatch, state } = useDemo();
+    const evaluation = state.offerEvaluations[111];
+
+    useEffect(() => {
+        if (!evaluation || Date.parse(evaluation.details.decision_deadline) - Date.now() <= 3 * 24 * 60 * 60 * 1000) {
+            return;
+        }
+
+        dispatch({
+            type: 'SAVE_OFFER_EVALUATION',
+            payload: {
+                jobId: 111,
+                request: {
+                    ratings: evaluation.ratings,
+                    details: {
+                        ...evaluation.details,
+                        decision_deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+                    },
+                },
+            },
+        });
+    }, [dispatch, evaluation]);
+
+    return null;
+};
 
 const SetInterviewBoardMode = () => {
     const { updatePreferences } = useDemo();
@@ -965,8 +1018,8 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('heading', { name: 'Needs Attention' })).toBeInTheDocument();
         expect(
             within(screen.getByRole('list', { name: 'Applications needing attention' })).getAllByRole('listitem')
-        ).toHaveLength(6);
-        expect(screen.getByText('Quantum Ledger')).toBeInTheDocument();
+        ).toHaveLength(5);
+        expect(screen.queryByText('Quantum Ledger')).not.toBeInTheDocument();
         expect(screen.getByText('Northstar Mobility')).toBeInTheDocument();
         expect(screen.getByText('Demo line chart')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Upcoming Interviews' })).toBeInTheDocument();
@@ -988,6 +1041,79 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Applied' })).not.toBeChecked();
         expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
+    });
+
+    test('keeps Add Interview attention navigation inside demo mode with the selected application', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        renderDemo(
+            <>
+                <PrepareUnscheduledDemoInterview />
+                <DemoRouteHarness />
+            </>,
+            [routes.demoDashboard]
+        );
+
+        await userEvent.click(
+            await screen.findByRole('button', {
+                name: 'Add interview for Full Stack Developer at ByteForge Systems',
+            })
+        );
+
+        expect(await screen.findByRole('heading', { name: 'You are adding an interview for:' })).toBeInTheDocument();
+        expect(screen.getByText('ByteForge Systems')).toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
+    });
+
+    test('keeps Evaluate offer attention navigation on active demo Offer Comparison', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        renderDemo(
+            <>
+                <PrepareUnevaluatedDemoOffer />
+                <DemoRouteHarness />
+            </>,
+            [routes.demoDashboard]
+        );
+
+        await userEvent.click(
+            await screen.findByRole('button', {
+                name: 'Evaluate offer for Frontend Infrastructure Engineer at Quantum Ledger',
+            })
+        );
+
+        expect(await screen.findByRole('heading', { name: 'Offers to Evaluate' })).toBeInTheDocument();
+        expect(screen.getByText('Quantum Ledger')).toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
+    });
+
+    test('opens and highlights the exact due demo offer in application List view', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        renderDemo(
+            <>
+                <PrepareDueDemoOffer />
+                <SetCollectionViewMode />
+                <DemoRouteHarness />
+            </>,
+            [routes.demoDashboard]
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
+        await userEvent.click(
+            await screen.findByRole('button', {
+                name: 'Record offer decision for DevOps UI Engineer at Greenhouse CloudOps',
+            })
+        );
+
+        await waitFor(() => expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true'));
+        await waitFor(() =>
+            expect(scrollAndHighlight).toHaveBeenCalledWith('111', expect.any(String), expect.anything())
+        );
+        expect(screen.getByRole('heading', { name: /Greenhouse CloudOps/ })).toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        scrollAndHighlight.mockRestore();
         fetchSpy.mockRestore();
     });
 

@@ -185,12 +185,14 @@ describe('Rose Ledger visual contract', () => {
             'src/pages/application/duplicateApplicationConfirmation.ts',
             'src/pages/interview/interviewConflictConfirmation.tsx',
             'src/pages/interview/applicationNavigationMessages.ts',
-            'src/pages/dashboard/navigation.ts',
+            'src/pages/dashboard/dashboardNavigation.ts',
             'src/components/passwordStrengthMeter/passwordStrength.ts',
             'src/components/activityControls/useControlDropdown.ts',
             'src/helper/csvExport.ts',
             'src/pages/dashboard/dashboardSelectors.ts',
             'src/pages/dashboard/attentionCenter/attentionItems.ts',
+            'src/pages/dashboard/attentionCenter/followUpDrafts.ts',
+            'src/pages/dashboard/attentionCenter/FollowUpDraftDialog.tsx',
             'src/pages/demo/state/demoDates.ts',
             'src/pages/application/jobApplication/QuickCaptureBookmarklet.tsx',
         ];
@@ -276,7 +278,7 @@ describe('Rose Ledger visual contract', () => {
         expect(offerEvaluationCss).not.toContain('box-shadow');
         expect(robustnessCss).not.toContain('linear-gradient');
         expect(robustnessCss).not.toContain('box-shadow');
-        expect(robustnessCss).toContain('background-color: var(--colorControlMutedSurface);');
+        expect(robustnessCss).toMatch(/\.lab\s*\{[^}]*background-color:\s*var\(--colorCardBg\);/s);
         expect(robustnessCss).toContain('border: 1px solid var(--colorCardBorder);');
         expect(robustnessCss).toContain('accent-color: var(--colorPrimary);');
         expect(robustnessCss).toContain('@media (max-width: 768px)');
@@ -328,6 +330,38 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(offerDecisionSkeletonCss).not.toContain('linear-gradient');
         expect(offerDecisionSkeletonCss).not.toContain('box-shadow');
+    });
+
+    it('uses the established application and Offer Comparison typography hierarchy on dashboard cards', () => {
+        const dashboardCardCss = readSource('src/pages/dashboard/shared/dashboardCard/DashboardCard.module.css');
+        const attentionCenterCss = readSource('src/pages/dashboard/attentionCenter/AttentionCenter.module.css');
+        const attentionCenterDesktopCss = attentionCenterCss.slice(0, attentionCenterCss.indexOf('@media'));
+        const followUpDialogCss = readSource('src/pages/dashboard/attentionCenter/FollowUpDraftDialog.module.css');
+
+        expect(dashboardCardCss).toMatch(/\.header h2\s*\{[^}]*font-size:\s*1\.3rem;/s);
+        expect(dashboardCardCss).toMatch(/\.header p\s*\{[^}]*font-size:\s*var\(--fontSizeBody\);/s);
+        expect(dashboardCardCss).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?\.header h2\s*\{[^}]*font-size:\s*1\.1rem;/s
+        );
+        expect(dashboardCardCss).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?\.header p\s*\{[^}]*font-size:\s*0\.9rem;/s
+        );
+        expect(attentionCenterDesktopCss).toMatch(
+            /\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1\.2rem;/s
+        );
+        expect(attentionCenterCss).toMatch(
+            /@media \(max-width: 803px\)[\s\S]*?\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1rem;/s
+        );
+        expect(attentionCenterCss).toMatch(
+            /\.actionRow\s*\{[^}]*justify-content:\s*flex-end;[^}]*margin-top:\s*auto;/s
+        );
+        expect(attentionCenterCss).toMatch(
+            /@media \(max-width: 550px\)[\s\S]*?\.actionButton\s*\{[^}]*width:\s*100%;/s
+        );
+        expect(followUpDialogCss).not.toContain('linear-gradient');
+        expect(followUpDialogCss).not.toContain('box-shadow');
+        expect(followUpDialogCss).toContain('white-space: pre-wrap;');
+        expect(followUpDialogCss).toContain('overflow-wrap: anywhere;');
     });
 
     it('defines both approved palettes and the shared metric aliases', () => {
@@ -758,7 +792,7 @@ describe('Rose Ledger visual contract', () => {
         expect(attentionCenter).toMatch(/\.attentionItem\s*\{[^}]*min-width:\s*0;/s);
         expect(attentionCenter).toMatch(/\.applicationDetails\s*\{[^}]*min-width:\s*0;/s);
         expect(attentionCenter).toMatch(
-            /\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1\.5rem;[^}]*overflow-wrap:\s*anywhere;/s
+            /\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1\.2rem;[^}]*overflow-wrap:\s*anywhere;/s
         );
         expect(attentionCenter).toMatch(
             /\.applicationDetails p,\s*\.reason,\s*\.centered p\s*\{[^}]*font-size:\s*var\(--fontSizeBody\);/s
@@ -767,7 +801,7 @@ describe('Rose Ledger visual contract', () => {
             /\.itemHeading\s*>\s*span\s*\{[^}]*font-size:\s*var\(--fontSizeCompactControl\);/s
         );
         expect(attentionCenter).toMatch(
-            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1\.2rem;[\s\S]*?\.applicationDetails p,\s*\.reason,\s*\.centered p\s*\{[^}]*font-size:\s*0\.9rem;[\s\S]*?\.itemHeading\s*>\s*span\s*\{[^}]*font-size:\s*0\.7rem;/
+            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1rem;[\s\S]*?\.applicationDetails p,\s*\.reason,\s*\.centered p\s*\{[^}]*font-size:\s*0\.9rem;[\s\S]*?\.itemHeading\s*>\s*span\s*\{[^}]*font-size:\s*0\.7rem;/
         );
         expect(attentionCenter).toMatch(
             /@media \(max-width: 768px\)\s*\{[^}]*\.attentionList\s*\{[^}]*grid-template-columns:\s*1fr;/s

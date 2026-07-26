@@ -1,0 +1,54 @@
+.content {
+    display: grid;
+    min-width: 0;
+    gap: var(--spaceSection);
+}
+
+.section {
+    display: grid;
+    min-width: 0;
+    gap: var(--spaceControl);
+}
+
+.label {
+    margin: 0;
+    color: var(--colorText);
+    font-size: var(--fontSizeControl);
+    font-weight: 700;
+}
+
+.text {
+    min-width: 0;
+    margin: 0;
+    color: var(--colorText);
+    font-size: var(--fontSizeBody);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    user-select: text;
+}
+
+.message {
+    white-space: pre-wrap;
+}
+
+.note {
+    margin: 0;
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+    line-height: 1.45;
+}
+
+.actions {
+    flex-wrap: wrap;
+    padding: var(--spaceCard) var(--spaceSection);
+}
+
+@media (max-width: 550px) {
+    .actions > button {
+        flex: 1 1 140px;
+    }
+
+    .text {
+        font-size: 0.9rem;
+    }
+}

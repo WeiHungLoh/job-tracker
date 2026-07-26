@@ -27,7 +27,9 @@
 .attentionItem {
     --attentionStatusColor: var(--colorPrimary);
 
+    display: flex;
     min-width: 0;
+    flex-direction: column;
     padding: 12px 14px;
     border: 1px solid var(--colorCardBorder);
     border-inline-start: 4px solid var(--attentionStatusColor);
@@ -63,7 +65,7 @@
 .centered h3 {
     margin: 0;
     color: var(--colorText);
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     line-height: 1.35;
     overflow-wrap: anywhere;
 }
@@ -89,6 +91,19 @@
     margin: 9px 0 0;
 }
 
+.actionRow {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: auto;
+    padding-top: var(--spaceCard);
+}
+
+.actionButton {
+    max-width: 100%;
+    font-size: var(--fontSizeControl);
+    overflow-wrap: anywhere;
+}
+
 .centered {
     display: grid;
     min-height: 110px;
@@ -104,7 +119,7 @@
 @media (max-width: 803px) {
     .applicationDetails h3,
     .centered h3 {
-        font-size: 1.2rem;
+        font-size: 1rem;
     }
 
     .applicationDetails p,
@@ -121,5 +136,11 @@
 @media (max-width: 768px) {
     .attentionList {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 550px) {
+    .actionButton {
+        width: 100%;
     }
 }

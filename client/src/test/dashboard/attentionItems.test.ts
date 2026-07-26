@@ -1,5 +1,6 @@
 import type { JobApplication, JobStatus } from '../../pages/application/models';
 import type { JobInterview } from '../../pages/interview/models';
+import type { OfferEvaluation } from '../../pages/offerDecision/models';
 import {
     ATTENTION_APPLICATION_STATUSES,
     FOLLOW_UP_AFTER_DAYS,
@@ -25,6 +26,26 @@ const createApplication = (
     job_location: '',
     job_posting_url: '',
     notes: '',
+});
+
+const createOfferEvaluation = (jobId: number, decisionDeadline: string): OfferEvaluation => ({
+    job_id: jobId,
+    ratings: {
+        career_growth: 3,
+        company_culture_fit: 3,
+        work_life_balance: 3,
+        compensation: 3,
+    },
+    details: {
+        currency: 'SGD',
+        monthly_base_salary: 8000,
+        bonus: '',
+        annual_leave_days: 18,
+        work_arrangement: 'Hybrid',
+        decision_deadline: decisionDeadline,
+        pros: '',
+        concerns: '',
+    },
 });
 
 const createInterview = (interviewId: number, jobId: number, start: string, duration = 60): JobInterview => ({
@@ -80,17 +101,17 @@ describe('getAttentionItems', () => {
             {
                 jobId: 4,
                 category: 'application-follow-up',
-                message: 'Applied 30 days ago with no interview scheduled.',
+                message: 'Applied on 18 June 2026 (30 days ago). No interview has been recorded.',
             },
             {
                 jobId: 3,
                 category: 'application-follow-up',
-                message: 'Applied 21 days ago with no interview scheduled.',
+                message: 'Applied on 27 June 2026 (21 days ago). No interview has been recorded.',
             },
             {
                 jobId: 2,
                 category: 'application-follow-up',
-                message: 'Applied 7 days ago with no interview scheduled.',
+                message: 'Applied on 11 July 2026 (7 days ago). No interview has been recorded.',
             },
         ]);
     });
@@ -113,7 +134,9 @@ describe('getAttentionItems', () => {
         expect(items[0]).toMatchObject({
             application: { job_id: 2 },
             category: 'post-interview',
-            message: 'Your interview process ended 7 days ago. Follow up or update the application status.',
+            latestCompletedInterview: { interview_id: 2 },
+            message:
+                'Your latest recorded interview ended on 11 July 2026 (7 days ago), and the application is still at Interview.',
         });
     });
 
@@ -128,7 +151,7 @@ describe('getAttentionItems', () => {
         );
 
         expect(items.map((item) => item.application.job_id)).toEqual([2]);
-        expect(items[0].message).toContain('ended 7 days ago');
+        expect(items[0].message).toContain('ended on 11 July 2026 (7 days ago)');
     });
 
     test('uses the latest end time across every linked interview', () => {
@@ -144,8 +167,11 @@ describe('getAttentionItems', () => {
         );
 
         expect(items).toHaveLength(1);
-        expect(items[0]).toMatchObject({ application: { job_id: 1 } });
-        expect(items[0].message).toContain('ended 7 days ago');
+        expect(items[0]).toMatchObject({
+            application: { job_id: 1 },
+            latestCompletedInterview: { interview_id: 2 },
+        });
+        expect(items[0].message).toContain('ended on 11 July 2026 (7 days ago)');
     });
 
     test('excludes an application when any linked interview is future or ongoing', () => {
@@ -184,8 +210,8 @@ describe('getAttentionItems', () => {
 
         expect(items.map((item) => item.application.job_id)).toEqual([2, 1]);
         expect(items.map((item) => item.message)).toEqual([
-            'Your interview process ended 14 days ago. Follow up or update the application status.',
-            'Your interview process ended 7 days ago. Follow up or update the application status.',
+            'Your latest recorded interview ended on 4 July 2026 (14 days ago), and the application is still at Interview.',
+            'Your latest recorded interview ended on 11 July 2026 (7 days ago), and the application is still at Interview.',
         ]);
     });
 
@@ -199,9 +225,7 @@ describe('getAttentionItems', () => {
 
         expect(items.map((item) => item.application.job_id)).toEqual([2, 3, 1]);
         expect(items.every((item) => item.category === 'interview-unscheduled')).toBe(true);
-        expect(items[0].message).toBe(
-            'This application is at Interview, but no interview has been scheduled. Add an interview to keep it updated.'
-        );
+        expect(items[0].message).toBe('This application is at Interview, but no interview has been scheduled.');
     });
 
     test('does not classify an Interview application as unscheduled when any interview is linked', () => {
@@ -214,18 +238,97 @@ describe('getAttentionItems', () => {
     test('uses the complete category priority order', () => {
         const applications = [
             createApplication(1, 'Applied', 30),
-            createApplication(2, 'Offer', 30),
+            { ...createApplication(2, 'Offer', 30), has_offer_evaluation: false },
             createApplication(3, 'Interview', 30),
             createApplication(4, 'Interview', 30),
+            { ...createApplication(5, 'Offer', 30), has_offer_evaluation: true },
         ];
         const interviews = [createInterviewEndingDaysAgo(1, 4, 7)];
+        const evaluations = [createOfferEvaluation(5, new Date(now.getTime() + 2 * DAY_MS).toISOString())];
 
-        expect(getAttentionItems(applications, interviews, now).map((item) => item.category)).toEqual([
+        expect(getAttentionItems(applications, interviews, now, evaluations).map((item) => item.category)).toEqual([
+            'offer-decision-due',
+            'offer-evaluation',
             'post-interview',
             'interview-unscheduled',
-            'offer-review',
             'application-follow-up',
         ]);
+    });
+
+    test('always includes unevaluated offers without relying on a decision deadline', () => {
+        const application = { ...createApplication(1, 'Offer', 10), has_offer_evaluation: false };
+        const [item] = getAttentionItems([application], [], now);
+
+        expect(item).toMatchObject({
+            category: 'offer-evaluation',
+            message: 'This offer has not been evaluated yet. Add its details to compare it and record a deadline.',
+        });
+    });
+
+    test('includes evaluated offers only from the exact 72-hour deadline boundary through the deadline', () => {
+        const applications = [1, 2, 3, 4, 5].map((jobId) => ({
+            ...createApplication(jobId, 'Offer', 10),
+            has_offer_evaluation: true,
+        }));
+        const evaluations = [
+            createOfferEvaluation(1, new Date(now.getTime() + 72 * 60 * 60 * 1000).toISOString()),
+            createOfferEvaluation(2, new Date(now.getTime() + 72 * 60 * 60 * 1000 + 1).toISOString()),
+            createOfferEvaluation(3, now.toISOString()),
+            createOfferEvaluation(4, new Date(now.getTime() - 1).toISOString()),
+            createOfferEvaluation(5, 'invalid'),
+        ];
+
+        const items = getAttentionItems(applications, [], now, evaluations);
+
+        expect(items.map((item) => item.application.job_id)).toEqual([3, 1]);
+        expect(items.every((item) => item.category === 'offer-decision-due')).toBe(true);
+        expect(items[0].message).toBe(
+            'The decision deadline is 18 July 2026 (0 minutes away). Record the application as Accepted or Declined once decided.'
+        );
+        expect(items[1].message).toBe(
+            'The decision deadline is 21 July 2026 (3 days away). Record the application as Accepted or Declined once decided.'
+        );
+    });
+
+    test.each([
+        { remainingMinutes: 25 * 60, expectedTiming: '2 days away' },
+        { remainingMinutes: 24 * 60, expectedTiming: '24 hours away' },
+        { remainingMinutes: 23 * 60 + 30, expectedTiming: '23 hours 30 minutes away' },
+        { remainingMinutes: 61, expectedTiming: '1 hour 1 minute away' },
+        { remainingMinutes: 60, expectedTiming: '1 hour away' },
+        { remainingMinutes: 1, expectedTiming: '1 minute away' },
+    ])(
+        'formats a decision deadline $expectedTiming',
+        ({ remainingMinutes, expectedTiming }) => {
+            const application = {
+                ...createApplication(1, 'Offer', 10),
+                has_offer_evaluation: true,
+            };
+            const evaluation = createOfferEvaluation(
+                1,
+                new Date(now.getTime() + remainingMinutes * MINUTE_MS).toISOString()
+            );
+
+            const [item] = getAttentionItems([application], [], now, [evaluation]);
+
+            expect(item.message).toContain(`(${expectedTiming})`);
+        }
+    );
+
+    test('orders evaluated offers by the nearest decision deadline', () => {
+        const applications = [1, 2, 3].map((jobId) => ({
+            ...createApplication(jobId, 'Offer', 10),
+            has_offer_evaluation: true,
+        }));
+        const evaluations = [
+            createOfferEvaluation(1, new Date(now.getTime() + 3 * DAY_MS).toISOString()),
+            createOfferEvaluation(2, new Date(now.getTime() + 1 * DAY_MS).toISOString()),
+            createOfferEvaluation(3, new Date(now.getTime() + 2 * DAY_MS).toISOString()),
+        ];
+
+        expect(
+            getAttentionItems(applications, [], now, evaluations).map((item) => item.application.job_id)
+        ).toEqual([2, 3, 1]);
     });
 
     test('uses job_id as the stable tie-breaker for equal primary sorting values', () => {
@@ -234,13 +337,13 @@ describe('getAttentionItems', () => {
             createApplication(2, 'Interview', 30),
             createApplication(8, 'Interview', 20),
             createApplication(6, 'Interview', 20),
-            createApplication(12, 'Offer', 10),
-            createApplication(10, 'Offer', 10),
+            { ...createApplication(12, 'Offer', 10), has_offer_evaluation: false },
+            { ...createApplication(10, 'Offer', 10), has_offer_evaluation: false },
         ];
         const interviews = [createInterviewEndingDaysAgo(1, 4, 7), createInterviewEndingDaysAgo(2, 2, 7)];
 
         expect(getAttentionItems(applications, interviews, now).map((item) => item.application.job_id)).toEqual([
-            2, 4, 6, 8, 10, 12,
+            10, 12, 2, 4, 6, 8,
         ]);
         expect(
             getAttentionItems(

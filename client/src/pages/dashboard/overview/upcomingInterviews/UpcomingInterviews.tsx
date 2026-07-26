@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import DashboardCard from '../../shared/dashboardCard/DashboardCard';
 import LoadingSpinner from '../../../../components/loadingSpinner/LoadingSpinner';
 import formatDate from '../../../../helper/dateFormatter';
-import type { UpcomingInterviewsProps } from '../../models';
+import type { UpcomingInterviewsProps } from '../../dashboardTypes';
 import { getUpcomingInterviews } from '../../dashboardSelectors';
 import styles from './UpcomingInterviews.module.css';
 import { getInterviewTiming } from '../../../../helper/interviewTiming';

@@ -18,13 +18,13 @@
 .header h2 {
     margin: 0;
     color: var(--colorText);
-    font-size: 1.1rem;
+    font-size: 1.3rem;
 }
 
 .header p {
     margin: 6px 0 0;
     color: var(--colorTextSecondary);
-    font-size: 0.875rem;
+    font-size: var(--fontSizeBody);
     line-height: 1.4;
 }
 
@@ -39,5 +39,13 @@
 @media (max-width: 768px) {
     .card {
         min-height: 0;
+    }
+
+    .header h2 {
+        font-size: 1.1rem;
+    }
+
+    .header p {
+        font-size: 0.9rem;
     }
 }

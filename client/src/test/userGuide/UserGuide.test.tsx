@@ -34,11 +34,21 @@ describe('renders user guide properly', () => {
         ).toBeVisible();
         expect(screen.getByText(/latest interview's end time, including its duration/i)).toBeVisible();
         expect(screen.getByText(/interview with no scheduled interview prompt you to add one/i)).toBeVisible();
-        expect(screen.getByText(/offer appear after interview-related items/i)).toBeVisible();
+        expect(screen.getByText(/evaluated offers with a decision deadline in the next 72 hours appear first/i)).toBeVisible();
+        expect(screen.getByText(/passed deadline do not appear/i)).toBeVisible();
+        expect(screen.getByText(/unevaluated offers appear next regardless of deadline/i)).toBeVisible();
         expect(
             screen.getByText(/applied applications with no linked interview appear after seven days/i)
         ).toBeVisible();
-        expect(screen.getByText(/advisory and read-only/i)).toBeVisible();
+        expect(screen.getByText(/suggests one next action for each selected application/i)).toBeVisible();
+        expect(screen.getByText(/copyable application follow-up template/i)).toBeVisible();
+        expect(screen.getByText(/copyable post-interview template/i)).toBeVisible();
+        expect(screen.getByText(/opens add interview/i)).toBeVisible();
+        expect(screen.getByText(/opens job applications in list view/i)).toBeVisible();
+        expect(screen.getByText(/opens active offer comparison/i)).toBeVisible();
+        expect(screen.getByText(/templates are generated locally and are not sent or saved/i)).toBeVisible();
+        expect(screen.getByText(/replace bracketed placeholders/i)).toBeVisible();
+        expect(screen.getByText(/does not mark an application as followed up/i)).toBeVisible();
         expect(screen.getByText(/future and ongoing interviews remain in the upcoming interviews card/i)).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /demo mode/i }));

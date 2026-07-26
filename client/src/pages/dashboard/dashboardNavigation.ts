@@ -2,6 +2,7 @@ import { JOB_STATUSES, type JobStatus } from '../application/models';
 
 export type DashboardApplicationNavigationState = {
     dashboardJobStatus: JobStatus;
+    dashboardApplicationId?: number;
 };
 
 export type DashboardInterviewNavigationState = {
@@ -15,6 +16,17 @@ export const getDashboardJobStatus = (state: unknown): JobStatus | null => {
 
     const status = state.dashboardJobStatus;
     return typeof status === 'string' && JOB_STATUSES.includes(status as JobStatus) ? (status as JobStatus) : null;
+};
+
+export const getDashboardApplicationId = (state: unknown): number | null => {
+    if (typeof state !== 'object' || state === null || !('dashboardApplicationId' in state)) {
+        return null;
+    }
+
+    const applicationId = state.dashboardApplicationId;
+    return typeof applicationId === 'number' && Number.isInteger(applicationId) && applicationId > 0
+        ? applicationId
+        : null;
 };
 
 export const getDashboardInterviewId = (state: unknown): number | null => {
