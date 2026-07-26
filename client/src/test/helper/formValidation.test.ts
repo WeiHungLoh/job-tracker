@@ -122,7 +122,7 @@ describe('job tracker form validation', () => {
         [
             'applicationDate',
             { applicationDate: '2999-01-01T00:00' },
-            'Application date cannot be later than the current date.',
+            'Application date cannot be in the future.',
         ],
     ] as const)('maps the application rule to the %s field', (field, overrides, message) => {
         const result = validateApplicationForm(
@@ -145,7 +145,7 @@ describe('job tracker form validation', () => {
         [
             'interviewDate',
             { interviewDate: '2026-07-08T10:00' },
-            'Interview date must be after the job application date.',
+            'Interview date must be after the application date.',
         ],
         [
             'interviewLocation',
@@ -214,6 +214,25 @@ describe('job tracker form validation', () => {
         expect(result).toMatchObject({
             isValid: true,
             values: { interviewDurationMinutes: Number(duration) },
+        });
+    });
+
+    test('accepts a past interview after the application date when the browser reports a range underflow', () => {
+        const result = validateInterviewForm({
+            applicationDate: '2025-08-01T10:00',
+            interviewDate: '2025-08-03T14:30',
+            interviewDateValidity: { rangeUnderflow: true } as ValidityState,
+            interviewDurationMinutes: '60',
+            interviewLocation: 'Zoom',
+            interviewType: '',
+            notes: '',
+        });
+
+        expect(result).toMatchObject({
+            isValid: true,
+            values: {
+                interviewDate: new Date(2025, 7, 3, 14, 30),
+            },
         });
     });
 

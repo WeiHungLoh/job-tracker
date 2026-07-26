@@ -658,7 +658,7 @@ describe('User add application flow', () => {
         userEvent.click(screen.getByRole('button', { name: /add job application/i }));
 
         await waitFor(() =>
-            expect(screen.getByText('Application date cannot be later than the current date.')).toBeInTheDocument()
+            expect(screen.getByText('Application date cannot be in the future.')).toBeInTheDocument()
         );
         expect(document.activeElement).toBe(screen.getByLabelText(/application date/i));
         expect(fetch).not.toHaveBeenCalled();

@@ -34,7 +34,9 @@ describe('renders user guide properly', () => {
         ).toBeVisible();
         expect(screen.getByText(/latest interview's end time, including its duration/i)).toBeVisible();
         expect(screen.getByText(/interview with no scheduled interview prompt you to add one/i)).toBeVisible();
-        expect(screen.getByText(/evaluated offers with a decision deadline in the next 72 hours appear first/i)).toBeVisible();
+        expect(
+            screen.getByText(/evaluated offers with a decision deadline in the next 72 hours appear first/i)
+        ).toBeVisible();
         expect(screen.getByText(/passed deadline do not appear/i)).toBeVisible();
         expect(screen.getByText(/unevaluated offers appear next regardless of deadline/i)).toBeVisible();
         expect(
@@ -109,6 +111,14 @@ describe('renders user guide properly', () => {
 
         expect(screen.getByText(/interview location is separate from job location/i)).toBeVisible();
         expect(screen.getByText(/interview notes are optional and limited to 3000 characters/i)).toBeVisible();
+        expect(screen.getByText(/runs past another active offer's decision deadline/i)).toBeVisible();
+        expect(
+            screen.getByText(
+                (_, element) =>
+                    element?.tagName === 'P' &&
+                    Boolean(element.textContent?.includes('does not add the interview unless you choose Add Anyway'))
+            )
+        ).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /archive mode/i }));
 

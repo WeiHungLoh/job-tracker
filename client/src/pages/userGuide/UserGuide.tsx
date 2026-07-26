@@ -338,6 +338,11 @@ const guideSections: readonly UserGuideSection[] = [
                     <li>Interview type is optional and limited to {FIELD_MAX_LENGTHS.interviewType} characters.</li>
                     <li>Interview notes are optional and limited to {FIELD_MAX_LENGTHS.notes} characters.</li>
                 </ul>
+                <p>
+                    Before saving, Job Tracker warns you if the interview overlaps another active interview or runs past
+                    another active offer&apos;s decision deadline. A warning does not add the interview unless you
+                    choose <strong>Add Anyway</strong>. Choose <strong>Cancel</strong> to keep the form unchanged.
+                </p>
                 <p>If the server rejects the submission, the entered interview details remain in the form.</p>
                 <h3>View interviews</h3>
                 <p>

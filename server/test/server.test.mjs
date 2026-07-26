@@ -694,7 +694,7 @@ test('rejects future application dates before accessing the database', async () 
 
     assert.equal(response.status, 422);
     assert.deepEqual(await response.json(), {
-        message: 'Application date cannot be later than the current date.',
+        message: 'Application date cannot be in the future.',
     });
 });
 
@@ -835,10 +835,15 @@ test('rejects missing, non-integer, and out-of-range interview durations before 
 test('accepts the minimum and maximum interview durations and forwards them to the insert query', async () => {
     const originalQuery = pool.query;
     const conflictLookupDurations = [];
+    const offerDeadlineLookupDurations = [];
     const insertedDurations = [];
     pool.query = async (sql, values) => {
         if (sql.includes('ORDER BY interviews.interview_date ASC')) {
             conflictLookupDurations.push(values[3]);
+            return { rows: [] };
+        }
+        if (sql.includes('offer_evaluations')) {
+            offerDeadlineLookupDurations.push(values[3]);
             return { rows: [] };
         }
 
@@ -868,6 +873,10 @@ test('accepts the minimum and maximum interview durations and forwards them to t
             assert.equal(response.status, 201);
         }
         assert.deepEqual(conflictLookupDurations, [INTERVIEW_DURATION_MINUTES_MIN, INTERVIEW_DURATION_MINUTES_MAX]);
+        assert.deepEqual(offerDeadlineLookupDurations, [
+            INTERVIEW_DURATION_MINUTES_MIN,
+            INTERVIEW_DURATION_MINUTES_MAX,
+        ]);
         assert.deepEqual(insertedDurations, [INTERVIEW_DURATION_MINUTES_MIN, INTERVIEW_DURATION_MINUTES_MAX]);
     } finally {
         pool.query = originalQuery;

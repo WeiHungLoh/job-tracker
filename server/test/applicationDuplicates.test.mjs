@@ -241,7 +241,7 @@ test('future-date validation retains precedence over an invalid duplicate overri
     );
 
     assert.equal(response.statusCode, 422);
-    assert.deepEqual(response.body, { message: 'Application date cannot be later than the current date.' });
+    assert.deepEqual(response.body, { message: 'Application date cannot be in the future.' });
     assert.equal(queryCalled, false);
 });
 

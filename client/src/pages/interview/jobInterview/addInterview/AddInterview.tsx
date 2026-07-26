@@ -25,6 +25,10 @@ import {
     createInterviewConflictConfirmation,
     isInterviewSchedulingConflictError,
 } from '../../interviewConflictConfirmation';
+import {
+    createInterviewOfferDeadlineConfirmation,
+    isInterviewOfferDeadlineWarningError,
+} from '../../interviewOfferDeadlineWarning';
 
 const AddInterview = () => {
     const [interviewDate, setInterviewDate] = useState<string>('');
@@ -63,19 +67,40 @@ const AddInterview = () => {
     };
 
     const submitInterview = async (request: CreateInterviewRequest): Promise<string | undefined> => {
-        try {
-            return await api.interview.createInterview(request);
-        } catch (error) {
-            if (!isInterviewSchedulingConflictError(error)) {
+        let approvedRequest = request;
+
+        while (true) {
+            try {
+                return await api.interview.createInterview(approvedRequest);
+            } catch (error) {
+                if (isInterviewSchedulingConflictError(error) && approvedRequest.allowSchedulingConflict !== true) {
+                    const { confirmed } = await confirm(createInterviewConflictConfirmation(error.data.conflicts));
+                    if (!confirmed) {
+                        return undefined;
+                    }
+
+                    approvedRequest = { ...approvedRequest, allowSchedulingConflict: true };
+                    continue;
+                }
+
+                if (isInterviewOfferDeadlineWarningError(error) && approvedRequest.allowOfferDeadlineWarning !== true) {
+                    const { confirmed } = await confirm(
+                        createInterviewOfferDeadlineConfirmation(
+                            error.data.warnings,
+                            approvedRequest.interviewDate,
+                            approvedRequest.interviewDurationMinutes
+                        )
+                    );
+                    if (!confirmed) {
+                        return undefined;
+                    }
+
+                    approvedRequest = { ...approvedRequest, allowOfferDeadlineWarning: true };
+                    continue;
+                }
+
                 throw error;
             }
-
-            const { confirmed } = await confirm(createInterviewConflictConfirmation(error.data.conflicts));
-            if (!confirmed) {
-                return undefined;
-            }
-
-            return await api.interview.createInterview({ ...request, allowSchedulingConflict: true });
         }
     };
 

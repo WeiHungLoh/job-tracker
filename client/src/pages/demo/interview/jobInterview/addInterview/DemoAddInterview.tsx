@@ -28,6 +28,10 @@ import {
 import { useConfirm } from 'material-ui-confirm';
 import { createInterviewConflictConfirmation } from '../../../../interview/interviewConflictConfirmation';
 import { getErrorToastMessage } from '../../../../../helper/getErrorToastMessage';
+import {
+    createInterviewOfferDeadlineConfirmation,
+    findInterviewOfferDeadlineWarnings,
+} from '../../../../interview/interviewOfferDeadlineWarning';
 
 const DemoAddInterview = () => {
     const [interviewDate, setInterviewDate] = useState<string>('');
@@ -129,9 +133,15 @@ const DemoAddInterview = () => {
             },
             currentTime
         );
+        const offerDeadlineWarnings = findInterviewOfferDeadlineWarnings(
+            state.applications,
+            state.offerEvaluations,
+            request,
+            currentTime
+        );
 
         setErrors({});
-        if (conflicts.length === 0) {
+        if (conflicts.length === 0 && offerDeadlineWarnings.length === 0) {
             createInterview(request);
             return;
         }
@@ -139,10 +149,27 @@ const DemoAddInterview = () => {
         pendingSubmissionRef.current = true;
         setIsLoading(true);
         try {
-            const { confirmed } = await confirm(createInterviewConflictConfirmation(conflicts));
-            if (confirmed) {
-                createInterview(request);
+            if (conflicts.length > 0) {
+                const { confirmed } = await confirm(createInterviewConflictConfirmation(conflicts));
+                if (!confirmed) {
+                    return;
+                }
             }
+
+            if (offerDeadlineWarnings.length > 0) {
+                const { confirmed } = await confirm(
+                    createInterviewOfferDeadlineConfirmation(
+                        offerDeadlineWarnings,
+                        request.interviewDate,
+                        request.interviewDurationMinutes
+                    )
+                );
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+            createInterview(request);
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to add the interview. Please try again.'));
         } finally {

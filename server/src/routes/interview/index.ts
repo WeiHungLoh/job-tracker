@@ -16,6 +16,7 @@ import {
 import {
     deleteAllJobInterviews,
     deleteJobInterview,
+    getInterviewOfferDeadlineWarnings,
     getInterviewSchedulingConflicts,
     getInterviews,
     insertInterview,
@@ -49,7 +50,7 @@ router.post(
             INTERVIEW_DURATION_MINUTES_MAX
         );
         const notes = toTrimmedString(req.body.notes, FIELD_MAX_LENGTHS.notes, true);
-        const { allowSchedulingConflict, interviewDate } = req.body;
+        const { allowOfferDeadlineWarning, allowSchedulingConflict, interviewDate } = req.body;
 
         if (
             applicationId === undefined ||
@@ -58,7 +59,8 @@ router.post(
             interviewLocation === undefined ||
             interviewType === undefined ||
             notes === undefined ||
-            !isOptionalBoolean(allowSchedulingConflict)
+            !isOptionalBoolean(allowSchedulingConflict) ||
+            !isOptionalBoolean(allowOfferDeadlineWarning)
         ) {
             sendError(res, 422, 'Interview fields are missing, invalid, or too long.');
             return;
@@ -91,6 +93,28 @@ router.post(
                 }
             }
 
+            if (allowOfferDeadlineWarning !== true) {
+                const warnings = await getInterviewOfferDeadlineWarnings(
+                    applicationId,
+                    req.user.id,
+                    normalizedInterviewDate,
+                    interviewDurationMinutes
+                );
+                if (warnings.length > 0) {
+                    res.status(409).json({
+                        code: 'INTERVIEW_OFFER_DEADLINE_WARNING',
+                        message: 'This interview may finish after an active offer deadline.',
+                        warnings: warnings.map((warning) => ({
+                            job_id: warning.job_id,
+                            company_name: warning.company_name,
+                            job_title: warning.job_title,
+                            decision_deadline: warning.decision_deadline.toISOString(),
+                        })),
+                    });
+                    return;
+                }
+            }
+
             const insertResult = await insertInterview(
                 applicationId,
                 req.user.id,
@@ -105,7 +129,7 @@ router.post(
                 return;
             }
             if (insertResult === 'invalid-date') {
-                sendError(res, 422, 'Interview date must be after the job application date.');
+                sendError(res, 422, 'Interview date must be after the application date.');
                 return;
             }
             res.status(201).send('Successfully added an interview!');

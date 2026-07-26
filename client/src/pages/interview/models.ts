@@ -46,6 +46,7 @@ export type CreateInterviewRequest = {
     interviewType: string;
     notes: string;
     allowSchedulingConflict?: boolean;
+    allowOfferDeadlineWarning?: boolean;
 };
 export type CreateInterviewResponse = string;
 
@@ -65,6 +66,21 @@ export type InterviewSchedulingConflictResponse = {
     code: InterviewSchedulingConflictCode;
     message: string;
     conflicts: InterviewSchedulingConflict[];
+};
+
+export type InterviewOfferDeadlineWarningCode = 'INTERVIEW_OFFER_DEADLINE_WARNING';
+
+export type InterviewOfferDeadlineWarning = {
+    job_id: number;
+    company_name: string;
+    job_title: string;
+    decision_deadline: string;
+};
+
+export type InterviewOfferDeadlineWarningResponse = {
+    code: InterviewOfferDeadlineWarningCode;
+    message: string;
+    warnings: InterviewOfferDeadlineWarning[];
 };
 
 export type DeleteInterviewRequest = {

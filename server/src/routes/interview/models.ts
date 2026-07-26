@@ -18,6 +18,7 @@ export type CreateInterviewRequest = {
     interviewType: string;
     notes: string;
     allowSchedulingConflict?: boolean;
+    allowOfferDeadlineWarning?: boolean;
 };
 
 export type InterviewSchedulingConflictCode = 'INTERVIEW_SCHEDULING_CONFLICT';
@@ -38,6 +39,25 @@ export type InterviewSchedulingConflictResponse = {
     conflicts: InterviewSchedulingConflict[];
 };
 
-export type CreateInterviewResponse = string | InterviewSchedulingConflictResponse | ErrorResponse;
+export type InterviewOfferDeadlineWarningCode = 'INTERVIEW_OFFER_DEADLINE_WARNING';
+
+export type InterviewOfferDeadlineWarning = {
+    job_id: number;
+    company_name: string;
+    job_title: string;
+    decision_deadline: string;
+};
+
+export type InterviewOfferDeadlineWarningResponse = {
+    code: InterviewOfferDeadlineWarningCode;
+    message: string;
+    warnings: InterviewOfferDeadlineWarning[];
+};
+
+export type CreateInterviewResponse =
+    | string
+    | InterviewSchedulingConflictResponse
+    | InterviewOfferDeadlineWarningResponse
+    | ErrorResponse;
 export type ListInterviewsResponse = JobInterview[] | ErrorResponse;
 export type GetInterviewCollectionSummaryResponse = InterviewCollectionSummary | ErrorResponse;

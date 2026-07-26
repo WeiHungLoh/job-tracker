@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { pool } from '../dist/db/connectDB.js';
-import { getInterviewSchedulingConflicts } from '../dist/db/queries/interviews.js';
+import { getInterviewOfferDeadlineWarnings, getInterviewSchedulingConflicts } from '../dist/db/queries/interviews.js';
 import interviewRouter from '../dist/routes/interview/index.js';
 
 const VALID_INTERVIEW = {
@@ -66,6 +66,81 @@ const storedConflict = {
     interview_duration_minutes: 60,
     interview_type: 'Technical Interview',
 };
+
+const storedOfferDeadlineWarning = {
+    job_id: 13,
+    company_name: 'Stripe',
+    job_title: 'Platform Engineer',
+    decision_deadline: new Date('2026-07-25T07:00:00.000Z'),
+};
+
+test('offer deadline lookup is user-scoped, active-only, excludes the target job, and checks the interview end', async () => {
+    let queryCall;
+
+    const warnings = await withMockedPoolQuery(
+        async (sql, values) => {
+            queryCall = { sql: compactSQL(sql), values };
+            return { rows: [storedOfferDeadlineWarning] };
+        },
+        () => getInterviewOfferDeadlineWarnings(11, 42, VALID_INTERVIEW.interviewDate, 60)
+    );
+
+    assert.deepEqual(warnings, [storedOfferDeadlineWarning]);
+    assert.deepEqual(queryCall.values, [11, 42, VALID_INTERVIEW.interviewDate, 60]);
+    assert.match(queryCall.sql, /applications\.user_id = \$2/);
+    assert.match(queryCall.sql, /applications\.is_archived = false/);
+    assert.match(queryCall.sql, /applications\.job_status = 'Offer'/);
+    assert.match(queryCall.sql, /applications\.job_id <> \$1/);
+    assert.match(queryCall.sql, /\$3::timestamptz >= NOW\(\)/);
+    assert.match(queryCall.sql, /evaluations\.decision_deadline <= \$3::timestamptz \+ \$4 \* INTERVAL '1 minute'/);
+    assert.match(queryCall.sql, /ORDER BY evaluations\.decision_deadline ASC/);
+});
+
+test('an active offer deadline warning returns 409 and does not insert', async () => {
+    const calls = [];
+    const response = await withMockedPoolQuery(
+        async (sql) => {
+            const query = compactSQL(sql);
+            calls.push(query);
+            if (query.includes('ORDER BY interviews.interview_date ASC')) {
+                return { rows: [] };
+            }
+            return { rows: [storedOfferDeadlineWarning] };
+        },
+        () => invokeCreateInterview(VALID_INTERVIEW)
+    );
+
+    assert.equal(response.statusCode, 409);
+    assert.deepEqual(response.body, {
+        code: 'INTERVIEW_OFFER_DEADLINE_WARNING',
+        message: 'This interview may finish after an active offer deadline.',
+        warnings: [
+            {
+                job_id: 13,
+                company_name: 'Stripe',
+                job_title: 'Platform Engineer',
+                decision_deadline: '2026-07-25T07:00:00.000Z',
+            },
+        ],
+    });
+    assert.equal(calls.length, 2);
+    assert.ok(calls.every((query) => !query.includes('INSERT INTO interviews')));
+});
+
+test('a non-boolean offer deadline override is rejected before database access', async () => {
+    let queryCalled = false;
+    const response = await withMockedPoolQuery(
+        async () => {
+            queryCalled = true;
+            return { rows: [] };
+        },
+        () => invokeCreateInterview({ ...VALID_INTERVIEW, allowOfferDeadlineWarning: 'true' })
+    );
+
+    assert.equal(response.statusCode, 422);
+    assert.deepEqual(response.body, { message: 'Interview fields are missing, invalid, or too long.' });
+    assert.equal(queryCalled, false);
+});
 
 const createStoredConflictFixture = (overrides = {}) => ({
     ...storedConflict,
@@ -359,7 +434,7 @@ test('no conflict preserves the existing successful creation response', async ()
 
     assert.equal(response.statusCode, 201);
     assert.equal(response.body, 'Successfully added an interview!');
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 3);
 });
 
 test('a past proposed interview is created normally when the database returns no conflicts', async () => {
@@ -378,7 +453,7 @@ test('a past proposed interview is created normally when the database returns no
 
     assert.equal(response.statusCode, 201);
     assert.equal(response.body, 'Successfully added an interview!');
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 3);
 });
 
 test('a past proposed interview still fails the existing application-date validation', async () => {
@@ -393,14 +468,18 @@ test('a past proposed interview still fails the existing application-date valida
     );
 
     assert.equal(response.statusCode, 422);
-    assert.deepEqual(response.body, { message: 'Interview date must be after the job application date.' });
+    assert.deepEqual(response.body, { message: 'Interview date must be after the application date.' });
 });
 
-test('allowSchedulingConflict true skips only the conflict lookup and creates once', async () => {
+test('allowSchedulingConflict true skips only the conflict lookup and still checks offer deadlines', async () => {
     const calls = [];
     const response = await withMockedPoolQuery(
         async (sql) => {
-            calls.push(compactSQL(sql));
+            const query = compactSQL(sql);
+            calls.push(query);
+            if (query.includes('offer_evaluations')) {
+                return { rows: [] };
+            }
             return { rows: [{ application_exists: true, interview_created: true }] };
         },
         () => invokeCreateInterview({ ...VALID_INTERVIEW, allowSchedulingConflict: true })
@@ -408,8 +487,27 @@ test('allowSchedulingConflict true skips only the conflict lookup and creates on
 
     assert.equal(response.statusCode, 201);
     assert.equal(response.body, 'Successfully added an interview!');
+    assert.equal(calls.length, 2);
+    assert.match(calls[0], /offer_evaluations/);
+    assert.match(calls[1], /INSERT INTO interviews/);
+});
+
+test('allowOfferDeadlineWarning true skips only the deadline lookup and still checks scheduling conflicts', async () => {
+    const calls = [];
+    const response = await withMockedPoolQuery(
+        async (sql) => {
+            const query = compactSQL(sql);
+            calls.push(query);
+            return { rows: [storedConflict] };
+        },
+        () => invokeCreateInterview({ ...VALID_INTERVIEW, allowOfferDeadlineWarning: true })
+    );
+
+    assert.equal(response.statusCode, 409);
+    assert.equal(response.body.code, 'INTERVIEW_SCHEDULING_CONFLICT');
     assert.equal(calls.length, 1);
-    assert.match(calls[0], /INSERT INTO interviews/);
+    assert.match(calls[0], /ORDER BY interviews\.interview_date ASC/);
+    assert.doesNotMatch(calls[0], /offer_evaluations|INSERT INTO interviews/);
 });
 
 test('a rejected conflict attempt can be retried with the override without duplicating the insert', async () => {
@@ -421,6 +519,9 @@ test('a rejected conflict attempt can be retried with the override without dupli
             if (query.includes('ORDER BY interviews.interview_date ASC')) {
                 return { rows: [storedConflict] };
             }
+            if (query.includes('offer_evaluations')) {
+                return { rows: [] };
+            }
             return { rows: [{ application_exists: true, interview_created: true }] };
         },
         async () => [
@@ -431,7 +532,7 @@ test('a rejected conflict attempt can be retried with the override without dupli
 
     assert.equal(responses[0].statusCode, 409);
     assert.equal(responses[1].statusCode, 201);
-    assert.equal(queryCount, 2);
+    assert.equal(queryCount, 3);
 });
 
 test('a non-boolean scheduling-conflict override is rejected before database access', async () => {
@@ -470,7 +571,7 @@ for (const [name, body] of [
 
 for (const [insertResult, expectedStatus, expectedMessage] of [
     ['not-found', 404, 'Job application not found.'],
-    ['invalid-date', 422, 'Interview date must be after the job application date.'],
+    ['invalid-date', 422, 'Interview date must be after the application date.'],
 ]) {
     test(`the override preserves the existing ${insertResult} application validation`, async () => {
         const response = await withMockedPoolQuery(
@@ -482,7 +583,12 @@ for (const [insertResult, expectedStatus, expectedMessage] of [
                     },
                 ],
             }),
-            () => invokeCreateInterview({ ...VALID_INTERVIEW, allowSchedulingConflict: true })
+            () =>
+                invokeCreateInterview({
+                    ...VALID_INTERVIEW,
+                    allowSchedulingConflict: true,
+                    allowOfferDeadlineWarning: true,
+                })
         );
 
         assert.equal(response.statusCode, expectedStatus);
@@ -496,13 +602,16 @@ for (const [name, insertResult, expectedStatus, expectedMessage] of [
         'interview date before the application date',
         'invalid-date',
         422,
-        'Interview date must be after the job application date.',
+        'Interview date must be after the application date.',
     ],
 ]) {
     test(`normal conflict checking preserves ${name} validation`, async () => {
         const response = await withMockedPoolQuery(
             async (sql) => {
                 if (compactSQL(sql).includes('ORDER BY interviews.interview_date ASC')) {
+                    return { rows: [] };
+                }
+                if (compactSQL(sql).includes('offer_evaluations')) {
                     return { rows: [] };
                 }
                 return {

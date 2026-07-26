@@ -110,6 +110,13 @@ export type InterviewSchedulingConflictRecord = {
     interview_type: string;
 };
 
+export type InterviewOfferDeadlineWarningRecord = {
+    job_id: number;
+    company_name: string;
+    job_title: string;
+    decision_deadline: Date;
+};
+
 export type ArchivedJobInterview = {
     archived_interview_id: number;
     archived_job_id: number;

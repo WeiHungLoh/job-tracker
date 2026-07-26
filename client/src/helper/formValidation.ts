@@ -148,7 +148,8 @@ export const validateApplicationForm = (
         errors.jobURL = `Job URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`;
     }
 
-    const applicationDateIsInvalid = isInvalidDatetimeLocalInput(applicationDate, applicationDateValidity);
+    const applicationDateIsInvalid =
+        applicationDateValidity?.badInput === true || isInvalidDatetimeLocalInput(applicationDate);
     let parsedApplicationDate = currentDate;
 
     if (applicationDateIsInvalid) {
@@ -157,7 +158,7 @@ export const validateApplicationForm = (
         parsedApplicationDate = parseDatetimeLocal(applicationDate);
 
         if (parsedApplicationDate > currentDate) {
-            errors.applicationDate = 'Application date cannot be later than the current date.';
+            errors.applicationDate = 'Application date cannot be in the future.';
         }
     }
 
@@ -196,7 +197,8 @@ export const validateInterviewForm = ({
     const trimmedNotes = notes.trim();
     const parsedDuration = Number(interviewDurationMinutes);
     const errors: InterviewFormErrors = {};
-    const interviewDateIsInvalid = isInvalidDatetimeLocalInput(interviewDate, interviewDateValidity);
+    const interviewDateIsInvalid =
+        interviewDateValidity?.badInput === true || isInvalidDatetimeLocalInput(interviewDate);
     let parsedInterviewDate: Date | undefined;
 
     if (interviewDateIsInvalid) {
@@ -206,7 +208,7 @@ export const validateInterviewForm = ({
     } else {
         parsedInterviewDate = parseDatetimeLocal(interviewDate);
         if (parsedInterviewDate <= new Date(applicationDate)) {
-            errors.interviewDate = 'Interview date must be after the job application date.';
+            errors.interviewDate = 'Interview date must be after the application date.';
         }
     }
 

@@ -68,7 +68,7 @@ router.post(
             return;
         }
         if (isFutureDate(appDate)) {
-            sendError(res, 422, 'Application date cannot be later than the current date.');
+            sendError(res, 422, 'Application date cannot be in the future.');
             return;
         }
         if (jobURL && !isValidHttpURL(jobURL)) {

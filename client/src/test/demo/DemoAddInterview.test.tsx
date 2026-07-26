@@ -135,7 +135,7 @@ describe('Demo Add Interview scheduling conflicts', () => {
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
 
-    test('Add Anyway dispatches once, shows success once, and resets once', async () => {
+    test('confirming both warnings dispatches once, shows success once, and resets once', async () => {
         renderDemoAddInterview([createInterviewAction(101)]);
         await waitFor(() => expect(getActiveInterviewCount()).toBeGreaterThan(0));
         const initialCount = getActiveInterviewCount();
@@ -145,6 +145,8 @@ describe('Demo Add Interview scheduling conflicts', () => {
         const dialog = await screen.findByRole('dialog');
         expect(within(dialog).getByRole('button', { name: 'Add Anyway' })).toHaveFocus();
         fireEvent.click(within(dialog).getByRole('button', { name: 'Add Anyway' }));
+        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
+        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add Anyway' }));
 
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
         expect(screen.getAllByTestId('toast')).toHaveLength(1);
@@ -156,16 +158,18 @@ describe('Demo Add Interview scheduling conflicts', () => {
         expect(screen.getByLabelText('Additional Notes (optional)')).toHaveValue('');
     });
 
-    test('allows a boundary-touching interview without opening a dialog', async () => {
+    test('allows a boundary-touching interview after only the offer deadline warning', async () => {
         renderDemoAddInterview([createInterviewAction(101)]);
         await waitFor(() => expect(getActiveInterviewCount()).toBeGreaterThan(0));
         const initialCount = getActiveInterviewCount();
 
         fillInterviewForm(11, 0);
         submitInterview();
+        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
+        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add Anyway' }));
 
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 
     test('ignores interviews moved to the archived demo collection', async () => {
@@ -175,9 +179,11 @@ describe('Demo Add Interview scheduling conflicts', () => {
 
         fillInterviewForm();
         submitInterview();
+        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
+        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add Anyway' }));
 
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 
     test('adds a past overlapping interview normally using a fixed current time', async () => {
@@ -209,5 +215,30 @@ describe('Demo Add Interview scheduling conflicts', () => {
                 .getAllByRole('listitem')
                 .map((item) => item.textContent)
         ).toEqual([expect.stringMatching(/^1\) /), expect.stringMatching(/^2\) /)]);
+    });
+
+    test('warns about active demo offer deadlines and adds only after confirmation', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date(2030, 0, 1, 9, 0));
+        renderDemoAddInterview();
+        const initialCount = getActiveInterviewCount();
+
+        fillInterviewForm();
+        submitInterview();
+        await act(async () => undefined);
+        const schedulingDialog = screen.getByRole('dialog', { name: 'Possible Scheduling Conflict' });
+        fireEvent.click(within(schedulingDialog).getByRole('button', { name: 'Add Anyway' }));
+        await act(async () => undefined);
+
+        const dialog = screen.getByRole('dialog', { name: 'Offer Deadline Warning' });
+        expect(dialog).toHaveTextContent('these active offers');
+        expect(within(dialog).getAllByRole('listitem')).toHaveLength(2);
+        expect(getActiveInterviewCount()).toBe(initialCount);
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Add Anyway' }));
+        await act(async () => undefined);
+
+        expect(getActiveInterviewCount()).toBe(initialCount + 1);
+        expect(screen.getAllByTestId('toast')).toHaveLength(1);
     });
 });

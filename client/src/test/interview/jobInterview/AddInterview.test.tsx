@@ -40,6 +40,21 @@ const conflictResponse = (
     json: async () => data,
 });
 
+const offerDeadlineWarningResponse = (
+    data: unknown = {
+        code: 'INTERVIEW_OFFER_DEADLINE_WARNING',
+        message: 'This interview may finish after an active offer deadline.',
+        warnings: [
+            {
+                job_id: 3,
+                company_name: 'Stripe',
+                job_title: 'Platform Engineer',
+                decision_deadline: new Date(2026, 6, 25, 15, 0).toISOString(),
+            },
+        ],
+    }
+) => conflictResponse(data);
+
 const successResponse = () => ({
     ok: true,
     status: 201,
@@ -282,7 +297,7 @@ describe('AddInterview page', () => {
         userEvent.click(screen.getByTestId('add-interview'));
 
         await waitFor(() =>
-            expect(screen.getByText('Interview date must be after the job application date.')).toBeInTheDocument()
+            expect(screen.getByText('Interview date must be after the application date.')).toBeInTheDocument()
         );
         expect(document.activeElement).toBe(screen.getByLabelText('Interview Date'));
         expect(fetch).not.toHaveBeenCalled();
@@ -404,6 +419,82 @@ describe('AddInterview page', () => {
         expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
         expect(within(dialog).getByRole('button', { name: 'Add Anyway' })).toBeInTheDocument();
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+    });
+
+    test('opens the offer-deadline dialog without showing an error toast', async () => {
+        fetch.mockResolvedValueOnce(offerDeadlineWarningResponse());
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/interview/add', state: { app: mockApplication } }]}>
+                <Routes>
+                    <Route path='/interview/add' element={<AddInterview />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fillCompleteInterviewForm();
+        userEvent.click(screen.getByTestId('add-interview'));
+
+        const dialog = await screen.findByRole('dialog');
+        expect(within(dialog).getByRole('heading', { name: 'Offer Deadline Warning' })).toBeInTheDocument();
+        expect(dialog).toHaveTextContent('Platform Engineer at Stripe');
+        expect(dialog).toHaveTextContent('You may want to ask for more time');
+        expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+    });
+
+    test('cancels an offer deadline warning without retrying or changing form values', async () => {
+        fetch.mockResolvedValueOnce(offerDeadlineWarningResponse());
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/interview/add', state: { app: mockApplication } }]}>
+                <Routes>
+                    <Route path='/interview/add' element={<AddInterview />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fillCompleteInterviewForm();
+        userEvent.click(screen.getByTestId('add-interview'));
+        const dialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
+        userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expectCompleteInterviewFormValues();
+        expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+    });
+
+    test('handles a scheduling conflict and offer deadline warning before creating once', async () => {
+        fetch
+            .mockResolvedValueOnce(conflictResponse())
+            .mockResolvedValueOnce(offerDeadlineWarningResponse())
+            .mockResolvedValueOnce(successResponse());
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/interview/add', state: { app: mockApplication } }]}>
+                <Routes>
+                    <Route path='/interview/add' element={<AddInterview />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fillCompleteInterviewForm();
+        userEvent.click(screen.getByTestId('add-interview'));
+        userEvent.click(await screen.findByRole('button', { name: 'Add Anyway' }));
+        const offerDeadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
+        userEvent.click(within(offerDeadlineDialog).getByRole('button', { name: 'Add Anyway' }));
+
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
+        const schedulingRetry = JSON.parse((fetch.mock.calls[1][1] as RequestInit).body as string);
+        const deadlineRetry = JSON.parse((fetch.mock.calls[2][1] as RequestInit).body as string);
+        expect(schedulingRetry).toMatchObject({ allowSchedulingConflict: true });
+        expect(schedulingRetry).not.toHaveProperty('allowOfferDeadlineWarning');
+        expect(deadlineRetry).toMatchObject({
+            allowSchedulingConflict: true,
+            allowOfferDeadlineWarning: true,
+        });
+        expect(await screen.findByText('Successfully added an interview!')).toBeInTheDocument();
+        expect(screen.getAllByTestId('toast')).toHaveLength(1);
     });
 
     test('accepts a past interview response without opening the scheduling-conflict dialog', async () => {
