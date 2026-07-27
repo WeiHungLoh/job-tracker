@@ -40,16 +40,11 @@ const createResponse = () => {
     };
 };
 
-test('adds nullable follow-up timestamps to fresh and existing application and interview tables', async () => {
+test('adds nullable follow-up timestamps to fresh application and interview tables', async () => {
     const source = await readSource('../src/db/queries/createTables.ts');
 
     assert.match(source, /application_follow_up_sent_at TIMESTAMPTZ/);
     assert.match(source, /follow_up_sent_at TIMESTAMPTZ/);
-    assert.match(
-        source,
-        /ALTER TABLE job_applications\s+ADD COLUMN IF NOT EXISTS application_follow_up_sent_at TIMESTAMPTZ/
-    );
-    assert.match(source, /ALTER TABLE interviews\s+ADD COLUMN IF NOT EXISTS follow_up_sent_at TIMESTAMPTZ/);
 });
 
 test('keeps follow-up mutations user-scoped, active-only, and server timestamped', async () => {

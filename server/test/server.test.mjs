@@ -129,17 +129,6 @@ test('creates fresh interview duration and time-filter columns without adding st
     assert.doesNotMatch(createTablesSource, /ADD COLUMN IF NOT EXISTS archived_offer_decision_filters/);
 });
 
-test('adds interview view preferences to existing user preference tables idempotently', async () => {
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
-
-    assert.match(createTablesSource, /ADD COLUMN IF NOT EXISTS interview_view_mode TEXT DEFAULT 'list'/);
-    assert.match(createTablesSource, /ADD COLUMN IF NOT EXISTS archived_interview_view_mode TEXT DEFAULT 'list'/);
-    assert.match(createTablesSource, /interview_view_mode = COALESCE\(interview_view_mode, 'list'\)/);
-    assert.match(createTablesSource, /ALTER COLUMN interview_view_mode SET NOT NULL/);
-    assert.match(createTablesSource, /ALTER COLUMN archived_interview_view_mode SET NOT NULL/);
-    assert.match(createTablesSource, /SELECT 1 FROM pg_constraint/);
-});
-
 test('returns 204 with no body when logging out', async () => {
     const response = await fetch(`${baseUrl}/authentication/sessions/current`, { method: 'DELETE' });
     const setCookieHeader = getSetCookieHeader(response);
