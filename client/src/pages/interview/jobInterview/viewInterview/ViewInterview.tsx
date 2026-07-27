@@ -65,9 +65,14 @@ const ViewInterview = () => {
         startPending: startDeletingInterview,
         stopPending: stopDeletingInterview,
     } = usePendingIds();
+    const {
+        pendingIds: undoingFollowUpInterviewIds,
+        startPending: startUndoingFollowUp,
+        stopPending: stopUndoingFollowUp,
+    } = usePendingIds();
     const confirm = useConfirm();
     const navigate = useNavigate();
-    const { showErrorToast } = useToast();
+    const { showErrorToast, showSuccessToast } = useToast();
     const filterRequest = useFilterRequest<InterviewFilterResult>();
     const viewMode = preferences.interview_view_mode;
     const selectedTimeFilters = preferences.interview_time_filters;
@@ -339,6 +344,32 @@ const ViewInterview = () => {
         }
     };
 
+    const handleUndoFollowUp = async (interview: JobInterview) => {
+        if (undoingFollowUpInterviewIds.has(interview.interview_id)) {
+            return;
+        }
+
+        startUndoingFollowUp(interview.interview_id);
+        try {
+            await api.interview.undoFollowUp({ interviewId: interview.interview_id });
+            setInterviews((current) =>
+                current.map((item) =>
+                    item.interview_id === interview.interview_id ? { ...item, follow_up_sent_at: null } : item
+                )
+            );
+            setUpcomingInterviews((current) =>
+                current.map((item) =>
+                    item.interview_id === interview.interview_id ? { ...item, follow_up_sent_at: null } : item
+                )
+            );
+            showSuccessToast('Interview follow-up undone.');
+        } catch (error) {
+            showErrorToast(getErrorToastMessage(error, 'Unable to undo the interview follow-up. Please try again.'));
+        } finally {
+            stopUndoingFollowUp(interview.interview_id);
+        }
+    };
+
     const hasInterviews = interviews.length > 0;
     const filtersAreActive = selectedTimeFilters.length !== INTERVIEW_TIME_FILTERS.length;
     const emptyState = createInterviewEmptyState({
@@ -444,9 +475,11 @@ const ViewInterview = () => {
                             index={index}
                             interview={interview}
                             isDeleting={deletingInterviewIds.has(interview.interview_id)}
+                            isUndoingFollowUp={undoingFollowUpInterviewIds.has(interview.interview_id)}
                             key={interview.interview_id}
                             layout={viewMode}
                             onDelete={() => handleDelete(interview.interview_id)}
+                            onUndoFollowUp={handleUndoFollowUp}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
                             variant='job'
                         />

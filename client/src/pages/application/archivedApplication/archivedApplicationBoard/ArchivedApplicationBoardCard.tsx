@@ -4,6 +4,7 @@ import { getApplicationBoardStatusClassName } from '../../applicationBoard/statu
 import type { ArchivedApplicationBoardCardProps } from './models';
 import styles from '../../applicationBoard/ApplicationBoard.module.css';
 import BoardCardActions from '../../../../components/boardCardActions/BoardCardActions';
+import FollowUpSentBadge from '../../../../components/followUpSentBadge/FollowUpSentBadge';
 
 const EMPTY_NOTES_MESSAGE = 'You do not have any notes here';
 
@@ -34,6 +35,13 @@ const ArchivedApplicationBoardCard = ({
 
             <p className={styles.jobTitle}>{application.job_title}</p>
             <p className={styles.meta}>{formattedApplicationDate.formattedDay}</p>
+            {application.application_follow_up_sent_at && (
+                <FollowUpSentBadge
+                    compact
+                    contextLabel={`${application.job_title} at ${application.company_name}`}
+                    sentAt={application.application_follow_up_sent_at}
+                />
+            )}
 
             <BoardCardActions
                 compactPanelSpacing
@@ -58,6 +66,12 @@ const ArchivedApplicationBoardCard = ({
                     </>
                 }
             >
+                {application.application_follow_up_sent_at && (
+                    <FollowUpSentBadge
+                        contextLabel={`${application.job_title} at ${application.company_name}`}
+                        sentAt={application.application_follow_up_sent_at}
+                    />
+                )}
                 {hasActions && (
                     <>
                         {application.job_posting_url !== '' && (

@@ -17,6 +17,85 @@ const fixedNow = new Date(2026, 6, 7, 12, 0, 0, 0);
 const fixedNowMs = fixedNow.getTime();
 
 describe('demo reducer state', () => {
+    test('marks and undoes application and interview follow-ups independently', () => {
+        const state = createDemoInitialState(fixedNow);
+        const application = state.applications.find((item) => item.job_status === 'Applied');
+        const interview = state.interviews[0];
+        expect(application).toBeDefined();
+
+        const applicationMarked = demoReducer(state, {
+            type: 'MARK_APPLICATION_FOLLOW_UP_SENT',
+            payload: { jobId: application!.job_id, sentAt: '2026-07-07T12:00:00.000Z' },
+        });
+        const bothMarked = demoReducer(applicationMarked, {
+            type: 'MARK_INTERVIEW_FOLLOW_UP_SENT',
+            payload: { interviewId: interview.interview_id, sentAt: '2026-07-07T12:01:00.000Z' },
+        });
+
+        expect(
+            bothMarked.applications.find((item) => item.job_id === application!.job_id)?.application_follow_up_sent_at
+        ).toBe('2026-07-07T12:00:00.000Z');
+        expect(
+            bothMarked.interviews.find((item) => item.interview_id === interview.interview_id)?.follow_up_sent_at
+        ).toBe('2026-07-07T12:01:00.000Z');
+
+        const applicationUndone = demoReducer(bothMarked, {
+            type: 'UNDO_APPLICATION_FOLLOW_UP',
+            payload: { jobId: application!.job_id },
+        });
+        const bothUndone = demoReducer(applicationUndone, {
+            type: 'UNDO_INTERVIEW_FOLLOW_UP',
+            payload: { interviewId: interview.interview_id },
+        });
+
+        expect(
+            bothUndone.applications.find((item) => item.job_id === application!.job_id)?.application_follow_up_sent_at
+        ).toBeNull();
+        expect(
+            bothUndone.interviews.find((item) => item.interview_id === interview.interview_id)?.follow_up_sent_at
+        ).toBeNull();
+    });
+
+    test('clears application follow-up on status change while preserving interview follow-up through archive', () => {
+        const state = createDemoInitialState(fixedNow);
+        const application = state.applications.find((item) => item.job_status === 'Applied');
+        expect(application).toBeDefined();
+        const marked = demoReducer(state, {
+            type: 'MARK_APPLICATION_FOLLOW_UP_SENT',
+            payload: { jobId: application!.job_id, sentAt: '2026-07-07T12:00:00.000Z' },
+        });
+        const statusChanged = demoReducer(marked, {
+            type: 'UPDATE_APPLICATION_STATUS',
+            payload: { jobId: application!.job_id, jobStatus: 'Interview' },
+        });
+
+        expect(
+            statusChanged.applications.find((item) => item.job_id === application!.job_id)
+                ?.application_follow_up_sent_at
+        ).toBeNull();
+
+        const interviewedApplication = state.applications.find((item) =>
+            state.interviews.some((interview) => interview.job_id === item.job_id)
+        )!;
+        const linkedInterview = state.interviews.find(
+            (interview) => interview.job_id === interviewedApplication.job_id
+        )!;
+        const interviewMarked = demoReducer(state, {
+            type: 'MARK_INTERVIEW_FOLLOW_UP_SENT',
+            payload: { interviewId: linkedInterview.interview_id, sentAt: '2026-07-07T12:01:00.000Z' },
+        });
+        const archived = demoReducer(interviewMarked, {
+            type: 'ARCHIVE_APPLICATION',
+            payload: { jobId: interviewedApplication.job_id },
+        });
+
+        expect(
+            archived.archivedInterviews.find(
+                (interview) => interview.archived_interview_id === linkedInterview.interview_id
+            )?.follow_up_sent_at
+        ).toBe('2026-07-07T12:01:00.000Z');
+    });
+
     test('creates a complete deterministic fixture set', () => {
         const state = createDemoInitialState(fixedNow);
         const coveredStatuses = new Set(state.applications.map((application) => application.job_status));
@@ -25,8 +104,8 @@ describe('demo reducer state', () => {
         );
         const earliestApplicationAgeDays = (fixedNow.getTime() - Math.min(...applicationTimes)) / (24 * 60 * 60 * 1000);
 
-        expect(state.applications).toHaveLength(20);
-        expect(state.interviews).toHaveLength(9);
+        expect(state.applications).toHaveLength(21);
+        expect(state.interviews).toHaveLength(10);
         expect(state.archivedApplications.length).toBeGreaterThanOrEqual(4);
         expect(state.archivedInterviews.length).toBeGreaterThanOrEqual(3);
         expect(Object.keys(state.offerEvaluations)).toHaveLength(3);
@@ -46,20 +125,20 @@ describe('demo reducer state', () => {
         expect(state.interviews.filter((interview) => new Date(interview.interview_date) > fixedNow).length).toBe(7);
         expect(
             state.interviews
-                .filter((interview) => interview.interview_id >= 407)
+                .filter((interview) => interview.interview_id >= 407 && interview.interview_id !== 410)
                 .map((interview) => new Date(interview.interview_date).getUTCFullYear())
         ).toEqual([2027, 2027, 2028]);
         const sortedInterviews = sortInterviews(state.interviews, fixedNowMs);
         const sortedArchivedInterviews = sortInterviews(state.archivedInterviews, fixedNowMs);
 
         expect(sortedInterviews.map((interview) => interview.interview_id)).toEqual([
-            401, 402, 403, 404, 407, 408, 409, 406, 405,
+            401, 402, 403, 404, 407, 408, 409, 410, 406, 405,
         ]);
         expect(sortedArchivedInterviews.map((interview) => interview.archived_interview_id)).toEqual([
             504, 503, 502, 501,
         ]);
         expect(createInterviewCsvData(sortedInterviews).map((interview) => interview.interview_id)).toEqual([
-            401, 402, 403, 404, 407, 408, 409, 406, 405,
+            401, 402, 403, 404, 407, 408, 409, 410, 406, 405,
         ]);
         expect(
             createInterviewCsvData(sortedArchivedInterviews).map((interview) => interview.archived_interview_id)
@@ -368,7 +447,7 @@ describe('demo reducer state', () => {
         expect(restored.archivedApplications.some((application) => application.archived_job_id === 107)).toBe(false);
         expect(restored.archivedInterviews.some((interview) => interview.archived_job_id === 107)).toBe(false);
         expect(sortInterviews(restored.interviews, fixedNowMs).map((interview) => interview.interview_id)).toEqual([
-            401, 402, 403, 404, 407, 408, 409, 406, 405,
+            401, 402, 403, 404, 407, 408, 409, 410, 406, 405,
         ]);
     });
 
@@ -391,7 +470,7 @@ describe('demo reducer state', () => {
         expect(unarchived.applications).toHaveLength(originalArchivedApplicationCount + state.applications.length);
         expect(unarchived.interviews).toHaveLength(originalArchivedInterviewCount + state.interviews.length);
         expect(sortInterviews(unarchived.interviews, fixedNowMs).map((interview) => interview.interview_id)).toEqual([
-            401, 402, 403, 404, 407, 408, 409, 504, 503, 502, 501, 406, 405,
+            401, 402, 403, 404, 407, 408, 409, 504, 503, 502, 501, 410, 406, 405,
         ]);
     });
 
@@ -460,7 +539,7 @@ describe('demo reducer state', () => {
             'Upcoming Interviews',
             'Past Interviews',
         ]);
-        expect(reset.applications).toHaveLength(20);
+        expect(reset.applications).toHaveLength(21);
         expect(reset.preferences.application_job_statuses).toEqual([...JOB_STATUSES]);
         expect(reset.preferences.application_show_notes).toBe(true);
         expect(reset.preferences.application_show_archive).toBe(true);
@@ -477,7 +556,7 @@ describe('demo reducer state', () => {
         expect(reset.preferences.archived_interview_time_filters).toEqual(['Upcoming Interviews', 'Past Interviews']);
         expect(reset.applications).not.toBe(state.applications);
         expect(sortInterviews(reset.interviews, fixedNowMs).map((interview) => interview.interview_id)).toEqual([
-            401, 402, 403, 404, 407, 408, 409, 406, 405,
+            401, 402, 403, 404, 407, 408, 409, 410, 406, 405,
         ]);
     });
 });

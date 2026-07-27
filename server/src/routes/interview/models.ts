@@ -61,3 +61,8 @@ export type CreateInterviewResponse =
     | ErrorResponse;
 export type ListInterviewsResponse = JobInterview[] | ErrorResponse;
 export type GetInterviewCollectionSummaryResponse = InterviewCollectionSummary | ErrorResponse;
+export type MarkInterviewFollowUpResponse =
+    | {
+          follow_up_sent_at: Date;
+      }
+    | ErrorResponse;

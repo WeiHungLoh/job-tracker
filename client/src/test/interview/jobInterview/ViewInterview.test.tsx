@@ -119,6 +119,47 @@ describe('Job interview viewer flow', () => {
         expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
     });
 
+    test('undoes only the selected interview follow-up and shows success', async () => {
+        const sentInterview = {
+            ...mockInterview,
+            follow_up_sent_at: '2026-07-27T07:42:00.000Z',
+        };
+        const otherInterview = {
+            ...mockInterview,
+            interview_id: 2,
+            job_id: 2,
+            company_name: 'Second Company',
+            follow_up_sent_at: '2026-07-27T08:42:00.000Z',
+        };
+        fetch.mockImplementation(async (_url: string, init?: RequestInit) =>
+            init?.method === 'GET' ? response([sentInterview, otherInterview]) : response(undefined, 204)
+        );
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>
+        );
+
+        await userEvent.click(
+            await screen.findByRole('button', {
+                name: 'Undo follow-up for Software Engineer at ABC Pte Ltd',
+            })
+        );
+
+        await waitFor(() =>
+            expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-interviews/1/follow-up`, {
+                method: 'DELETE',
+            })
+        );
+        expect(
+            screen.queryByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' })
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Undo follow-up for Software Engineer at Second Company' })
+        ).toBeInTheDocument();
+        expect(await screen.findByText('Interview follow-up undone.')).toBeInTheDocument();
+    });
+
     test('highlights the exact dashboard interview in List view without resaving the view preference', async () => {
         const updatePreferences = vi.fn();
         const scrollIntoView = vi.fn();

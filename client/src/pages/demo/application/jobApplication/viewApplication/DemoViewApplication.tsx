@@ -43,10 +43,7 @@ import EmptyState from '../../../../../components/emptyState/EmptyState';
 import { routes } from '../../../../../routes';
 import { createApplicationEmptyState } from '../../../../application/applicationEmptyState';
 import { getApplicationsInBoardOrder } from '../../../../application/applicationBoard/applicationBoardUtils';
-import {
-    getDashboardApplicationId,
-    getDashboardJobStatus,
-} from '../../../../dashboard/dashboardNavigation';
+import { getDashboardApplicationId, getDashboardJobStatus } from '../../../../dashboard/dashboardNavigation';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
 import { shouldAutoScrollAfterStatusChange } from '../../../../application/applicationSorting';
 import usePendingIds from '../../../../../hooks/usePendingIds';
@@ -67,7 +64,7 @@ const DemoViewApplication = () => {
     const confirm = useConfirm();
     const statusHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-    const { showErrorToast } = useToast();
+    const { showErrorToast, showSuccessToast } = useToast();
     const saveApplicationNotes = useCallback(
         (jobId: number, notes: string) => {
             dispatch({ type: 'UPDATE_APPLICATION_NOTES', payload: { jobId, notes } });
@@ -336,6 +333,11 @@ const DemoViewApplication = () => {
         });
     };
 
+    const handleUndoFollowUp = (application: JobApplication) => {
+        dispatch({ type: 'UNDO_APPLICATION_FOLLOW_UP', payload: { jobId: application.job_id } });
+        showSuccessToast('Application follow-up undone.');
+    };
+
     const hasApplications = applications.length > 0;
     const filtersAreActive = selectedJobStatuses.length !== JOB_STATUSES.length;
     const emptyState = createApplicationEmptyState({
@@ -440,6 +442,7 @@ const DemoViewApplication = () => {
                         pendingBulkAction === 'archive' || archivingApplicationIds.has(jobId)
                     }
                     isUpdatingApplicationStatus={isDemoApplicationStatusUpdating}
+                    isUndoingApplicationFollowUp={() => false}
                     noteSaveStatuses={notesAutosave.noteSaveStatuses}
                     onArchive={handleArchive}
                     onDelete={handleDelete}
@@ -448,6 +451,7 @@ const DemoViewApplication = () => {
                     onNotesVisibilityChange={notesAutosave.setNoteVisibility}
                     onRetryNotes={notesAutosave.retryNotes}
                     onStatusChange={updateApplicationStatusFromBoard}
+                    onUndoFollowUp={handleUndoFollowUp}
                     selectedJobStatuses={selectedJobStatuses}
                     upcomingInterviewCountByJob={upcomingInterviewCountByJob}
                 />
@@ -468,6 +472,7 @@ const DemoViewApplication = () => {
                         isArchiving={pendingBulkAction === 'archive' || archivingApplicationIds.has(application.job_id)}
                         isDeleting={deletingApplicationIds.has(application.job_id)}
                         isEditingStatus={editingApplicationId === application.job_id}
+                        isUndoingFollowUp={false}
                         key={application.job_id}
                         note={notesAutosave.draftNotes[application.job_id] ?? application.notes}
                         noteSaveStatus={notesAutosave.noteSaveStatuses[application.job_id] ?? 'idle'}
@@ -478,6 +483,7 @@ const DemoViewApplication = () => {
                         onRetryNotes={notesAutosave.retryNotes}
                         onJobStatusChange={setEditedJobStatus}
                         onToggleStatusEditor={handleStatusEditorToggle}
+                        onUndoFollowUp={handleUndoFollowUp}
                         showArchive={showArchive}
                         showNotes={showNotes}
                         upcomingInterviewCount={upcomingInterviewCountByJob[application.job_id] ?? 0}

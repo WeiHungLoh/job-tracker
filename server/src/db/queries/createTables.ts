@@ -65,6 +65,7 @@ const createTables = async (): Promise<void> => {
             job_location TEXT NOT NULL DEFAULT '',
             job_posting_url TEXT NOT NULL DEFAULT '',
             notes TEXT NOT NULL DEFAULT '',
+            application_follow_up_sent_at TIMESTAMPTZ,
             is_archived BOOLEAN NOT NULL DEFAULT false,
             CONSTRAINT job_applications_job_user_unique
                 UNIQUE (job_id, user_id)
@@ -143,6 +144,7 @@ const createTables = async (): Promise<void> => {
             interview_type TEXT NOT NULL DEFAULT '',
             interview_notes TEXT NOT NULL DEFAULT '',
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            follow_up_sent_at TIMESTAMPTZ,
             is_archived BOOLEAN NOT NULL DEFAULT false,
             CONSTRAINT interviews_job_user_fk
                 FOREIGN KEY (job_id, user_id)
@@ -198,47 +200,6 @@ const createTables = async (): Promise<void> => {
                 CHECK (archived_offer_decision_filters <@ ${ARCHIVED_OFFER_DECISION_FILTER_SQL_ARRAY})
         )`;
 
-    const addInterviewViewModePreferences = `
-        ALTER TABLE user_preferences
-            ADD COLUMN IF NOT EXISTS interview_view_mode TEXT DEFAULT 'list',
-            ADD COLUMN IF NOT EXISTS archived_interview_view_mode TEXT DEFAULT 'list';
-
-        UPDATE user_preferences
-        SET
-            interview_view_mode = COALESCE(interview_view_mode, 'list'),
-            archived_interview_view_mode = COALESCE(archived_interview_view_mode, 'list');
-
-        ALTER TABLE user_preferences
-            ALTER COLUMN interview_view_mode SET DEFAULT 'list',
-            ALTER COLUMN interview_view_mode SET NOT NULL,
-            ALTER COLUMN archived_interview_view_mode SET DEFAULT 'list',
-            ALTER COLUMN archived_interview_view_mode SET NOT NULL`;
-
-    const addInterviewViewModeConstraints = `
-        DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1 FROM pg_constraint
-                WHERE conname = 'user_preferences_interview_view_mode_check'
-                    AND conrelid = 'user_preferences'::regclass
-            ) THEN
-                ALTER TABLE user_preferences
-                    ADD CONSTRAINT user_preferences_interview_view_mode_check
-                    CHECK (interview_view_mode IN (${COLLECTION_VIEW_MODE_SQL_VALUES}));
-            END IF;
-
-            IF NOT EXISTS (
-                SELECT 1 FROM pg_constraint
-                WHERE conname = 'user_preferences_archived_interview_view_mode_check'
-                    AND conrelid = 'user_preferences'::regclass
-            ) THEN
-                ALTER TABLE user_preferences
-                    ADD CONSTRAINT user_preferences_archived_interview_view_mode_check
-                    CHECK (archived_interview_view_mode IN (${COLLECTION_VIEW_MODE_SQL_VALUES}));
-            END IF;
-        END
-        $$`;
-
     const createJobApplicationArchiveIndex = `CREATE INDEX IF NOT EXISTS job_applications_user_archived_idx
         ON job_applications (user_id, is_archived)`;
 
@@ -274,8 +235,6 @@ const createTables = async (): Promise<void> => {
         createCounterofferPlanTable,
         createInterviewTable,
         createUserPreferencesTable,
-        addInterviewViewModePreferences,
-        addInterviewViewModeConstraints,
         populateUserPreferences,
         createJobApplicationArchiveIndex,
         createInterviewArchiveIndex,

@@ -250,6 +250,15 @@ const applicationSeeds: ApplicationSeed[] = [
         jobLocation: 'London - Remote',
         notes: '',
     },
+    {
+        id: 121,
+        companyName: 'Summit Talent',
+        jobTitle: 'Platform Engineer',
+        daysAgo: 34,
+        jobStatus: 'Interview',
+        jobLocation: 'Singapore - Hybrid',
+        notes: 'Waiting for the hiring team to share next steps.',
+    },
 ];
 
 const archivedApplicationSeeds: ApplicationSeed[] = [
@@ -409,6 +418,18 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_type: 'Technical panel interview',
         interview_notes: 'Prepare TypeScript architecture tradeoffs.',
     },
+    {
+        interview_id: 410,
+        job_id: 121,
+        company_name: 'Summit Talent',
+        job_title: 'Platform Engineer',
+        job_status: 'Interview',
+        interview_date: toDateString(daysAgo(now, 8, 10)),
+        interview_duration_minutes: DEFAULT_INTERVIEW_DURATION_MINUTES,
+        interview_location: 'Google Meet',
+        interview_type: 'Hiring-manager interview',
+        interview_notes: 'Completed; follow up with the hiring team.',
+    },
 ];
 
 const createArchivedInterviews = (now: Date): ArchivedJobInterview[] => [
@@ -565,6 +586,6 @@ export const createDemoInitialState = (now = new Date()): DemoState => ({
         offer_decision_filters: [...defaultDemoPreferences.offer_decision_filters],
         archived_offer_decision_filters: [...defaultDemoPreferences.archived_offer_decision_filters],
     },
-    nextApplicationId: 121,
-    nextInterviewId: 410,
+    nextApplicationId: 122,
+    nextInterviewId: 411,
 });

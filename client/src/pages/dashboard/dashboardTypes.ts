@@ -5,6 +5,8 @@ import type { OfferEvaluation } from '../offerDecision/models';
 export type DashboardInterviewSelectHandler = (interviewId: number) => void;
 export type DashboardStatusSelectHandler = (status: JobStatus) => void;
 export type DashboardApplicationActionHandler = (application: JobApplication) => void;
+export type DashboardApplicationFollowUpHandler = (application: JobApplication) => void | Promise<void>;
+export type DashboardInterviewFollowUpHandler = (interview: JobInterview) => void | Promise<void>;
 export type StatusCountMap = Partial<Record<JobStatus, number>>;
 
 export type DashboardDataProps = {
@@ -20,6 +22,8 @@ export type DashboardNavigationProps = {
     onOpenOfferComparison?: DashboardApplicationActionHandler;
     onOpenOfferDecisionApplication?: DashboardApplicationActionHandler;
     onStatusSelect?: DashboardStatusSelectHandler;
+    onMarkApplicationFollowUpSent?: DashboardApplicationFollowUpHandler;
+    onMarkInterviewFollowUpSent?: DashboardInterviewFollowUpHandler;
 };
 
 export type DashboardContentProps = DashboardDataProps &

@@ -34,23 +34,40 @@ describe('renders user guide properly', () => {
         ).toBeVisible();
         expect(screen.getByText(/latest interview's end time, including its duration/i)).toBeVisible();
         expect(screen.getByText(/interview with no scheduled interview prompt you to add one/i)).toBeVisible();
-        expect(
-            screen.getByText(/evaluated offers with a decision deadline in the next 72 hours appear first/i)
-        ).toBeVisible();
+        expect(screen.getByRole('heading', { name: 'Evaluated offers due within 72 hours' })).toBeVisible();
         expect(screen.getByText(/passed deadline do not appear/i)).toBeVisible();
-        expect(screen.getByText(/unevaluated offers appear next regardless of deadline/i)).toBeVisible();
+        expect(screen.getByText(/these appear next regardless of deadline/i)).toBeVisible();
         expect(
             screen.getByText(/applied applications with no linked interview appear after seven days/i)
         ).toBeVisible();
         expect(screen.getByText(/suggests one next action for each selected application/i)).toBeVisible();
+        const priorityHeadings = [
+            'Evaluated offers due within 72 hours',
+            'Unevaluated offers',
+            'Completed interviews',
+            'Interview applications without a scheduled interview',
+            'Stale Applied applications',
+        ].map((name) => screen.getByRole('heading', { name }));
+        priorityHeadings.slice(1).forEach((heading, index) => {
+            expect(
+                priorityHeadings[index].compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING
+            ).toBeTruthy();
+        });
         expect(screen.getByText(/copyable application follow-up template/i)).toBeVisible();
         expect(screen.getByText(/copyable post-interview template/i)).toBeVisible();
         expect(screen.getByText(/opens add interview/i)).toBeVisible();
         expect(screen.getByText(/opens job applications in list view/i)).toBeVisible();
         expect(screen.getByText(/opens active offer comparison/i)).toBeVisible();
-        expect(screen.getByText(/templates are generated locally and are not sent or saved/i)).toBeVisible();
+        expect(screen.getByText(/templates are generated locally and are never sent by job tracker/i)).toBeVisible();
         expect(screen.getByText(/replace bracketed placeholders/i)).toBeVisible();
-        expect(screen.getByText(/does not mark an application as followed up/i)).toBeVisible();
+        expect(screen.getByText(/copying a message does not mark it as sent/i)).toBeVisible();
+        expect(screen.getByTestId('ug')).toHaveTextContent(/use mark as sent only after you send it yourself/i);
+        expect(screen.getByText(/board cards show a compact indicator/i)).toBeVisible();
+        expect(screen.getByText(/archived cards keep the sent time as read-only context/i)).toBeVisible();
+        expect(screen.getByTestId('ug')).toHaveTextContent(
+            /application follow-up clears when you press undo or when the application leaves applied/i
+        );
+        expect(screen.getByText(/only the latest sent time is kept/i)).toBeVisible();
         expect(screen.getByText(/future and ongoing interviews remain in the upcoming interviews card/i)).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /demo mode/i }));
@@ -62,6 +79,10 @@ describe('renders user guide properly', () => {
         );
         expect(screen.getByText(/no account, authentication, backend request or database write/i)).toBeVisible();
         expect(screen.getByText(/four fit ratings/i)).toBeVisible();
+        expect(screen.getByText(/follow-up marking and undo use demo state only/i)).toBeVisible();
+        expect(
+            screen.getByText(/post-interview follow-up marking and undo also stay entirely in demo state/i)
+        ).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /^offer comparison$/i }));
 

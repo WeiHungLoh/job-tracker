@@ -12,6 +12,7 @@ export type ApplicationBoardProps = {
     hasOfferEvaluation: (jobId: number) => boolean;
     isArchivingApplication: (jobId: number) => boolean;
     isUpdatingApplicationStatus: (jobId: number) => boolean;
+    isUndoingApplicationFollowUp?: (jobId: number) => boolean;
     noteSaveStatuses: Record<number, NoteSaveStatus>;
     onArchive: (jobId: number) => void | Promise<void>;
     onDelete: (jobId: number) => void | Promise<void>;
@@ -20,6 +21,7 @@ export type ApplicationBoardProps = {
     onNotesVisibilityChange: (jobId: number, isVisible: boolean) => void;
     onRetryNotes: (jobId: number) => void;
     onStatusChange: BoardStatusChangeHandler;
+    onUndoFollowUp?: (application: JobApplication) => void | Promise<void>;
     selectedJobStatuses: readonly JobStatus[];
     upcomingInterviewCountByJob: Record<number, number>;
 };
@@ -29,11 +31,13 @@ export type ApplicationBoardCardProps = EditableNotesProps & {
     isArchiving: boolean;
     isDeleting: boolean;
     isUpdatingStatus: boolean;
+    isUndoingFollowUp?: boolean;
     hasInterview: boolean;
     hasOfferEvaluation: boolean;
     onArchive: (jobId: number) => void | Promise<void>;
     onDelete: (jobId: number) => void | Promise<void>;
     onNotesVisibilityChange: (jobId: number, isVisible: boolean) => void;
     onStatusChange: BoardStatusChangeHandler;
+    onUndoFollowUp?: (application: JobApplication) => void | Promise<void>;
     upcomingInterviewCount: number;
 };

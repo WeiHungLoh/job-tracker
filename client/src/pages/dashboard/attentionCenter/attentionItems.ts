@@ -100,7 +100,11 @@ export const getAttentionItems = (
                 const latestEnd = latestCompletedInterview.timing.end.getTime();
                 const interviewAgeDays = getElapsedDays(latestEnd, now);
 
-                if (interviewAgeDays !== null && interviewAgeDays >= FOLLOW_UP_AFTER_DAYS) {
+                if (
+                    interviewAgeDays !== null &&
+                    interviewAgeDays >= FOLLOW_UP_AFTER_DAYS &&
+                    !latestCompletedInterview.interview.follow_up_sent_at
+                ) {
                     const category: AttentionItemCategory = 'post-interview';
                     return [
                         {
@@ -148,8 +152,7 @@ export const getAttentionItems = (
                 ];
             }
 
-            const decisionDeadline =
-                offerEvaluationByJobId.get(application.job_id)?.details.decision_deadline ?? '';
+            const decisionDeadline = offerEvaluationByJobId.get(application.job_id)?.details.decision_deadline ?? '';
             const deadlineTime = Date.parse(decisionDeadline);
             const remainingMs = deadlineTime - now.getTime();
             if (!Number.isFinite(deadlineTime) || remainingMs < 0 || remainingMs > OFFER_DECISION_ATTENTION_MS) {
@@ -171,7 +174,12 @@ export const getAttentionItems = (
             ];
         }
 
-        if (application.job_status !== 'Applied' || linkedInterviews.length > 0 || ageDays === null) {
+        if (
+            application.job_status !== 'Applied' ||
+            application.application_follow_up_sent_at ||
+            linkedInterviews.length > 0 ||
+            ageDays === null
+        ) {
             return [];
         }
 

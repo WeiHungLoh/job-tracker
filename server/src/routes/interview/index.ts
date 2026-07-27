@@ -6,6 +6,7 @@ import type {
     InterviewIdParams,
     ListInterviewsQuery,
     ListInterviewsResponse,
+    MarkInterviewFollowUpResponse,
 } from './models.js';
 import type { Request, Response } from 'express';
 import {
@@ -16,10 +17,12 @@ import {
 import {
     deleteAllJobInterviews,
     deleteJobInterview,
+    clearInterviewFollowUpSent,
     getInterviewOfferDeadlineWarnings,
     getInterviewSchedulingConflicts,
     getInterviews,
     insertInterview,
+    markInterviewFollowUpSent,
 } from '../../db/queries/interviews.js';
 import { handleRouteError, sendError } from '../../http/responses.js';
 import {
@@ -181,6 +184,52 @@ router.delete(
             res.sendStatus(204);
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to delete interviews.');
+        }
+    }
+);
+
+router.put(
+    '/:interviewId/follow-up',
+    async (
+        req: Request<InterviewIdParams, MarkInterviewFollowUpResponse>,
+        res: Response<MarkInterviewFollowUpResponse>
+    ): Promise<void> => {
+        const interviewId = toPositiveInteger(req.params.interviewId);
+        if (interviewId === undefined) {
+            sendError(res, 422, 'Interview ID must be a positive integer.');
+            return;
+        }
+
+        try {
+            const sentAt = await markInterviewFollowUpSent(interviewId, req.user.id);
+            if (!sentAt) {
+                sendError(res, 404, 'Active interview not found.');
+                return;
+            }
+            res.status(200).json({ follow_up_sent_at: sentAt });
+        } catch (error: unknown) {
+            handleRouteError(res, error, 'Unable to mark the interview follow-up as sent.');
+        }
+    }
+);
+
+router.delete(
+    '/:interviewId/follow-up',
+    async (req: Request<InterviewIdParams, EmptyResponse>, res: Response<EmptyResponse>): Promise<void> => {
+        const interviewId = toPositiveInteger(req.params.interviewId);
+        if (interviewId === undefined) {
+            sendError(res, 422, 'Interview ID must be a positive integer.');
+            return;
+        }
+
+        try {
+            if (!(await clearInterviewFollowUpSent(interviewId, req.user.id))) {
+                sendError(res, 404, 'Active interview not found.');
+                return;
+            }
+            res.sendStatus(204);
+        } catch (error: unknown) {
+            handleRouteError(res, error, 'Unable to undo the interview follow-up.');
         }
     }
 );

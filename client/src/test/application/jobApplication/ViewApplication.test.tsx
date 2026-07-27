@@ -272,6 +272,61 @@ describe('Job application viewing flow', () => {
         );
     });
 
+    test('undoes a persisted application follow-up without refetching and shows success', async () => {
+        const sentApplication = {
+            ...mockApplication,
+            application_follow_up_sent_at: '2026-07-27T07:42:00.000Z',
+        };
+        mockApplicationCollection([sentApplication]);
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>
+        );
+
+        const undo = await screen.findByRole('button', {
+            name: 'Undo follow-up for Software Engineer at ABC Pte Ltd',
+        });
+        await userEvent.click(undo);
+
+        await waitFor(() =>
+            expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1/follow-up`, {
+                method: 'DELETE',
+            })
+        );
+        await waitFor(() => expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument());
+        expect(await screen.findByText('Application follow-up undone.')).toBeInTheDocument();
+        expect(applicationListRequestCount()).toBe(1);
+    });
+
+    test('removes the application follow-up badge when status leaves Applied', async () => {
+        mockApplicationCollection([
+            {
+                ...mockApplication,
+                application_follow_up_sent_at: '2026-07-27T07:42:00.000Z',
+            },
+        ]);
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>
+        );
+
+        await screen.findByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' });
+        await userEvent.click(screen.getByRole('button', { name: 'Edit Status' }));
+        await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
+        await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+        await waitFor(() => expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument());
+        expect(fetch).toHaveBeenCalledWith(
+            `${import.meta.env.VITE_API_URL}/job-applications/1/status`,
+            expect.objectContaining({
+                body: JSON.stringify({ jobStatus: 'Interview' }),
+                method: 'PATCH',
+            })
+        );
+    });
+
     test('places the view toggle before the application controls', async () => {
         render(
             <MemoryRouter>
@@ -1071,7 +1126,9 @@ describe('Job application viewing flow', () => {
                 application_view_mode: 'list',
             })
         );
-        await waitFor(() => expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything()));
+        await waitFor(() =>
+            expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything())
+        );
         expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
         await waitFor(() => expect(screen.getByTestId('location-state')).toHaveTextContent('null'));
         scrollAndHighlight.mockRestore();

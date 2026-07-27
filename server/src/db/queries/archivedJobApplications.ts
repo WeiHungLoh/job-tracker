@@ -136,7 +136,8 @@ export const getArchivedJobApplications = async (
             job_status,
             job_location,
             job_posting_url,
-            notes
+            notes,
+            application_follow_up_sent_at
          FROM job_applications
          WHERE user_id = $1 AND is_archived = true
             AND job_status = ANY($2::text[])

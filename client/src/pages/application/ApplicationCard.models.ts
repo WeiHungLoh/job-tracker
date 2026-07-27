@@ -15,10 +15,12 @@ export type JobApplicationCardProps = ApplicationCardBaseProps &
         isArchiving: boolean;
         isEditingStatus: boolean;
         isUpdatingStatus: boolean;
+        isUndoingFollowUp?: boolean;
         onArchive: (jobId: number) => void | Promise<void>;
         onDelete: (jobId: number) => void | Promise<void>;
         onJobStatusChange: (jobStatus: JobStatus) => void;
         onToggleStatusEditor: (application: JobApplication) => void | Promise<void>;
+        onUndoFollowUp?: (application: JobApplication) => void | Promise<void>;
         showArchive: boolean;
         showNotes: boolean;
         upcomingInterviewCount: number;

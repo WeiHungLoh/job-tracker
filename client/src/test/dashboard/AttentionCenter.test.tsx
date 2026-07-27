@@ -227,7 +227,7 @@ describe('AttentionCenter', () => {
         expect(screen.queryByText(/20 June 2026 about the Role 1 position/)).not.toBeInTheDocument();
     });
 
-    test('copies the exact plain-text draft, closes the dialog, and reports success', async () => {
+    test('copies the exact plain-text draft, keeps the dialog open, and reports success', async () => {
         const writeText = vi.mocked(navigator.clipboard.writeText);
         render(
             <AttentionCenter
@@ -259,13 +259,8 @@ Thank you for your time and consideration.
 
 Best regards,
 [Your name]`);
-        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(screen.getByRole('dialog', { name: 'Draft application follow-up' })).toBeInTheDocument();
         expect(await screen.findByText('Follow-up message copied to clipboard.')).toBeInTheDocument();
-        expect(
-            screen.getByRole('button', {
-                name: 'Draft application follow-up for Role 1 at Company 1',
-            })
-        ).toBeInTheDocument();
     });
 
     test('keeps the static draft open and reports clipboard failure', async () => {
@@ -293,6 +288,92 @@ Best regards,
         expect(
             await screen.findByText('Unable to copy the follow-up message. Please select and copy it manually.')
         ).toBeInTheDocument();
+    });
+
+    test('marks the selected application follow-up, closes the dialog, and shows a success toast', async () => {
+        const application = createApplication(1, 'Applied');
+        const onMarkApplicationFollowUpSent = vi.fn().mockResolvedValue(undefined);
+        render(
+            <AttentionCenter
+                applications={[application]}
+                interviews={[]}
+                currentTime={currentTime}
+                isLoading={false}
+                onMarkApplicationFollowUpSent={onMarkApplicationFollowUpSent}
+            />
+        );
+
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Draft application follow-up for Role 1 at Company 1' })
+        );
+        const markButton = screen.getByRole('button', {
+            name: 'Mark application follow-up as sent for Role 1 at Company 1',
+        });
+        const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+        const copyButton = screen.getByRole('button', { name: 'Copy message' });
+
+        expect(markButton.compareDocumentPosition(cancelButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(cancelButton.compareDocumentPosition(copyButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        await act(async () => {
+            await userEvent.click(markButton);
+        });
+
+        expect(onMarkApplicationFollowUpSent).toHaveBeenCalledWith(application);
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(await screen.findByText('Follow-up marked as sent.')).toBeInTheDocument();
+    });
+
+    test('marks the exact selected interview and keeps the dialog open when marking fails', async () => {
+        const application = createApplication(1, 'Interview');
+        const interview = { ...createInterview(1, '2026-07-02T11:00:00.000Z'), interview_id: 41 };
+        const onMarkInterviewFollowUpSent = vi.fn().mockRejectedValue(new Error('Database unavailable'));
+        render(
+            <AttentionCenter
+                applications={[application]}
+                interviews={[interview]}
+                currentTime={currentTime}
+                isLoading={false}
+                onMarkInterviewFollowUpSent={onMarkInterviewFollowUpSent}
+            />
+        );
+
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Draft post-interview message for Role 1 at Company 1' })
+        );
+        await act(async () => {
+            await userEvent.click(
+                screen.getByRole('button', {
+                    name: 'Mark post-interview follow-up as sent for Role 1 at Company 1',
+                })
+            );
+        });
+
+        expect(onMarkInterviewFollowUpSent).toHaveBeenCalledWith(interview);
+        expect(screen.getByRole('dialog', { name: 'Draft post-interview message' })).toBeInTheDocument();
+        expect(await screen.findByText('Unable to mark the follow-up as sent. Please try again.')).toBeInTheDocument();
+    });
+
+    test('copying the message does not mark a follow-up as sent', async () => {
+        const onMarkApplicationFollowUpSent = vi.fn();
+        render(
+            <AttentionCenter
+                applications={[createApplication(1, 'Applied')]}
+                interviews={[]}
+                currentTime={currentTime}
+                isLoading={false}
+                onMarkApplicationFollowUpSent={onMarkApplicationFollowUpSent}
+            />
+        );
+
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Draft application follow-up for Role 1 at Company 1' })
+        );
+        await act(async () => {
+            await userEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+        });
+
+        expect(onMarkApplicationFollowUpSent).not.toHaveBeenCalled();
     });
 
     test('keeps upcoming interviews in their existing dashboard card', () => {

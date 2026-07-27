@@ -145,6 +145,7 @@ export const getInterviews = async (userId: number, timeFilters: InterviewTimeFi
             interviews.interview_location,
             interviews.interview_type,
             interviews.interview_notes,
+            interviews.follow_up_sent_at,
             job_applications.company_name,
             job_applications.job_title,
             job_applications.job_status
@@ -178,6 +179,30 @@ export const deleteJobInterview = async (interviewId: number, userId: number): P
         `DELETE FROM interviews WHERE interview_id = $1 AND user_id = $2 AND is_archived = false`,
         [interviewId, userId]
     );
+    return hasAffectedRows(result);
+};
+
+export const markInterviewFollowUpSent = async (interviewId: number, userId: number): Promise<Date | undefined> => {
+    const result = await pool.query<{ follow_up_sent_at: Date }>(
+        `UPDATE interviews
+         SET follow_up_sent_at = COALESCE(follow_up_sent_at, CURRENT_TIMESTAMP)
+         WHERE interview_id = $1 AND user_id = $2 AND is_archived = false
+         RETURNING follow_up_sent_at`,
+        [interviewId, userId]
+    );
+
+    return result.rows[0]?.follow_up_sent_at;
+};
+
+export const clearInterviewFollowUpSent = async (interviewId: number, userId: number): Promise<boolean> => {
+    const result = await pool.query(
+        `UPDATE interviews
+         SET follow_up_sent_at = NULL
+         WHERE interview_id = $1 AND user_id = $2 AND is_archived = false
+         RETURNING interview_id`,
+        [interviewId, userId]
+    );
+
     return hasAffectedRows(result);
 };
 

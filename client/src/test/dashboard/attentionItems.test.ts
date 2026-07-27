@@ -123,6 +123,50 @@ describe('getAttentionItems', () => {
         expect(getAttentionItems([application], [interview], now)).toEqual([]);
     });
 
+    test('suppresses only the follow-up item whose persisted timestamp is set', () => {
+        const sentApplication = {
+            ...createApplication(1, 'Applied', 30),
+            application_follow_up_sent_at: '2026-07-17T12:00:00.000Z',
+        };
+        const pendingApplication = createApplication(2, 'Applied', 30);
+        const sentInterview = {
+            ...createInterviewEndingDaysAgo(10, 3, 10),
+            follow_up_sent_at: '2026-07-17T12:00:00.000Z',
+        };
+        const pendingInterview = createInterviewEndingDaysAgo(11, 4, 10);
+
+        const items = getAttentionItems(
+            [
+                sentApplication,
+                pendingApplication,
+                createApplication(3, 'Interview', 30),
+                createApplication(4, 'Interview', 30),
+            ],
+            [sentInterview, pendingInterview],
+            now
+        );
+
+        expect(items.map((item) => [item.category, item.application.job_id])).toEqual([
+            ['post-interview', 4],
+            ['application-follow-up', 2],
+        ]);
+    });
+
+    test('allows a later qualifying interview when an earlier interview follow-up was sent', () => {
+        const earlier = {
+            ...createInterviewEndingDaysAgo(10, 1, 14),
+            follow_up_sent_at: '2026-07-05T12:00:00.000Z',
+        };
+        const later = createInterviewEndingDaysAgo(11, 1, 7);
+
+        const [item] = getAttentionItems([createApplication(1, 'Interview', 30)], [earlier, later], now);
+
+        expect(item).toMatchObject({
+            category: 'post-interview',
+            latestCompletedInterview: { interview_id: 11 },
+        });
+    });
+
     test('includes completed interview follow-ups at exactly seven full days but not six days', () => {
         const items = getAttentionItems(
             [createApplication(1, 'Interview', 30), createApplication(2, 'Interview', 30)],
@@ -297,23 +341,20 @@ describe('getAttentionItems', () => {
         { remainingMinutes: 61, expectedTiming: '1 hour 1 minute away' },
         { remainingMinutes: 60, expectedTiming: '1 hour away' },
         { remainingMinutes: 1, expectedTiming: '1 minute away' },
-    ])(
-        'formats a decision deadline $expectedTiming',
-        ({ remainingMinutes, expectedTiming }) => {
-            const application = {
-                ...createApplication(1, 'Offer', 10),
-                has_offer_evaluation: true,
-            };
-            const evaluation = createOfferEvaluation(
-                1,
-                new Date(now.getTime() + remainingMinutes * MINUTE_MS).toISOString()
-            );
+    ])('formats a decision deadline $expectedTiming', ({ remainingMinutes, expectedTiming }) => {
+        const application = {
+            ...createApplication(1, 'Offer', 10),
+            has_offer_evaluation: true,
+        };
+        const evaluation = createOfferEvaluation(
+            1,
+            new Date(now.getTime() + remainingMinutes * MINUTE_MS).toISOString()
+        );
 
-            const [item] = getAttentionItems([application], [], now, [evaluation]);
+        const [item] = getAttentionItems([application], [], now, [evaluation]);
 
-            expect(item.message).toContain(`(${expectedTiming})`);
-        }
-    );
+        expect(item.message).toContain(`(${expectedTiming})`);
+    });
 
     test('orders evaluated offers by the nearest decision deadline', () => {
         const applications = [1, 2, 3].map((jobId) => ({
@@ -326,9 +367,9 @@ describe('getAttentionItems', () => {
             createOfferEvaluation(3, new Date(now.getTime() + 2 * DAY_MS).toISOString()),
         ];
 
-        expect(
-            getAttentionItems(applications, [], now, evaluations).map((item) => item.application.job_id)
-        ).toEqual([2, 3, 1]);
+        expect(getAttentionItems(applications, [], now, evaluations).map((item) => item.application.job_id)).toEqual([
+            2, 3, 1,
+        ]);
     });
 
     test('uses job_id as the stable tie-breaker for equal primary sorting values', () => {

@@ -12,6 +12,7 @@ export type JobInterview = {
     interview_location: string;
     interview_type: string;
     interview_notes: string;
+    follow_up_sent_at?: string | null;
 };
 
 export type ArchivedJobInterview = {
@@ -25,6 +26,7 @@ export type ArchivedJobInterview = {
     interview_location: string;
     interview_type: string;
     interview_notes: string;
+    follow_up_sent_at?: string | null;
 };
 
 export type ListInterviewsRequest = {
@@ -90,6 +92,17 @@ export type DeleteInterviewResponse = null;
 
 export type DeleteAllInterviewsRequest = null;
 export type DeleteAllInterviewsResponse = null;
+
+export type MarkInterviewFollowUpRequest = {
+    interviewId: number;
+};
+export type MarkInterviewFollowUpResponse = {
+    follow_up_sent_at: string;
+};
+export type UndoInterviewFollowUpRequest = {
+    interviewId: number;
+};
+export type UndoInterviewFollowUpResponse = null;
 
 export type ListArchivedInterviewsRequest = {
     timeFilters?: InterviewTimeFilter[];

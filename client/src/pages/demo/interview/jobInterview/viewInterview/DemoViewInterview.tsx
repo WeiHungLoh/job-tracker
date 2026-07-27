@@ -41,7 +41,7 @@ const DemoViewInterview = () => {
     const location = useLocation();
     const dashboardInterviewIdRef = useRef(getDashboardInterviewId(location.state));
     const dashboardHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-    const { showErrorToast } = useToast();
+    const { showErrorToast, showSuccessToast } = useToast();
     const [isDeletingAll, setIsDeletingAll] = useState(false);
     const deleteAllPendingRef = useRef(false);
     const selectedTimeFilters = preferences.interview_time_filters;
@@ -143,6 +143,11 @@ const DemoViewInterview = () => {
         return true;
     };
 
+    const handleUndoFollowUp = (interview: JobInterview) => {
+        dispatch({ type: 'UNDO_INTERVIEW_FOLLOW_UP', payload: { interviewId: interview.interview_id } });
+        showSuccessToast('Interview follow-up undone.');
+    };
+
     const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: JobInterview) => {
         event.preventDefault();
 
@@ -222,9 +227,11 @@ const DemoViewInterview = () => {
                             index={index}
                             interview={interview}
                             isDeleting={false}
+                            isUndoingFollowUp={false}
                             key={interview.interview_id}
                             layout={viewMode}
                             onDelete={() => handleDelete(interview.interview_id)}
+                            onUndoFollowUp={handleUndoFollowUp}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
                             variant='job'
                         />

@@ -1,0 +1,64 @@
+.badge {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: var(--spaceCompact);
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px var(--spaceCompact);
+    border: 1px solid color-mix(in srgb, var(--colorStatusAccepted) 38%, var(--colorCardBorder));
+    border-radius: var(--radiusControl);
+    background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeCompactControl);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.marker {
+    flex: 0 0 auto;
+    color: var(--colorStatusAccepted);
+}
+
+.copy {
+    color: var(--colorText);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.time {
+    font-variant-numeric: tabular-nums;
+}
+
+.undo {
+    --colorSpinnerLight: var(--colorStatusAccepted);
+    --colorSpinnerLightTrack: color-mix(in srgb, var(--colorStatusAccepted) 28%, transparent);
+
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--colorStatusAccepted);
+}
+
+.undo:not(:disabled):hover {
+    background: color-mix(in srgb, var(--colorStatusAccepted) 12%, transparent);
+}
+
+.compact {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 5px;
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeCompactControl);
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}

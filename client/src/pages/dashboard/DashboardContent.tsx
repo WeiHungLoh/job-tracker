@@ -20,6 +20,8 @@ const DashboardContent = ({
     onOpenOfferComparison,
     onOpenOfferDecisionApplication,
     onStatusSelect,
+    onMarkApplicationFollowUpSent,
+    onMarkInterviewFollowUpSent,
 }: DashboardContentProps) => {
     const currentTime = useCurrentTime();
 
@@ -44,6 +46,8 @@ const DashboardContent = ({
                     offerEvaluations={offerEvaluations}
                     onOpenOfferComparison={onOpenOfferComparison}
                     onOpenOfferDecisionApplication={onOpenOfferDecisionApplication}
+                    onMarkApplicationFollowUpSent={onMarkApplicationFollowUpSent}
+                    onMarkInterviewFollowUpSent={onMarkInterviewFollowUpSent}
                 />
             </section>
             <section className={styles.trendSection}>

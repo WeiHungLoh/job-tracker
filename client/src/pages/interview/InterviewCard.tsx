@@ -6,18 +6,20 @@ import CalendarOptions from './calendarOptions/CalendarOptions';
 import styles from './InterviewCard.module.css';
 import BoardCardActions from '../../components/boardCardActions/BoardCardActions';
 import { formatInterviewCountdown, getInterviewTiming } from '../../helper/interviewTiming';
+import FollowUpSentBadge from '../../components/followUpSentBadge/FollowUpSentBadge';
 
-const InterviewCard = ({
-    applicationRoute,
-    currentTime = new Date(),
-    index,
-    interview,
-    isDeleting,
-    layout = 'list',
-    onDelete,
-    onViewApplicationClick,
-    variant,
-}: InterviewCardProps) => {
+const InterviewCard = (props: InterviewCardProps) => {
+    const {
+        applicationRoute,
+        currentTime = new Date(),
+        index,
+        interview,
+        isDeleting,
+        layout = 'list',
+        onDelete,
+        onViewApplicationClick,
+        variant,
+    } = props;
     const applicationId = variant === 'job' ? interview.job_id : interview.archived_job_id;
     const timing = getInterviewTiming(interview, currentTime);
     const showCalendarOptions = variant === 'job' && timing.isValid && !timing.hasStarted;
@@ -54,7 +56,16 @@ const InterviewCard = ({
                     {isBoardLayout ? interview.job_title : `Job Title: ${interview.job_title}`}
                 </p>
                 {isBoardLayout ? (
-                    <p className={styles.date}>{timing.formattedRange}</p>
+                    <>
+                        <p className={styles.date}>{timing.formattedRange}</p>
+                        {interview.follow_up_sent_at && (
+                            <FollowUpSentBadge
+                                compact
+                                contextLabel={`${interview.job_title} at ${interview.company_name}`}
+                                sentAt={interview.follow_up_sent_at}
+                            />
+                        )}
+                    </>
                 ) : (
                     <>
                         <p className={styles.location}>Location: {interview.interview_location}</p>
@@ -70,6 +81,18 @@ const InterviewCard = ({
                             <p className={styles.notes}>Notes: {interview.interview_notes}</p>
                         )}
                         <p className={`${timingStatus.className} ${styles.timingBadge}`}>{timingStatus.label}</p>
+                        {interview.follow_up_sent_at && (
+                            <FollowUpSentBadge
+                                contextLabel={`${interview.job_title} at ${interview.company_name}`}
+                                isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
+                                onUndo={
+                                    variant === 'job' && props.onUndoFollowUp
+                                        ? () => props.onUndoFollowUp?.(interview)
+                                        : undefined
+                                }
+                                sentAt={interview.follow_up_sent_at}
+                            />
+                        )}
                         <Link to={`${applicationRoute}#${applicationId}`} onClick={onViewApplicationClick}>
                             Click here to review corresponding job application
                         </Link>
@@ -88,7 +111,21 @@ const InterviewCard = ({
                         </>
                     }
                     compactActions
-                />
+                >
+                    {interview.follow_up_sent_at && (
+                        <FollowUpSentBadge
+                            contextLabel={`${interview.job_title} at ${interview.company_name}`}
+                            isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
+                            onUndo={
+                                variant === 'job' && props.onUndoFollowUp
+                                    ? () => props.onUndoFollowUp?.(interview)
+                                    : undefined
+                            }
+                            sentAt={interview.follow_up_sent_at}
+                            undoText='Undo follow-up'
+                        />
+                    )}
+                </BoardCardActions>
             ) : (
                 <div className={styles.buttonGroup}>
                     {showCalendarOptions && <CalendarOptions interview={interview} />}

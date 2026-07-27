@@ -49,6 +49,12 @@ export type UpdateApplicationStatusRequest = {
     jobStatus: JobStatus;
 };
 
+export type MarkApplicationFollowUpResponse =
+    | {
+          application_follow_up_sent_at: Date;
+      }
+    | ErrorResponse;
+
 export type CreateApplicationResponse = string | DuplicateApplicationErrorResponse | ErrorResponse;
 export type ListApplicationsResponse = JobApplication[] | ErrorResponse;
 export type ListJobStatusCountsResponse = JobStatusCount[] | ErrorResponse;

@@ -40,12 +40,42 @@
 
 .actions {
     flex-wrap: wrap;
-    padding: var(--spaceCard) var(--spaceSection);
+    padding: var(--spaceCompact) var(--spaceSection) !important;
 }
 
-@media (max-width: 550px) {
+.actionSpacer {
+    flex: 1;
+}
+
+.actionButton {
+    min-height: 40px;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .actions {
+        display: grid !important;
+        align-items: stretch;
+        gap: var(--spaceControl);
+        padding-right: var(--spaceCard) !important;
+        padding-left: var(--spaceCard) !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .actions > button {
-        flex: 1 1 140px;
+        width: 100%;
+        min-width: 0;
+        min-height: 36px;
+        box-sizing: border-box;
+        margin-left: 0 !important;
+        padding-right: var(--spaceControl);
+        padding-left: var(--spaceControl);
+        font-size: var(--fontSizeCompactControl);
+        white-space: nowrap;
+    }
+
+    .actionSpacer {
+        display: none;
     }
 
     .text {

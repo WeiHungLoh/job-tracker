@@ -76,6 +76,7 @@ export type JobApplication = {
     job_posting_url: string;
     notes: string;
     has_offer_evaluation?: boolean;
+    application_follow_up_sent_at?: string | null;
 };
 
 export type ArchivedJobApplication = {
@@ -87,6 +88,7 @@ export type ArchivedJobApplication = {
     job_location: string;
     job_posting_url: string;
     notes: string;
+    application_follow_up_sent_at?: string | null;
 };
 
 export type ListApplicationsRequest = {
@@ -165,6 +167,17 @@ export type UpdateApplicationStatusRequest = {
     jobStatus: JobStatus;
 };
 export type UpdateApplicationStatusResponse = null;
+
+export type MarkApplicationFollowUpRequest = {
+    jobId: number;
+};
+export type MarkApplicationFollowUpResponse = {
+    application_follow_up_sent_at: string;
+};
+export type UndoApplicationFollowUpRequest = {
+    jobId: number;
+};
+export type UndoApplicationFollowUpResponse = null;
 
 export type ListArchivedApplicationsRequest = {
     jobStatuses: JobStatus[];

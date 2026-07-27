@@ -86,7 +86,12 @@ const ViewApplication = () => {
         startPending: startUpdatingApplicationStatus,
         stopPending: stopUpdatingApplicationStatus,
     } = usePendingIds();
-    const { showErrorToast } = useToast();
+    const {
+        pendingIds: undoingFollowUpApplicationIds,
+        startPending: startUndoingFollowUp,
+        stopPending: stopUndoingFollowUp,
+    } = usePendingIds();
+    const { showErrorToast, showSuccessToast } = useToast();
     const filterRequest = useFilterRequest<JobApplication[]>();
     const saveApplicationNotes = useCallback(
         async (jobId: number, editedNotes: string) => {
@@ -253,16 +258,11 @@ const ViewApplication = () => {
                 }
                 const preferenceUpdate =
                     Object.keys(preferenceUpdates).length > 0
-                        ? updatePreferences(preferenceUpdates).catch(
-                              (error: unknown) => {
-                                  showErrorToast(
-                                      getErrorToastMessage(
-                                          error,
-                                          'Unable to filter job applications. Please try again.'
-                                      )
-                                  );
-                              }
-                          )
+                        ? updatePreferences(preferenceUpdates).catch((error: unknown) => {
+                              showErrorToast(
+                                  getErrorToastMessage(error, 'Unable to filter job applications. Please try again.')
+                              );
+                          })
                         : Promise.resolve();
                 const [jobApplications, jobInterviews] = await Promise.all([
                     api.application.listApplications({ jobStatuses: initialJobStatuses }),
@@ -393,6 +393,27 @@ const ViewApplication = () => {
     const handleDelete = (jobId: number) => handleApplicationAction('delete', jobId);
     const handleArchive = (jobId: number) => handleApplicationAction('archive', jobId);
 
+    const handleUndoFollowUp = async (application: JobApplication) => {
+        if (undoingFollowUpApplicationIds.has(application.job_id)) {
+            return;
+        }
+
+        startUndoingFollowUp(application.job_id);
+        try {
+            await api.application.undoFollowUp({ jobId: application.job_id });
+            setApplications((current) =>
+                current.map((item) =>
+                    item.job_id === application.job_id ? { ...item, application_follow_up_sent_at: null } : item
+                )
+            );
+            showSuccessToast('Application follow-up undone.');
+        } catch (error) {
+            showErrorToast(getErrorToastMessage(error, 'Unable to undo the application follow-up. Please try again.'));
+        } finally {
+            stopUndoingFollowUp(application.job_id);
+        }
+    };
+
     const handleBulkAction = async (action: 'archive' | 'delete') => {
         if (bulkActionPendingRef.current) {
             return;
@@ -491,7 +512,16 @@ const ViewApplication = () => {
             closeStatusEditor();
             setApplications((current) =>
                 current
-                    .map((item) => (item.job_id === application.job_id ? { ...item, job_status: newStatus } : item))
+                    .map((item) =>
+                        item.job_id === application.job_id
+                            ? {
+                                  ...item,
+                                  job_status: newStatus,
+                                  application_follow_up_sent_at:
+                                      newStatus === 'Applied' ? item.application_follow_up_sent_at ?? null : null,
+                              }
+                            : item
+                    )
                     .filter((item) => selectedJobStatuses.includes(item.job_status))
             );
 
@@ -524,7 +554,16 @@ const ViewApplication = () => {
         startUpdatingApplicationStatus(application.job_id);
         setApplications((current) =>
             current
-                .map((item) => (item.job_id === application.job_id ? { ...item, job_status: newStatus } : item))
+                .map((item) =>
+                    item.job_id === application.job_id
+                        ? {
+                              ...item,
+                              job_status: newStatus,
+                              application_follow_up_sent_at:
+                                  newStatus === 'Applied' ? item.application_follow_up_sent_at ?? null : null,
+                          }
+                        : item
+                )
                 .filter((item) => selectedJobStatuses.includes(item.job_status))
         );
 
@@ -674,6 +713,7 @@ const ViewApplication = () => {
                                 pendingBulkAction === 'archive' || archivingApplicationIds.has(jobId)
                             }
                             isUpdatingApplicationStatus={(jobId) => updatingStatusApplicationIds.has(jobId)}
+                            isUndoingApplicationFollowUp={(jobId) => undoingFollowUpApplicationIds.has(jobId)}
                             noteSaveStatuses={notesAutosave.noteSaveStatuses}
                             onArchive={handleArchive}
                             onDelete={handleDelete}
@@ -682,6 +722,7 @@ const ViewApplication = () => {
                             onNotesVisibilityChange={notesAutosave.setNoteVisibility}
                             onRetryNotes={notesAutosave.retryNotes}
                             onStatusChange={updateApplicationStatusFromBoard}
+                            onUndoFollowUp={handleUndoFollowUp}
                             selectedJobStatuses={selectedJobStatuses}
                             upcomingInterviewCountByJob={upcomingInterviewCountByJob}
                         />
@@ -705,6 +746,7 @@ const ViewApplication = () => {
                                 isDeleting={deletingApplicationIds.has(application.job_id)}
                                 isEditingStatus={editingApplicationId === application.job_id}
                                 isUpdatingStatus={updatingStatusApplicationIds.has(application.job_id)}
+                                isUndoingFollowUp={undoingFollowUpApplicationIds.has(application.job_id)}
                                 key={application.job_id}
                                 note={notesAutosave.draftNotes[application.job_id] ?? application.notes}
                                 noteSaveStatus={notesAutosave.noteSaveStatuses[application.job_id] ?? 'idle'}
@@ -715,6 +757,7 @@ const ViewApplication = () => {
                                 onRetryNotes={notesAutosave.retryNotes}
                                 onJobStatusChange={setEditedJobStatus}
                                 onToggleStatusEditor={handleStatusEditorToggle}
+                                onUndoFollowUp={handleUndoFollowUp}
                                 showArchive={showArchive}
                                 showNotes={showNotes}
                                 upcomingInterviewCount={upcomingInterviewCountByJob[application.job_id] ?? 0}

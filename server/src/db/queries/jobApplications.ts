@@ -81,6 +81,7 @@ export const getJobApplications = async (userId: number, jobStatuses: JobStatus[
             job_location,
             job_posting_url,
             applications.notes,
+            application_follow_up_sent_at,
             EXISTS (
                 SELECT 1
                 FROM offer_evaluations
@@ -160,6 +161,32 @@ export const editNotes = async (jobId: number, userId: number, notes: string): P
     return hasAffectedRows(result);
 };
 
+export const markApplicationFollowUpSent = async (jobId: number, userId: number): Promise<Date | undefined> => {
+    const result = await pool.query<{ application_follow_up_sent_at: Date }>(
+        `UPDATE job_applications
+         SET application_follow_up_sent_at = COALESCE(application_follow_up_sent_at, CURRENT_TIMESTAMP)
+         WHERE job_id = $1 AND user_id = $2 AND is_archived = false
+            AND job_status = 'Applied'
+         RETURNING application_follow_up_sent_at`,
+        [jobId, userId]
+    );
+
+    return result.rows[0]?.application_follow_up_sent_at;
+};
+
+export const clearApplicationFollowUpSent = async (jobId: number, userId: number): Promise<boolean> => {
+    const result = await pool.query(
+        `UPDATE job_applications
+         SET application_follow_up_sent_at = NULL
+         WHERE job_id = $1 AND user_id = $2 AND is_archived = false
+            AND job_status = 'Applied'
+         RETURNING job_id`,
+        [jobId, userId]
+    );
+
+    return hasAffectedRows(result);
+};
+
 export const updateApplicationStatus = async (
     jobStatus: JobStatus,
     jobId: number,
@@ -192,7 +219,12 @@ export const updateApplicationStatus = async (
         ),
         updated_application AS (
             UPDATE job_applications
-            SET job_status = $1
+            SET
+                job_status = $1,
+                application_follow_up_sent_at = CASE
+                    WHEN $1::text = 'Applied' THEN application_follow_up_sent_at
+                    ELSE NULL
+                END
             FROM application
             WHERE job_applications.job_id = application.job_id
                 AND (

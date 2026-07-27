@@ -9,6 +9,7 @@ import type {
     ListApplicationsResponse,
     ListJobStatusCountsResponse,
     ListWeeklyApplicationsResponse,
+    MarkApplicationFollowUpResponse,
     UpdateApplicationStatusRequest,
     UpdateNotesRequest,
 } from './models.js';
@@ -17,12 +18,14 @@ import { FIELD_MAX_LENGTHS } from '../../config/validation.js';
 import {
     deleteAllJobApplications,
     deleteJobApplication,
+    clearApplicationFollowUpSent,
     editNotes,
     findPotentialDuplicateApplication,
     getApplicationsForLatestEightWeeks,
     getJobApplications,
     getJobStatusCounts,
     insertJobApplication,
+    markApplicationFollowUpSent,
     updateApplicationStatus,
 } from '../../db/queries/jobApplications.js';
 import { handleRouteError, sendError } from '../../http/responses.js';
@@ -208,6 +211,52 @@ router.delete(
             res.sendStatus(204);
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to delete job applications.');
+        }
+    }
+);
+
+router.put(
+    '/:jobId/follow-up',
+    async (
+        req: Request<JobIdParams, MarkApplicationFollowUpResponse>,
+        res: Response<MarkApplicationFollowUpResponse>
+    ): Promise<void> => {
+        const jobId = toPositiveInteger(req.params.jobId);
+        if (jobId === undefined) {
+            sendError(res, 422, 'Job application ID must be a positive integer.');
+            return;
+        }
+
+        try {
+            const sentAt = await markApplicationFollowUpSent(jobId, req.user.id);
+            if (!sentAt) {
+                sendError(res, 404, 'Active Applied job application not found.');
+                return;
+            }
+            res.status(200).json({ application_follow_up_sent_at: sentAt });
+        } catch (error: unknown) {
+            handleRouteError(res, error, 'Unable to mark the application follow-up as sent.');
+        }
+    }
+);
+
+router.delete(
+    '/:jobId/follow-up',
+    async (req: Request<JobIdParams, EmptyResponse>, res: Response<EmptyResponse>): Promise<void> => {
+        const jobId = toPositiveInteger(req.params.jobId);
+        if (jobId === undefined) {
+            sendError(res, 422, 'Job application ID must be a positive integer.');
+            return;
+        }
+
+        try {
+            if (!(await clearApplicationFollowUpSent(jobId, req.user.id))) {
+                sendError(res, 404, 'Active Applied job application not found.');
+                return;
+            }
+            res.sendStatus(204);
+        } catch (error: unknown) {
+            handleRouteError(res, error, 'Unable to undo the application follow-up.');
         }
     }
 );

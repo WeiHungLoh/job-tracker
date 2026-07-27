@@ -42,6 +42,8 @@ type SaveCounterofferPlanPayload = {
 export type DemoAction =
     | { type: 'CREATE_APPLICATION'; payload: CreateApplicationPayload }
     | { type: 'UPDATE_APPLICATION_STATUS'; payload: { jobId: number; jobStatus: JobStatus } }
+    | { type: 'MARK_APPLICATION_FOLLOW_UP_SENT'; payload: { jobId: number; sentAt: string } }
+    | { type: 'UNDO_APPLICATION_FOLLOW_UP'; payload: { jobId: number } }
     | { type: 'UPDATE_APPLICATION_NOTES'; payload: { jobId: number; notes: string } }
     | { type: 'DELETE_APPLICATION'; payload: { jobId: number } }
     | { type: 'DELETE_ALL_APPLICATIONS' }
@@ -53,6 +55,8 @@ export type DemoAction =
     | { type: 'DELETE_ALL_ARCHIVED_APPLICATIONS' }
     | { type: 'CREATE_INTERVIEW'; payload: CreateInterviewPayload }
     | { type: 'DELETE_INTERVIEW'; payload: { interviewId: number } }
+    | { type: 'MARK_INTERVIEW_FOLLOW_UP_SENT'; payload: { interviewId: number; sentAt: string } }
+    | { type: 'UNDO_INTERVIEW_FOLLOW_UP'; payload: { interviewId: number } }
     | { type: 'DELETE_ALL_INTERVIEWS' }
     | { type: 'DELETE_ARCHIVED_INTERVIEW'; payload: { archivedInterviewId: number } }
     | { type: 'DELETE_ALL_ARCHIVED_INTERVIEWS' }
@@ -73,6 +77,7 @@ const toArchivedApplication = (application: JobApplication): ArchivedJobApplicat
     job_location: application.job_location,
     job_posting_url: application.job_posting_url,
     notes: application.notes,
+    application_follow_up_sent_at: application.application_follow_up_sent_at ?? null,
 });
 
 const toActiveApplication = (application: ArchivedJobApplication): JobApplication => ({
@@ -84,6 +89,7 @@ const toActiveApplication = (application: ArchivedJobApplication): JobApplicatio
     job_location: application.job_location,
     job_posting_url: application.job_posting_url,
     notes: application.notes,
+    application_follow_up_sent_at: application.application_follow_up_sent_at ?? null,
 });
 
 const toArchivedInterview = (interview: JobInterview, application: JobApplication): ArchivedJobInterview => ({
@@ -97,6 +103,7 @@ const toArchivedInterview = (interview: JobInterview, application: JobApplicatio
     interview_location: interview.interview_location,
     interview_type: interview.interview_type,
     interview_notes: interview.interview_notes,
+    follow_up_sent_at: interview.follow_up_sent_at ?? null,
 });
 
 const toActiveInterview = (interview: ArchivedJobInterview, application: ArchivedJobApplication): JobInterview => ({
@@ -110,6 +117,7 @@ const toActiveInterview = (interview: ArchivedJobInterview, application: Archive
     interview_location: interview.interview_location,
     interview_type: interview.interview_type,
     interview_notes: interview.interview_notes,
+    follow_up_sent_at: interview.follow_up_sent_at ?? null,
 });
 
 const mergePreferences = (state: DemoState, updatedPreferences: UpdateUserPreferencesRequest): DemoState => {
@@ -179,11 +187,35 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                         ? {
                               ...application,
                               job_status: action.payload.jobStatus,
+                              application_follow_up_sent_at:
+                                  action.payload.jobStatus === 'Applied'
+                                      ? application.application_follow_up_sent_at ?? null
+                                      : null,
                           }
                         : application
                 ),
             };
         }
+
+        case 'MARK_APPLICATION_FOLLOW_UP_SENT':
+            return {
+                ...state,
+                applications: state.applications.map((application) =>
+                    application.job_id === action.payload.jobId && application.job_status === 'Applied'
+                        ? { ...application, application_follow_up_sent_at: action.payload.sentAt }
+                        : application
+                ),
+            };
+
+        case 'UNDO_APPLICATION_FOLLOW_UP':
+            return {
+                ...state,
+                applications: state.applications.map((application) =>
+                    application.job_id === action.payload.jobId && application.job_status === 'Applied'
+                        ? { ...application, application_follow_up_sent_at: null }
+                        : application
+                ),
+            };
 
         case 'UPDATE_APPLICATION_NOTES':
             return {
@@ -358,6 +390,26 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 ...state,
                 interviews: state.interviews.filter(
                     (interview) => interview.interview_id !== action.payload.interviewId
+                ),
+            };
+
+        case 'MARK_INTERVIEW_FOLLOW_UP_SENT':
+            return {
+                ...state,
+                interviews: state.interviews.map((interview) =>
+                    interview.interview_id === action.payload.interviewId
+                        ? { ...interview, follow_up_sent_at: action.payload.sentAt }
+                        : interview
+                ),
+            };
+
+        case 'UNDO_INTERVIEW_FOLLOW_UP':
+            return {
+                ...state,
+                interviews: state.interviews.map((interview) =>
+                    interview.interview_id === action.payload.interviewId
+                        ? { ...interview, follow_up_sent_at: null }
+                        : interview
                 ),
             };
 

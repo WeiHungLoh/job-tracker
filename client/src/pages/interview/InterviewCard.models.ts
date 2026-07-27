@@ -14,6 +14,8 @@ type InterviewCardBaseProps = {
 
 export type JobInterviewCardProps = InterviewCardBaseProps & {
     interview: JobInterview;
+    isUndoingFollowUp?: boolean;
+    onUndoFollowUp?: (interview: JobInterview) => void | Promise<void>;
     variant: 'job';
 };
 

@@ -35,6 +35,10 @@ import type {
     GetApplicationRelationSummaryResponse,
     UpdateApplicationStatusRequest,
     UpdateApplicationStatusResponse,
+    MarkApplicationFollowUpRequest,
+    MarkApplicationFollowUpResponse,
+    UndoApplicationFollowUpRequest,
+    UndoApplicationFollowUpResponse,
     UpdateNotesRequest,
     UpdateNotesResponse,
 } from '../pages/application/models';
@@ -55,6 +59,10 @@ import type {
     ListInterviewsResponse,
     GetInterviewCollectionSummaryRequest,
     GetInterviewCollectionSummaryResponse,
+    MarkInterviewFollowUpRequest,
+    MarkInterviewFollowUpResponse,
+    UndoInterviewFollowUpRequest,
+    UndoInterviewFollowUpResponse,
 } from '../pages/interview/models';
 import type {
     GetUserPreferencesRequest,
@@ -193,6 +201,20 @@ export const useJobTrackerAPI = () => {
             >(req, endpointConfig.application.updateStatus);
         };
 
+        const markApplicationFollowUpSent = async (req: MarkApplicationFollowUpRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                MarkApplicationFollowUpRequest,
+                MarkApplicationFollowUpResponse
+            >(req, endpointConfig.application.markFollowUpSent);
+        };
+
+        const undoApplicationFollowUp = async (req: UndoApplicationFollowUpRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                UndoApplicationFollowUpRequest,
+                UndoApplicationFollowUpResponse
+            >(req, endpointConfig.application.undoFollowUp);
+        };
+
         const listInterviews = async (req: ListInterviewsRequest) => {
             return await makeAuthenticatedJobTrackerAPIRequest<ListInterviewsRequest, ListInterviewsResponse>(
                 req,
@@ -226,6 +248,20 @@ export const useJobTrackerAPI = () => {
                 null,
                 endpointConfig.interview.deleteAllInterviews
             );
+        };
+
+        const markInterviewFollowUpSent = async (req: MarkInterviewFollowUpRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                MarkInterviewFollowUpRequest,
+                MarkInterviewFollowUpResponse
+            >(req, endpointConfig.interview.markFollowUpSent);
+        };
+
+        const undoInterviewFollowUp = async (req: UndoInterviewFollowUpRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                UndoInterviewFollowUpRequest,
+                UndoInterviewFollowUpResponse
+            >(req, endpointConfig.interview.undoFollowUp);
         };
 
         const listArchivedApplications = async (req: ListArchivedApplicationsRequest) => {
@@ -409,6 +445,8 @@ export const useJobTrackerAPI = () => {
                 deleteAllApplications,
                 updateNotes,
                 updateStatus: updateApplicationStatus,
+                markFollowUpSent: markApplicationFollowUpSent,
+                undoFollowUp: undoApplicationFollowUp,
             },
             interview: {
                 listInterviews,
@@ -416,6 +454,8 @@ export const useJobTrackerAPI = () => {
                 createInterview,
                 deleteInterview,
                 deleteAllInterviews,
+                markFollowUpSent: markInterviewFollowUpSent,
+                undoFollowUp: undoInterviewFollowUp,
             },
             archivedApplication: {
                 listApplications: listArchivedApplications,

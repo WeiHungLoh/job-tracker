@@ -103,6 +103,31 @@ describe('makeJobTrackerAPIRequest', () => {
         });
     });
 
+    test('declares mark and undo endpoints for both follow-up resources', () => {
+        expect(endpointConfig.application.markFollowUpSent).toEqual({
+            url: '/job-applications/:jobId/follow-up',
+            verb: 'PUT',
+            fieldMap: { jobId: 'path' },
+            retry: true,
+        });
+        expect(endpointConfig.application.undoFollowUp).toEqual({
+            url: '/job-applications/:jobId/follow-up',
+            verb: 'DELETE',
+            fieldMap: { jobId: 'path' },
+        });
+        expect(endpointConfig.interview.markFollowUpSent).toEqual({
+            url: '/job-interviews/:interviewId/follow-up',
+            verb: 'PUT',
+            fieldMap: { interviewId: 'path' },
+            retry: true,
+        });
+        expect(endpointConfig.interview.undoFollowUp).toEqual({
+            url: '/job-interviews/:interviewId/follow-up',
+            verb: 'DELETE',
+            fieldMap: { interviewId: 'path' },
+        });
+    });
+
     test('maps path and query fields while serializing remaining fields as JSON', async () => {
         await makeJobTrackerAPIRequest(
             {

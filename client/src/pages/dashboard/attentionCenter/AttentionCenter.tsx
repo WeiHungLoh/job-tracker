@@ -20,6 +20,8 @@ type AttentionCenterProps = {
     onAddInterview?: (application: JobApplication) => void;
     onOpenOfferComparison?: (application: JobApplication) => void;
     onOpenOfferDecisionApplication?: (application: JobApplication) => void;
+    onMarkApplicationFollowUpSent?: (application: JobApplication) => void | Promise<void>;
+    onMarkInterviewFollowUpSent?: (interview: JobInterview) => void | Promise<void>;
 };
 
 const ACTION_LABELS: Record<AttentionItemCategory, string> = {
@@ -39,8 +41,13 @@ const AttentionCenter = ({
     onAddInterview,
     onOpenOfferComparison,
     onOpenOfferDecisionApplication,
+    onMarkApplicationFollowUpSent,
+    onMarkInterviewFollowUpSent,
 }: AttentionCenterProps) => {
-    const [selectedFollowUpDraft, setSelectedFollowUpDraft] = useState<FollowUpDraft | null>(null);
+    const [selectedFollowUp, setSelectedFollowUp] = useState<{
+        draft: FollowUpDraft;
+        item: AttentionItem;
+    } | null>(null);
     const items = useMemo(
         () => getAttentionItems(applications, interviews, currentTime, offerEvaluations),
         [applications, currentTime, interviews, offerEvaluations]
@@ -49,13 +56,14 @@ const AttentionCenter = ({
     const handleAttentionAction = (item: AttentionItem) => {
         switch (item.category) {
             case 'application-follow-up':
-                setSelectedFollowUpDraft(createApplicationFollowUpDraft(item.application));
+                setSelectedFollowUp({ draft: createApplicationFollowUpDraft(item.application), item });
                 break;
             case 'post-interview':
                 if (item.latestCompletedInterview) {
-                    setSelectedFollowUpDraft(
-                        createPostInterviewFollowUpDraft(item.application, item.latestCompletedInterview)
-                    );
+                    setSelectedFollowUp({
+                        draft: createPostInterviewFollowUpDraft(item.application, item.latestCompletedInterview),
+                        item,
+                    });
                 }
                 break;
             case 'interview-unscheduled':
@@ -69,6 +77,23 @@ const AttentionCenter = ({
                 break;
         }
     };
+
+    const selectedApplication = selectedFollowUp?.item.application;
+    const selectedInterview = selectedFollowUp?.item.latestCompletedInterview;
+    const markAsSentLabel =
+        selectedFollowUp?.item.category === 'application-follow-up' && selectedApplication
+            ? `Mark application follow-up as sent for ${selectedApplication.job_title} at ${selectedApplication.company_name}`
+            : selectedFollowUp?.item.category === 'post-interview' && selectedApplication
+            ? `Mark post-interview follow-up as sent for ${selectedApplication.job_title} at ${selectedApplication.company_name}`
+            : undefined;
+    const handleMarkAsSent =
+        selectedFollowUp?.item.category === 'application-follow-up' &&
+        selectedApplication &&
+        onMarkApplicationFollowUpSent
+            ? () => onMarkApplicationFollowUpSent(selectedApplication)
+            : selectedFollowUp?.item.category === 'post-interview' && selectedInterview && onMarkInterviewFollowUpSent
+            ? () => onMarkInterviewFollowUpSent(selectedInterview)
+            : undefined;
 
     return (
         <>
@@ -127,7 +152,12 @@ const AttentionCenter = ({
                     </ul>
                 )}
             </DashboardCard>
-            <FollowUpDraftDialog draft={selectedFollowUpDraft} onClose={() => setSelectedFollowUpDraft(null)} />
+            <FollowUpDraftDialog
+                draft={selectedFollowUp?.draft ?? null}
+                markAsSentLabel={markAsSentLabel}
+                onClose={() => setSelectedFollowUp(null)}
+                onMarkAsSent={handleMarkAsSent}
+            />
         </>
     );
 };

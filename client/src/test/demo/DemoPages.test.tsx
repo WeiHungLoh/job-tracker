@@ -753,7 +753,7 @@ describe('demo page interactions', () => {
         renderDemo(<DemoViewInterview />, [routes.demoViewInterviews]);
 
         expect(within(screen.getByRole('region', { name: 'Active interviews' })).getAllByRole('article')).toHaveLength(
-            9
+            10
         );
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
@@ -809,6 +809,7 @@ describe('demo page interactions', () => {
                 'Atlas RecruitTech interview',
                 'Harbour Analytics interview',
                 'NovaStack interview',
+                'Summit Talent interview',
                 'Quantum Ledger interview',
                 'Merlion Cloud interview',
             ];
@@ -931,7 +932,7 @@ describe('demo page interactions', () => {
         await waitFor(() =>
             expect(
                 within(screen.getByRole('region', { name: 'Active interviews' })).getAllByRole('article')
-            ).toHaveLength(2)
+            ).toHaveLength(3)
         );
         fireEvent.click(
             within(screen.getByRole('group', { name: 'Interview view' })).getByRole('button', { name: 'Board' })
@@ -961,7 +962,7 @@ describe('demo page interactions', () => {
         expect(mockConfirm).toHaveBeenLastCalledWith(
             expect.objectContaining({
                 description:
-                    'Delete all 9 active interviews you own? This affects every active interview in your account. This action is permanent and cannot be undone.',
+                    'Delete all 10 active interviews you own? This affects every active interview in your account. This action is permanent and cannot be undone.',
             })
         );
     });
@@ -1035,7 +1036,7 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('heading', { name: 'Needs Attention' })).toBeInTheDocument();
         expect(
             within(screen.getByRole('list', { name: 'Applications needing attention' })).getAllByRole('listitem')
-        ).toHaveLength(5);
+        ).toHaveLength(6);
         expect(screen.queryByText('Quantum Ledger')).not.toBeInTheDocument();
         expect(screen.getByText('Northstar Mobility')).toBeInTheDocument();
         expect(screen.getByText('Demo line chart')).toBeInTheDocument();
@@ -1043,6 +1044,51 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('heading', { name: 'Application Pipeline' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
         expect(screen.getAllByText('Demo bar chart')).toHaveLength(2);
+    });
+
+    test('marks and undoes a demo application follow-up in local state without fetching', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        renderDemo(
+            <>
+                <DemoDashboard />
+                <DemoViewApplication />
+            </>,
+            [routes.demoDashboard]
+        );
+
+        await userEvent.click(
+            screen.getByRole('button', {
+                name: 'Draft application follow-up for Product Engineer at Northstar Mobility',
+            })
+        );
+        await act(async () => {
+            await userEvent.click(
+                screen.getByRole('button', {
+                    name: 'Mark application follow-up as sent for Product Engineer at Northstar Mobility',
+                })
+            );
+        });
+
+        await waitFor(() =>
+            expect(
+                within(screen.getByRole('list', { name: 'Applications needing attention' })).queryByText(
+                    'Northstar Mobility'
+                )
+            ).not.toBeInTheDocument()
+        );
+        const applicationCard = document.getElementById('106');
+        expect(applicationCard).not.toBeNull();
+        const undo = within(applicationCard!).getByRole('button', {
+            name: 'Undo follow-up for Product Engineer at Northstar Mobility',
+        });
+        await userEvent.click(undo);
+
+        expect(
+            within(screen.getByRole('list', { name: 'Applications needing attention' })).getByText('Northstar Mobility')
+        ).toBeInTheDocument();
+        expect(within(applicationCard!).queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
     });
 
     test('navigates from a demo dashboard status to the matching application filter without fetching', async () => {

@@ -44,64 +44,72 @@ const guideSections: readonly UserGuideSection[] = [
         content: (
             <>
                 <p>The dashboard gives you a quick visual overview of your job search progress:</p>
-                <ul>
-                    <li>
-                        <strong>Stat cards:</strong> Shows total applications, applications added this week, upcoming
-                        interviews, interview rate, and offer rate.
-                    </li>
-                    <li>
-                        <strong>Needs attention:</strong> Shows up to six applications that may require action, ordered
-                        by urgency, and suggests one next action for each selected application.
-                        <ul>
-                            <li>
-                                Interview applications appear when every scheduled interview has ended and at least
-                                seven full days have passed since the latest interview ended. The number of days is
-                                calculated from the latest interview&apos;s end time, including its duration, and
-                                applications waiting longer are ranked higher. These items can generate a copyable
-                                post-interview template.
-                            </li>
-                            <li>
-                                Applications marked as Interview with no scheduled interview prompt you to add one. The
-                                action opens Add Interview without creating an interview automatically.
-                            </li>
-                            <li>
-                                Evaluated offers with a decision deadline in the next 72 hours appear first. The action
-                                opens Job Applications in List view, filters to Offer, then scrolls to and highlights
-                                the exact application so you can record it as Accepted or Declined. Evaluated offers
-                                more than 72 hours away and offers with a passed deadline do not appear.
-                            </li>
-                            <li>
-                                Unevaluated offers appear next regardless of deadline because their deadline has not
-                                been recorded yet. The action opens active Offer Comparison so you can add the offer
-                                details and decision deadline.
-                            </li>
-                            <li>
-                                Applied applications with no linked interview appear after seven days, with older
-                                applications ranked higher. These items can generate a copyable application follow-up
-                                template.
-                            </li>
-                        </ul>
-                        <p>
-                            Follow-up templates are generated locally and are not sent or saved. Replace bracketed
-                            placeholders before using a template. Copying a message does not mark an application as
-                            followed up. Future and ongoing interviews remain in the Upcoming Interviews card.
-                        </p>
-                    </li>
-                    <li>
-                        <strong>Application trend:</strong> Shows applications added over the past eight weeks, with a
-                        summary of this week, the change from last week, and the best week.
-                    </li>
-                    <li>
-                        <strong>Upcoming interviews:</strong> Shows the next three scheduled interviews.
-                    </li>
-                    <li>
-                        <strong>Application pipeline:</strong> Shows current Applied, Interview, Offer, and Accepted
-                        totals.
-                    </li>
-                    <li>
-                        <strong>Closed outcomes:</strong> Shows current Rejected, Ghosted, and Declined totals.
-                    </li>
-                </ul>
+                <h3>Stat cards</h3>
+                <p>
+                    Shows total applications, applications added this week, upcoming interviews, interview rate, and
+                    offer rate.
+                </p>
+                <h3>Needs attention</h3>
+                <p>
+                    Shows up to six applications that may require action, ordered by category priority, and suggests one
+                    next action for each selected application. Within a category, the most urgent or longest-waiting
+                    items appear first.
+                </p>
+                <h3>Evaluated offers due within 72 hours</h3>
+                <p>
+                    These appear first. The action opens Job Applications in List view, filters to Offer, then scrolls
+                    to and highlights the exact application so you can record it as Accepted or Declined. Evaluated
+                    offers more than 72 hours away and offers with a passed deadline do not appear.
+                </p>
+                <h3>Unevaluated offers</h3>
+                <p>
+                    These appear next regardless of deadline because their deadline has not been recorded yet. The
+                    action opens active Offer Comparison so you can add the offer details and decision deadline.
+                </p>
+                <h3>Completed interviews</h3>
+                <p>
+                    Interview applications appear when every scheduled interview has ended and at least seven full days
+                    have passed since the latest interview ended. The number of days is calculated from the latest
+                    interview&apos;s end time, including its duration, and applications waiting longer are ranked
+                    higher. These items can generate a copyable post-interview template.
+                </p>
+                <h3>Interview applications without a scheduled interview</h3>
+                <p>
+                    Applications marked as Interview with no scheduled interview prompt you to add one. The action opens
+                    Add Interview without creating an interview automatically.
+                </p>
+                <h3>Stale Applied applications</h3>
+                <p>
+                    Applied applications with no linked interview appear after seven days, with older applications
+                    ranked higher. These items can generate a copyable application follow-up template.
+                </p>
+                <h3>Follow-up drafts and sent status</h3>
+                <p>
+                    Follow-up templates are generated locally and are never sent by Job Tracker. Replace bracketed
+                    placeholders before using a template. Copying a message does not mark it as sent. Use{' '}
+                    <strong>Mark as sent</strong> only after you send it yourself; Job Tracker stores the current time
+                    and removes that exact follow-up from Needs Attention.
+                </p>
+                <p>
+                    Active list cards show the full sent time with <strong>Undo</strong>. Board cards show a compact
+                    indicator, with the full sent time and Undo in <strong>Actions</strong>. Archived cards keep the
+                    sent time as read-only context. An application follow-up clears when you press <strong>Undo</strong>{' '}
+                    or when the application leaves <code>Applied</code>. An interview follow-up remains until you undo
+                    it or delete the interview (including deletion through its linked application). Only the latest sent
+                    time is kept; Job Tracker does not maintain a follow-up history. Future and ongoing interviews
+                    remain in the Upcoming Interviews card.
+                </p>
+                <h3>Application trend</h3>
+                <p>
+                    Shows applications added over the past eight weeks, with a summary of this week, the change from
+                    last week, and the best week.
+                </p>
+                <h3>Upcoming interviews</h3>
+                <p>Shows the next three scheduled interviews.</p>
+                <h3>Application pipeline</h3>
+                <p>Shows current Applied, Interview, Offer, and Accepted totals.</p>
+                <h3>Closed outcomes</h3>
+                <p>Shows current Rejected, Ghosted, and Declined totals.</p>
                 <p>
                     Interview rate counts applications currently at <code>Interview</code>, <code>Offer</code>,{' '}
                     <code>Accepted</code> or <code>Declined</code>. Offer rate counts <code>Offer</code>,{' '}
@@ -129,14 +137,15 @@ const guideSections: readonly UserGuideSection[] = [
                     <li>No account, authentication, backend request or database write is used.</li>
                     <li>Changes remain while you move around demo pages, then reset when the browser refreshes.</li>
                     <li>
-                        Success toasts match the signed-in app when adding an application or interview and when first
-                        saving an offer evaluation.
+                        Success toasts match the signed-in app when adding an application or interview, first saving an
+                        offer evaluation, and marking or undoing follow-ups.
                     </li>
                 </ul>
                 <h3>Applications</h3>
                 <p>
                     Add applications, switch between list and board view, filter by status, edit notes, update status,
-                    archive, restore, delete and export CSV records.
+                    archive, restore, delete and export CSV records. Follow-up marking and Undo use demo state only and
+                    mirror the signed-in list, board and archived-card behavior.
                 </p>
                 <h3>Offer comparison</h3>
                 <p>
@@ -153,8 +162,9 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Create interviews from an application with status <code>Interview</code>, switch active or archived
                     interviews between list and responsive board view, open their related application and export CSV
-                    records. The interview date must be after the linked application date, and notes use the shared{' '}
-                    {FIELD_MAX_LENGTHS.notes}-character limit.
+                    records. Post-interview follow-up marking and Undo also stay entirely in demo state. The interview
+                    date must be after the linked application date, and notes use the shared {FIELD_MAX_LENGTHS.notes}
+                    -character limit.
                 </p>
                 <h3>Navigation and reset</h3>
                 <p>
@@ -334,7 +344,7 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <p>
                     An orange <strong>Upcoming Interviews</strong> badge appears below the status when an application
-                    has one or more interviews scheduled in the future.
+                    has one or more interviews that have not ended yet.
                 </p>
             </>
         ),

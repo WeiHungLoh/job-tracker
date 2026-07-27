@@ -15,6 +15,7 @@ export const getArchivedJobInterviews = async (
             interviews.interview_location,
             interviews.interview_type,
             interviews.interview_notes,
+            interviews.follow_up_sent_at,
             job_applications.company_name,
             job_applications.job_title,
             job_applications.job_status

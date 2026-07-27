@@ -24,7 +24,7 @@ Job Tracker is a full-stack PERN application for managing job applications, inte
 -   Manage job applications with status, dates, locations, posting URLs, and notes
 -   Explore a fully interactive frontend demo without creating an account
 -   Review application trends, pipeline stages, closed outcomes, conversion rates, and upcoming interviews
--   Prioritize up to six follow-ups with a read-only Needs Attention action center using clear 7-day and 21-day signals
+-   Prioritize up to six follow-ups using seven-day eligibility and deadline ordering, then persist sent times with Undo and demo-mode parity
 -   Switch between list and Kanban board views with drag-and-drop status updates
 -   Track interviews linked to job applications
 -   Compare current offers using required decision timing and monthly salary, practical terms, four fit ratings, and live scores

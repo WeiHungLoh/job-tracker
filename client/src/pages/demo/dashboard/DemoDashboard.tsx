@@ -1,20 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import DashboardContent from '../../dashboard/DashboardContent';
 import type { JobApplication, JobStatus } from '../../application/models';
+import type { JobInterview } from '../../interview/models';
 import type {
     DashboardApplicationNavigationState,
     DashboardInterviewNavigationState,
 } from '../../dashboard/dashboardNavigation';
-import {
-    selectJobStatusCounts,
-    selectOfferDecisionWorkspace,
-    selectWeeklyApplications,
-} from '../state/demoSelectors';
+import { selectJobStatusCounts, selectOfferDecisionWorkspace, selectWeeklyApplications } from '../state/demoSelectors';
 import { useDemo } from '../context/DemoContext';
 import { routes } from '../../../routes';
 
 const DemoDashboard = () => {
-    const { state } = useDemo();
+    const { dispatch, state } = useDemo();
     const statusCounts = selectJobStatusCounts(state);
     const weeklyApplications = selectWeeklyApplications(state);
     const offerDecisionWorkspace = selectOfferDecisionWorkspace(state);
@@ -53,6 +50,20 @@ const DemoDashboard = () => {
         navigate(routes.demoViewApplications, { state: navigationState });
     };
 
+    const handleMarkApplicationFollowUpSent = (application: JobApplication) => {
+        dispatch({
+            type: 'MARK_APPLICATION_FOLLOW_UP_SENT',
+            payload: { jobId: application.job_id, sentAt: new Date().toISOString() },
+        });
+    };
+
+    const handleMarkInterviewFollowUpSent = (interview: JobInterview) => {
+        dispatch({
+            type: 'MARK_INTERVIEW_FOLLOW_UP_SENT',
+            payload: { interviewId: interview.interview_id, sentAt: new Date().toISOString() },
+        });
+    };
+
     return (
         <DashboardContent
             applications={applications}
@@ -65,6 +76,8 @@ const DemoDashboard = () => {
             onInterviewSelect={handleInterviewSelect}
             onOpenOfferComparison={handleOpenOfferComparison}
             onOpenOfferDecisionApplication={handleOpenOfferDecisionApplication}
+            onMarkApplicationFollowUpSent={handleMarkApplicationFollowUpSent}
+            onMarkInterviewFollowUpSent={handleMarkInterviewFollowUpSent}
             onStatusSelect={handleStatusSelect}
         />
     );

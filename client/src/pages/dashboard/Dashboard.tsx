@@ -4,10 +4,7 @@ import DashboardContent from './DashboardContent';
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../application/models';
 import type { JobInterview } from '../interview/models';
 import type { OfferEvaluation } from '../offerDecision/models';
-import type {
-    DashboardApplicationNavigationState,
-    DashboardInterviewNavigationState,
-} from './dashboardNavigation';
+import type { DashboardApplicationNavigationState, DashboardInterviewNavigationState } from './dashboardNavigation';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
 import { useToast } from '../../components/toast/ToastProvider';
@@ -51,6 +48,28 @@ const Dashboard = () => {
         navigate(routes.viewApplications, { state });
     };
 
+    const handleMarkApplicationFollowUpSent = async (application: JobApplication) => {
+        const result = await api.application.markFollowUpSent({ jobId: application.job_id });
+        setApplications((current) =>
+            current.map((item) =>
+                item.job_id === application.job_id
+                    ? { ...item, application_follow_up_sent_at: result.application_follow_up_sent_at }
+                    : item
+            )
+        );
+    };
+
+    const handleMarkInterviewFollowUpSent = async (interview: JobInterview) => {
+        const result = await api.interview.markFollowUpSent({ interviewId: interview.interview_id });
+        setInterviews((current) =>
+            current.map((item) =>
+                item.interview_id === interview.interview_id
+                    ? { ...item, follow_up_sent_at: result.follow_up_sent_at }
+                    : item
+            )
+        );
+    };
+
     useEffect(() => {
         let isActive = true;
 
@@ -62,14 +81,13 @@ const Dashboard = () => {
                     weeklyApplicationCounts,
                     attentionApplications,
                     evaluatedOffers,
-                ] =
-                    await Promise.all([
-                        api.application.listJobStatusCounts(),
-                        api.interview.listInterviews({}),
-                        api.application.listWeeklyApplications(),
-                        api.application.listApplications({ jobStatuses: [...ATTENTION_APPLICATION_STATUSES] }),
-                        api.offerDecision.getActive({ filters: ['Evaluated Offers'] }),
-                    ]);
+                ] = await Promise.all([
+                    api.application.listJobStatusCounts(),
+                    api.interview.listInterviews({}),
+                    api.application.listWeeklyApplications(),
+                    api.application.listApplications({ jobStatuses: [...ATTENTION_APPLICATION_STATUSES] }),
+                    api.offerDecision.getActive({ filters: ['Evaluated Offers'] }),
+                ]);
 
                 if (!isActive) {
                     return;
@@ -114,6 +132,8 @@ const Dashboard = () => {
             onInterviewSelect={handleInterviewSelect}
             onOpenOfferComparison={handleOpenOfferComparison}
             onOpenOfferDecisionApplication={handleOpenOfferDecisionApplication}
+            onMarkApplicationFollowUpSent={handleMarkApplicationFollowUpSent}
+            onMarkInterviewFollowUpSent={handleMarkInterviewFollowUpSent}
             onStatusSelect={handleStatusSelect}
         />
     );

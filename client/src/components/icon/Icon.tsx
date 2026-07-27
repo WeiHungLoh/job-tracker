@@ -20,6 +20,7 @@ import {
     MdMenuBook,
     MdOutlineStickyNote2,
     MdWifiOff,
+    MdUndo,
 } from 'react-icons/md';
 import { FaBriefcase } from 'react-icons/fa';
 import { GoAlertFill } from 'react-icons/go';
@@ -50,6 +51,7 @@ const icons: Record<IconName, IconType> = {
     visibility: IoEye,
     visibilityOff: IoMdEyeOff,
     wifiOff: MdWifiOff,
+    undo: MdUndo,
 };
 
 const Icon = ({ name, size, title, ...props }: IconProps) => {

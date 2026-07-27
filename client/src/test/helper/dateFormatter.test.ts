@@ -1,4 +1,9 @@
-import { isInvalidDatetimeLocalInput, toDatetimeLocalInputValue } from '../../helper/dateFormatter';
+import {
+    formatFollowUpCompactDate,
+    formatFollowUpSentAt,
+    isInvalidDatetimeLocalInput,
+    toDatetimeLocalInputValue,
+} from '../../helper/dateFormatter';
 
 describe('datetime-local validation', () => {
     test('rejects impossible calendar dates instead of normalizing them', () => {
@@ -35,5 +40,27 @@ describe('datetime-local validation', () => {
 
         expect(toDatetimeLocalInputValue(timestamp)).toBe(expected);
         expect(toDatetimeLocalInputValue('')).toBe('');
+    });
+});
+
+describe('follow-up timestamp formatting', () => {
+    test('formats a complete local date and time plus a compact board date', () => {
+        const timestamp = '2026-07-27T07:42:00.000Z';
+        const date = new Date(timestamp);
+        const expectedFull = date
+            .toLocaleString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            })
+            .replace(',', ' at')
+            .replace(/\b(am|pm)\b/i, (period) => period.toUpperCase());
+        const expectedCompact = date.toLocaleString('en-GB', { day: 'numeric', month: 'short' });
+
+        expect(formatFollowUpSentAt(timestamp)).toBe(expectedFull);
+        expect(formatFollowUpCompactDate(timestamp)).toBe(expectedCompact);
     });
 });

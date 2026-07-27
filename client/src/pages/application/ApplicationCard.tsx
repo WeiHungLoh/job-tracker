@@ -9,6 +9,7 @@ import ApplicationStatusBadge from './ApplicationStatusBadge';
 import NoteSaveStatus from '../../components/noteSaveStatus/NoteSaveStatus';
 import styles from './ApplicationCard.module.css';
 import { isApplicationStatusDisabled } from './applicationStatusRestrictions';
+import FollowUpSentBadge from '../../components/followUpSentBadge/FollowUpSentBadge';
 
 const JOB_STATUS_CARD_CLASS_MAP: Record<JobStatus, string> = {
     Accepted: styles.statusAccepted,
@@ -40,7 +41,6 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                 )}
                 <p className={styles.date}>Application Date: {formattedApplicationDate.formattedDate}</p>
                 <p>Time since application: {formattedApplicationDate.timeSinceApplication}</p>
-
                 {variant === 'job' ? (
                     <>
                         <div className={styles.badgeGroup}>
@@ -75,15 +75,29 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                                 ))}
                             </select>
                         )}
-
-                        {application.job_status === 'Interview' && (
-                            <Link to={routes.addInterview} state={{ app: application }}>
-                                Click here to add an interview
-                            </Link>
-                        )}
                     </>
                 ) : (
                     <ApplicationStatusBadge jobStatus={application.job_status} showLabel />
+                )}
+
+                {application.application_follow_up_sent_at &&
+                    (variant === 'archived' || application.job_status === 'Applied') && (
+                        <FollowUpSentBadge
+                            contextLabel={`${application.job_title} at ${application.company_name}`}
+                            isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
+                            onUndo={
+                                variant === 'job' && props.onUndoFollowUp
+                                    ? () => props.onUndoFollowUp?.(application)
+                                    : undefined
+                            }
+                            sentAt={application.application_follow_up_sent_at}
+                        />
+                    )}
+
+                {variant === 'job' && application.job_status === 'Interview' && (
+                    <Link to={routes.addInterview} state={{ app: application }}>
+                        Click here to add an interview
+                    </Link>
                 )}
 
                 {application.job_posting_url !== '' && (

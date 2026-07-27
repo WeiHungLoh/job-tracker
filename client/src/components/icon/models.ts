@@ -23,6 +23,7 @@ export type IconName =
     | 'visibility'
     | 'visibilityOff'
     | 'wifiOff'
+    | 'undo'
     | 'darkMode'
     | 'lightMode';
 
