@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { JobTrackerAPIError } from '../../api/models';
 import OfferDecisionPage from '../../pages/offerDecision/OfferDecisionPage';
 import type { OfferDecisionWorkspaceData, OfferEvaluation } from '../../pages/offerDecision/models';
@@ -11,16 +11,32 @@ const mocks = vi.hoisted(() => ({
     deleteAllActiveEvaluations: vi.fn(),
     deleteAllArchivedEvaluations: vi.fn(),
     deleteEvaluation: vi.fn(),
+    deleteCounterofferPlan: vi.fn(),
     getActiveApplicationSummary: vi.fn(),
     getArchivedApplicationSummary: vi.fn(),
     getActive: vi.fn(),
     getArchived: vi.fn(),
+    getCounterofferPlan: vi.fn(),
+    saveCounterofferPlan: vi.fn(),
     saveEvaluation: vi.fn(),
     showErrorToast: vi.fn(),
     showSuccessToast: vi.fn(),
 }));
 
 vi.mock('material-ui-confirm', () => ({ useConfirm: () => mocks.confirm }));
+
+const openOfferActions = (companyName: string) => {
+    fireEvent.click(screen.getByRole('button', { name: `More actions for ${companyName}` }));
+    return screen.getByRole('menu', { name: `More actions for ${companyName}` });
+};
+
+const editOfferEvaluation = (companyName: string) => {
+    fireEvent.click(
+        within(openOfferActions(companyName)).getByRole('menuitem', {
+            name: `Edit evaluation for ${companyName}`,
+        })
+    );
+};
 
 vi.mock('../../api/useJobTrackerAPI', () => ({
     useJobTrackerAPI: () => ({
@@ -34,8 +50,11 @@ vi.mock('../../api/useJobTrackerAPI', () => ({
             deleteAllActiveEvaluations: mocks.deleteAllActiveEvaluations,
             deleteAllArchivedEvaluations: mocks.deleteAllArchivedEvaluations,
             deleteEvaluation: mocks.deleteEvaluation,
+            deleteCounterofferPlan: mocks.deleteCounterofferPlan,
             getActive: mocks.getActive,
             getArchived: mocks.getArchived,
+            getCounterofferPlan: mocks.getCounterofferPlan,
+            saveCounterofferPlan: mocks.saveCounterofferPlan,
             saveEvaluation: mocks.saveEvaluation,
         },
     }),
@@ -111,10 +130,24 @@ describe('OfferDecisionPage', () => {
         mocks.deleteAllActiveEvaluations.mockResolvedValue(null);
         mocks.deleteAllArchivedEvaluations.mockResolvedValue(null);
         mocks.deleteEvaluation.mockResolvedValue(null);
+        mocks.deleteCounterofferPlan.mockResolvedValue(null);
         mocks.getActiveApplicationSummary.mockResolvedValue({ offer_evaluation_count: 2 });
         mocks.getArchivedApplicationSummary.mockResolvedValue({ offer_evaluation_count: 2 });
         mocks.getActive.mockResolvedValue(workspaceData);
         mocks.getArchived.mockResolvedValue(workspaceData);
+        mocks.getCounterofferPlan.mockResolvedValue({
+            monthly_base_salary: 11000,
+            bonus: '',
+            annual_leave_days: 20,
+            work_arrangement: 'Hybrid',
+            ratings: {
+                career_growth: 4,
+                company_culture_fit: 4,
+                work_life_balance: 4,
+                compensation: 5,
+            },
+        });
+        mocks.saveCounterofferPlan.mockResolvedValue(null);
         mocks.saveEvaluation.mockResolvedValue(null);
     });
 
@@ -355,7 +388,11 @@ describe('OfferDecisionPage', () => {
         );
         expect(mocks.getActive).toHaveBeenCalledOnce();
         expect(mocks.getArchived).not.toHaveBeenCalled();
-        expect(screen.getByRole('button', { name: 'Edit evaluation for Beta Labs' })).toBeInTheDocument();
+        expect(
+            within(openOfferActions('Beta Labs')).getByRole('menuitem', {
+                name: 'Edit evaluation for Beta Labs',
+            })
+        ).toBeInTheDocument();
         expect(mocks.showSuccessToast).toHaveBeenCalledWith('Offer evaluation added.');
     });
 
@@ -363,7 +400,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: '20% target' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
 
@@ -375,7 +412,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         fireEvent.change(screen.getByLabelText('Acme decision deadline'), {
             target: { value: '2026-06-30T10:00' },
         });
@@ -394,7 +431,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: '20% target' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
 

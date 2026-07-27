@@ -66,6 +66,19 @@ const renderDemo = (children: ReactNode, initialEntries: DemoInitialEntry[] = [r
     );
 };
 
+const openOfferActions = (companyName: string) => {
+    fireEvent.click(screen.getByRole('button', { name: `More actions for ${companyName}` }));
+    return screen.getByRole('menu', { name: `More actions for ${companyName}` });
+};
+
+const editOfferEvaluation = (companyName: string) => {
+    fireEvent.click(
+        within(openOfferActions(companyName)).getByRole('menuitem', {
+            name: `Edit evaluation for ${companyName}`,
+        })
+    );
+};
+
 const DemoRecordCounts = () => {
     const { state } = useDemo();
 
@@ -244,7 +257,7 @@ describe('demo page interactions', () => {
         renderDemo(<DemoOfferDecisionPage archived={false} />, [routes.demoOfferDecisions]);
 
         expect(screen.getByRole('heading', { name: 'Evaluated Offers' })).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Greenhouse CloudOps' }));
+        editOfferEvaluation('Greenhouse CloudOps');
         expect(screen.getByLabelText('Greenhouse CloudOps Company/Culture Fit rating')).toHaveValue('5');
         fireEvent.change(screen.getByLabelText('Greenhouse CloudOps Company/Culture Fit rating'), {
             target: { value: '4' },
@@ -260,7 +273,11 @@ describe('demo page interactions', () => {
         expect(screen.queryByText('Offer evaluation added.')).not.toBeInTheDocument();
         expect(screen.queryByLabelText('Greenhouse CloudOps Company/Culture Fit rating')).not.toBeInTheDocument();
         expect(screen.getByText('SGD 10,500')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Edit evaluation for Greenhouse CloudOps' })).toBeInTheDocument();
+        expect(
+            within(openOfferActions('Greenhouse CloudOps')).getByRole('menuitem', {
+                name: 'Edit evaluation for Greenhouse CloudOps',
+            })
+        ).toBeInTheDocument();
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
@@ -1107,7 +1124,9 @@ describe('demo page interactions', () => {
             })
         );
 
-        await waitFor(() => expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true'));
+        await waitFor(() =>
+            expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true')
+        );
         await waitFor(() =>
             expect(scrollAndHighlight).toHaveBeenCalledWith('111', expect.any(String), expect.anything())
         );

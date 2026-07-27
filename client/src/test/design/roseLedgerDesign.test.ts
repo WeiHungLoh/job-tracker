@@ -270,6 +270,9 @@ describe('Rose Ledger visual contract', () => {
         const offerEvaluationCss = readSource('src/pages/offerDecision/OfferEvaluation.module.css');
         const offerDecisionSkeletonCss = readSource('src/pages/offerDecision/OfferDecisionSkeleton.module.css');
         const robustnessCss = readSource('src/pages/offerDecision/robustness/OfferDecisionRobustnessLab.module.css');
+        const counterofferCss = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.module.css');
+        const counterofferDialog = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.tsx');
+        const followUpDialog = readSource('src/pages/dashboard/attentionCenter/FollowUpDraftDialog.tsx');
         const activityControlsCss = readSource('src/components/activityControls/ActivityControls.module.css');
 
         expect(offerDecisionWorkspaceCss).not.toContain('linear-gradient');
@@ -278,6 +281,50 @@ describe('Rose Ledger visual contract', () => {
         expect(offerEvaluationCss).not.toContain('box-shadow');
         expect(robustnessCss).not.toContain('linear-gradient');
         expect(robustnessCss).not.toContain('box-shadow');
+        expect(counterofferCss).not.toContain('linear-gradient');
+        expect(counterofferCss).not.toContain('box-shadow');
+        expect(counterofferCss).not.toMatch(/\.tabs\s*\{/);
+        expect(counterofferDialog).not.toContain('dividers');
+        expect(followUpDialog).not.toContain('dividers');
+        expect(counterofferCss).toMatch(
+            /\.ratingSlider\s*\{[^}]*width:\s*100%;[^}]*min-width:\s*0;[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(counterofferCss).toContain('color: var(--colorToastSuccessText);');
+        expect(counterofferCss).toContain('color: var(--colorToastErrorText);');
+        expect(counterofferCss).toMatch(/\.applicationContext span\s*\{[^}]*font-weight:\s*600;[^}]*\}/s);
+        expect(counterofferCss).toMatch(
+            /\.description\s*\{[^}]*margin:\s*var\(--spaceControl\) 0 var\(--spaceSection\);[^}]*\}/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 600px\)[\s\S]*?\.actions\s*\{[^}]*display:\s*grid\s*!important;/
+        );
+        expect(counterofferCss).toMatch(
+            /\.actions\s*\{[^}]*padding:\s*var\(--spaceCompact\) var\(--spaceSection\) !important;/s
+        );
+        expect(counterofferCss).toMatch(
+            /\.dialogContent\s*\{[^}]*padding:\s*0 var\(--spaceSection\) var\(--spaceSection\) !important;/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 600px\)[\s\S]*?\.actions > button\s*\{[^}]*min-height:\s*36px;[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?\.dialogContent\s*\{[^}]*padding-right:\s*var\(--spaceCard\) !important;[^}]*padding-left:\s*var\(--spaceCard\) !important;/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 600px\)[\s\S]*?\.actions\s*\{[^}]*padding-right:\s*var\(--spaceCard\) !important;[^}]*padding-left:\s*var\(--spaceCard\) !important;/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 600px\)[\s\S]*?\.actions\[data-button-count='2'\]\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 600px\)[\s\S]*?\.actions\[data-button-count='3'\]\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?\.idealColumns\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 600px\)[\s\S]*?\.dialogPaper\s*\{[^}]*max-height:\s*calc\(100dvh - 16px\);/s
+        );
         expect(robustnessCss).toMatch(/\.lab\s*\{[^}]*background-color:\s*var\(--colorCardBg\);/s);
         expect(robustnessCss).toContain('border: 1px solid var(--colorCardBorder);');
         expect(robustnessCss).toContain('accent-color: var(--colorPrimary);');
@@ -330,6 +377,21 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(offerDecisionSkeletonCss).not.toContain('linear-gradient');
         expect(offerDecisionSkeletonCss).not.toContain('box-shadow');
+    });
+
+    it('groups the cohesive counteroffer implementation without generic nesting', () => {
+        [
+            'CounterofferIdealOffer.tsx',
+            'CounterofferPlanDialog.module.css',
+            'CounterofferPlanDialog.tsx',
+            'counterofferPlan.ts',
+        ].forEach((fileName) =>
+            expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/counteroffer', fileName))).toBe(true)
+        );
+
+        expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/CounterofferPlanDialog.tsx'))).toBe(false);
+        expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/components'))).toBe(false);
+        expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/utils'))).toBe(false);
     });
 
     it('uses the established application and Offer Comparison typography hierarchy on dashboard cards', () => {

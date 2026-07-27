@@ -3,7 +3,12 @@ import type { ArchivedJobInterview, JobInterview } from '../../interview/models'
 import { createDemoInitialState } from './demoInitialState';
 import type { DemoState } from '../models';
 import type { UpdateUserPreferencesRequest } from '../../../components/userPreferences/models';
-import type { OfferEvaluation, SaveOfferEvaluationRequest } from '../../offerDecision/models';
+import type {
+    CounterofferPlan,
+    OfferEvaluation,
+    SaveCounterofferPlanRequest,
+    SaveOfferEvaluationRequest,
+} from '../../offerDecision/models';
 import { isApplicationStatusDisabled } from '../../application/applicationStatusRestrictions';
 
 type CreateApplicationPayload = {
@@ -29,6 +34,11 @@ type SaveOfferEvaluationPayload = {
     request: SaveOfferEvaluationRequest;
 };
 
+type SaveCounterofferPlanPayload = {
+    jobId: number;
+    request: SaveCounterofferPlanRequest;
+};
+
 export type DemoAction =
     | { type: 'CREATE_APPLICATION'; payload: CreateApplicationPayload }
     | { type: 'UPDATE_APPLICATION_STATUS'; payload: { jobId: number; jobStatus: JobStatus } }
@@ -49,6 +59,8 @@ export type DemoAction =
     | { type: 'SAVE_OFFER_EVALUATION'; payload: SaveOfferEvaluationPayload }
     | { type: 'DELETE_OFFER_EVALUATION'; payload: { jobId: number } }
     | { type: 'DELETE_ALL_OFFER_EVALUATIONS'; payload: { archived: boolean } }
+    | { type: 'SAVE_COUNTEROFFER_PLAN'; payload: SaveCounterofferPlanPayload }
+    | { type: 'DELETE_COUNTEROFFER_PLAN'; payload: { jobId: number } }
     | { type: 'UPDATE_PREFERENCES'; payload: UpdateUserPreferencesRequest }
     | { type: 'RESET_DEMO'; payload?: { now?: Date } };
 
@@ -118,6 +130,15 @@ const removeOfferEvaluations = (
     return remainingEvaluations;
 };
 
+const removeCounterofferPlans = (
+    counterofferPlans: Record<number, CounterofferPlan>,
+    jobIds: readonly number[]
+): Record<number, CounterofferPlan> => {
+    const remainingPlans = { ...counterofferPlans };
+    jobIds.forEach((jobId) => delete remainingPlans[jobId]);
+    return remainingPlans;
+};
+
 export const demoReducer = (state: DemoState, action: DemoAction): DemoState => {
     switch (action.type) {
         case 'CREATE_APPLICATION': {
@@ -180,6 +201,7 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 applications: state.applications.filter((application) => application.job_id !== action.payload.jobId),
                 interviews: state.interviews.filter((interview) => interview.job_id !== action.payload.jobId),
                 offerEvaluations: removeOfferEvaluations(state.offerEvaluations, [action.payload.jobId]),
+                counterofferPlans: removeCounterofferPlans(state.counterofferPlans, [action.payload.jobId]),
             };
 
         case 'DELETE_ALL_APPLICATIONS':
@@ -189,6 +211,10 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 interviews: [],
                 offerEvaluations: removeOfferEvaluations(
                     state.offerEvaluations,
+                    state.applications.map((application) => application.job_id)
+                ),
+                counterofferPlans: removeCounterofferPlans(
+                    state.counterofferPlans,
                     state.applications.map((application) => application.job_id)
                 ),
             };
@@ -283,6 +309,7 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                     (interview) => interview.archived_job_id !== action.payload.archivedJobId
                 ),
                 offerEvaluations: removeOfferEvaluations(state.offerEvaluations, [action.payload.archivedJobId]),
+                counterofferPlans: removeCounterofferPlans(state.counterofferPlans, [action.payload.archivedJobId]),
             };
 
         case 'DELETE_ALL_ARCHIVED_APPLICATIONS':
@@ -292,6 +319,10 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 archivedInterviews: [],
                 offerEvaluations: removeOfferEvaluations(
                     state.offerEvaluations,
+                    state.archivedApplications.map((application) => application.archived_job_id)
+                ),
+                counterofferPlans: removeCounterofferPlans(
+                    state.counterofferPlans,
                     state.archivedApplications.map((application) => application.archived_job_id)
                 ),
             };
@@ -368,17 +399,36 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
             return {
                 ...state,
                 offerEvaluations: removeOfferEvaluations(state.offerEvaluations, [action.payload.jobId]),
+                counterofferPlans: removeCounterofferPlans(state.counterofferPlans, [action.payload.jobId]),
             };
 
-        case 'DELETE_ALL_OFFER_EVALUATIONS':
+        case 'DELETE_ALL_OFFER_EVALUATIONS': {
+            const jobIds = action.payload.archived
+                ? state.archivedApplications.map((application) => application.archived_job_id)
+                : state.applications.map((application) => application.job_id);
             return {
                 ...state,
-                offerEvaluations: removeOfferEvaluations(
-                    state.offerEvaluations,
-                    action.payload.archived
-                        ? state.archivedApplications.map((application) => application.archived_job_id)
-                        : state.applications.map((application) => application.job_id)
-                ),
+                offerEvaluations: removeOfferEvaluations(state.offerEvaluations, jobIds),
+                counterofferPlans: removeCounterofferPlans(state.counterofferPlans, jobIds),
+            };
+        }
+
+        case 'SAVE_COUNTEROFFER_PLAN':
+            return {
+                ...state,
+                counterofferPlans: {
+                    ...state.counterofferPlans,
+                    [action.payload.jobId]: {
+                        ...action.payload.request,
+                        ratings: { ...action.payload.request.ratings },
+                    },
+                },
+            };
+
+        case 'DELETE_COUNTEROFFER_PLAN':
+            return {
+                ...state,
+                counterofferPlans: removeCounterofferPlans(state.counterofferPlans, [action.payload.jobId]),
             };
 
         case 'UPDATE_PREFERENCES':

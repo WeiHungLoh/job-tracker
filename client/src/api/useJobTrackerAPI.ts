@@ -77,11 +77,17 @@ import type {
     DeleteAllOfferEvaluationsResponse,
     DeleteOfferEvaluationRequest,
     DeleteOfferEvaluationResponse,
+    DeleteCounterofferPlanRequest,
+    DeleteCounterofferPlanResponse,
     GetActiveOfferDecisionsRequest,
     GetArchivedOfferDecisionsRequest,
     GetOfferDecisionsResponse,
+    GetCounterofferPlanRequest,
+    GetCounterofferPlanResponse,
     SaveOfferEvaluationAPIRequest,
     SaveOfferEvaluationResponse,
+    SaveCounterofferPlanAPIRequest,
+    SaveCounterofferPlanResponse,
 } from '../pages/offerDecision/models';
 import { endpointConfig } from './endpointConfig';
 import { makeAuthenticatedJobTrackerAPIRequest, makeJobTrackerAPIRequest } from './api';
@@ -355,6 +361,27 @@ export const useJobTrackerAPI = () => {
             >(null, endpointConfig.offerDecision.deleteAllArchivedEvaluations);
         };
 
+        const getCounterofferPlan = async (req: GetCounterofferPlanRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<GetCounterofferPlanRequest, GetCounterofferPlanResponse>(
+                req,
+                endpointConfig.offerDecision.getCounterofferPlan
+            );
+        };
+
+        const saveCounterofferPlan = async (req: SaveCounterofferPlanAPIRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                SaveCounterofferPlanAPIRequest,
+                SaveCounterofferPlanResponse
+            >(req, endpointConfig.offerDecision.saveCounterofferPlan);
+        };
+
+        const deleteCounterofferPlan = async (req: DeleteCounterofferPlanRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                DeleteCounterofferPlanRequest,
+                DeleteCounterofferPlanResponse
+            >(req, endpointConfig.offerDecision.deleteCounterofferPlan);
+        };
+
         const getUserPreferences = async () => {
             return await makeAuthenticatedJobTrackerAPIRequest<GetUserPreferencesRequest, GetUserPreferencesResponse>(
                 null,
@@ -414,6 +441,9 @@ export const useJobTrackerAPI = () => {
                 getArchived: getArchivedOfferDecisions,
                 saveEvaluation: saveOfferEvaluation,
                 deleteEvaluation: deleteOfferEvaluation,
+                getCounterofferPlan,
+                saveCounterofferPlan,
+                deleteCounterofferPlan,
             },
             userPreferences: {
                 get: getUserPreferences,

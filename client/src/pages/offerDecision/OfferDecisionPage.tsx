@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import EmptyState from '../../components/emptyState/EmptyState';
 import OfferDecisionWorkspace from './OfferDecisionWorkspace';
-import type { OfferDecisionFilter, OfferDecisionWorkspaceData, SaveOfferEvaluationRequest } from './models';
+import type {
+    OfferDecisionFilter,
+    OfferDecisionWorkspaceData,
+    SaveCounterofferPlanRequest,
+    SaveOfferEvaluationRequest,
+} from './models';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
 import { useToast } from '../../components/toast/ToastProvider';
@@ -167,7 +172,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
                             return [application];
                         }
                         return !archived && application.job_status === 'Offer'
-                            ? [{ ...application, evaluation: null }]
+                            ? [{ ...application, evaluation: null, has_counteroffer_plan: false }]
                             : [];
                     }),
                 };
@@ -215,6 +220,35 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
         }
     };
 
+    const setCounterofferPlanAvailability = (jobId: number, hasCounterofferPlan: boolean) => {
+        setData((current) => {
+            if (!current) {
+                return current;
+            }
+            return {
+                applications: current.applications.map((application) =>
+                    application.job_id === jobId
+                        ? { ...application, has_counteroffer_plan: hasCounterofferPlan }
+                        : application
+                ),
+            };
+        });
+    };
+
+    const getCounterofferPlan = async (jobId: number) => {
+        return await api.offerDecision.getCounterofferPlan({ jobId });
+    };
+
+    const saveCounterofferPlan = async (jobId: number, request: SaveCounterofferPlanRequest) => {
+        await api.offerDecision.saveCounterofferPlan({ jobId, ...request });
+        setCounterofferPlanAvailability(jobId, true);
+    };
+
+    const deleteCounterofferPlan = async (jobId: number) => {
+        await api.offerDecision.deleteCounterofferPlan({ jobId });
+        setCounterofferPlanAvailability(jobId, false);
+    };
+
     if (!isLoading && (loadFailed || !data)) {
         return (
             <EmptyState
@@ -232,10 +266,13 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             getDeleteAllEvaluationCount={getDeleteAllEvaluationCount}
             isFiltering={isFiltering}
             isLoading={isLoading}
+            onDeleteCounterofferPlan={deleteCounterofferPlan}
             onDelete={deleteEvaluation}
             onDeleteAll={deleteAllEvaluations}
             onFilterSelectionChange={handleFilterSelection}
+            onGetCounterofferPlan={getCounterofferPlan}
             onSave={archived ? undefined : saveEvaluation}
+            onSaveCounterofferPlan={saveCounterofferPlan}
             readOnly={archived}
         />
     );

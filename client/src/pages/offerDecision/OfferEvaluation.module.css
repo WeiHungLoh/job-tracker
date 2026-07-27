@@ -338,6 +338,53 @@
     margin-top: var(--spaceCard);
 }
 
+.cardActionDropdown {
+    width: min(250px, calc(100vw - 48px));
+}
+
+.cardActions .cardActionTrigger {
+    border: 1.5px solid var(--colorPrimary);
+    background: transparent;
+    color: var(--colorPrimary);
+}
+
+.cardActions .cardActionTrigger:not(:disabled):hover {
+    border-color: var(--colorPrimary);
+    background: var(--colorBtnSecondaryHoverBg);
+    color: var(--colorPrimary);
+}
+
+.cardActionOptions {
+    display: flex;
+    flex-direction: column;
+}
+
+.cardActionOptions .cardActionOption {
+    display: flex;
+    width: 100%;
+    min-height: 38px;
+    padding: var(--spaceControl) var(--spaceCompact);
+    align-items: center;
+    justify-content: flex-start;
+    border: 0;
+    border-radius: var(--radiusMenuItem);
+    background: transparent;
+    color: var(--colorText);
+    font-size: var(--fontSizeControl);
+    font-weight: 400;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.cardActionOption:not(:disabled):hover {
+    background: var(--colorNavHoverBg);
+}
+
+.cardActionOption:focus-visible {
+    outline: 2px solid var(--colorControlFocusRing);
+    outline-offset: -2px;
+}
+
 @media (max-width: 768px) {
     .cardHeader h3 {
         font-size: 1.2rem;
@@ -348,5 +395,9 @@
     .detailsReview dd,
     .reviewValue dt {
         font-size: 0.9rem;
+    }
+
+    .cardActionOptions .cardActionOption {
+        min-height: 42px;
     }
 }

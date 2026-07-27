@@ -30,6 +30,7 @@ describe('demo reducer state', () => {
         expect(state.archivedApplications.length).toBeGreaterThanOrEqual(4);
         expect(state.archivedInterviews.length).toBeGreaterThanOrEqual(3);
         expect(Object.keys(state.offerEvaluations)).toHaveLength(3);
+        expect(Object.keys(state.counterofferPlans)).toEqual(['111']);
         expect(JOB_STATUSES.every((status) => coveredStatuses.has(status))).toBe(true);
         expect(earliestApplicationAgeDays).toBeGreaterThanOrEqual(49);
 
@@ -74,6 +75,12 @@ describe('demo reducer state', () => {
         expect(
             activeWorkspace.applications.find((application) => application.job_id === 111)?.evaluation
         ).not.toBeNull();
+        expect(
+            activeWorkspace.applications.find((application) => application.job_id === 111)?.has_counteroffer_plan
+        ).toBe(true);
+        expect(
+            activeWorkspace.applications.find((application) => application.job_id === 112)?.has_counteroffer_plan
+        ).toBe(false);
         expect(activeWorkspace.applications.find((application) => application.job_id === 113)).toBeUndefined();
         expect(archivedWorkspace.applications.map((application) => application.job_id)).toEqual([204]);
         expect(archivedWorkspace.applications[0].evaluation).toBe(state.offerEvaluations[204]);
@@ -136,9 +143,32 @@ describe('demo reducer state', () => {
         const updated = demoReducer(state, { type: 'DELETE_OFFER_EVALUATION', payload: { jobId: 111 } });
 
         expect(updated.offerEvaluations[111]).toBeUndefined();
+        expect(updated.counterofferPlans[111]).toBeUndefined();
         expect(updated.applications.find((application) => application.job_id === 111)).toBe(
             state.applications.find((application) => application.job_id === 111)
         );
+    });
+
+    test('saves and deletes a demo counteroffer plan through the shared state model', () => {
+        const state = createDemoInitialState(fixedNow);
+        const request = {
+            ...state.counterofferPlans[111],
+            monthly_base_salary: 12000,
+        };
+        const saved = demoReducer(state, {
+            type: 'SAVE_COUNTEROFFER_PLAN',
+            payload: { jobId: 112, request },
+        });
+
+        expect(saved.counterofferPlans[112]).toEqual(request);
+        expect(saved.counterofferPlans[112]).not.toBe(request);
+        expect(selectOfferDecisionWorkspace(saved).applications.find((item) => item.job_id === 112)).toMatchObject({
+            has_counteroffer_plan: true,
+        });
+
+        const deleted = demoReducer(saved, { type: 'DELETE_COUNTEROFFER_PLAN', payload: { jobId: 112 } });
+        expect(deleted.counterofferPlans[112]).toBeUndefined();
+        expect(deleted.offerEvaluations[112]).toBe(state.offerEvaluations[112]);
     });
 
     test('bulk deletes offer evaluations only from the selected active or archived collection', () => {
@@ -153,6 +183,7 @@ describe('demo reducer state', () => {
         });
 
         expect(activeDeleted.offerEvaluations[111]).toBeUndefined();
+        expect(activeDeleted.counterofferPlans[111]).toBeUndefined();
         expect(activeDeleted.offerEvaluations[112]).toBeUndefined();
         expect(activeDeleted.offerEvaluations[204]).toBe(state.offerEvaluations[204]);
         expect(archivedDeleted.offerEvaluations[204]).toBeUndefined();
@@ -187,6 +218,7 @@ describe('demo reducer state', () => {
             payload: { archivedJobId: 204 },
         });
         expect(activeDeleted.offerEvaluations[111]).toBeUndefined();
+        expect(activeDeleted.counterofferPlans[111]).toBeUndefined();
         expect(archivedDeleted.offerEvaluations[204]).toBeUndefined();
     });
 

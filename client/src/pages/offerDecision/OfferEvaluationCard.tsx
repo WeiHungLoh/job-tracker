@@ -1,4 +1,5 @@
 import PrimaryButton from '../../components/button/PrimaryButton';
+import ControlDropdown from '../../components/activityControls/ControlDropdown';
 import formatDate from '../../helper/dateFormatter';
 import ApplicationStatusBadge from '../application/ApplicationStatusBadge';
 import { OFFER_DECISION_CATEGORIES } from './offerDecisionConfig';
@@ -19,6 +20,10 @@ type OfferEvaluationCardProps = {
     allowDelete: boolean;
     allowEdit: boolean;
     application: OfferDecisionApplication;
+    counterofferAction?: {
+        hasPlan: boolean;
+        onOpen: () => void;
+    };
     draft: OfferEvaluation | undefined;
     errors: OfferEvaluationFormErrors;
     expanded: boolean;
@@ -108,10 +113,90 @@ const OfferDetailsReview = ({ details }: { details: OfferDetails }) => (
     </div>
 );
 
+const OfferEvaluationActionsMenu = ({
+    allowEdit,
+    application,
+    counterofferAction,
+    onEdit,
+}: Pick<OfferEvaluationCardProps, 'allowEdit' | 'application' | 'counterofferAction' | 'onEdit'>) => {
+    if (!allowEdit && !counterofferAction) {
+        return null;
+    }
+
+    const editAction = (
+        <PrimaryButton
+            aria-label={`Edit evaluation for ${application.company_name}`}
+            onClick={onEdit}
+            type='button'
+            variant='secondary'
+        >
+            Edit evaluation
+        </PrimaryButton>
+    );
+    const counterofferLabel = counterofferAction?.hasPlan ? 'View counteroffer plan' : 'Plan counteroffer';
+    const counterofferButton = counterofferAction ? (
+        <PrimaryButton
+            aria-label={`${counterofferLabel} for ${application.company_name}`}
+            onClick={counterofferAction.onOpen}
+            type='button'
+            variant='secondary'
+        >
+            {counterofferLabel}
+        </PrimaryButton>
+    ) : null;
+
+    if (!allowEdit) {
+        return counterofferButton;
+    }
+
+    if (!counterofferAction) {
+        return editAction;
+    }
+
+    const menuLabel = `More actions for ${application.company_name}`;
+    return (
+        <ControlDropdown
+            closeOnSelect
+            dropdownAriaLabel={menuLabel}
+            dropdownClassName={styles.cardActionDropdown}
+            dropdownRole='menu'
+            id={`offer-evaluation-${application.job_id}-more`}
+            label='More...'
+            triggerAriaLabel={menuLabel}
+            triggerClassName={styles.cardActionTrigger}
+            triggerStyle='activity'
+        >
+            <div className={styles.cardActionOptions}>
+                <PrimaryButton
+                    aria-label={`Edit evaluation for ${application.company_name}`}
+                    className={styles.cardActionOption}
+                    onClick={onEdit}
+                    role='menuitem'
+                    type='button'
+                    variant='secondary'
+                >
+                    Edit evaluation
+                </PrimaryButton>
+                <PrimaryButton
+                    aria-label={`${counterofferLabel} for ${application.company_name}`}
+                    className={styles.cardActionOption}
+                    onClick={counterofferAction.onOpen}
+                    role='menuitem'
+                    type='button'
+                    variant='secondary'
+                >
+                    {counterofferLabel}
+                </PrimaryButton>
+            </div>
+        </ControlDropdown>
+    );
+};
+
 const OfferEvaluationCard = ({
     allowDelete,
     allowEdit,
     application,
+    counterofferAction,
     draft,
     errors,
     expanded,
@@ -191,16 +276,12 @@ const OfferEvaluationCard = ({
                                 >
                                     {expanded ? 'Hide details' : 'Show details'}
                                 </PrimaryButton>
-                                {allowEdit && (
-                                    <PrimaryButton
-                                        aria-label={`Edit evaluation for ${application.company_name}`}
-                                        onClick={onEdit}
-                                        type='button'
-                                        variant='compact'
-                                    >
-                                        Edit evaluation
-                                    </PrimaryButton>
-                                )}
+                                <OfferEvaluationActionsMenu
+                                    allowEdit={allowEdit}
+                                    application={application}
+                                    counterofferAction={savedEvaluation ? counterofferAction : undefined}
+                                    onEdit={onEdit}
+                                />
                                 {savedEvaluation && allowDelete && onDelete && (
                                     <PrimaryButton
                                         aria-label={`Delete evaluation for ${application.company_name}`}
@@ -209,7 +290,7 @@ const OfferEvaluationCard = ({
                                         type='button'
                                         variant='destructive'
                                     >
-                                        Delete evaluation
+                                        Delete
                                     </PrimaryButton>
                                 )}
                             </div>

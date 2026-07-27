@@ -68,6 +68,23 @@ describe('makeJobTrackerAPIRequest', () => {
                 verb: 'DELETE',
                 fieldMap: { jobId: 'path' },
             },
+            getCounterofferPlan: {
+                url: '/offer-decisions/:jobId/counteroffer-plan',
+                verb: 'GET',
+                fieldMap: { jobId: 'path' },
+                retry: true,
+            },
+            saveCounterofferPlan: {
+                url: '/offer-decisions/:jobId/counteroffer-plan',
+                verb: 'PUT',
+                fieldMap: { jobId: 'path' },
+                retry: true,
+            },
+            deleteCounterofferPlan: {
+                url: '/offer-decisions/:jobId/counteroffer-plan',
+                verb: 'DELETE',
+                fieldMap: { jobId: 'path' },
+            },
         });
     });
 

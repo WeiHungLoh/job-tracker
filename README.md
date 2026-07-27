@@ -28,6 +28,7 @@ Job Tracker is a full-stack PERN application for managing job applications, inte
 -   Switch between list and Kanban board views with drag-and-drop status updates
 -   Track interviews linked to job applications
 -   Compare current offers using required decision timing and monthly salary, practical terms, four fit ratings, and live scores
+-   Build and save one focused Counteroffer Plan by comparing the current offer with an Ideal offer, live fit changes, and competing-offer context
 -   Try different priorities to see which active offer fits best and whether a small change affects the result
 -   Keep saved evaluations as read-only history after status changes, or delete an active evaluation without deleting its application
 -   Review or delete archived offer evaluations while keeping archived records read-only

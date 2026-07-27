@@ -42,6 +42,7 @@ export type OfferDecisionApplication = {
     job_status: JobStatus;
     application_date: string;
     evaluation: OfferEvaluation | null;
+    has_counteroffer_plan?: boolean;
 };
 
 export type OfferDecisionWorkspaceData = {
@@ -109,9 +110,51 @@ export type OfferDecisionWorkspaceProps = {
     getDeleteAllEvaluationCount?: () => Promise<number>;
     isFiltering?: boolean;
     isLoading?: boolean;
+    onDeleteCounterofferPlan?: (jobId: number) => Promise<void>;
     onDelete?: (jobId: number) => Promise<void>;
     onDeleteAll?: () => Promise<void>;
     onFilterSelectionChange?: (filters: OfferDecisionFilter[]) => Promise<boolean>;
+    onGetCounterofferPlan?: (jobId: number) => Promise<CounterofferPlan>;
     onSave?: (jobId: number, request: SaveOfferEvaluationRequest) => Promise<void>;
+    onSaveCounterofferPlan?: (jobId: number, request: SaveCounterofferPlanRequest) => Promise<void>;
     readOnly: boolean;
 };
+
+export type CounterofferPlan = {
+    monthly_base_salary: number;
+    bonus: string;
+    annual_leave_days: number | null;
+    work_arrangement: OfferWorkArrangement;
+    ratings: OfferDecisionValues;
+};
+
+export type SaveCounterofferPlanRequest = CounterofferPlan;
+
+export type CounterofferPlanErrors = {
+    annual_leave_days?: string;
+    bonus?: string;
+    fit_rating?: string;
+    monthly_base_salary?: string;
+    plan?: string;
+    ratings?: string;
+    work_arrangement?: string;
+};
+
+export type ValidCounterofferPlan = {
+    isValid: true;
+    request: SaveCounterofferPlanRequest;
+};
+
+export type InvalidCounterofferPlan = {
+    isValid: false;
+    errors: CounterofferPlanErrors;
+};
+
+export type CounterofferPlanValidationResult = ValidCounterofferPlan | InvalidCounterofferPlan;
+
+export type GetCounterofferPlanRequest = { jobId: number };
+export type GetCounterofferPlanResponse = CounterofferPlan;
+export type SaveCounterofferPlanAPIRequest = SaveCounterofferPlanRequest & { jobId: number };
+export type SaveCounterofferPlanResponse = null;
+export type DeleteCounterofferPlanRequest = { jobId: number };
+export type DeleteCounterofferPlanResponse = null;

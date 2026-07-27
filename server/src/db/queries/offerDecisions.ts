@@ -1,4 +1,6 @@
 import type {
+    CounterofferPlan,
+    CounterofferPlanInput,
     JobStatus,
     OfferDecisionFilter,
     OfferDecisionApplication,
@@ -7,6 +9,7 @@ import type {
     OfferEvaluation,
     OfferEvaluationInput,
 } from '../models.js';
+import { OFFER_DECISION_VALUE_MAX } from '../../config/validation.js';
 import { pool } from '../connectDB.js';
 
 type OfferDecisionRow = {
@@ -28,6 +31,7 @@ type OfferDecisionRow = {
     decision_deadline: Date | string | null;
     pros: string | null;
     concerns: string | null;
+    has_counteroffer_plan: boolean;
 };
 
 type LockedApplicationRow = {
@@ -36,7 +40,32 @@ type LockedApplicationRow = {
     application_date: Date | string;
 };
 
+type CounterofferPlanRow = {
+    monthly_base_salary: number;
+    bonus: string;
+    annual_leave_days: number | null;
+    work_arrangement: CounterofferPlanInput['work_arrangement'];
+    career_growth_rating: number;
+    company_culture_fit_rating: number;
+    work_life_balance_rating: number;
+    compensation_rating: number;
+};
+
+type LockedCounterofferEvaluationRow = CounterofferPlanRow & {
+    job_id: number;
+    job_status: JobStatus;
+    is_archived: boolean;
+    decision_deadline: Date | string;
+};
+
 export type SaveOfferEvaluationResult = 'saved' | 'application_unavailable' | 'deadline_before_application';
+export type SaveCounterofferPlanResult =
+    | 'saved'
+    | 'evaluation_not_found'
+    | 'application_ineligible'
+    | 'decision_window_expired'
+    | 'plan_unchanged'
+    | 'fit_below_current';
 
 const toISOString = (value: Date | string): string => (value instanceof Date ? value.toISOString() : value);
 
@@ -73,6 +102,20 @@ const toApplication = (row: OfferDecisionRow): OfferDecisionApplication => ({
     job_status: row.job_status,
     application_date: toISOString(row.application_date),
     evaluation: toEvaluation(row),
+    has_counteroffer_plan: row.has_counteroffer_plan,
+});
+
+const toCounterofferPlan = (row: CounterofferPlanRow): CounterofferPlan => ({
+    monthly_base_salary: row.monthly_base_salary,
+    bonus: row.bonus,
+    annual_leave_days: row.annual_leave_days,
+    work_arrangement: row.work_arrangement,
+    ratings: {
+        career_growth: Number(row.career_growth_rating),
+        company_culture_fit: Number(row.company_culture_fit_rating),
+        work_life_balance: Number(row.work_life_balance_rating),
+        compensation: Number(row.compensation_rating),
+    },
 });
 
 export const getOfferDecisionWorkspace = async (
@@ -99,7 +142,13 @@ export const getOfferDecisionWorkspace = async (
             evaluations.work_arrangement,
             evaluations.decision_deadline,
             evaluations.pros,
-            evaluations.concerns
+            evaluations.concerns,
+            EXISTS (
+                SELECT 1
+                FROM offer_counteroffer_plans AS counteroffers
+                WHERE counteroffers.job_id = applications.job_id
+                    AND counteroffers.user_id = applications.user_id
+            ) AS has_counteroffer_plan
         FROM job_applications AS applications
         LEFT JOIN offer_evaluations AS evaluations
             ON evaluations.job_id = applications.job_id
@@ -153,6 +202,183 @@ export const getOfferDecisionWorkspace = async (
     );
 
     return { applications: result.rows.map(toApplication) };
+};
+
+export const getCounterofferPlan = async (userId: number, jobId: number): Promise<CounterofferPlan | null> => {
+    const result = await pool.query<CounterofferPlanRow>(
+        `SELECT
+            plans.monthly_base_salary,
+            plans.bonus,
+            plans.annual_leave_days,
+            plans.work_arrangement,
+            plans.career_growth_rating,
+            plans.company_culture_fit_rating,
+            plans.work_life_balance_rating,
+            plans.compensation_rating
+        FROM offer_counteroffer_plans AS plans
+        WHERE plans.user_id = $1
+            AND plans.job_id = $2`,
+        [userId, jobId]
+    );
+
+    return result.rows[0] ? toCounterofferPlan(result.rows[0]) : null;
+};
+
+const calculateOfferDecisionScore = (ratings: OfferDecisionInputRatings): number => {
+    const total =
+        ratings.career_growth + ratings.company_culture_fit + ratings.work_life_balance + ratings.compensation;
+    return Math.round((total / (4 * OFFER_DECISION_VALUE_MAX)) * 100);
+};
+
+type OfferDecisionInputRatings = CounterofferPlanInput['ratings'];
+
+const ratingsAreEqual = (first: OfferDecisionInputRatings, second: OfferDecisionInputRatings): boolean =>
+    first.career_growth === second.career_growth &&
+    first.company_culture_fit === second.company_culture_fit &&
+    first.work_life_balance === second.work_life_balance &&
+    first.compensation === second.compensation;
+
+const planMatchesCurrentOffer = (plan: CounterofferPlanInput, currentOffer: LockedCounterofferEvaluationRow): boolean =>
+    plan.monthly_base_salary === currentOffer.monthly_base_salary &&
+    plan.bonus === currentOffer.bonus &&
+    plan.annual_leave_days === currentOffer.annual_leave_days &&
+    plan.work_arrangement === currentOffer.work_arrangement &&
+    ratingsAreEqual(plan.ratings, {
+        career_growth: Number(currentOffer.career_growth_rating),
+        company_culture_fit: Number(currentOffer.company_culture_fit_rating),
+        work_life_balance: Number(currentOffer.work_life_balance_rating),
+        compensation: Number(currentOffer.compensation_rating),
+    });
+
+const upsertCounterofferPlan = async (
+    query: (sql: string, values?: unknown[]) => Promise<unknown>,
+    userId: number,
+    jobId: number,
+    plan: CounterofferPlanInput
+): Promise<void> => {
+    await query(
+        `INSERT INTO offer_counteroffer_plans (
+            job_id,
+            user_id,
+            monthly_base_salary,
+            bonus,
+            annual_leave_days,
+            work_arrangement,
+            career_growth_rating,
+            company_culture_fit_rating,
+            work_life_balance_rating,
+            compensation_rating
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+        )
+        ON CONFLICT (job_id, user_id) DO UPDATE SET
+            monthly_base_salary = EXCLUDED.monthly_base_salary,
+            bonus = EXCLUDED.bonus,
+            annual_leave_days = EXCLUDED.annual_leave_days,
+            work_arrangement = EXCLUDED.work_arrangement,
+            career_growth_rating = EXCLUDED.career_growth_rating,
+            company_culture_fit_rating = EXCLUDED.company_culture_fit_rating,
+            work_life_balance_rating = EXCLUDED.work_life_balance_rating,
+            compensation_rating = EXCLUDED.compensation_rating,
+            updated_at = CURRENT_TIMESTAMP`,
+        [
+            jobId,
+            userId,
+            plan.monthly_base_salary,
+            plan.bonus,
+            plan.annual_leave_days,
+            plan.work_arrangement,
+            plan.ratings.career_growth,
+            plan.ratings.company_culture_fit,
+            plan.ratings.work_life_balance,
+            plan.ratings.compensation,
+        ]
+    );
+};
+
+export const saveCounterofferPlan = async (
+    userId: number,
+    jobId: number,
+    request: CounterofferPlanInput
+): Promise<SaveCounterofferPlanResult> => {
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+        const evaluationResult = await client.query<LockedCounterofferEvaluationRow>(
+            `SELECT
+                applications.job_id,
+                applications.job_status,
+                applications.is_archived,
+                evaluations.decision_deadline,
+                evaluations.monthly_base_salary,
+                evaluations.bonus,
+                evaluations.annual_leave_days,
+                evaluations.work_arrangement,
+                evaluations.career_growth_rating,
+                evaluations.company_culture_fit_rating,
+                evaluations.work_life_balance_rating,
+                evaluations.compensation_rating
+            FROM job_applications AS applications
+            JOIN offer_evaluations AS evaluations
+                ON evaluations.job_id = applications.job_id
+                AND evaluations.user_id = applications.user_id
+            WHERE applications.user_id = $1
+                AND applications.job_id = $2
+            FOR UPDATE OF applications, evaluations`,
+            [userId, jobId]
+        );
+        const currentOffer = evaluationResult.rows[0];
+
+        if (!currentOffer) {
+            await client.query('ROLLBACK');
+            return 'evaluation_not_found';
+        }
+        if (currentOffer.is_archived || currentOffer.job_status !== 'Offer') {
+            await client.query('ROLLBACK');
+            return 'application_ineligible';
+        }
+        if (new Date(currentOffer.decision_deadline).getTime() < Date.now()) {
+            await client.query('ROLLBACK');
+            return 'decision_window_expired';
+        }
+        if (planMatchesCurrentOffer(request, currentOffer)) {
+            await client.query('ROLLBACK');
+            return 'plan_unchanged';
+        }
+
+        const currentFitRating = calculateOfferDecisionScore({
+            career_growth: Number(currentOffer.career_growth_rating),
+            company_culture_fit: Number(currentOffer.company_culture_fit_rating),
+            work_life_balance: Number(currentOffer.work_life_balance_rating),
+            compensation: Number(currentOffer.compensation_rating),
+        });
+        if (calculateOfferDecisionScore(request.ratings) < currentFitRating) {
+            await client.query('ROLLBACK');
+            return 'fit_below_current';
+        }
+
+        await upsertCounterofferPlan(client.query.bind(client), userId, jobId, request);
+        await client.query('COMMIT');
+        return 'saved';
+    } catch (error: unknown) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const deleteCounterofferPlan = async (userId: number, jobId: number): Promise<boolean> => {
+    const result = await pool.query(
+        `DELETE FROM offer_counteroffer_plans
+        WHERE user_id = $1
+            AND job_id = $2
+        RETURNING job_id`,
+        [userId, jobId]
+    );
+
+    return (result.rowCount ?? 0) > 0;
 };
 
 const upsertOfferEvaluation = async (

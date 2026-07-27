@@ -37,7 +37,7 @@ const FollowUpDraftDialog = ({ draft, onClose }: FollowUpDraftDialogProps) => {
             {draft && (
                 <>
                     <DialogTitle>{draft.title}</DialogTitle>
-                    <DialogContent className={styles.content} dividers>
+                    <DialogContent className={styles.content}>
                         <section className={styles.section}>
                             <h3 className={styles.label} id={subjectLabelId}>
                                 Subject
@@ -54,10 +54,6 @@ const FollowUpDraftDialog = ({ draft, onClose }: FollowUpDraftDialogProps) => {
                                 {draft.message}
                             </p>
                         </section>
-                        <p className={styles.note}>
-                            Replace any bracketed placeholders before sending. Job Tracker will not send or save this
-                            message.
-                        </p>
                     </DialogContent>
                     <DialogActions className={styles.actions}>
                         <Button variant='outlined' onClick={onClose}>

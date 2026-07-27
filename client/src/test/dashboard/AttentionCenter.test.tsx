@@ -180,11 +180,6 @@ describe('AttentionCenter', () => {
         expect(screen.getByRole('dialog', { name: 'Draft application follow-up' })).toBeInTheDocument();
         expect(screen.getByText('Follow-up on my Role 1 application at Company 1')).toBeInTheDocument();
         expect(screen.getByText(/^Dear Hiring Team,/)).toBeInTheDocument();
-        expect(
-            screen.getByText(
-                'Replace any bracketed placeholders before sending. Job Tracker will not send or save this message.'
-            )
-        ).toBeInTheDocument();
         expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
         expect(document.querySelector('[contenteditable="true"]')).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();

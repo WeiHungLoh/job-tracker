@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { useDemo } from '../context/DemoContext';
 import OfferDecisionWorkspace from '../../offerDecision/OfferDecisionWorkspace';
-import type { SaveOfferEvaluationRequest } from '../../offerDecision/models';
+import type { SaveCounterofferPlanRequest, SaveOfferEvaluationRequest } from '../../offerDecision/models';
 import { selectArchivedOfferDecisionWorkspace, selectOfferDecisionWorkspace } from '../state/demoSelectors';
 import { useToast } from '../../../components/toast/ToastProvider';
+import { JobTrackerAPIError } from '../../../api/models';
 
 type DemoOfferDecisionPageProps = {
     archived: boolean;
@@ -37,12 +38,31 @@ const DemoOfferDecisionPage = ({ archived }: DemoOfferDecisionPageProps) => {
         showSuccessToast(archived ? 'Archived offer evaluations deleted.' : 'Active offer evaluations deleted.');
     };
 
+    const getCounterofferPlan = async (jobId: number) => {
+        const plan = state.counterofferPlans[jobId];
+        if (!plan) {
+            throw new JobTrackerAPIError('Counteroffer plan was not found.', 404);
+        }
+        return { ...plan, ratings: { ...plan.ratings } };
+    };
+
+    const saveCounterofferPlan = async (jobId: number, request: SaveCounterofferPlanRequest) => {
+        dispatch({ type: 'SAVE_COUNTEROFFER_PLAN', payload: { jobId, request } });
+    };
+
+    const deleteCounterofferPlan = async (jobId: number) => {
+        dispatch({ type: 'DELETE_COUNTEROFFER_PLAN', payload: { jobId } });
+    };
+
     return (
         <OfferDecisionWorkspace
             data={data}
+            onDeleteCounterofferPlan={deleteCounterofferPlan}
             onDelete={deleteEvaluation}
             onDeleteAll={deleteAllEvaluations}
+            onGetCounterofferPlan={getCounterofferPlan}
             onSave={archived ? undefined : saveEvaluation}
+            onSaveCounterofferPlan={saveCounterofferPlan}
             readOnly={archived}
         />
     );

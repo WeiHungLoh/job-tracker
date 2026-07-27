@@ -196,11 +196,22 @@ export type OfferDecisionApplication = {
     job_status: JobStatus;
     application_date: string;
     evaluation: OfferEvaluation | null;
+    has_counteroffer_plan: boolean;
 };
 
 export type OfferDecisionWorkspace = {
     applications: OfferDecisionApplication[];
 };
+
+export type CounterofferPlanInput = {
+    monthly_base_salary: number;
+    bonus: string;
+    annual_leave_days: number | null;
+    work_arrangement: OfferWorkArrangement;
+    ratings: OfferDecisionValues;
+};
+
+export type CounterofferPlan = CounterofferPlanInput;
 
 export type InterviewCollectionSummary = {
     interview_count: number;

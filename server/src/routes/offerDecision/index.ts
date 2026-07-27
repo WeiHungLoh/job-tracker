@@ -1,20 +1,28 @@
 import type {
     DeleteAllOfferEvaluationsResponse,
     DeleteOfferEvaluationResponse,
+    DeleteCounterofferPlanResponse,
+    GetCounterofferPlanResponse,
     GetOfferDecisionsQuery,
     GetOfferDecisionsResponse,
     SaveOfferEvaluationRequest,
     SaveOfferEvaluationResponse,
+    SaveCounterofferPlanRequest,
+    SaveCounterofferPlanResponse,
 } from './models.js';
 import type { Request, Response } from 'express';
 import {
     deleteAllOfferEvaluations,
+    deleteCounterofferPlan,
     deleteOfferEvaluation,
+    getCounterofferPlan,
     getOfferDecisionWorkspace,
     saveOfferEvaluation,
+    saveCounterofferPlan,
 } from '../../db/queries/offerDecisions.js';
-import { handleRouteError, sendError } from '../../http/responses.js';
+import { handleCodedRouteError, handleRouteError, sendCodedError, sendError } from '../../http/responses.js';
 import {
+    isSaveCounterofferPlanRequest,
     isSaveOfferEvaluationRequest,
     toOfferDecisionFilterQueryValues,
     toPositiveInteger,
@@ -85,6 +93,123 @@ router.get(
 
 router.delete('/', createDeleteAllHandler(false));
 router.delete('/archived', createDeleteAllHandler(true));
+
+router.get(
+    '/:jobId/counteroffer-plan',
+    async (
+        req: Request<{ jobId: string }, GetCounterofferPlanResponse>,
+        res: Response<GetCounterofferPlanResponse>
+    ): Promise<void> => {
+        const jobId = toPositiveInteger(req.params.jobId);
+        if (jobId === undefined) {
+            sendCodedError(res, 422, 'INVALID_APPLICATION_ID', 'Application ID is invalid.');
+            return;
+        }
+
+        try {
+            const plan = await getCounterofferPlan(req.user.id, jobId);
+            if (!plan) {
+                sendCodedError(res, 404, 'COUNTEROFFER_PLAN_NOT_FOUND', 'Counteroffer plan was not found.');
+                return;
+            }
+
+            res.status(200).json(plan);
+        } catch (error: unknown) {
+            handleCodedRouteError(res, error, 'COUNTEROFFER_DATABASE_FAILURE', 'Unable to load counteroffer plan.');
+        }
+    }
+);
+
+router.put(
+    '/:jobId/counteroffer-plan',
+    async (
+        req: Request<{ jobId: string }, SaveCounterofferPlanResponse, SaveCounterofferPlanRequest>,
+        res: Response<SaveCounterofferPlanResponse>
+    ): Promise<void> => {
+        const jobId = toPositiveInteger(req.params.jobId);
+        if (jobId === undefined) {
+            sendCodedError(res, 422, 'INVALID_APPLICATION_ID', 'Application ID is invalid.');
+            return;
+        }
+        if (!isSaveCounterofferPlanRequest(req.body)) {
+            sendCodedError(res, 422, 'INVALID_COUNTEROFFER_PLAN', 'Counteroffer plan fields are missing or invalid.');
+            return;
+        }
+
+        try {
+            const result = await saveCounterofferPlan(req.user.id, jobId, req.body);
+            if (result === 'evaluation_not_found') {
+                sendCodedError(res, 404, 'OFFER_EVALUATION_NOT_FOUND', 'Offer evaluation was not found.');
+                return;
+            }
+            if (result === 'application_ineligible') {
+                sendCodedError(
+                    res,
+                    409,
+                    'COUNTEROFFER_APPLICATION_INELIGIBLE',
+                    'Counteroffer plans can only be edited for active, non-archived applications with Offer status.'
+                );
+                return;
+            }
+            if (result === 'decision_window_expired') {
+                sendCodedError(
+                    res,
+                    409,
+                    'COUNTEROFFER_DECISION_WINDOW_EXPIRED',
+                    'The offer decision window has expired. This counteroffer plan is now read-only.'
+                );
+                return;
+            }
+            if (result === 'plan_unchanged') {
+                sendCodedError(
+                    res,
+                    422,
+                    'COUNTEROFFER_PLAN_UNCHANGED',
+                    'The Ideal offer must change at least one term or rating.'
+                );
+                return;
+            }
+            if (result === 'fit_below_current') {
+                sendCodedError(
+                    res,
+                    422,
+                    'COUNTEROFFER_FIT_BELOW_CURRENT',
+                    'The Ideal offer must have a fit rating at least as high as the current offer.'
+                );
+                return;
+            }
+
+            res.sendStatus(204);
+        } catch (error: unknown) {
+            handleCodedRouteError(res, error, 'COUNTEROFFER_DATABASE_FAILURE', 'Unable to save counteroffer plan.');
+        }
+    }
+);
+
+router.delete(
+    '/:jobId/counteroffer-plan',
+    async (
+        req: Request<{ jobId: string }, DeleteCounterofferPlanResponse>,
+        res: Response<DeleteCounterofferPlanResponse>
+    ): Promise<void> => {
+        const jobId = toPositiveInteger(req.params.jobId);
+        if (jobId === undefined) {
+            sendCodedError(res, 422, 'INVALID_APPLICATION_ID', 'Application ID is invalid.');
+            return;
+        }
+
+        try {
+            if (!(await deleteCounterofferPlan(req.user.id, jobId))) {
+                sendCodedError(res, 404, 'COUNTEROFFER_PLAN_NOT_FOUND', 'Counteroffer plan was not found.');
+                return;
+            }
+
+            res.sendStatus(204);
+        } catch (error: unknown) {
+            handleCodedRouteError(res, error, 'COUNTEROFFER_DATABASE_FAILURE', 'Unable to delete counteroffer plan.');
+        }
+    }
+);
 
 router.put(
     '/:jobId',

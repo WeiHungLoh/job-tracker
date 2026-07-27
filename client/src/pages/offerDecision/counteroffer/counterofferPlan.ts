@@ -1,0 +1,210 @@
+import {
+    OFFER_ANNUAL_LEAVE_DAYS_MAX,
+    OFFER_DETAILS_MAX_LENGTHS,
+    OFFER_MONTHLY_BASE_SALARY_MAX,
+    OFFER_WORK_ARRANGEMENTS,
+} from '../offerDecisionConfig';
+import { calculateOfferDecisionScore, isOfferDecisionValues } from '../offerEvaluation';
+import type {
+    CounterofferPlan,
+    CounterofferPlanErrors,
+    CounterofferPlanValidationResult,
+    OfferDecisionApplication,
+    OfferDecisionValues,
+    OfferEvaluation,
+} from '../models';
+
+export const isCounterofferPlanningEligible = (
+    application: OfferDecisionApplication,
+    readOnly: boolean,
+    now = Date.now()
+): boolean =>
+    !readOnly &&
+    application.job_status === 'Offer' &&
+    Boolean(application.evaluation) &&
+    new Date(application.evaluation?.details.decision_deadline ?? '').getTime() >= now;
+
+export const createCounterofferPlanFromEvaluation = (evaluation: OfferEvaluation): CounterofferPlan => ({
+    monthly_base_salary: evaluation.details.monthly_base_salary ?? 0,
+    bonus: evaluation.details.bonus,
+    annual_leave_days: evaluation.details.annual_leave_days,
+    work_arrangement: evaluation.details.work_arrangement,
+    ratings: { ...evaluation.ratings },
+});
+
+export const formatRatingDifference = (current: number, ideal: number): string => {
+    const difference = ideal - current;
+    if (difference === 0) {
+        return 'No change';
+    }
+
+    const unit = Math.abs(difference) === 1 ? 'rating point' : 'rating points';
+    return `${difference > 0 ? '+' : '−'}${Math.abs(difference)} ${unit}`;
+};
+
+export const formatFitRatingDifference = (current: number, ideal: number): string => {
+    const difference = ideal - current;
+    if (difference === 0) {
+        return 'No change';
+    }
+
+    return `${difference > 0 ? '+' : '−'}${Math.abs(difference)} percentage points`;
+};
+
+export const calculateCounterofferPlanResult = (currentEvaluation: OfferEvaluation, plan: CounterofferPlan) => {
+    const currentFitRating = calculateOfferDecisionScore(currentEvaluation.ratings);
+    const idealFitRating = calculateOfferDecisionScore(plan.ratings);
+    return {
+        currentFitRating,
+        idealFitRating,
+        difference: idealFitRating - currentFitRating,
+    };
+};
+
+const ratingsAreEqual = (first: OfferDecisionValues, second: OfferDecisionValues): boolean =>
+    first.career_growth === second.career_growth &&
+    first.company_culture_fit === second.company_culture_fit &&
+    first.work_life_balance === second.work_life_balance &&
+    first.compensation === second.compensation;
+
+export const counterofferPlanValuesAreEqual = (first: CounterofferPlan, second: CounterofferPlan): boolean =>
+    first.monthly_base_salary === second.monthly_base_salary &&
+    first.bonus === second.bonus &&
+    first.annual_leave_days === second.annual_leave_days &&
+    first.work_arrangement === second.work_arrangement &&
+    ratingsAreEqual(first.ratings, second.ratings);
+
+const planMatchesEvaluation = (plan: CounterofferPlan, evaluation: OfferEvaluation): boolean =>
+    plan.monthly_base_salary === evaluation.details.monthly_base_salary &&
+    plan.bonus === evaluation.details.bonus &&
+    plan.annual_leave_days === evaluation.details.annual_leave_days &&
+    plan.work_arrangement === evaluation.details.work_arrangement &&
+    ratingsAreEqual(plan.ratings, evaluation.ratings);
+
+export const validateCounterofferPlan = (
+    plan: CounterofferPlan,
+    currentEvaluation: OfferEvaluation
+): CounterofferPlanValidationResult => {
+    const normalizedPlan = {
+        ...plan,
+        bonus: plan.bonus.trim(),
+        ratings: { ...plan.ratings },
+    };
+    const errors: CounterofferPlanErrors = {};
+
+    if (
+        !Number.isInteger(normalizedPlan.monthly_base_salary) ||
+        normalizedPlan.monthly_base_salary < 0 ||
+        normalizedPlan.monthly_base_salary > OFFER_MONTHLY_BASE_SALARY_MAX
+    ) {
+        errors.monthly_base_salary = `Monthly base salary must be a whole number from 0 to ${OFFER_MONTHLY_BASE_SALARY_MAX}.`;
+    }
+    if (normalizedPlan.bonus.length > OFFER_DETAILS_MAX_LENGTHS.bonus) {
+        errors.bonus = `Bonus must be ${OFFER_DETAILS_MAX_LENGTHS.bonus} characters or fewer.`;
+    }
+    if (
+        normalizedPlan.annual_leave_days !== null &&
+        (!Number.isInteger(normalizedPlan.annual_leave_days) ||
+            normalizedPlan.annual_leave_days < 0 ||
+            normalizedPlan.annual_leave_days > OFFER_ANNUAL_LEAVE_DAYS_MAX)
+    ) {
+        errors.annual_leave_days = `Annual leave must be a whole number from 0 to ${OFFER_ANNUAL_LEAVE_DAYS_MAX}.`;
+    }
+    if (
+        normalizedPlan.work_arrangement !== '' &&
+        !OFFER_WORK_ARRANGEMENTS.some((arrangement) => arrangement === normalizedPlan.work_arrangement)
+    ) {
+        errors.work_arrangement = 'Select a valid work arrangement.';
+    }
+    if (!isOfferDecisionValues(normalizedPlan.ratings)) {
+        errors.ratings = 'Ratings must be whole numbers from 1 to 5.';
+    }
+
+    if (Object.keys(errors).length === 0 && planMatchesEvaluation(normalizedPlan, currentEvaluation)) {
+        errors.plan = 'Change at least one term or rating for the Ideal offer.';
+    }
+
+    const currentFitRating = calculateOfferDecisionScore(currentEvaluation.ratings);
+    if (!errors.ratings && calculateOfferDecisionScore(normalizedPlan.ratings) < currentFitRating) {
+        const idealFitRating = calculateOfferDecisionScore(normalizedPlan.ratings);
+        errors.fit_rating =
+            'Your Ideal offer has a lower fit rating than your current offer. ' +
+            'Adjust the ratings before saving. ' +
+            `Current offer: ${currentFitRating}%. Ideal offer: ${idealFitRating}%.`;
+    }
+
+    if (Object.keys(errors).length > 0) {
+        return { isValid: false, errors };
+    }
+    return { isValid: true, request: normalizedPlan };
+};
+
+const formatNameList = (names: string[]): string => {
+    if (names.length <= 1) {
+        return names[0] ?? '';
+    }
+    if (names.length === 2) {
+        return `${names[0]} and ${names[1]}`;
+    }
+    return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+};
+
+export const buildCounterofferConclusion = (
+    currentApplication: OfferDecisionApplication,
+    idealFitRating: number,
+    applications: OfferDecisionApplication[],
+    now = Date.now()
+): string => {
+    const evaluation = currentApplication.evaluation;
+    if (!evaluation) {
+        return '';
+    }
+
+    const currentFitRating = calculateOfferDecisionScore(evaluation.ratings);
+    if (idealFitRating === currentFitRating) {
+        return 'Your Ideal offer has the same fit rating as the current offer, with a different combination of terms and ratings.';
+    }
+
+    const otherOffers = applications
+        .filter(
+            (application) =>
+                application.job_id !== currentApplication.job_id &&
+                application.job_status === 'Offer' &&
+                Boolean(application.evaluation) &&
+                new Date(application.evaluation?.details.decision_deadline ?? '').getTime() >= now
+        )
+        .map((application) => ({
+            companyName: application.company_name,
+            fitRating: calculateOfferDecisionScore(application.evaluation!.ratings),
+        }));
+
+    if (otherOffers.length === 0) {
+        return (
+            `Your Ideal offer would change the fit rating from ${currentFitRating}% to ${idealFitRating}%. ` +
+            'Add another evaluated offer to compare them.'
+        );
+    }
+
+    const highestOtherFitRating = Math.max(...otherOffers.map((offer) => offer.fitRating));
+    if (idealFitRating > highestOtherFitRating) {
+        return `Your Ideal offer would have the highest fit rating among your currently evaluated offers at ${idealFitRating}%.`;
+    }
+    if (idealFitRating < highestOtherFitRating) {
+        const higherNames = otherOffers
+            .filter((offer) => offer.fitRating === highestOtherFitRating)
+            .map((offer) => offer.companyName);
+        const comparisonVerb = idealFitRating > currentFitRating ? 'improve' : 'change';
+        return (
+            `Your Ideal offer would ${comparisonVerb} the fit rating from ${currentFitRating}% to ${idealFitRating}%. ` +
+            `${formatNameList(higherNames)} would still have the higher fit rating at ${highestOtherFitRating}%.`
+        );
+    }
+
+    const tiedNames = otherOffers
+        .filter((offer) => offer.fitRating === idealFitRating)
+        .map((offer) => offer.companyName);
+    return (
+        `Your Ideal offer would give ${formatNameList([currentApplication.company_name, ...tiedNames])} ` +
+        `the same fit rating of ${idealFitRating}%.`
+    );
+};

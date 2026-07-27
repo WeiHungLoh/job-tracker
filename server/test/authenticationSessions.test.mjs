@@ -182,7 +182,7 @@ test('successful login stores one hashed refresh-token session before issuing un
         );
         assert.match(
             refreshCookieHeader,
-            /refresh_token=[^;]+; Max-Age=259200; Path=\/api\/authentication; Expires=[^;]+; HttpOnly; SameSite=Strict/
+            /refresh_token=[^;]+; Max-Age=604800; Path=\/api\/authentication; Expires=[^;]+; HttpOnly; SameSite=Strict/
         );
 
         const accessPayload = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
@@ -197,6 +197,7 @@ test('successful login stores one hashed refresh-token session before issuing un
         assert.equal(insertCall.values[2], hashRefreshToken(refreshToken));
         assert.notEqual(insertCall.values[2], refreshToken);
         assert.ok(insertCall.values[3] instanceof Date);
+        assert.ok(Math.abs(insertCall.values[3].getTime() - (Date.now() + 7 * 24 * 60 * 60 * 1000)) < 1500);
         assert.ok(Math.abs(insertCall.values[3].getTime() - refreshPayload.exp * 1000) < 1500);
     } finally {
         pool.query = originalQuery;

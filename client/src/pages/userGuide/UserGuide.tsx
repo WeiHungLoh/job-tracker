@@ -212,6 +212,26 @@ const guideSections: readonly UserGuideSection[] = [
                     fit rating, and reset when you close the tool. It is not available for expired, previous or archived
                     evaluations.
                 </p>
+                <h3>Plan a counteroffer</h3>
+                <p>
+                    For an active, non-expired offer with a saved evaluation, select <code>Plan counteroffer</code> on
+                    its card. The dialog shows the read-only Current offer first and one editable Ideal offer directly
+                    below it. The Ideal offer starts with the current terms and all four current ratings. Terms and
+                    ratings remain separate inputs: changing salary, bonus, leave or work arrangement does not change a
+                    rating automatically.
+                </p>
+                <p>
+                    The Ideal offer shows its equal-weight fit rating, the difference from the current offer and how it
+                    compares with your other active evaluated offers. Its rating comparison clearly separates Current,
+                    Ideal and Change values. Individual rating differences use rating points; Fit rating differences use
+                    percentage points. The Ideal offer must differ from the current offer and cannot have a lower
+                    overall Fit rating. It never alters the saved evaluation or application status.
+                </p>
+                <p>
+                    Saved plans remain available to review or delete after a deadline passes, the application moves to
+                    Accepted or Declined, or the application is archived. Editing is available again only while the
+                    offer is active, not archived and within its decision window.
+                </p>
                 <h3>Status changes, deletion and archive</h3>
                 <p>
                     While a saved evaluation exists, its application can only remain at Offer or move to Accepted or

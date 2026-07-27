@@ -1,0 +1,455 @@
+.dialogPaper {
+    max-height: min(94vh, 920px);
+    overflow: hidden;
+}
+
+.dialogContent {
+    display: flex;
+    min-width: 0;
+    padding: 0 var(--spaceSection) var(--spaceSection) !important;
+    color: var(--colorText);
+    flex-direction: column;
+}
+
+.description {
+    margin: var(--spaceControl) 0 var(--spaceSection);
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+    line-height: 1.5;
+}
+
+.applicationContext {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+    color: var(--colorText);
+    overflow-wrap: anywhere;
+}
+
+.applicationContext strong {
+    color: var(--colorText);
+    font-size: 1.5rem;
+    line-height: 1.35;
+}
+
+.applicationContext span {
+    color: var(--colorTextSecondary);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.planFlow,
+.currentOffer,
+.idealOffer {
+    display: grid;
+    min-width: 0;
+}
+
+.planFlow {
+    gap: var(--spaceControl);
+}
+
+.currentOffer,
+.idealOffer {
+    gap: var(--spaceCard);
+    padding: var(--spaceCard);
+    border: 1px solid var(--colorControlBorder);
+    border-radius: var(--radiusControl);
+    background-color: var(--colorCardBg);
+}
+
+.idealOffer {
+    border-color: var(--colorPrimary);
+}
+
+.sectionHeading {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spaceCard);
+}
+
+.sectionHeading h3 {
+    margin: 2px 0 0;
+    color: var(--colorText);
+    font-size: 1.2rem;
+}
+
+.sectionHeading p {
+    margin: 5px 0 0;
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+    line-height: 1.45;
+}
+
+.sectionEyebrow {
+    color: var(--colorPrimary);
+    font-size: var(--fontSizeMetadata);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.currentColumns,
+.idealColumns {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spaceCard);
+}
+
+.detailCard {
+    min-width: 0;
+    padding: var(--spaceCompact);
+    border: 1px solid var(--colorControlBorder);
+    border-radius: var(--radiusControl);
+    background-color: var(--colorControlMutedSurface);
+}
+
+.detailCard h4,
+.scenarioResult h4 {
+    margin: 0 0 var(--spaceCompact);
+    color: var(--colorPrimary);
+    font-size: var(--fontSizeControl);
+    line-height: 1.35;
+}
+
+.reviewGrid,
+.currentRatings {
+    display: grid;
+    min-width: 0;
+    margin: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spaceControl);
+}
+
+.reviewGrid > div,
+.currentRatings > div {
+    min-width: 0;
+    padding: var(--spaceControl);
+    border-radius: var(--radiusControl);
+    background-color: var(--colorCardBg);
+}
+
+.reviewGrid dt,
+.currentRatings dt {
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeMetadata);
+    font-weight: 700;
+}
+
+.reviewGrid dd,
+.currentRatings dd {
+    margin: 4px 0 0;
+    color: var(--colorText);
+    font-size: var(--fontSizeControl);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.currentRatings dd {
+    color: var(--colorPrimary);
+    font-size: 1rem;
+}
+
+.formGrid {
+    display: grid;
+    gap: var(--spaceCompact);
+}
+
+.field {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+    color: var(--colorLabel);
+    font-size: var(--fontSizeControl);
+    font-weight: 600;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: var(--spaceControl);
+    border: 1px solid var(--colorInputBorder);
+    border-radius: var(--radiusControl);
+    outline: none;
+    background-color: var(--colorInputBg);
+    color: var(--colorInputText);
+    font: inherit;
+}
+
+.field input[readonly] {
+    background-color: var(--colorControlMutedSurface);
+    color: var(--colorTextSecondary);
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: var(--colorPrimary);
+    outline: 3px solid var(--colorPrimaryFocusShadow);
+}
+
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'] {
+    border-color: var(--colorToastErrorAccent);
+}
+
+.fieldError {
+    display: block;
+    color: var(--colorToastErrorText);
+    font-size: var(--fontSizeCompactControl);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.ratingComparison {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spaceControl);
+}
+
+.ratingComparisonRow {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+    padding: var(--spaceControl);
+    border-radius: var(--radiusControl);
+    background-color: var(--colorCardBg);
+}
+
+.fitRatingTile {
+    grid-column: 1 / -1;
+}
+
+.ratingCardHeading {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+}
+
+.ratingFactor {
+    min-width: 0;
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeMetadata);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.idealRatingValue {
+    color: var(--colorPrimary);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.ratingChange {
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeCompactControl);
+    font-weight: 700;
+}
+
+.ratingChange[data-direction='positive'],
+.resultValues dd[data-direction='positive'] {
+    color: var(--colorToastSuccessText);
+}
+
+.ratingChange[data-direction='negative'],
+.resultValues dd[data-direction='negative'] {
+    color: var(--colorToastErrorText);
+}
+
+.ratingSlider {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    display: block;
+    grid-column: 1 / -1;
+    accent-color: var(--colorPrimary);
+}
+
+.ratingSlider:focus-visible {
+    border-radius: var(--radiusControl);
+    outline: 3px solid var(--colorPrimaryFocusShadow);
+    outline-offset: 2px;
+}
+
+.planError,
+.scenarioResult {
+    padding: var(--spaceCard);
+    border-radius: var(--radiusControl);
+}
+
+.planError {
+    border: 1px solid var(--colorToastErrorAccent);
+    background-color: var(--colorToastErrorBg);
+}
+
+.scenarioResult {
+    border: 1px solid var(--colorPrimary);
+    background-color: var(--colorStatIconBg);
+}
+
+.resultValues {
+    display: grid;
+    margin: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--spaceControl);
+}
+
+.resultValues > div {
+    min-width: 0;
+}
+
+.resultValues dt {
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeMetadata);
+    font-weight: 700;
+}
+
+.resultValues dd {
+    margin: 4px 0 0;
+    color: var(--colorText);
+    font-size: var(--fontSizeControl);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.scenarioResult > p {
+    margin: var(--spaceCompact) 0 0;
+    color: var(--colorText);
+    font-size: var(--fontSizeControl);
+    line-height: 1.5;
+}
+
+.focusTarget {
+    display: inline-block;
+    margin-top: var(--spaceControl);
+    color: var(--colorToastErrorText);
+    font-size: var(--fontSizeCompactControl);
+    font-weight: 700;
+}
+
+.focusTarget:focus {
+    border-radius: 4px;
+    outline: 3px solid var(--colorPrimaryFocusShadow);
+    outline-offset: 2px;
+}
+
+.loadingState,
+.loadError {
+    display: grid;
+    min-height: 220px;
+    place-content: center;
+    color: var(--colorTextSecondary);
+    text-align: center;
+}
+
+.loadError p {
+    margin: 0 0 var(--spaceCard);
+}
+
+.loadError > div {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spaceControl);
+}
+
+.actions {
+    flex-wrap: wrap;
+    padding: var(--spaceCompact) var(--spaceSection) !important;
+}
+
+.actionSpacer {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .dialogContent {
+        padding-right: var(--spaceCard) !important;
+        padding-left: var(--spaceCard) !important;
+    }
+
+    .currentColumns,
+    .idealColumns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sectionHeading {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 600px) {
+    .dialogPaper {
+        width: calc(100% - 16px);
+        max-height: calc(100dvh - 16px);
+        margin: 8px;
+    }
+
+    .description {
+        font-size: 0.9rem;
+    }
+
+    .applicationContext strong {
+        font-size: 1.2rem;
+    }
+
+    .applicationContext span {
+        font-size: 0.9rem;
+    }
+
+    .currentOffer,
+    .idealOffer {
+        padding: var(--spaceCompact);
+    }
+
+    .reviewGrid,
+    .currentRatings,
+    .resultValues {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ratingComparison {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .actions {
+        display: grid !important;
+        align-items: stretch;
+        gap: var(--spaceControl);
+        padding-right: var(--spaceCard) !important;
+        padding-left: var(--spaceCard) !important;
+    }
+
+    .actions[data-button-count='2'] {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .actions[data-button-count='3'] {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .actions > button {
+        width: 100%;
+        min-width: 0;
+        min-height: 36px;
+        box-sizing: border-box;
+        margin-left: 0 !important;
+        padding-right: var(--spaceControl);
+        padding-left: var(--spaceControl);
+        font-size: var(--fontSizeCompactControl);
+        white-space: nowrap;
+    }
+
+    .actionSpacer {
+        display: none;
+    }
+}

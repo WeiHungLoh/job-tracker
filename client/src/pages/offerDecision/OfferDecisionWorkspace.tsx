@@ -39,6 +39,8 @@ import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import { useToast } from '../../components/toast/ToastProvider';
 import { useUserPreferences } from '../../components/userPreferences/UserPreferencesProvider';
 import styles from './OfferDecisionWorkspace.module.css';
+import CounterofferPlanDialog from './counteroffer/CounterofferPlanDialog';
+import { isCounterofferPlanningEligible } from './counteroffer/counterofferPlan';
 
 type DraftEvaluations = Record<number, OfferEvaluation>;
 type EvaluationErrors = Record<number, OfferEvaluationFormErrors>;
@@ -104,10 +106,13 @@ const OfferDecisionWorkspace = ({
     getDeleteAllEvaluationCount,
     isFiltering = false,
     isLoading = false,
+    onDeleteCounterofferPlan,
     onDelete,
     onDeleteAll,
     onFilterSelectionChange,
+    onGetCounterofferPlan,
     onSave,
+    onSaveCounterofferPlan,
     readOnly,
 }: OfferDecisionWorkspaceProps) => {
     const confirm = useConfirm();
@@ -121,6 +126,8 @@ const OfferDecisionWorkspace = ({
     const [savingJobId, setSavingJobId] = useState<number>();
     const [deletingJobId, setDeletingJobId] = useState<number>();
     const [isDeletingAll, setIsDeletingAll] = useState(false);
+    const [counterofferPlanAvailability, setCounterofferPlanAvailability] = useState<Record<number, boolean>>({});
+    const [counterofferApplication, setCounterofferApplication] = useState<OfferDecisionApplication | null>(null);
     const deleteAllPendingRef = useRef(false);
 
     const groups = groupOfferDecisionApplications(data.applications);
@@ -301,43 +308,62 @@ const OfferDecisionWorkspace = ({
         allowEdit: boolean,
         expired: boolean,
         showExpiredBadge: boolean
-    ) => (
-        <OfferEvaluationCard
-            allowDelete={Boolean(onDelete) && !isDeletingAll}
-            allowEdit={allowEdit}
-            application={application}
-            draft={drafts[application.job_id]}
-            errors={errors[application.job_id] ?? {}}
-            expanded={expandedJobIds.includes(application.job_id)}
-            expired={showExpiredBadge && expired}
-            isDeleting={deletingJobId === application.job_id}
-            isSaving={savingJobId === application.job_id}
-            key={application.job_id}
-            onCancel={() => cancelEvaluation(application.job_id)}
-            onDelete={onDelete ? () => void handleDelete(application.job_id) : undefined}
-            onDetailsChange={(details, field) => {
-                updateEvaluation(application.job_id, (evaluation) => ({ ...evaluation, details }));
-                clearFieldError(application.job_id, field);
-            }}
-            onEdit={() => editEvaluation(application)}
-            onRatingChange={(category, value) => {
-                updateEvaluation(application.job_id, (evaluation) => ({
-                    ...evaluation,
-                    ratings: updateOfferDecisionValue(evaluation.ratings, category, value),
-                }));
-                clearFieldError(application.job_id, 'ratings');
-            }}
-            onSave={(badInput, refs) => void handleSave(application, badInput, refs)}
-            onStart={() => startEvaluation(application)}
-            onToggleExpanded={() =>
-                setExpandedJobIds((current) =>
-                    current.includes(application.job_id)
-                        ? current.filter((jobId) => jobId !== application.job_id)
-                        : [...current, application.job_id]
-                )
-            }
-        />
-    );
+    ) => {
+        const hasCounterofferPlan =
+            counterofferPlanAvailability[application.job_id] ?? Boolean(application.has_counteroffer_plan);
+        const canCreateCounterofferPlan = isCounterofferPlanningEligible(application, readOnly);
+        const canOpenCounterofferPlan =
+            Boolean(onGetCounterofferPlan) &&
+            Boolean(onDeleteCounterofferPlan) &&
+            Boolean(onSaveCounterofferPlan) &&
+            (hasCounterofferPlan || canCreateCounterofferPlan);
+
+        return (
+            <OfferEvaluationCard
+                allowDelete={Boolean(onDelete) && !isDeletingAll}
+                allowEdit={allowEdit}
+                application={application}
+                counterofferAction={
+                    canOpenCounterofferPlan
+                        ? {
+                              hasPlan: hasCounterofferPlan,
+                              onOpen: () => setCounterofferApplication(application),
+                          }
+                        : undefined
+                }
+                draft={drafts[application.job_id]}
+                errors={errors[application.job_id] ?? {}}
+                expanded={expandedJobIds.includes(application.job_id)}
+                expired={showExpiredBadge && expired}
+                isDeleting={deletingJobId === application.job_id}
+                isSaving={savingJobId === application.job_id}
+                key={application.job_id}
+                onCancel={() => cancelEvaluation(application.job_id)}
+                onDelete={onDelete ? () => void handleDelete(application.job_id) : undefined}
+                onDetailsChange={(details, field) => {
+                    updateEvaluation(application.job_id, (evaluation) => ({ ...evaluation, details }));
+                    clearFieldError(application.job_id, field);
+                }}
+                onEdit={() => editEvaluation(application)}
+                onRatingChange={(category, value) => {
+                    updateEvaluation(application.job_id, (evaluation) => ({
+                        ...evaluation,
+                        ratings: updateOfferDecisionValue(evaluation.ratings, category, value),
+                    }));
+                    clearFieldError(application.job_id, 'ratings');
+                }}
+                onSave={(badInput, refs) => void handleSave(application, badInput, refs)}
+                onStart={() => startEvaluation(application)}
+                onToggleExpanded={() =>
+                    setExpandedJobIds((current) =>
+                        current.includes(application.job_id)
+                            ? current.filter((jobId) => jobId !== application.job_id)
+                            : [...current, application.job_id]
+                    )
+                }
+            />
+        );
+    };
 
     const emptyState = createOfferDecisionEmptyState({
         filtersAreActive,
@@ -462,6 +488,27 @@ const OfferDecisionWorkspace = ({
                         />
                     )}
                 </>
+            )}
+            {counterofferApplication && onGetCounterofferPlan && onDeleteCounterofferPlan && onSaveCounterofferPlan && (
+                <CounterofferPlanDialog
+                    application={counterofferApplication}
+                    applications={data.applications}
+                    hasPlan={
+                        counterofferPlanAvailability[counterofferApplication.job_id] ??
+                        Boolean(counterofferApplication.has_counteroffer_plan)
+                    }
+                    onClose={() => setCounterofferApplication(null)}
+                    onDelete={onDeleteCounterofferPlan}
+                    onGet={onGetCounterofferPlan}
+                    onPlanAvailabilityChange={(jobId, hasCounterofferPlan) =>
+                        setCounterofferPlanAvailability((current) => ({
+                            ...current,
+                            [jobId]: hasCounterofferPlan,
+                        }))
+                    }
+                    onSave={onSaveCounterofferPlan}
+                    readOnly={readOnly}
+                />
             )}
         </main>
     );

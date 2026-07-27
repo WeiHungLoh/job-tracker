@@ -160,9 +160,9 @@ test('creates access and refresh tokens with the configured expiration times', (
     const refreshPayload = jwt.decode(refreshToken);
 
     assert.equal(accessPayload.exp - accessPayload.iat, 15 * 60);
-    assert.equal(refreshPayload.exp - refreshPayload.iat, 3 * 24 * 60 * 60);
+    assert.equal(refreshPayload.exp - refreshPayload.iat, 7 * 24 * 60 * 60);
     assert.equal(ACCESS_TOKEN_COOKIE_OPTIONS.maxAge, 15 * 60 * 1000);
-    assert.equal(REFRESH_TOKEN_COOKIE_OPTIONS.maxAge, 3 * 24 * 60 * 60 * 1000);
+    assert.equal(REFRESH_TOKEN_COOKIE_OPTIONS.maxAge, 7 * 24 * 60 * 60 * 1000);
     assert.equal(ACCESS_TOKEN_COOKIE_OPTIONS.sameSite, 'strict');
     assert.equal(REFRESH_TOKEN_COOKIE_OPTIONS.sameSite, 'strict');
     assert.equal(ACCESS_TOKEN_COOKIE_OPTIONS.path, '/api');
@@ -487,7 +487,7 @@ test('returns 401 when a protected route has no token', async () => {
 });
 
 test('protects active and archived offer decision routes', async () => {
-    for (const path of ['/offer-decisions', '/offer-decisions/archived']) {
+    for (const path of ['/offer-decisions', '/offer-decisions/archived', '/offer-decisions/1/counteroffer-plan']) {
         const response = await fetch(`${baseUrl}${path}`);
 
         assert.equal(response.status, 401);

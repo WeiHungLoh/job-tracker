@@ -103,6 +103,34 @@ const createTables = async (): Promise<void> => {
             ON DELETE CASCADE
     )`;
 
+    const createCounterofferPlanTable = `CREATE TABLE IF NOT EXISTS offer_counteroffer_plans (
+        job_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        monthly_base_salary INTEGER NOT NULL
+            CHECK (monthly_base_salary BETWEEN 0 AND ${OFFER_MONTHLY_BASE_SALARY_MAX}),
+        bonus TEXT NOT NULL DEFAULT ''
+            CHECK (CHAR_LENGTH(bonus) <= ${OFFER_DETAILS_MAX_LENGTHS.bonus}),
+        annual_leave_days INTEGER
+            CHECK (annual_leave_days BETWEEN 0 AND ${OFFER_ANNUAL_LEAVE_DAYS_MAX}),
+        work_arrangement TEXT NOT NULL DEFAULT ''
+            CHECK (work_arrangement IN (${OFFER_WORK_ARRANGEMENT_SQL_VALUES})),
+        career_growth_rating INTEGER NOT NULL
+            CHECK (career_growth_rating BETWEEN ${OFFER_DECISION_VALUE_MIN} AND ${OFFER_DECISION_VALUE_MAX}),
+        company_culture_fit_rating INTEGER NOT NULL
+            CHECK (company_culture_fit_rating BETWEEN ${OFFER_DECISION_VALUE_MIN} AND ${OFFER_DECISION_VALUE_MAX}),
+        work_life_balance_rating INTEGER NOT NULL
+            CHECK (work_life_balance_rating BETWEEN ${OFFER_DECISION_VALUE_MIN} AND ${OFFER_DECISION_VALUE_MAX}),
+        compensation_rating INTEGER NOT NULL
+            CHECK (compensation_rating BETWEEN ${OFFER_DECISION_VALUE_MIN} AND ${OFFER_DECISION_VALUE_MAX}),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (job_id, user_id),
+        CONSTRAINT offer_counteroffer_plans_evaluation_fk
+            FOREIGN KEY (job_id, user_id)
+            REFERENCES offer_evaluations(job_id, user_id)
+            ON DELETE CASCADE
+    )`;
+
     const createInterviewTable = `CREATE TABLE IF NOT EXISTS interviews (
             interview_id SERIAL PRIMARY KEY,
             job_id INTEGER NOT NULL,
@@ -243,6 +271,7 @@ const createTables = async (): Promise<void> => {
         createAuthenticationSessionsTable,
         createJobAppTable,
         createOfferEvaluationTable,
+        createCounterofferPlanTable,
         createInterviewTable,
         createUserPreferencesTable,
         addInterviewViewModePreferences,

@@ -13,6 +13,7 @@ import {
     type OfferDecisionFilter,
     type ArchivedOfferDecisionFilter,
     OFFER_WORK_ARRANGEMENTS,
+    type CounterofferPlanInput,
     type OfferDetails,
     type OfferDecisionValues,
     type OfferEvaluationInput,
@@ -172,6 +173,24 @@ export const isSaveOfferEvaluationRequest = (value: unknown): value is OfferEval
 
     const request = value as Partial<OfferEvaluationInput>;
     return isOfferDecisionValues(request.ratings) && isOfferDetails(request.details);
+};
+
+export const isSaveCounterofferPlanRequest = (value: unknown): value is CounterofferPlanInput => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return false;
+    }
+
+    const plan = value as Record<string, unknown>;
+    return (
+        toIntegerInRange(plan.monthly_base_salary, 0, OFFER_MONTHLY_BASE_SALARY_MAX) !== undefined &&
+        isNormalizedBoundedText(plan.bonus, OFFER_DETAILS_MAX_LENGTHS.bonus) &&
+        (plan.annual_leave_days === null ||
+            toIntegerInRange(plan.annual_leave_days, 0, OFFER_ANNUAL_LEAVE_DAYS_MAX) !== undefined) &&
+        typeof plan.work_arrangement === 'string' &&
+        (plan.work_arrangement === '' ||
+            OFFER_WORK_ARRANGEMENTS.some((arrangement) => arrangement === plan.work_arrangement)) &&
+        isOfferDecisionValues(plan.ratings)
+    );
 };
 
 export const isValidDate = (value: unknown): value is string => {

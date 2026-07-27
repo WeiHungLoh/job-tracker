@@ -10,7 +10,7 @@ import type { DemoState } from '../models';
 import type { JobStatus } from '../../application/models';
 import { daysAgo, daysFromNow, toDateString, weeksAgo } from './demoDates';
 import { DEFAULT_INTERVIEW_DURATION_MINUTES, INTERVIEW_TIME_FILTERS } from '../../../helper/interviewTiming';
-import type { OfferDecisionValues, OfferDetails, OfferEvaluation } from '../../offerDecision/models';
+import type { CounterofferPlan, OfferDecisionValues, OfferDetails, OfferEvaluation } from '../../offerDecision/models';
 import {
     ACTIVE_OFFER_DECISION_FILTERS,
     ARCHIVED_OFFER_DECISION_FILTERS,
@@ -534,12 +534,28 @@ const createOfferEvaluations = (now: Date): Record<number, OfferEvaluation> => {
     };
 };
 
+const createCounterofferPlans = (): Record<number, CounterofferPlan> => ({
+    111: {
+        monthly_base_salary: 11200,
+        bonus: '15% target',
+        annual_leave_days: 24,
+        work_arrangement: 'Hybrid',
+        ratings: {
+            career_growth: 4,
+            company_culture_fit: 5,
+            work_life_balance: 4,
+            compensation: 5,
+        },
+    },
+});
+
 export const createDemoInitialState = (now = new Date()): DemoState => ({
     applications: applicationSeeds.map((seed) => createApplication(seed, now)),
     archivedApplications: archivedApplicationSeeds.map((seed) => createArchivedApplication(seed, now)),
     interviews: createInterviews(now),
     archivedInterviews: createArchivedInterviews(now),
     offerEvaluations: createOfferEvaluations(now),
+    counterofferPlans: createCounterofferPlans(),
     preferences: {
         ...defaultDemoPreferences,
         application_job_statuses: [...defaultDemoPreferences.application_job_statuses],

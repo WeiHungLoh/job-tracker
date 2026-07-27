@@ -78,6 +78,14 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/results show your top match/i)).toBeVisible();
         expect(screen.getByText(/your changes and results are not saved/i)).toBeVisible();
         expect(screen.getByText(/not available for expired, previous or archived evaluations/i)).toBeVisible();
+        expect(screen.getByRole('heading', { name: /plan a counteroffer/i })).toBeVisible();
+        expect(
+            screen.getByText(/read-only current offer first and one editable ideal offer directly below it/i)
+        ).toBeVisible();
+        expect(screen.getByText(/starts with the current terms and all four current ratings/i)).toBeVisible();
+        expect(screen.getByText(/individual rating differences use rating points/i)).toBeVisible();
+        expect(screen.getByText(/fit rating differences use percentage points/i)).toBeVisible();
+        expect(screen.getByText(/saved plans remain available to review or delete/i)).toBeVisible();
         expect(screen.getByText(/while a saved evaluation exists/i)).toBeVisible();
         expect(screen.getByText(/deleting the evaluation removes only that evaluation/i)).toBeVisible();
         expect(screen.getByText(/archived evaluations are read-only/i)).toBeVisible();
