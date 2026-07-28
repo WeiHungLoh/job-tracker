@@ -4,6 +4,7 @@ export const FIELD_MAX_LENGTHS = {
     location: 200,
     interviewType: 100,
     jobURL: 2048,
+    meetingURL: 2048,
     notes: 3000,
 } as const;
 

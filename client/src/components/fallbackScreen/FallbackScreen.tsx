@@ -24,6 +24,11 @@ const FALLBACK_CONTENT: Record<FallbackScreenVariant, FallbackContent> = {
         message: 'The page you are looking for does not exist or may have moved.',
         title: 'Page not found',
     },
+    routeError: {
+        actionLabel: 'Reload page',
+        message: 'Something went wrong while loading this page. Please try again.',
+        title: 'Unable to load this page',
+    },
 };
 
 const FallbackScreen = ({ variant = 'loading', onAction }: FallbackScreenProps) => {

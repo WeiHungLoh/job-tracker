@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import InterviewCard from '../../pages/interview/InterviewCard';
@@ -17,6 +17,8 @@ const futureInterview: JobInterview = {
     interview_type: 'Technical Interview',
     job_id: 7,
     job_title: 'Software Engineer',
+    meeting_url: '',
+    is_pinned: false,
 };
 
 const renderJobCard = (interview: JobInterview = futureInterview, onDelete = vi.fn()) => {
@@ -27,7 +29,9 @@ const renderJobCard = (interview: JobInterview = futureInterview, onDelete = vi.
                 index={0}
                 interview={interview}
                 isDeleting={false}
+                isUpdatingPin={false}
                 onDelete={onDelete}
+                onPinToggle={vi.fn()}
                 onViewApplicationClick={vi.fn()}
                 variant='job'
             />
@@ -114,8 +118,10 @@ describe('InterviewCard calendar options', () => {
                     index={0}
                     interview={{ ...futureInterview, interview_date: '2020-01-01T00:00:00Z' }}
                     isDeleting={false}
+                    isUpdatingPin={false}
                     layout='board'
                     onDelete={vi.fn()}
+                    onPinToggle={vi.fn()}
                     onViewApplicationClick={vi.fn()}
                     variant='job'
                 />
@@ -250,6 +256,44 @@ describe('InterviewCard calendar options', () => {
         expect(notes.compareDocumentPosition(timeLeft) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
+    test('shows the meeting URL directly after the follow-up badge in list and board layouts', async () => {
+        const interview = {
+            ...futureInterview,
+            follow_up_sent_at: '2026-07-27T07:42:00.000Z',
+            meeting_url: 'https://meet.example.com/room',
+        };
+        renderJobCard(interview);
+
+        const listFollowUp = screen.getByRole('status');
+        const listMeetingURL = screen.getByRole('link', { name: 'Click here to enter meeting' });
+        expect(listMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
+        expect(listMeetingURL).toHaveAttribute('target', '_blank');
+        expect(listFollowUp.compareDocumentPosition(listMeetingURL) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        render(
+            <MemoryRouter>
+                <InterviewCard
+                    applicationRoute='/application/view'
+                    index={0}
+                    interview={interview}
+                    isDeleting={false}
+                    isUpdatingPin={false}
+                    layout='board'
+                    onDelete={vi.fn()}
+                    onPinToggle={vi.fn()}
+                    onViewApplicationClick={vi.fn()}
+                    variant='job'
+                />
+            </MemoryRouter>
+        );
+
+        await userEvent.click(screen.getAllByText('Actions')[0]);
+        const boardCard = screen.getAllByRole('article', { name: 'Acme interview' })[1];
+        const boardFollowUp = within(boardCard).getAllByRole('status')[1];
+        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to enter meeting' });
+        expect(boardFollowUp.compareDocumentPosition(boardMeetingURL) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
     test('uses shared Board actions and hides List-only interview details', async () => {
         const open = vi.spyOn(window, 'open').mockReturnValue(null);
         render(
@@ -259,8 +303,10 @@ describe('InterviewCard calendar options', () => {
                     index={0}
                     interview={futureInterview}
                     isDeleting={false}
+                    isUpdatingPin={false}
                     layout='board'
                     onDelete={vi.fn()}
+                    onPinToggle={vi.fn()}
                     onViewApplicationClick={vi.fn()}
                     variant='job'
                 />

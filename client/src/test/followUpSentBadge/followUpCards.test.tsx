@@ -168,8 +168,10 @@ describe('follow-up card variants', () => {
                     index={0}
                     interview={record as never}
                     isDeleting={false}
+                    isUpdatingPin={false}
                     layout={layout}
                     onDelete={vi.fn()}
+                    onPinToggle={vi.fn()}
                     onUndoFollowUp={variant === 'job' ? onUndoFollowUp : undefined}
                     onViewApplicationClick={vi.fn()}
                     variant={variant as never}

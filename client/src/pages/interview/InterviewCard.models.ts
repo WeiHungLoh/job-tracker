@@ -14,7 +14,9 @@ type InterviewCardBaseProps = {
 
 export type JobInterviewCardProps = InterviewCardBaseProps & {
     interview: JobInterview;
+    isUpdatingPin: boolean;
     isUndoingFollowUp?: boolean;
+    onPinToggle: (interview: JobInterview) => void | Promise<void>;
     onUndoFollowUp?: (interview: JobInterview) => void | Promise<void>;
     variant: 'job';
 };

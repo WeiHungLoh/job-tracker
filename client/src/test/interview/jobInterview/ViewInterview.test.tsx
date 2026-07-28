@@ -19,6 +19,7 @@ const mockInterview = {
     interview_notes: 'Bring resume',
     interview_date: '2025-06-20T00:00:00Z',
     interview_duration_minutes: 60,
+    is_pinned: false,
 };
 
 const mockPreferences: UserPreferences = {
@@ -117,6 +118,91 @@ describe('Job interview viewer flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all interviews/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+    });
+
+    test('pins and unpins an interview without refetching while preserving the time-filtered order', async () => {
+        const laterInterview = {
+            ...mockInterview,
+            company_name: 'Later Interview',
+            interview_date: '2025-07-20T00:00:00Z',
+            interview_id: 2,
+            job_id: 2,
+        };
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews/2/pin')) {
+                const { isPinned } = JSON.parse(String(init?.body));
+                return response({ interview_id: 2, is_pinned: isPinned });
+            }
+            return init?.method === 'GET' ? response([mockInterview, laterInterview]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>
+        );
+
+        const interviewRegion = await screen.findByRole('region', { name: 'Active interviews' });
+        const getCompanyOrder = () =>
+            within(interviewRegion)
+                .getAllByRole('article')
+                .map((card) => card.getAttribute('aria-label'));
+
+        expect(getCompanyOrder()).toEqual(['ABC Pte Ltd interview', 'Later Interview interview']);
+        await userEvent.click(screen.getByRole('button', { name: 'Pin Later Interview interview' }));
+
+        await waitFor(() => expect(getCompanyOrder()).toEqual(['Later Interview interview', 'ABC Pte Ltd interview']));
+        expect(screen.getByRole('button', { name: 'Unpin Later Interview interview' })).toHaveAttribute(
+            'aria-pressed',
+            'true'
+        );
+        expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Unpin Later Interview interview' }));
+
+        await waitFor(() => expect(getCompanyOrder()).toEqual(['ABC Pte Ltd interview', 'Later Interview interview']));
+        expect(await screen.findByText('Interview unpinned.')).toBeInTheDocument();
+        expect(
+            fetch.mock.calls.filter(
+                ([url, init]) =>
+                    String(url).includes('/job-interviews?') && (init as RequestInit | undefined)?.method === 'GET'
+            )
+        ).toHaveLength(1);
+        expect(fetch).toHaveBeenCalledWith(
+            `${import.meta.env.VITE_API_URL}/job-interviews/2/pin`,
+            expect.objectContaining({
+                body: JSON.stringify({ isPinned: true }),
+                method: 'PATCH',
+            })
+        );
+        expect(fetch).toHaveBeenCalledWith(
+            `${import.meta.env.VITE_API_URL}/job-interviews/2/pin`,
+            expect.objectContaining({
+                body: JSON.stringify({ isPinned: false }),
+                method: 'PATCH',
+            })
+        );
+    });
+
+    test('preserves an interview pin state and position when the update fails', async () => {
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews/1/pin')) {
+                return response({ message: 'Interview pin unavailable.' }, 400);
+            }
+            return init?.method === 'GET' ? response([mockInterview]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
+
+        expect(await screen.findByText('Interview pin unavailable.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Pin ABC Pte Ltd interview' })).toBeEnabled();
+        expect(screen.getByRole('article', { name: 'ABC Pte Ltd interview' })).toBeInTheDocument();
     });
 
     test('undoes only the selected interview follow-up and shows success', async () => {

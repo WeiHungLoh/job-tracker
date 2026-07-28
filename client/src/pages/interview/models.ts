@@ -12,7 +12,9 @@ export type JobInterview = {
     interview_location: string;
     interview_type: string;
     interview_notes: string;
+    meeting_url: string;
     follow_up_sent_at?: string | null;
+    is_pinned: boolean;
 };
 
 export type ArchivedJobInterview = {
@@ -26,7 +28,9 @@ export type ArchivedJobInterview = {
     interview_location: string;
     interview_type: string;
     interview_notes: string;
+    meeting_url: string;
     follow_up_sent_at?: string | null;
+    is_pinned: boolean;
 };
 
 export type ListInterviewsRequest = {
@@ -46,6 +50,7 @@ export type CreateInterviewRequest = {
     interviewDurationMinutes: number;
     interviewLocation: string;
     interviewType: string;
+    meetingURL: string;
     notes: string;
     allowSchedulingConflict?: boolean;
     allowOfferDeadlineWarning?: boolean;
@@ -93,6 +98,15 @@ export type DeleteInterviewResponse = null;
 export type DeleteAllInterviewsRequest = null;
 export type DeleteAllInterviewsResponse = null;
 
+export type UpdateInterviewPinRequest = {
+    interviewId: number;
+    isPinned: boolean;
+};
+export type UpdateInterviewPinResponse = {
+    interview_id: number;
+    is_pinned: boolean;
+};
+
 export type MarkInterviewFollowUpRequest = {
     interviewId: number;
 };
@@ -129,5 +143,7 @@ export const INTERVIEW_CSV_HEADERS: InterviewCsvHeader[] = [
     { label: 'Interview Date', key: 'interview_date' },
     { label: 'Duration (minutes)', key: 'interview_duration_minutes' },
     { label: 'Interview Type', key: 'interview_type' },
+    { label: 'Meeting URL', key: 'meeting_url' },
+    { label: 'Pinned', key: 'is_pinned' },
     { label: 'Additional Notes', key: 'notes' },
 ];

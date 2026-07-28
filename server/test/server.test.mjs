@@ -7,6 +7,14 @@ import { createAccessToken, createRefreshToken } from '../dist/auth/tokens.js';
 import { createApp } from '../dist/app.js';
 import { pool } from '../dist/db/connectDB.js';
 import { handleRouteError } from '../dist/http/responses.js';
+import {
+    archiveJobApplication,
+    getArchivedJobApplications,
+    unarchiveJobApplication,
+} from '../dist/db/queries/archivedJobApplications.js';
+import { getJobApplications } from '../dist/db/queries/jobApplications.js';
+import { getArchivedJobInterviews } from '../dist/db/queries/archivedInterviews.js';
+import { getInterviews } from '../dist/db/queries/interviews.js';
 import jwt from 'jsonwebtoken';
 import { AUTHENTICATED_API_RATE_LIMIT, SIGN_IN_EMAIL_IP_LIMIT } from '../dist/config/server.js';
 import {
@@ -106,6 +114,123 @@ test('creates new user preference rows with enabled display defaults', async () 
     );
     assert.match(userPreferencesTable, /user_preferences_offer_decision_filters_check/);
     assert.match(userPreferencesTable, /user_preferences_archived_offer_decision_filters_check/);
+});
+
+test('creates job applications with a persistent false pin default without startup migration SQL', async () => {
+    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const jobApplicationsTable = createTablesSource.match(
+        /CREATE TABLE IF NOT EXISTS job_applications \([\s\S]*?\n\s*\)`/
+    )?.[0];
+
+    assert.ok(jobApplicationsTable);
+    assert.match(jobApplicationsTable, /is_pinned BOOLEAN NOT NULL DEFAULT false/);
+    assert.doesNotMatch(
+        createTablesSource,
+        /ALTER TABLE job_applications\s+ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT false/
+    );
+});
+
+test('creates the optional interview meeting URL field without startup migration SQL', async () => {
+    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const activeInterviewQuerySource = await readFile(
+        new URL('../src/db/queries/interviews.ts', import.meta.url),
+        'utf8'
+    );
+    const archivedInterviewQuerySource = await readFile(
+        new URL('../src/db/queries/archivedInterviews.ts', import.meta.url),
+        'utf8'
+    );
+    const interviewsTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS interviews \([\s\S]*?\n\s*\)`/)?.[0];
+
+    assert.ok(interviewsTable);
+    assert.match(interviewsTable, /meeting_url TEXT NOT NULL DEFAULT ''/);
+    assert.doesNotMatch(
+        createTablesSource,
+        /ALTER TABLE interviews\s+ADD COLUMN IF NOT EXISTS meeting_url TEXT NOT NULL DEFAULT ''/
+    );
+    assert.match(activeInterviewQuerySource, /interviews\.meeting_url/);
+    assert.match(archivedInterviewQuerySource, /interviews\.meeting_url/);
+});
+
+test('creates persistent interview pinning and returns pinned interviews first after time filtering', async () => {
+    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const interviewsTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS interviews \([\s\S]*?\n\s*\)`/)?.[0];
+    const originalQuery = pool.query;
+    const queries = [];
+    pool.query = async (sql, values) => {
+        queries.push({ sql: String(sql), values });
+        return { rows: [] };
+    };
+
+    try {
+        await getInterviews(TEST_USER.id, ['Upcoming Interviews']);
+        await getArchivedJobInterviews(TEST_USER.id, ['Past Interviews']);
+
+        assert.ok(interviewsTable);
+        assert.match(interviewsTable, /is_pinned BOOLEAN NOT NULL DEFAULT false/);
+        assert.doesNotMatch(
+            createTablesSource,
+            /ALTER TABLE interviews\s+ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT false/
+        );
+        assert.match(queries[0].sql, /interviews\.is_pinned/);
+        assert.match(queries[1].sql, /interviews\.is_pinned/);
+        for (const query of queries) {
+            assert.match(query.sql, /ORDER BY\s+interviews\.is_pinned DESC,/);
+        }
+        assert.deepEqual(queries[0].values, [TEST_USER.id, ['Upcoming Interviews']]);
+        assert.deepEqual(queries[1].values, [TEST_USER.id, ['Past Interviews']]);
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
+test('returns pin state from active and archived application list queries', async () => {
+    const originalQuery = pool.query;
+    const queries = [];
+    pool.query = async (sql, values) => {
+        queries.push({ sql: String(sql), values });
+        return { rows: [] };
+    };
+
+    try {
+        await getJobApplications(TEST_USER.id, ['Applied']);
+        await getArchivedJobApplications(TEST_USER.id, ['Offer']);
+
+        assert.match(queries[0].sql, /applications\.is_pinned/);
+        assert.deepEqual(queries[0].values, [TEST_USER.id, ['Applied']]);
+        assert.match(queries[1].sql, /\bis_pinned\b/);
+        assert.deepEqual(queries[1].values, [TEST_USER.id, ['Offer']]);
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
+test('archiving and restoring an application leave its pin state unchanged', async () => {
+    const originalConnect = pool.connect;
+    const queries = [];
+    pool.connect = async () => ({
+        query: async (sql, values) => {
+            queries.push({ sql: String(sql), values });
+            return { rowCount: 1, rows: [] };
+        },
+        release: () => {},
+    });
+
+    try {
+        assert.equal(await archiveJobApplication(7, TEST_USER.id), true);
+        assert.equal(await unarchiveJobApplication(7, TEST_USER.id), true);
+
+        const applicationUpdates = queries.filter((query) => /UPDATE job_applications/.test(query.sql));
+        assert.equal(applicationUpdates.length, 2);
+        assert.match(applicationUpdates[0].sql, /SET is_archived = true/);
+        assert.match(applicationUpdates[1].sql, /SET is_archived = false/);
+        for (const query of applicationUpdates) {
+            assert.doesNotMatch(query.sql, /is_pinned\s*=/);
+            assert.deepEqual(query.values, [7, TEST_USER.id]);
+        }
+    } finally {
+        pool.connect = originalConnect;
+    }
 });
 
 test('creates fresh interview duration and time-filter columns without adding startup migration SQL', async () => {
@@ -557,6 +682,208 @@ test('requires a job status in the atomic status update', async () => {
     });
 });
 
+test('requires a boolean pin state', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+
+    for (const isPinned of [undefined, null, 'true', 1, [], {}]) {
+        const body = isPinned === undefined ? {} : { isPinned };
+        const response = await fetch(`${baseUrl}/job-applications/1/pin`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        assert.equal(response.status, 422);
+        assert.deepEqual(await response.json(), {
+            message: 'Pin state must be a boolean.',
+        });
+    }
+});
+
+test('requires a positive application ID when changing pin state', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+    const response = await fetch(`${baseUrl}/job-applications/not-an-id/pin`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            Cookie: `access_token=${token}`,
+        },
+        body: JSON.stringify({ isPinned: true }),
+    });
+
+    assert.equal(response.status, 422);
+    assert.deepEqual(await response.json(), {
+        message: 'Job application ID must be a positive integer.',
+    });
+});
+
+test('pins and unpins only the authenticated user active application', async () => {
+    const originalQuery = pool.query;
+    const queries = [];
+    pool.query = async (sql, values) => {
+        queries.push({ sql: String(sql), values });
+        return { rows: [{ job_id: values[1], is_pinned: values[0] }] };
+    };
+
+    try {
+        const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+
+        for (const isPinned of [true, false]) {
+            const response = await fetch(`${baseUrl}/job-applications/7/pin`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Cookie: `access_token=${token}`,
+                },
+                body: JSON.stringify({ isPinned }),
+            });
+
+            assert.equal(response.status, 200);
+            assert.deepEqual(await response.json(), { job_id: 7, is_pinned: isPinned });
+        }
+
+        assert.deepEqual(
+            queries.map((query) => query.values),
+            [
+                [true, 7, TEST_USER.id],
+                [false, 7, TEST_USER.id],
+            ]
+        );
+        for (const query of queries) {
+            assert.match(query.sql, /WHERE job_id = \$2 AND user_id = \$3 AND is_archived = false/);
+            assert.match(query.sql, /RETURNING job_id, is_pinned/);
+        }
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
+test('does not expose another user or archived application through pinning', async () => {
+    const originalQuery = pool.query;
+    pool.query = async () => ({ rows: [] });
+
+    try {
+        const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+        const response = await fetch(`${baseUrl}/job-applications/7/pin`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify({ isPinned: true }),
+        });
+
+        assert.equal(response.status, 404);
+        assert.deepEqual(await response.json(), { message: 'Job application not found.' });
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
+test('requires a boolean interview pin state', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+
+    for (const isPinned of [undefined, null, 'true', 1, [], {}]) {
+        const body = isPinned === undefined ? {} : { isPinned };
+        const response = await fetch(`${baseUrl}/job-interviews/1/pin`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        assert.equal(response.status, 422);
+        assert.deepEqual(await response.json(), {
+            message: 'Pin state must be a boolean.',
+        });
+    }
+});
+
+test('requires a positive interview ID when changing pin state', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+    const response = await fetch(`${baseUrl}/job-interviews/not-an-id/pin`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            Cookie: `access_token=${token}`,
+        },
+        body: JSON.stringify({ isPinned: true }),
+    });
+
+    assert.equal(response.status, 422);
+    assert.deepEqual(await response.json(), {
+        message: 'Interview ID must be a positive integer.',
+    });
+});
+
+test('pins and unpins only the authenticated user active interview', async () => {
+    const originalQuery = pool.query;
+    const queries = [];
+    pool.query = async (sql, values) => {
+        queries.push({ sql: String(sql), values });
+        return { rows: [{ interview_id: values[1], is_pinned: values[0] }] };
+    };
+
+    try {
+        const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+
+        for (const isPinned of [true, false]) {
+            const response = await fetch(`${baseUrl}/job-interviews/7/pin`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Cookie: `access_token=${token}`,
+                },
+                body: JSON.stringify({ isPinned }),
+            });
+
+            assert.equal(response.status, 200);
+            assert.deepEqual(await response.json(), { interview_id: 7, is_pinned: isPinned });
+        }
+
+        assert.deepEqual(
+            queries.map((query) => query.values),
+            [
+                [true, 7, TEST_USER.id],
+                [false, 7, TEST_USER.id],
+            ]
+        );
+        for (const query of queries) {
+            assert.match(query.sql, /WHERE interview_id = \$2 AND user_id = \$3 AND is_archived = false/);
+            assert.match(query.sql, /RETURNING interview_id, is_pinned/);
+        }
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
+test('does not expose another user or archived interview through pinning', async () => {
+    const originalQuery = pool.query;
+    pool.query = async () => ({ rows: [] });
+
+    try {
+        const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+        const response = await fetch(`${baseUrl}/job-interviews/7/pin`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify({ isPinned: true }),
+        });
+
+        assert.equal(response.status, 404);
+        assert.deepEqual(await response.json(), { message: 'Interview not found.' });
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
 test('returns 409 when moving an application with an active interview to Applied', async () => {
     const originalQuery = pool.query;
     let query;
@@ -894,6 +1221,83 @@ test('rejects non-http application URLs before accessing the database', async ()
     assert.deepEqual(await response.json(), {
         message: 'URL must be in a valid format.',
     });
+});
+
+test('rejects invalid interview meeting URLs before accessing the database', async () => {
+    const originalQuery = pool.query;
+    let queryCount = 0;
+    pool.query = async () => {
+        queryCount += 1;
+        throw new Error('The database should not be accessed for an invalid meeting URL.');
+    };
+
+    try {
+        const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+        for (const meetingURL of ['javascript:alert(1)', 'https://meeting']) {
+            const response = await fetch(`${baseUrl}/job-interviews`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Cookie: `access_token=${token}`,
+                },
+                body: JSON.stringify({
+                    jobId: 1,
+                    interviewDate: '2027-01-02T00:00:00.000Z',
+                    interviewDurationMinutes: 60,
+                    interviewLocation: 'Remote',
+                    interviewType: '',
+                    meetingURL,
+                    notes: '',
+                }),
+            });
+
+            assert.equal(response.status, 422);
+            assert.deepEqual(await response.json(), {
+                message: 'URL must be in a valid format.',
+            });
+        }
+        assert.equal(queryCount, 0);
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
+test('trims and persists a valid optional interview meeting URL', async () => {
+    const originalQuery = pool.query;
+    let insertValues;
+    pool.query = async (sql, values) => {
+        if (sql.includes('ORDER BY interviews.interview_date ASC') || sql.includes('offer_evaluations')) {
+            return { rows: [] };
+        }
+
+        insertValues = values;
+        return { rows: [{ application_exists: true, interview_created: true }] };
+    };
+
+    try {
+        const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+        const response = await fetch(`${baseUrl}/job-interviews`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify({
+                jobId: 1,
+                interviewDate: '2027-01-02T00:00:00.000Z',
+                interviewDurationMinutes: 60,
+                interviewLocation: 'Remote',
+                interviewType: '',
+                meetingURL: '  https://meet.example.com/room  ',
+                notes: '',
+            }),
+        });
+
+        assert.equal(response.status, 201);
+        assert.equal(insertValues[6], 'https://meet.example.com/room');
+    } finally {
+        pool.query = originalQuery;
+    }
 });
 
 test('rejects application fields over their maximum length before accessing the database', async () => {

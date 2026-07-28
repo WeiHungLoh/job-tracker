@@ -137,6 +137,7 @@ export const getArchivedJobApplications = async (
             job_location,
             job_posting_url,
             notes,
+            is_pinned,
             application_follow_up_sent_at
          FROM job_applications
          WHERE user_id = $1 AND is_archived = true

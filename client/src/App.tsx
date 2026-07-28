@@ -24,7 +24,7 @@ const reloadPage = () => window.location.reload();
 
 export const appRoutes: RouteObject[] = [
     {
-        errorElement: <FallbackScreen variant='authenticationError' onAction={reloadPage} />,
+        errorElement: <FallbackScreen variant='routeError' onAction={reloadPage} />,
         children: [
             {
                 path: routes.signIn,

@@ -63,9 +63,10 @@ const ViewApplication = () => {
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
     const [interviews, setInterviews] = useState<JobInterview[]>([]);
     const confirm = useConfirm();
-    const statusHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const applicationHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const updatingStatusApplicationIdRef = useRef<Set<number>>(new Set());
+    const updatingPinApplicationIdRef = useRef<Set<number>>(new Set());
     const pendingApplicationActionIdsRef = useRef<Set<number>>(new Set());
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isFilteringApplications, setIsFilteringApplications] = useState<boolean>(false);
@@ -85,6 +86,11 @@ const ViewApplication = () => {
         pendingIds: updatingStatusApplicationIds,
         startPending: startUpdatingApplicationStatus,
         stopPending: stopUpdatingApplicationStatus,
+    } = usePendingIds();
+    const {
+        pendingIds: updatingPinApplicationIds,
+        startPending: startUpdatingApplicationPin,
+        stopPending: stopUpdatingApplicationPin,
     } = usePendingIds();
     const {
         pendingIds: undoingFollowUpApplicationIds,
@@ -116,6 +122,8 @@ const ViewApplication = () => {
     const showNotes = preferences.application_show_notes;
     const enableScroll = preferences.application_enable_scroll;
     const viewMode = preferences.application_view_mode;
+    const viewModeRef = useRef(viewMode);
+    viewModeRef.current = viewMode;
     const isBoardView = viewMode === 'board';
     const currentSortOrder = isBoardView
         ? preferences.application_board_sort_order
@@ -414,6 +422,51 @@ const ViewApplication = () => {
         }
     };
 
+    const handlePinToggle = async (application: JobApplication) => {
+        if (updatingPinApplicationIdRef.current.has(application.job_id)) {
+            return;
+        }
+
+        const isPinned = !application.is_pinned;
+        updatingPinApplicationIdRef.current.add(application.job_id);
+        startUpdatingApplicationPin(application.job_id);
+
+        try {
+            const updatedApplication = await api.application.updatePin({
+                jobId: application.job_id,
+                isPinned,
+            });
+            setApplications((current) =>
+                current.map((item) =>
+                    item.job_id === updatedApplication.job_id
+                        ? { ...item, is_pinned: updatedApplication.is_pinned }
+                        : item
+                )
+            );
+            showSuccessToast(isPinned ? 'Job application pinned.' : 'Job application unpinned.');
+
+            if (enableScroll && viewModeRef.current === 'list') {
+                setTimeout(() => {
+                    if (viewModeRef.current === 'list') {
+                        scrollAndHighlight(
+                            String(application.job_id),
+                            styles.highlighted,
+                            applicationHighlightTimeout.current
+                        );
+                    }
+                }, 100);
+            }
+        } catch (error) {
+            const fallback = isPinned
+                ? 'Unable to pin the job application. Please try again.'
+                : 'Unable to unpin the job application. Please try again.';
+            showErrorToast(getErrorToastMessage(error, fallback));
+        } finally {
+            updatingPinApplicationIdRef.current.delete(application.job_id);
+            stopUpdatingApplicationPin(application.job_id);
+        }
+    };
+
     const handleBulkAction = async (action: 'archive' | 'delete') => {
         if (bulkActionPendingRef.current) {
             return;
@@ -530,7 +583,11 @@ const ViewApplication = () => {
                 statusRemainsVisible
             ) {
                 setTimeout(() => {
-                    scrollAndHighlight(String(application.job_id), styles.highlighted, statusHighlightTimeout.current);
+                    scrollAndHighlight(
+                        String(application.job_id),
+                        styles.highlighted,
+                        applicationHighlightTimeout.current
+                    );
                 }, 100);
             }
         } catch (error) {
@@ -677,7 +734,7 @@ const ViewApplication = () => {
                                         application_enable_scroll: !enableScroll,
                                     })
                                 }
-                                label='Auto scroll after job status change'
+                                label='Auto scroll after application moves'
                             />
                         </DisplayOptions>
                     )}
@@ -712,6 +769,7 @@ const ViewApplication = () => {
                             isArchivingApplication={(jobId) =>
                                 pendingBulkAction === 'archive' || archivingApplicationIds.has(jobId)
                             }
+                            isUpdatingApplicationPin={(jobId) => updatingPinApplicationIds.has(jobId)}
                             isUpdatingApplicationStatus={(jobId) => updatingStatusApplicationIds.has(jobId)}
                             isUndoingApplicationFollowUp={(jobId) => undoingFollowUpApplicationIds.has(jobId)}
                             noteSaveStatuses={notesAutosave.noteSaveStatuses}
@@ -720,6 +778,7 @@ const ViewApplication = () => {
                             onEditNotes={handleEditNotes}
                             onNotesBlur={notesAutosave.flushNote}
                             onNotesVisibilityChange={notesAutosave.setNoteVisibility}
+                            onPinToggle={handlePinToggle}
                             onRetryNotes={notesAutosave.retryNotes}
                             onStatusChange={updateApplicationStatusFromBoard}
                             onUndoFollowUp={handleUndoFollowUp}
@@ -745,6 +804,7 @@ const ViewApplication = () => {
                                 }
                                 isDeleting={deletingApplicationIds.has(application.job_id)}
                                 isEditingStatus={editingApplicationId === application.job_id}
+                                isUpdatingPin={updatingPinApplicationIds.has(application.job_id)}
                                 isUpdatingStatus={updatingStatusApplicationIds.has(application.job_id)}
                                 isUndoingFollowUp={undoingFollowUpApplicationIds.has(application.job_id)}
                                 key={application.job_id}
@@ -756,6 +816,7 @@ const ViewApplication = () => {
                                 onNotesBlur={notesAutosave.flushNote}
                                 onRetryNotes={notesAutosave.retryNotes}
                                 onJobStatusChange={setEditedJobStatus}
+                                onPinToggle={handlePinToggle}
                                 onToggleStatusEditor={handleStatusEditorToggle}
                                 onUndoFollowUp={handleUndoFollowUp}
                                 showArchive={showArchive}

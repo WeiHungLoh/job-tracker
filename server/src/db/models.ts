@@ -74,6 +74,7 @@ export type JobApplication = {
     job_posting_url: string;
     notes: string;
     has_offer_evaluation: boolean;
+    is_pinned: boolean;
     application_follow_up_sent_at: Date | null;
 };
 
@@ -86,7 +87,13 @@ export type ArchivedJobApplication = {
     job_location: string;
     job_posting_url: string;
     notes: string;
+    is_pinned: boolean;
     application_follow_up_sent_at: Date | null;
+};
+
+export type ApplicationPin = {
+    job_id: number;
+    is_pinned: boolean;
 };
 
 export type JobInterview = {
@@ -97,10 +104,17 @@ export type JobInterview = {
     interview_location: string;
     interview_type: string;
     interview_notes: string;
+    meeting_url: string;
     company_name: string;
     job_title: string;
     job_status: JobStatus;
     follow_up_sent_at: Date | null;
+    is_pinned: boolean;
+};
+
+export type InterviewPin = {
+    interview_id: number;
+    is_pinned: boolean;
 };
 
 export type InterviewSchedulingConflictRecord = {
@@ -128,10 +142,12 @@ export type ArchivedJobInterview = {
     interview_location: string;
     interview_type: string;
     interview_notes: string;
+    meeting_url: string;
     company_name: string;
     job_title: string;
     job_status: JobStatus;
     follow_up_sent_at: Date | null;
+    is_pinned: boolean;
 };
 
 export type JobStatusCount = {

@@ -1,4 +1,4 @@
-import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../models.js';
+import type { ApplicationPin, JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../models.js';
 import { pool } from '../connectDB.js';
 import { hasAffectedRows, JOB_STATUS_SORT_ORDER } from './shared.js';
 
@@ -81,6 +81,7 @@ export const getJobApplications = async (userId: number, jobStatuses: JobStatus[
             job_location,
             job_posting_url,
             applications.notes,
+            applications.is_pinned,
             application_follow_up_sent_at,
             EXISTS (
                 SELECT 1
@@ -185,6 +186,22 @@ export const clearApplicationFollowUpSent = async (jobId: number, userId: number
     );
 
     return hasAffectedRows(result);
+};
+
+export const updateApplicationPin = async (
+    isPinned: boolean,
+    jobId: number,
+    userId: number
+): Promise<ApplicationPin | undefined> => {
+    const result = await pool.query<ApplicationPin>(
+        `UPDATE job_applications
+         SET is_pinned = $1
+         WHERE job_id = $2 AND user_id = $3 AND is_archived = false
+         RETURNING job_id, is_pinned`,
+        [isPinned, jobId, userId]
+    );
+
+    return result.rows[0];
 };
 
 export const updateApplicationStatus = async (

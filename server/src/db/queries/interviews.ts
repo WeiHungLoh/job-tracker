@@ -1,5 +1,6 @@
 import type {
     InterviewOfferDeadlineWarningRecord,
+    InterviewPin,
     InterviewSchedulingConflictRecord,
     InterviewTimeFilter,
     JobInterview,
@@ -100,6 +101,7 @@ export const insertInterview = async (
     interviewDurationMinutes: number,
     location: string,
     interviewType: string,
+    meetingURL: string,
     notes: string
 ): Promise<InsertInterviewResult> => {
     const result = await pool.query<{ application_exists: boolean; interview_created: boolean }>(
@@ -116,9 +118,10 @@ export const insertInterview = async (
                 interview_duration_minutes,
                 interview_location,
                 interview_type,
+                meeting_url,
                 interview_notes
             )
-            SELECT $1, $2, $3, $4, $5, $6, $7
+            SELECT $1, $2, $3, $4, $5, $6, $7, $8
             FROM application
             WHERE application_date IS NOT NULL AND $3::timestamptz > application_date
             RETURNING 1
@@ -126,7 +129,7 @@ export const insertInterview = async (
         SELECT
             EXISTS(SELECT 1 FROM application) AS application_exists,
             EXISTS(SELECT 1 FROM inserted_interview) AS interview_created`,
-        [jobId, userId, interviewDate, interviewDurationMinutes, location, interviewType, notes]
+        [jobId, userId, interviewDate, interviewDurationMinutes, location, interviewType, meetingURL, notes]
     );
 
     if (result.rows[0]?.interview_created) {
@@ -144,8 +147,10 @@ export const getInterviews = async (userId: number, timeFilters: InterviewTimeFi
             interviews.interview_duration_minutes,
             interviews.interview_location,
             interviews.interview_type,
+            interviews.meeting_url,
             interviews.interview_notes,
             interviews.follow_up_sent_at,
+            interviews.is_pinned,
             job_applications.company_name,
             job_applications.job_title,
             job_applications.job_status
@@ -167,11 +172,28 @@ export const getInterviews = async (userId: number, timeFilters: InterviewTimeFi
                 )
             )
          ORDER BY
+             interviews.is_pinned DESC,
              interviews.interview_date + interviews.interview_duration_minutes * INTERVAL '1 minute' > NOW() DESC,
              interviews.interview_date ASC`,
         [userId, timeFilters]
     );
     return result.rows;
+};
+
+export const updateInterviewPin = async (
+    isPinned: boolean,
+    interviewId: number,
+    userId: number
+): Promise<InterviewPin | undefined> => {
+    const result = await pool.query<InterviewPin>(
+        `UPDATE interviews
+         SET is_pinned = $1
+         WHERE interview_id = $2 AND user_id = $3 AND is_archived = false
+         RETURNING interview_id, is_pinned`,
+        [isPinned, interviewId, userId]
+    );
+
+    return result.rows[0];
 };
 
 export const deleteJobInterview = async (interviewId: number, userId: number): Promise<boolean> => {

@@ -10,6 +10,7 @@ import NoteSaveStatus from '../../components/noteSaveStatus/NoteSaveStatus';
 import styles from './ApplicationCard.module.css';
 import { isApplicationStatusDisabled } from './applicationStatusRestrictions';
 import FollowUpSentBadge from '../../components/followUpSentBadge/FollowUpSentBadge';
+import PinControl from '../../components/pinControl/PinControl';
 
 const JOB_STATUS_CARD_CLASS_MAP: Record<JobStatus, string> = {
     Accepted: styles.statusAccepted,
@@ -32,9 +33,28 @@ const ApplicationCard = (props: ApplicationCardProps) => {
             id={String(applicationId)}
         >
             <div className={styles.applicationContent}>
-                <h2>
-                    {index + 1}. {application.company_name}
-                </h2>
+                <div className={styles.headingRow}>
+                    <h2>
+                        {index + 1}. {application.company_name}
+                    </h2>
+                    {variant === 'job' ? (
+                        <PinControl
+                            itemLabel={application.company_name}
+                            isPending={props.isUpdatingPin}
+                            isPinned={application.is_pinned}
+                            onToggle={() => props.onPinToggle(application)}
+                            size='list'
+                            subject='application'
+                        />
+                    ) : (
+                        <PinControl
+                            itemLabel={application.company_name}
+                            isPinned={application.is_pinned}
+                            size='list'
+                            subject='application'
+                        />
+                    )}
+                </div>
                 <p className={styles.jobTitle}>Job Title: {application.job_title}</p>
                 {application.job_location !== '' && (
                     <p className={styles.location}>Location: {application.job_location}</p>
@@ -107,7 +127,7 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                         rel='noreferrer noopener'
                         target='_blank'
                     >
-                        Click here to head to job application URL
+                        Click here to view job posting
                     </a>
                 )}
             </div>

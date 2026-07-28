@@ -653,7 +653,7 @@ describe('App routing and authentication behavior', () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
-    test('displays the authentication fallback when a route throws an error', async () => {
+    test('displays the route-loading fallback when a route throws an error', async () => {
         const router = createMemoryRouter(
             [
                 {
@@ -670,9 +670,11 @@ describe('App routing and authentication behavior', () => {
 
         render(<RouterProvider router={router} />);
 
-        expect(await screen.findByRole('heading', { name: /unable to verify authentication/i })).toBeInTheDocument();
-        expect(screen.getByText(/We could not verify your session. Please try again./i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: /unable to load this page/i })).toBeInTheDocument();
+        expect(
+            screen.getByText(/Something went wrong while loading this page. Please try again./i)
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument();
     });
 
     test('displays active navigation bar when on dashboard page', async () => {

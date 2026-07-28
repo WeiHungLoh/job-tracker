@@ -11,6 +11,7 @@ export type ApplicationBoardProps = {
     hasInterview: (jobId: number) => boolean;
     hasOfferEvaluation: (jobId: number) => boolean;
     isArchivingApplication: (jobId: number) => boolean;
+    isUpdatingApplicationPin: (jobId: number) => boolean;
     isUpdatingApplicationStatus: (jobId: number) => boolean;
     isUndoingApplicationFollowUp?: (jobId: number) => boolean;
     noteSaveStatuses: Record<number, NoteSaveStatus>;
@@ -19,6 +20,7 @@ export type ApplicationBoardProps = {
     onEditNotes: (jobId: number, notes: string) => void;
     onNotesBlur: (jobId: number) => void;
     onNotesVisibilityChange: (jobId: number, isVisible: boolean) => void;
+    onPinToggle: (application: JobApplication) => void | Promise<void>;
     onRetryNotes: (jobId: number) => void;
     onStatusChange: BoardStatusChangeHandler;
     onUndoFollowUp?: (application: JobApplication) => void | Promise<void>;
@@ -30,6 +32,7 @@ export type ApplicationBoardCardProps = EditableNotesProps & {
     application: JobApplication;
     isArchiving: boolean;
     isDeleting: boolean;
+    isUpdatingPin: boolean;
     isUpdatingStatus: boolean;
     isUndoingFollowUp?: boolean;
     hasInterview: boolean;
@@ -37,6 +40,7 @@ export type ApplicationBoardCardProps = EditableNotesProps & {
     onArchive: (jobId: number) => void | Promise<void>;
     onDelete: (jobId: number) => void | Promise<void>;
     onNotesVisibilityChange: (jobId: number, isVisible: boolean) => void;
+    onPinToggle: (application: JobApplication) => void | Promise<void>;
     onStatusChange: BoardStatusChangeHandler;
     onUndoFollowUp?: (application: JobApplication) => void | Promise<void>;
     upcomingInterviewCount: number;

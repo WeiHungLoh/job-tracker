@@ -346,7 +346,7 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'true');
         expect(screen.getByRole('switch', { name: 'Show archive' })).toHaveAttribute('aria-checked', 'true');
-        expect(screen.getByRole('switch', { name: 'Auto scroll after job status change' })).toHaveAttribute(
+        expect(screen.getByRole('switch', { name: 'Auto scroll after application moves' })).toHaveAttribute(
             'aria-checked',
             'true'
         );
@@ -443,7 +443,7 @@ describe('demo page interactions', () => {
     test('keeps independent list and board sorting preferences in the demo', async () => {
         renderDemo(<DemoViewApplication />);
 
-        expect(await screen.findByRole('heading', { name: '1. Pinecone Health' })).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: '1. Cedar FinTech' })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Sort by' }));
         fireEvent.click(screen.getByRole('radio', { name: /Company A/ }));
         expect(await screen.findByRole('heading', { name: '1. Aster Security' })).toBeInTheDocument();
@@ -792,6 +792,27 @@ describe('demo page interactions', () => {
             within(interviews).queryByRole('link', { name: /review corresponding job application/i })
         ).not.toBeInTheDocument();
         expect(within(interviews).getAllByText('Actions').length).toBeGreaterThan(0);
+    });
+
+    test('pins and unpins demo interviews locally with the same ordering and success feedback', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        renderDemo(<DemoViewInterview />, [routes.demoViewInterviews]);
+
+        const interviews = screen.getByRole('region', { name: 'Active interviews' });
+        await userEvent.click(screen.getByRole('button', { name: 'Pin Summit Talent interview' }));
+
+        expect(within(interviews).getAllByRole('article')[0]).toHaveAccessibleName('Summit Talent interview');
+        expect(screen.getByRole('button', { name: 'Unpin Summit Talent interview' })).toHaveAttribute(
+            'aria-pressed',
+            'true'
+        );
+        expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Unpin Summit Talent interview' }));
+
+        expect(await screen.findByText('Interview unpinned.')).toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
     });
 
     test('renders active demo interviews in the production date order in List and Board views', () => {

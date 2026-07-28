@@ -14,10 +14,12 @@ export type DemoJobApplicationCardProps = DemoApplicationCardBaseProps &
         hasOfferEvaluation: boolean;
         isArchiving: boolean;
         isEditingStatus: boolean;
+        isUpdatingPin: boolean;
         isUndoingFollowUp?: boolean;
         onArchive: (jobId: number) => void | Promise<void>;
         onDelete: (jobId: number) => void | Promise<void>;
         onJobStatusChange: (jobStatus: JobStatus) => void;
+        onPinToggle: (application: JobApplication) => void | Promise<void>;
         onToggleStatusEditor: (application: JobApplication) => void | Promise<void>;
         onUndoFollowUp?: (application: JobApplication) => void | Promise<void>;
         showArchive: boolean;

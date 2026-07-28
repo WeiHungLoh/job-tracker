@@ -7,8 +7,8 @@
     align-items: center;
     gap: 6px;
     padding: 6px var(--spaceCompact);
-    border: 1px solid color-mix(in srgb, var(--colorStatusAccepted) 38%, var(--colorCardBorder));
-    border-radius: var(--radiusControl);
+    border: 0;
+    border-radius: var(--radiusPill);
     background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeCompactControl);
@@ -56,7 +56,10 @@
     width: fit-content;
     max-width: 100%;
     margin-top: 5px;
-    color: var(--colorTextSecondary);
+    padding: 4px 9px;
+    border-radius: var(--radiusPill);
+    background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
+    color: var(--colorText);
     font-size: var(--fontSizeCompactControl);
     font-weight: 700;
     line-height: 1.35;

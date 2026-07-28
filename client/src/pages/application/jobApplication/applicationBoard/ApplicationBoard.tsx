@@ -88,6 +88,7 @@ const ApplicationBoard = ({
     hasInterview,
     hasOfferEvaluation,
     isArchivingApplication,
+    isUpdatingApplicationPin,
     isUpdatingApplicationStatus,
     isUndoingApplicationFollowUp,
     noteSaveStatuses,
@@ -96,6 +97,7 @@ const ApplicationBoard = ({
     onEditNotes,
     onNotesBlur,
     onNotesVisibilityChange,
+    onPinToggle,
     onRetryNotes,
     onStatusChange,
     onUndoFollowUp,
@@ -194,6 +196,7 @@ const ApplicationBoard = ({
                                     hasOfferEvaluation={hasOfferEvaluation(application.job_id)}
                                     isArchiving={isArchivingApplication(application.job_id)}
                                     isDeleting={deletingApplicationIds.has(application.job_id)}
+                                    isUpdatingPin={isUpdatingApplicationPin(application.job_id)}
                                     isUpdatingStatus={isUpdatingApplicationStatus(application.job_id)}
                                     isUndoingFollowUp={isUndoingApplicationFollowUp?.(application.job_id)}
                                     key={application.job_id}
@@ -204,6 +207,7 @@ const ApplicationBoard = ({
                                     onEditNotes={onEditNotes}
                                     onNotesBlur={onNotesBlur}
                                     onNotesVisibilityChange={onNotesVisibilityChange}
+                                    onPinToggle={onPinToggle}
                                     onRetryNotes={onRetryNotes}
                                     onStatusChange={onStatusChange}
                                     onUndoFollowUp={onUndoFollowUp}

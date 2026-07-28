@@ -7,6 +7,8 @@ import type {
     ListInterviewsQuery,
     ListInterviewsResponse,
     MarkInterviewFollowUpResponse,
+    UpdateInterviewPinRequest,
+    UpdateInterviewPinResponse,
 } from './models.js';
 import type { Request, Response } from 'express';
 import {
@@ -23,11 +25,13 @@ import {
     getInterviews,
     insertInterview,
     markInterviewFollowUpSent,
+    updateInterviewPin,
 } from '../../db/queries/interviews.js';
 import { handleRouteError, sendError } from '../../http/responses.js';
 import {
     isOptionalBoolean,
     isValidDate,
+    isValidHttpURL,
     toInterviewTimeFilterQueryValues,
     toIntegerInRange,
     toPositiveInteger,
@@ -47,6 +51,7 @@ router.post(
         const applicationId = toPositiveInteger(req.body.jobId);
         const interviewLocation = toTrimmedString(req.body.interviewLocation, FIELD_MAX_LENGTHS.location);
         const interviewType = toTrimmedString(req.body.interviewType, FIELD_MAX_LENGTHS.interviewType, true);
+        const meetingURL = toTrimmedString(req.body.meetingURL ?? '', FIELD_MAX_LENGTHS.meetingURL, true);
         const interviewDurationMinutes = toIntegerInRange(
             req.body.interviewDurationMinutes,
             INTERVIEW_DURATION_MINUTES_MIN,
@@ -61,11 +66,17 @@ router.post(
             interviewDurationMinutes === undefined ||
             interviewLocation === undefined ||
             interviewType === undefined ||
+            meetingURL === undefined ||
             notes === undefined ||
             !isOptionalBoolean(allowSchedulingConflict) ||
             !isOptionalBoolean(allowOfferDeadlineWarning)
         ) {
             sendError(res, 422, 'Interview fields are missing, invalid, or too long.');
+            return;
+        }
+
+        if (meetingURL && !isValidHttpURL(meetingURL)) {
+            sendError(res, 422, 'URL must be in a valid format.');
             return;
         }
 
@@ -125,6 +136,7 @@ router.post(
                 interviewDurationMinutes,
                 interviewLocation,
                 interviewType,
+                meetingURL,
                 notes
             );
             if (insertResult === 'not-found') {
@@ -184,6 +196,35 @@ router.delete(
             res.sendStatus(204);
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to delete interviews.');
+        }
+    }
+);
+
+router.patch(
+    '/:interviewId/pin',
+    async (
+        req: Request<InterviewIdParams, UpdateInterviewPinResponse, UpdateInterviewPinRequest>,
+        res: Response<UpdateInterviewPinResponse>
+    ): Promise<void> => {
+        const interviewId = toPositiveInteger(req.params.interviewId);
+        if (interviewId === undefined) {
+            sendError(res, 422, 'Interview ID must be a positive integer.');
+            return;
+        }
+        if (typeof req.body.isPinned !== 'boolean') {
+            sendError(res, 422, 'Pin state must be a boolean.');
+            return;
+        }
+
+        try {
+            const interviewPin = await updateInterviewPin(req.body.isPinned, interviewId, req.user.id);
+            if (!interviewPin) {
+                sendError(res, 404, 'Interview not found.');
+                return;
+            }
+            res.status(200).json(interviewPin);
+        } catch (error: unknown) {
+            handleRouteError(res, error, 'Unable to update the interview pin.');
         }
     }
 );

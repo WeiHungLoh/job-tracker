@@ -345,7 +345,7 @@
 .card a {
     width: fit-content;
     padding: 4px 8px;
-    border-radius: 8px;
+    border-radius: var(--radiusPill);
     background-color: var(--colorLinkBg);
     color: var(--colorLinkText);
     font-size: 0.8125rem;

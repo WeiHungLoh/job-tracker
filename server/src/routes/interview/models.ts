@@ -1,6 +1,6 @@
 import type { ErrorResponse } from '../../http/models.js';
 export type { EmptyResponse } from '../../http/models.js';
-import type { InterviewCollectionSummary, JobInterview } from '../../db/models.js';
+import type { InterviewCollectionSummary, InterviewPin, JobInterview } from '../../db/models.js';
 
 export type InterviewIdParams = {
     interviewId: string;
@@ -16,6 +16,7 @@ export type CreateInterviewRequest = {
     interviewDurationMinutes: number;
     interviewLocation: string;
     interviewType: string;
+    meetingURL?: string;
     notes: string;
     allowSchedulingConflict?: boolean;
     allowOfferDeadlineWarning?: boolean;
@@ -61,6 +62,10 @@ export type CreateInterviewResponse =
     | ErrorResponse;
 export type ListInterviewsResponse = JobInterview[] | ErrorResponse;
 export type GetInterviewCollectionSummaryResponse = InterviewCollectionSummary | ErrorResponse;
+export type UpdateInterviewPinRequest = {
+    isPinned: boolean;
+};
+export type UpdateInterviewPinResponse = InterviewPin | ErrorResponse;
 export type MarkInterviewFollowUpResponse =
     | {
           follow_up_sent_at: Date;

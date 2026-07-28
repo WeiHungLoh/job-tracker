@@ -19,6 +19,7 @@ const mockApplication = {
     job_status: 'Applied',
     job_posting_url: 'https://jobstreet.com',
     notes: '',
+    is_pinned: false,
 };
 
 const mockInterview = {
@@ -246,6 +247,10 @@ describe('Job application viewing flow', () => {
         expect(screen.getByText(/software engineer/i)).toBeInTheDocument();
         expect(screen.getByText(/^job status:/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /edit status/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Pin ABC Pte Ltd application' })).toHaveAttribute(
+            'aria-pressed',
+            'false'
+        );
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Filter by' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
@@ -254,7 +259,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'false');
         expect(screen.getByRole('switch', { name: 'Show archive' })).toHaveAttribute('aria-checked', 'false');
-        expect(screen.getByRole('switch', { name: 'Auto scroll after job status change' })).toHaveAttribute(
+        expect(screen.getByRole('switch', { name: 'Auto scroll after application moves' })).toHaveAttribute(
             'aria-checked',
             'false'
         );
@@ -271,6 +276,171 @@ describe('Job application viewing flow', () => {
             }
         );
     });
+
+    test('pins and unpins without refetching, reorders the list, scrolls when enabled, and shows success', async () => {
+        const olderApplication = {
+            ...mockApplication,
+            company_name: 'Zulu Systems',
+            application_date: '2025-05-20T00:00:00Z',
+        };
+        const newerApplication = {
+            ...mockApplication,
+            job_id: 2,
+            company_name: 'Alpha Labs',
+            application_date: '2025-06-20T00:00:00Z',
+        };
+        mockApplicationCollection([olderApplication, newerApplication]);
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/user-preferences')) {
+                return response({
+                    ...mockPreferences,
+                    application_enable_scroll: true,
+                    ...(init?.body ? JSON.parse(String(init.body)) : {}),
+                });
+            }
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/pin')) {
+                const { isPinned } = JSON.parse(String(init?.body));
+                return response({ job_id: 1, is_pinned: isPinned });
+            }
+            return init?.method === 'GET' ? response([olderApplication, newerApplication]) : response(undefined, 204);
+        });
+        const highlightSpy = vi.spyOn(highlightElement, 'scrollAndHighlight');
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    application_enable_scroll: true,
+                    application_list_sort_order: 'application_date_desc',
+                },
+            }
+        );
+
+        await screen.findByRole('button', { name: 'Pin Zulu Systems application' });
+        expectListCompanyOrder(['Alpha Labs', 'Zulu Systems']);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Pin Zulu Systems application' }));
+
+        await waitFor(() => expectListCompanyOrder(['Zulu Systems', 'Alpha Labs']));
+        expect(screen.getByRole('button', { name: 'Unpin Zulu Systems application' })).toHaveAttribute(
+            'aria-pressed',
+            'true'
+        );
+        expect(await screen.findByText('Job application pinned.')).toBeInTheDocument();
+        await waitFor(() => expect(highlightSpy).toHaveBeenCalledWith('1', expect.any(String), expect.any(Object)));
+
+        await userEvent.click(screen.getByRole('button', { name: 'Unpin Zulu Systems application' }));
+
+        await waitFor(() => expectListCompanyOrder(['Alpha Labs', 'Zulu Systems']));
+        expect(await screen.findByText('Job application unpinned.')).toBeInTheDocument();
+        await waitFor(() => expect(highlightSpy).toHaveBeenCalledTimes(2));
+        expect(applicationListRequestCount()).toBe(1);
+        expect(fetch).toHaveBeenCalledWith(
+            `${import.meta.env.VITE_API_URL}/job-applications/1/pin`,
+            expect.objectContaining({
+                body: JSON.stringify({ isPinned: true }),
+                method: 'PATCH',
+            })
+        );
+        expect(fetch).toHaveBeenCalledWith(
+            `${import.meta.env.VITE_API_URL}/job-applications/1/pin`,
+            expect.objectContaining({
+                body: JSON.stringify({ isPinned: false }),
+                method: 'PATCH',
+            })
+        );
+        highlightSpy.mockRestore();
+    });
+
+    test('disables only the pending pin and preserves its state when pinning fails', async () => {
+        let resolvePinRequest: ((value: ReturnType<typeof response>) => void) | undefined;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/user-preferences')) {
+                return response(mockPreferences);
+            }
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/pin')) {
+                return await new Promise((resolve) => {
+                    resolvePinRequest = resolve;
+                });
+            }
+            return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>
+        );
+
+        const pinButton = await screen.findByRole('button', { name: 'Pin ABC Pte Ltd application' });
+        void userEvent.click(pinButton);
+        await waitFor(() => expect(pinButton).toBeDisabled());
+
+        await act(async () => {
+            resolvePinRequest?.(response({ message: 'Pin update unavailable.' }, 400));
+        });
+
+        expect(await screen.findByText('Pin update unavailable.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Pin ABC Pte Ltd application' })).toBeEnabled();
+        expect(applicationListRequestCount()).toBe(1);
+    });
+
+    test.each([
+        { enableScroll: false, viewMode: 'list' },
+        { enableScroll: true, viewMode: 'board' },
+    ] as const)(
+        'does not auto scroll or trigger a status change when pinning in $viewMode view',
+        async ({ enableScroll, viewMode }) => {
+            fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+                if (url.endsWith('/user-preferences')) {
+                    return response({
+                        ...mockPreferences,
+                        application_enable_scroll: enableScroll,
+                        application_view_mode: viewMode,
+                        ...(init?.body ? JSON.parse(String(init.body)) : {}),
+                    });
+                }
+                if (url.endsWith('/job-interviews')) {
+                    return response([]);
+                }
+                if (url.endsWith('/job-applications/1/pin')) {
+                    return response({ job_id: 1, is_pinned: true });
+                }
+                return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+            });
+            const highlightSpy = vi.spyOn(highlightElement, 'scrollAndHighlight');
+
+            render(
+                <MemoryRouter>
+                    <ViewApplication />
+                </MemoryRouter>,
+                {
+                    initialPreferences: {
+                        application_enable_scroll: enableScroll,
+                        application_view_mode: viewMode,
+                    },
+                }
+            );
+
+            await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd application' }));
+            await screen.findByRole('button', { name: 'Unpin ABC Pte Ltd application' });
+            await act(async () => {
+                await new Promise((resolve) => setTimeout(resolve, 150));
+            });
+
+            expect(highlightSpy).not.toHaveBeenCalled();
+            expect(statusUpdateRequestCount(1)).toBe(0);
+            highlightSpy.mockRestore();
+        }
+    );
 
     test('undoes a persisted application follow-up without refetching and shows success', async () => {
         const sentApplication = {
@@ -676,7 +846,7 @@ describe('Job application viewing flow', () => {
                 return response(undefined, 204);
             }
             return response([
-                mockApplication,
+                { ...mockApplication, is_pinned: true },
                 { ...mockApplication, job_id: 2, company_name: 'Offer Pte Ltd', job_status: 'Offer' },
             ]);
         });
@@ -705,6 +875,16 @@ describe('Job application viewing flow', () => {
         expect(within(applicationCard).queryByText('Remote')).not.toBeInTheDocument();
         expect(within(applicationCard).queryByText('Applied 20 Jun 2025')).not.toBeInTheDocument();
         expect(within(applicationCard).queryByText(/\d+ days \d+ hours \d+ minutes/)).not.toBeInTheDocument();
+        const pinButton = within(applicationCard).getByRole('button', {
+            name: 'Unpin ABC Pte Ltd application',
+        });
+        const statusBadge = within(applicationCard).getByText('Applied', { selector: 'span' });
+        const dragButton = within(applicationCard).getByRole('button', {
+            name: 'Drag ABC Pte Ltd Software Engineer application',
+        });
+        expect(pinButton).toHaveAttribute('aria-pressed', 'true');
+        expect(pinButton.compareDocumentPosition(statusBadge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(statusBadge.compareDocumentPosition(dragButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(within(board).getByRole('article', { name: /Offer Pte Ltd Software Engineer/i })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Display options' })).not.toBeInTheDocument();
     });
@@ -987,7 +1167,7 @@ describe('Job application viewing flow', () => {
         expect(screen.getByPlaceholderText('Add your notes here')).not.toBeVisible();
         await userEvent.click(screen.getByText('Actions'));
 
-        expect(screen.getByRole('link', { name: 'Open job posting' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Click here to view job posting' })).toBeInTheDocument();
         const notesField = screen.getByPlaceholderText('Add your notes here');
         expect(notesField).toBeVisible();
         expect(notesField).toHaveAttribute('maxlength', '3000');

@@ -13,6 +13,10 @@ export type InterviewTimingSource = {
     interview_duration_minutes: number;
 };
 
+type PinnableInterviewTimingSource = InterviewTimingSource & {
+    is_pinned?: boolean;
+};
+
 export type InterviewTiming = {
     end: Date;
     formattedRange: string;
@@ -100,13 +104,24 @@ export const formatInterviewCountdown = (timing: InterviewTiming, now = new Date
     return `${days} days ${hours} hours ${minutes} minutes`;
 };
 
-export const filterAndSortInterviews = <Interview extends InterviewTimingSource>(
+export const filterAndSortInterviews = <Interview extends PinnableInterviewTimingSource>(
     interviews: readonly Interview[],
     selectedFilters: readonly InterviewTimeFilter[],
     now = new Date()
 ): Interview[] => {
-    const nowTime = now.getTime();
-    const sortedInterviews = [...interviews].sort((firstInterview, secondInterview) => {
+    const filteredInterviews =
+        selectedFilters.length === 1
+            ? interviews.filter((interview) => {
+                  const timing = getInterviewTiming(interview, now);
+                  return selectedFilters[0] === 'Upcoming Interviews' ? timing.hasNotEnded : timing.hasEnded;
+              })
+            : interviews;
+
+    return [...filteredInterviews].sort((firstInterview, secondInterview) => {
+        if (Boolean(firstInterview.is_pinned) !== Boolean(secondInterview.is_pinned)) {
+            return firstInterview.is_pinned ? -1 : 1;
+        }
+
         const firstTiming = getInterviewTiming(firstInterview, now);
         const secondTiming = getInterviewTiming(secondInterview, now);
 
@@ -118,16 +133,6 @@ export const filterAndSortInterviews = <Interview extends InterviewTimingSource>
         }
 
         return firstTiming.start.getTime() - secondTiming.start.getTime();
-    });
-
-    if (selectedFilters.length !== 1) {
-        return sortedInterviews;
-    }
-
-    const [selectedFilter] = selectedFilters;
-    return sortedInterviews.filter((interview) => {
-        const timing = getInterviewTiming(interview, new Date(nowTime));
-        return selectedFilter === 'Upcoming Interviews' ? timing.hasNotEnded : timing.hasEnded;
     });
 };
 

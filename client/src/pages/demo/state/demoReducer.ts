@@ -26,6 +26,7 @@ type CreateInterviewPayload = {
     interviewLocation: string;
     interviewType: string;
     jobId: number;
+    meetingURL: string;
     notes: string;
 };
 
@@ -42,6 +43,7 @@ type SaveCounterofferPlanPayload = {
 export type DemoAction =
     | { type: 'CREATE_APPLICATION'; payload: CreateApplicationPayload }
     | { type: 'UPDATE_APPLICATION_STATUS'; payload: { jobId: number; jobStatus: JobStatus } }
+    | { type: 'UPDATE_APPLICATION_PIN'; payload: { jobId: number; isPinned: boolean } }
     | { type: 'MARK_APPLICATION_FOLLOW_UP_SENT'; payload: { jobId: number; sentAt: string } }
     | { type: 'UNDO_APPLICATION_FOLLOW_UP'; payload: { jobId: number } }
     | { type: 'UPDATE_APPLICATION_NOTES'; payload: { jobId: number; notes: string } }
@@ -54,6 +56,7 @@ export type DemoAction =
     | { type: 'DELETE_ARCHIVED_APPLICATION'; payload: { archivedJobId: number } }
     | { type: 'DELETE_ALL_ARCHIVED_APPLICATIONS' }
     | { type: 'CREATE_INTERVIEW'; payload: CreateInterviewPayload }
+    | { type: 'UPDATE_INTERVIEW_PIN'; payload: { interviewId: number; isPinned: boolean } }
     | { type: 'DELETE_INTERVIEW'; payload: { interviewId: number } }
     | { type: 'MARK_INTERVIEW_FOLLOW_UP_SENT'; payload: { interviewId: number; sentAt: string } }
     | { type: 'UNDO_INTERVIEW_FOLLOW_UP'; payload: { interviewId: number } }
@@ -77,6 +80,7 @@ const toArchivedApplication = (application: JobApplication): ArchivedJobApplicat
     job_location: application.job_location,
     job_posting_url: application.job_posting_url,
     notes: application.notes,
+    is_pinned: application.is_pinned,
     application_follow_up_sent_at: application.application_follow_up_sent_at ?? null,
 });
 
@@ -89,6 +93,7 @@ const toActiveApplication = (application: ArchivedJobApplication): JobApplicatio
     job_location: application.job_location,
     job_posting_url: application.job_posting_url,
     notes: application.notes,
+    is_pinned: application.is_pinned,
     application_follow_up_sent_at: application.application_follow_up_sent_at ?? null,
 });
 
@@ -103,7 +108,9 @@ const toArchivedInterview = (interview: JobInterview, application: JobApplicatio
     interview_location: interview.interview_location,
     interview_type: interview.interview_type,
     interview_notes: interview.interview_notes,
+    meeting_url: interview.meeting_url ?? '',
     follow_up_sent_at: interview.follow_up_sent_at ?? null,
+    is_pinned: interview.is_pinned,
 });
 
 const toActiveInterview = (interview: ArchivedJobInterview, application: ArchivedJobApplication): JobInterview => ({
@@ -117,7 +124,9 @@ const toActiveInterview = (interview: ArchivedJobInterview, application: Archive
     interview_location: interview.interview_location,
     interview_type: interview.interview_type,
     interview_notes: interview.interview_notes,
+    meeting_url: interview.meeting_url ?? '',
     follow_up_sent_at: interview.follow_up_sent_at ?? null,
+    is_pinned: interview.is_pinned,
 });
 
 const mergePreferences = (state: DemoState, updatedPreferences: UpdateUserPreferencesRequest): DemoState => {
@@ -160,6 +169,7 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 job_location: jobLocation,
                 job_posting_url: jobURL,
                 notes: '',
+                is_pinned: false,
             };
 
             return {
@@ -196,6 +206,16 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 ),
             };
         }
+
+        case 'UPDATE_APPLICATION_PIN':
+            return {
+                ...state,
+                applications: state.applications.map((application) =>
+                    application.job_id === action.payload.jobId
+                        ? { ...application, is_pinned: action.payload.isPinned }
+                        : application
+                ),
+            };
 
         case 'MARK_APPLICATION_FOLLOW_UP_SENT':
             return {
@@ -376,6 +396,8 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 interview_location: action.payload.interviewLocation,
                 interview_type: action.payload.interviewType,
                 interview_notes: action.payload.notes,
+                meeting_url: action.payload.meetingURL ?? '',
+                is_pinned: false,
             };
 
             return {
@@ -390,6 +412,16 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 ...state,
                 interviews: state.interviews.filter(
                     (interview) => interview.interview_id !== action.payload.interviewId
+                ),
+            };
+
+        case 'UPDATE_INTERVIEW_PIN':
+            return {
+                ...state,
+                interviews: state.interviews.map((interview) =>
+                    interview.interview_id === action.payload.interviewId
+                        ? { ...interview, is_pinned: action.payload.isPinned }
+                        : interview
                 ),
             };
 

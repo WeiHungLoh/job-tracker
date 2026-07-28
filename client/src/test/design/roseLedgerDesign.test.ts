@@ -195,6 +195,8 @@ describe('Rose Ledger visual contract', () => {
             'src/pages/dashboard/attentionCenter/FollowUpDraftDialog.tsx',
             'src/pages/demo/state/demoDates.ts',
             'src/pages/application/jobApplication/QuickCaptureBookmarklet.tsx',
+            'src/components/pinControl/PinControl.tsx',
+            'src/components/pinControl/PinControl.module.css',
         ];
         const obsoletePaths = [
             'src/test/renderWithToast.tsx',
@@ -213,6 +215,8 @@ describe('Rose Ledger visual contract', () => {
             'src/pages/demo/state/demoDateHelpers.ts',
             'src/pages/userGuide/components/quickCaptureBookmarklet/QuickCaptureBookmarklet.tsx',
             'src/pages/application/jobApplication/QuickCaptureSetupDialog.tsx',
+            'src/pages/application/ApplicationPin.tsx',
+            'src/pages/application/ApplicationPin.module.css',
         ];
 
         expectedPaths.forEach((path) => expect(existsSync(resolve(clientRoot, path)), path).toBe(true));
@@ -759,6 +763,7 @@ describe('Rose Ledger visual contract', () => {
         const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
         const calendarOptions = readSource('src/pages/interview/calendarOptions/CalendarOptions.module.css');
         const applicationBoard = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');
+        const followUpSentBadge = readSource('src/components/followUpSentBadge/FollowUpSentBadge.module.css');
         const allCss = collectCssFiles(sourceRoot)
             .map((path) => readFileSync(path, 'utf8'))
             .join('\n');
@@ -769,9 +774,18 @@ describe('Rose Ledger visual contract', () => {
         expect(applicationCard).toMatch(/\.application\s*\{[^}]*gap:\s*0;/s);
         expect(applicationCard).toMatch(/\.applicationContent\s*\{[^}]*padding-right:\s*60px;/s);
         expect(applicationCard).toContain('border-radius: var(--radiusPill);');
+        expect(applicationCard).toMatch(
+            /\.applicationContent a,\s*\.url\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s
+        );
+        expect(applicationCard).toMatch(/\.applicationContent select\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(applicationCard).toMatch(/\.badgeGroup\s*\{[^}]*gap:\s*var\(--spaceCompact\);/s);
         expect(applicationCard).toMatch(/\.buttonGroup button\s*\{[^}]*white-space: nowrap;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*grid-template-columns:\s*1fr\s+1fr;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*flex-shrink:\s*0;/s);
+        expect(interviewCard).toMatch(/\.interviewContent a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(interviewCard).toMatch(
+            /\.board \.interviewContent \.headingRow\s*\{[^}]*align-items:\s*center;[^}]*\}/s
+        );
         expect(applicationCard).toMatch(/\.location\s*\{[^}]*color:\s*var\(--colorLocationText\);/s);
         expect(interviewCard).toMatch(/\.location\s*\{[^}]*color:\s*var\(--colorLocationText\);/s);
         expect(interviewCard).toMatch(/\.type\s*\{[^}]*color:\s*var\(--colorInterviewType\);/s);
@@ -784,6 +798,11 @@ describe('Rose Ledger visual contract', () => {
         expect(interviewCard).toMatch(/@media \(max-width: 803px\)\s*\{\s*\.interview\s*\{[^}]*padding-right:\s*0;/s);
         expect(calendarOptions).toMatch(/\.trigger\s*\{[^}]*width:\s*100%;/s);
         expect(applicationBoard).toContain('border-radius: var(--radiusPill);');
+        expect(applicationBoard).toMatch(/\.card a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(followUpSentBadge).toMatch(/\.badge\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(followUpSentBadge).toMatch(
+            /\.compact\s*\{[^}]*padding:\s*4px 9px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:/s
+        );
         [
             'scrollbar-color',
             '::-webkit-scrollbar-track',

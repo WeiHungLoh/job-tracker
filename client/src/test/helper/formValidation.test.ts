@@ -89,6 +89,7 @@ describe('job tracker form validation', () => {
                 interviewDurationMinutes: '1.5',
                 interviewLocation: '   ',
                 interviewType: 'x'.repeat(FIELD_MAX_LENGTHS.interviewType + 1),
+                meetingURL: 'meet.example',
                 notes: 'x'.repeat(FIELD_MAX_LENGTHS.notes + 1),
             })
         ).toEqual({
@@ -97,6 +98,7 @@ describe('job tracker form validation', () => {
                 interviewDurationMinutes: 'Please enter a duration between 1 and 1440 minutes',
                 interviewLocation: 'Please enter an interview location.',
                 interviewType: `Interview type must be ${FIELD_MAX_LENGTHS.interviewType} characters or fewer.`,
+                meetingURL: 'URL must be in a valid format.',
                 notes: `Notes must be ${FIELD_MAX_LENGTHS.notes} characters or fewer.`,
             },
             isValid: false,
@@ -117,13 +119,9 @@ describe('job tracker form validation', () => {
         [
             'jobURL',
             { jobURL: 'x'.repeat(FIELD_MAX_LENGTHS.jobURL + 1) },
-            `Job URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`,
+            `Job Posting URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`,
         ],
-        [
-            'applicationDate',
-            { applicationDate: '2999-01-01T00:00' },
-            'Application date cannot be in the future.',
-        ],
+        ['applicationDate', { applicationDate: '2999-01-01T00:00' }, 'Application date cannot be in the future.'],
     ] as const)('maps the application rule to the %s field', (field, overrides, message) => {
         const result = validateApplicationForm(
             {
@@ -142,11 +140,7 @@ describe('job tracker form validation', () => {
 
     test.each([
         ['interviewDate', { interviewDate: '' }, 'Please enter an interview date.'],
-        [
-            'interviewDate',
-            { interviewDate: '2026-07-08T10:00' },
-            'Interview date must be after the application date.',
-        ],
+        ['interviewDate', { interviewDate: '2026-07-08T10:00' }, 'Interview date must be after the application date.'],
         [
             'interviewLocation',
             { interviewLocation: 'x'.repeat(FIELD_MAX_LENGTHS.location + 1) },
@@ -301,6 +295,7 @@ describe('job tracker form validation', () => {
                 interviewDurationMinutes: 60,
                 interviewLocation: 'Zoom',
                 interviewType: 'Technical',
+                meetingURL: '',
                 notes: 'Prepare examples',
             },
         });

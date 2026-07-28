@@ -6,6 +6,10 @@
     composes: applicationContent from '../../application/ApplicationCard.module.css';
 }
 
+.headingRow {
+    composes: headingRow from '../../application/ApplicationCard.module.css';
+}
+
 .buttonGroup {
     composes: buttonGroup from '../../application/ApplicationCard.module.css';
 }

@@ -62,7 +62,7 @@ const DemoViewApplication = () => {
     const [editingApplicationId, setEditingApplicationId] = useState<number | null>(null);
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
     const confirm = useConfirm();
-    const statusHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const applicationHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const { showErrorToast, showSuccessToast } = useToast();
     const saveApplicationNotes = useCallback(
@@ -76,6 +76,7 @@ const DemoViewApplication = () => {
     const [pendingBulkAction, setPendingBulkAction] = useState<'archive' | 'delete' | null>(null);
     const bulkActionPendingRef = useRef(false);
     const pendingApplicationActionIdsRef = useRef<Set<number>>(new Set());
+    const updatingPinApplicationIdRef = useRef<Set<number>>(new Set());
     const {
         pendingIds: deletingApplicationIds,
         startPending: startDeletingApplication,
@@ -85,6 +86,11 @@ const DemoViewApplication = () => {
         pendingIds: archivingApplicationIds,
         startPending: startArchivingApplication,
         stopPending: stopArchivingApplication,
+    } = usePendingIds();
+    const {
+        pendingIds: updatingPinApplicationIds,
+        startPending: startUpdatingApplicationPin,
+        stopPending: stopUpdatingApplicationPin,
     } = usePendingIds();
     const applications = useMemo(() => selectApplications(state), [state]);
     const interviewJobIdSet = useMemo(() => selectInterviewJobIdSet(state), [state]);
@@ -97,6 +103,8 @@ const DemoViewApplication = () => {
     const showNotes = preferences.application_show_notes;
     const enableScroll = preferences.application_enable_scroll;
     const viewMode = preferences.application_view_mode;
+    const viewModeRef = useRef(viewMode);
+    viewModeRef.current = viewMode;
     const isBoardView = viewMode === 'board';
     const csvApplications = isBoardView ? getApplicationsInBoardOrder(applications, selectedJobStatuses) : applications;
     const csvData = createApplicationCsvData(csvApplications);
@@ -317,7 +325,7 @@ const DemoViewApplication = () => {
 
         if (shouldAutoScrollAfterStatusChange(enableScroll, preferences.application_list_sort_order)) {
             setTimeout(() => {
-                scrollAndHighlight(String(application.job_id), styles.highlighted, statusHighlightTimeout.current);
+                scrollAndHighlight(String(application.job_id), styles.highlighted, applicationHighlightTimeout.current);
             }, 100);
         }
     };
@@ -336,6 +344,40 @@ const DemoViewApplication = () => {
     const handleUndoFollowUp = (application: JobApplication) => {
         dispatch({ type: 'UNDO_APPLICATION_FOLLOW_UP', payload: { jobId: application.job_id } });
         showSuccessToast('Application follow-up undone.');
+    };
+
+    const handlePinToggle = async (application: JobApplication) => {
+        if (updatingPinApplicationIdRef.current.has(application.job_id)) {
+            return;
+        }
+
+        const isPinned = !application.is_pinned;
+        updatingPinApplicationIdRef.current.add(application.job_id);
+        startUpdatingApplicationPin(application.job_id);
+
+        try {
+            await Promise.resolve();
+            dispatch({
+                type: 'UPDATE_APPLICATION_PIN',
+                payload: { jobId: application.job_id, isPinned },
+            });
+            showSuccessToast(isPinned ? 'Job application pinned.' : 'Job application unpinned.');
+
+            if (enableScroll && viewModeRef.current === 'list') {
+                setTimeout(() => {
+                    if (viewModeRef.current === 'list') {
+                        scrollAndHighlight(
+                            String(application.job_id),
+                            styles.highlighted,
+                            applicationHighlightTimeout.current
+                        );
+                    }
+                }, 100);
+            }
+        } finally {
+            updatingPinApplicationIdRef.current.delete(application.job_id);
+            stopUpdatingApplicationPin(application.job_id);
+        }
     };
 
     const hasApplications = applications.length > 0;
@@ -422,7 +464,7 @@ const DemoViewApplication = () => {
                                         application_enable_scroll: !enableScroll,
                                     })
                                 }
-                                label='Auto scroll after job status change'
+                                label='Auto scroll after application moves'
                             />
                         </DisplayOptions>
                     )}
@@ -441,6 +483,7 @@ const DemoViewApplication = () => {
                     isArchivingApplication={(jobId) =>
                         pendingBulkAction === 'archive' || archivingApplicationIds.has(jobId)
                     }
+                    isUpdatingApplicationPin={(jobId) => updatingPinApplicationIds.has(jobId)}
                     isUpdatingApplicationStatus={isDemoApplicationStatusUpdating}
                     isUndoingApplicationFollowUp={() => false}
                     noteSaveStatuses={notesAutosave.noteSaveStatuses}
@@ -449,6 +492,7 @@ const DemoViewApplication = () => {
                     onEditNotes={handleEditNotes}
                     onNotesBlur={notesAutosave.flushNote}
                     onNotesVisibilityChange={notesAutosave.setNoteVisibility}
+                    onPinToggle={handlePinToggle}
                     onRetryNotes={notesAutosave.retryNotes}
                     onStatusChange={updateApplicationStatusFromBoard}
                     onUndoFollowUp={handleUndoFollowUp}
@@ -472,6 +516,7 @@ const DemoViewApplication = () => {
                         isArchiving={pendingBulkAction === 'archive' || archivingApplicationIds.has(application.job_id)}
                         isDeleting={deletingApplicationIds.has(application.job_id)}
                         isEditingStatus={editingApplicationId === application.job_id}
+                        isUpdatingPin={updatingPinApplicationIds.has(application.job_id)}
                         isUndoingFollowUp={false}
                         key={application.job_id}
                         note={notesAutosave.draftNotes[application.job_id] ?? application.notes}
@@ -482,6 +527,7 @@ const DemoViewApplication = () => {
                         onNotesBlur={notesAutosave.flushNote}
                         onRetryNotes={notesAutosave.retryNotes}
                         onJobStatusChange={setEditedJobStatus}
+                        onPinToggle={handlePinToggle}
                         onToggleStatusEditor={handleStatusEditorToggle}
                         onUndoFollowUp={handleUndoFollowUp}
                         showArchive={showArchive}

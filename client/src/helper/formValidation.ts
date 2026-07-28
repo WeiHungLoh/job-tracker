@@ -7,6 +7,7 @@ export const FIELD_MAX_LENGTHS = {
     location: 200,
     interviewType: 100,
     jobURL: 2048,
+    meetingURL: 2048,
     notes: 3000,
 } as const;
 
@@ -43,6 +44,7 @@ export type InterviewFormErrors = {
     interviewDurationMinutes?: string;
     interviewLocation?: string;
     interviewType?: string;
+    meetingURL?: string;
     notes?: string;
 };
 
@@ -73,6 +75,7 @@ type InterviewFormInput = {
     interviewDurationValidity?: ValidityState;
     interviewLocation: string;
     interviewType: string;
+    meetingURL: string;
     notes: string;
 };
 
@@ -81,6 +84,7 @@ type ValidInterviewFormValues = {
     interviewDurationMinutes: number;
     interviewLocation: string;
     interviewType: string;
+    meetingURL: string;
     notes: string;
 };
 
@@ -145,7 +149,7 @@ export const validateApplicationForm = (
     }
 
     if (trimmedJobURL.length > FIELD_MAX_LENGTHS.jobURL) {
-        errors.jobURL = `Job URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`;
+        errors.jobURL = `Job Posting URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`;
     }
 
     const applicationDateIsInvalid =
@@ -190,10 +194,12 @@ export const validateInterviewForm = ({
     interviewDurationValidity,
     interviewLocation,
     interviewType,
+    meetingURL = '',
     notes,
 }: InterviewFormInput): FormValidationResult<ValidInterviewFormValues, InterviewFormErrors> => {
     const trimmedInterviewLocation = interviewLocation.trim();
     const trimmedInterviewType = interviewType.trim();
+    const trimmedMeetingURL = meetingURL.trim();
     const trimmedNotes = notes.trim();
     const parsedDuration = Number(interviewDurationMinutes);
     const errors: InterviewFormErrors = {};
@@ -235,6 +241,12 @@ export const validateInterviewForm = ({
         errors.interviewType = `Interview type must be ${FIELD_MAX_LENGTHS.interviewType} characters or fewer.`;
     }
 
+    if (trimmedMeetingURL.length > FIELD_MAX_LENGTHS.meetingURL) {
+        errors.meetingURL = `Meeting URL must be ${FIELD_MAX_LENGTHS.meetingURL} characters or fewer.`;
+    } else if (trimmedMeetingURL && !isValidHttpURL(trimmedMeetingURL)) {
+        errors.meetingURL = 'URL must be in a valid format.';
+    }
+
     if (trimmedNotes.length > FIELD_MAX_LENGTHS.notes) {
         errors.notes = `Notes must be ${FIELD_MAX_LENGTHS.notes} characters or fewer.`;
     }
@@ -250,6 +262,7 @@ export const validateInterviewForm = ({
             interviewDurationMinutes: parsedDuration,
             interviewLocation: trimmedInterviewLocation,
             interviewType: trimmedInterviewType,
+            meetingURL: trimmedMeetingURL,
             notes: trimmedNotes,
         },
     };

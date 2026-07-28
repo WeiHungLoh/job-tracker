@@ -156,7 +156,7 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Form validation uses the same limits as the signed-in app, including the{' '}
                     {FIELD_MAX_LENGTHS.companyName}-character company limit, {FIELD_MAX_LENGTHS.jobTitle}-character job
-                    title limit and valid <code>http://</code> or <code>https://</code> job URLs.
+                    title limit and valid <code>http://</code> or <code>https://</code> Job Posting URLs.
                 </p>
                 <h3>Interviews</h3>
                 <p>
@@ -265,8 +265,8 @@ const guideSections: readonly UserGuideSection[] = [
             <>
                 <h3>Add a job application</h3>
                 <p>
-                    Enter the company name, job title and status. Application date, location and job URL are optional.
-                    If the application date is blank, the current date is used.
+                    Enter the company name, job title and status. Application date, location and Job Posting URL are
+                    optional. If the application date is blank, the current date is used.
                 </p>
                 <ul>
                     <li>
@@ -283,8 +283,8 @@ const guideSections: readonly UserGuideSection[] = [
                         characters.
                     </li>
                     <li>
-                        Job URLs are limited to {FIELD_MAX_LENGTHS.jobURL} characters and must use <code>http://</code>{' '}
-                        or <code>https://</code> with a valid domain and suffix.
+                        Job Posting URLs are limited to {FIELD_MAX_LENGTHS.jobURL} characters and must use{' '}
+                        <code>http://</code> or <code>https://</code> with a valid domain and suffix.
                     </li>
                 </ul>
                 <p>If the server rejects the submission, the entered application details remain in the form.</p>
@@ -520,8 +520,9 @@ const guideSections: readonly UserGuideSection[] = [
                     <code>Newest Application</code>. Active and archived list and board choices are saved independently.
                 </p>
                 <p>
-                    Interviews are grouped with upcoming dates first (closest at the top), then past dates (earliest
-                    first). This applies to both upcoming and archived interviews.
+                    Interview time filters are applied first. Within the matching interviews, pinned interviews appear
+                    first, followed by upcoming dates (closest at the top), then past dates (earliest first). Archived
+                    interviews keep their saved pin indicator as read-only.
                 </p>
             </>
         ),
@@ -533,10 +534,10 @@ const guideSections: readonly UserGuideSection[] = [
         content: (
             <>
                 <p>
-                    Use the <strong>Auto scroll after job status change</strong> toggle under{' '}
+                    Use the <strong>Auto scroll after application moves</strong> toggle under{' '}
                     <strong>Display options</strong> in list view to control scrolling behavior. When enabled (green),
-                    auto scroll only applies when Sort by is set to Job Status. When both conditions are met, changing
-                    the job status via the edit dropdown will automatically scroll the application into view.
+                    pinning or unpinning scrolls the moved application into view. Job-status changes also scroll into
+                    view when Sort by is set to Job Status.
                 </p>
                 <p>
                     After an eligible list-view status update, the application receives a green highlight for four

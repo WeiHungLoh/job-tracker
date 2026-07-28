@@ -3,6 +3,7 @@ import { JOB_STATUS_ORDER, type ApplicationListSortOrder, type JobStatus } from 
 type SortableApplication = {
     application_date: string;
     company_name: string;
+    is_pinned: boolean;
     job_status: JobStatus;
 };
 
@@ -35,6 +36,11 @@ export const sortApplications = <Application extends SortableApplication>(
     sortOrder: ApplicationListSortOrder
 ): Application[] => {
     return [...applications].sort((firstApplication, secondApplication) => {
+        const byPinned = Number(Boolean(secondApplication.is_pinned)) - Number(Boolean(firstApplication.is_pinned));
+        if (byPinned !== 0) {
+            return byPinned;
+        }
+
         switch (sortOrder) {
             case 'job_status': {
                 const byStatus =

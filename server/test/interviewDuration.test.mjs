@@ -37,7 +37,16 @@ test('interview queries persist, return, and sort with the stored duration', asy
 
     try {
         assert.equal(
-            await insertInterview(12, 34, '2027-01-02T00:00:00.000Z', 90, 'Remote', 'Technical', 'Prepare'),
+            await insertInterview(
+                12,
+                34,
+                '2027-01-02T00:00:00.000Z',
+                90,
+                'Remote',
+                'Technical',
+                'https://meet.example.com/room',
+                'Prepare'
+            ),
             'created'
         );
         assert.deepEqual(await getInterviews(34, ['Upcoming Interviews']), []);
@@ -46,9 +55,18 @@ test('interview queries persist, return, and sort with the stored duration', asy
         pool.query = originalQuery;
     }
 
-    assert.deepEqual(calls[0].values, [12, 34, '2027-01-02T00:00:00.000Z', 90, 'Remote', 'Technical', 'Prepare']);
+    assert.deepEqual(calls[0].values, [
+        12,
+        34,
+        '2027-01-02T00:00:00.000Z',
+        90,
+        'Remote',
+        'Technical',
+        'https://meet.example.com/room',
+        'Prepare',
+    ]);
     assert.match(calls[0].sql, /interview_duration_minutes/);
-    assert.match(calls[0].sql, /SELECT \$1, \$2, \$3, \$4, \$5, \$6, \$7/);
+    assert.match(calls[0].sql, /SELECT \$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8/);
 
     for (const call of calls.slice(1)) {
         const compactSQL = call.sql.replace(/\s+/g, ' ').trim();

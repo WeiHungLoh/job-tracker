@@ -1,4 +1,5 @@
 import type {
+    ApplicationPin,
     ApplicationCollectionSummary,
     ApplicationRelationSummary,
     JobApplication,
@@ -48,6 +49,12 @@ export type UpdateNotesRequest = {
 export type UpdateApplicationStatusRequest = {
     jobStatus: JobStatus;
 };
+
+export type UpdateApplicationPinRequest = {
+    isPinned: boolean;
+};
+
+export type UpdateApplicationPinResponse = ApplicationPin | ErrorResponse;
 
 export type MarkApplicationFollowUpResponse =
     | {

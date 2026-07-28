@@ -148,6 +148,15 @@ const DemoViewInterview = () => {
         showSuccessToast('Interview follow-up undone.');
     };
 
+    const handlePinToggle = (interview: JobInterview) => {
+        const isPinned = !interview.is_pinned;
+        dispatch({
+            type: 'UPDATE_INTERVIEW_PIN',
+            payload: { interviewId: interview.interview_id, isPinned },
+        });
+        showSuccessToast(isPinned ? 'Interview pinned.' : 'Interview unpinned.');
+    };
+
     const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: JobInterview) => {
         event.preventDefault();
 
@@ -227,10 +236,12 @@ const DemoViewInterview = () => {
                             index={index}
                             interview={interview}
                             isDeleting={false}
+                            isUpdatingPin={false}
                             isUndoingFollowUp={false}
                             key={interview.interview_id}
                             layout={viewMode}
                             onDelete={() => handleDelete(interview.interview_id)}
+                            onPinToggle={handlePinToggle}
                             onUndoFollowUp={handleUndoFollowUp}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
                             variant='job'

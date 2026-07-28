@@ -10,6 +10,8 @@ import type {
     ListJobStatusCountsResponse,
     ListWeeklyApplicationsResponse,
     MarkApplicationFollowUpResponse,
+    UpdateApplicationPinRequest,
+    UpdateApplicationPinResponse,
     UpdateApplicationStatusRequest,
     UpdateNotesRequest,
 } from './models.js';
@@ -26,6 +28,7 @@ import {
     getJobStatusCounts,
     insertJobApplication,
     markApplicationFollowUpSent,
+    updateApplicationPin,
     updateApplicationStatus,
 } from '../../db/queries/jobApplications.js';
 import { handleRouteError, sendError } from '../../http/responses.js';
@@ -257,6 +260,35 @@ router.delete(
             res.sendStatus(204);
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to undo the application follow-up.');
+        }
+    }
+);
+
+router.patch(
+    '/:jobId/pin',
+    async (
+        req: Request<JobIdParams, UpdateApplicationPinResponse, UpdateApplicationPinRequest>,
+        res: Response<UpdateApplicationPinResponse>
+    ): Promise<void> => {
+        const jobId = toPositiveInteger(req.params.jobId);
+        if (jobId === undefined) {
+            sendError(res, 422, 'Job application ID must be a positive integer.');
+            return;
+        }
+        if (typeof req.body.isPinned !== 'boolean') {
+            sendError(res, 422, 'Pin state must be a boolean.');
+            return;
+        }
+
+        try {
+            const updatedApplication = await updateApplicationPin(req.body.isPinned, jobId, req.user.id);
+            if (!updatedApplication) {
+                sendError(res, 404, 'Job application not found.');
+                return;
+            }
+            res.status(200).json(updatedApplication);
+        } catch (error: unknown) {
+            handleRouteError(res, error, 'Unable to update the job application pin.');
         }
     }
 );

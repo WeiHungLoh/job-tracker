@@ -18,6 +18,7 @@ const mockApplication = {
     job_status: 'Applied',
     job_posting_url: 'https://jobstreet.com',
     notes: '',
+    is_pinned: false,
 };
 
 const mockPreferences: UserPreferences = {
@@ -173,6 +174,43 @@ describe('Archived job application viewing flow', () => {
                 method: 'GET',
             }
         );
+    });
+
+    test('shows pinned archived applications as read-only in list and board views', async () => {
+        mockArchivedApplicationCollection([{ ...mockApplication, is_pinned: true }]);
+
+        render(
+            <MemoryRouter>
+                <ViewArchivedApplication />
+            </MemoryRouter>
+        );
+
+        expect(await screen.findByLabelText('ABC Pte Ltd application is pinned')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /pin ABC Pte Ltd application/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /unpin ABC Pte Ltd application/i })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Board' }));
+
+        const board = await screen.findByRole('region', { name: 'Archived application board' });
+        expect(within(board).getByLabelText('ABC Pte Ltd application is pinned')).toBeInTheDocument();
+        expect(within(board).queryByRole('button', { name: /pin ABC Pte Ltd application/i })).not.toBeInTheDocument();
+        expect(within(board).queryByRole('button', { name: /unpin ABC Pte Ltd application/i })).not.toBeInTheDocument();
+    });
+
+    test('does not show a pin for unpinned archived applications in list or board view', async () => {
+        render(
+            <MemoryRouter>
+                <ViewArchivedApplication />
+            </MemoryRouter>
+        );
+
+        await screen.findByText(/ABC Pte Ltd/i);
+        expect(screen.queryByLabelText(/application is pinned/i)).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Board' }));
+
+        const board = await screen.findByRole('region', { name: 'Archived application board' });
+        expect(within(board).queryByLabelText(/application is pinned/i)).not.toBeInTheDocument();
     });
 
     test('places Sort by between Filter by and Display options while keeping actions last', async () => {
@@ -610,7 +648,9 @@ describe('Archived job application viewing flow', () => {
 
         await userEvent.click(within(applicationCard).getByText('Actions'));
 
-        expect(within(applicationCard).getByRole('link', { name: 'Open job posting' })).toBeInTheDocument();
+        expect(
+            within(applicationCard).getByRole('link', { name: 'Click here to view job posting' })
+        ).toBeInTheDocument();
         expect(within(applicationCard).getByRole('button', { name: 'Unarchive' })).toBeInTheDocument();
         expect(within(applicationCard).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
     });

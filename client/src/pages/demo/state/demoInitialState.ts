@@ -41,6 +41,7 @@ type ApplicationSeed = {
     companyName: string;
     daysAgo: number;
     id: number;
+    isPinned?: boolean;
     jobLocation: string;
     jobStatus: JobStatus;
     jobTitle: string;
@@ -55,6 +56,7 @@ const createApplication = (seed: ApplicationSeed, now: Date): JobApplication => 
     job_status: seed.jobStatus,
     job_location: seed.jobLocation,
     job_posting_url: '',
+    is_pinned: seed.isPinned ?? false,
     notes: seed.notes,
 });
 
@@ -66,6 +68,7 @@ const createArchivedApplication = (seed: ApplicationSeed, now: Date): ArchivedJo
     job_status: seed.jobStatus,
     job_location: seed.jobLocation,
     job_posting_url: '',
+    is_pinned: seed.isPinned ?? false,
     notes: seed.notes,
 });
 
@@ -189,6 +192,7 @@ const applicationSeeds: ApplicationSeed[] = [
     },
     {
         id: 114,
+        isPinned: true,
         companyName: 'Aster Security',
         jobTitle: 'Security Tooling Engineer',
         daysAgo: 6,
@@ -243,6 +247,7 @@ const applicationSeeds: ApplicationSeed[] = [
     },
     {
         id: 120,
+        isPinned: true,
         companyName: 'Cedar FinTech',
         jobTitle: 'Senior React Engineer',
         daysAgo: 55,
@@ -282,6 +287,7 @@ const archivedApplicationSeeds: ApplicationSeed[] = [
     },
     {
         id: 203,
+        isPinned: true,
         companyName: 'SilverRail Labs',
         jobTitle: 'UI Engineer',
         daysAgo: 88,
@@ -300,6 +306,7 @@ const archivedApplicationSeeds: ApplicationSeed[] = [
     },
     {
         id: 205,
+        isPinned: true,
         companyName: 'OrbitPay',
         jobTitle: 'Frontend Engineer',
         daysAgo: 103,
@@ -321,6 +328,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Google Meet',
         interview_type: 'HR screening call',
         interview_notes: 'Ask about frontend platform ownership.',
+        meeting_url: 'https://meet.google.com/example-room',
+        is_pinned: false,
     },
     {
         interview_id: 402,
@@ -333,6 +342,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Zoom',
         interview_type: 'Technical interview',
         interview_notes: '',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 403,
@@ -345,6 +356,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'HarbourFront office',
         interview_type: 'Behavioural interview',
         interview_notes: 'Prepare dashboard tradeoff examples.',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 404,
@@ -357,6 +370,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Microsoft Teams',
         interview_type: 'Hiring-manager interview',
         interview_notes: '',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 405,
@@ -369,6 +384,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Phone call',
         interview_type: 'Recruiter follow-up',
         interview_notes: 'Completed; waiting for panel feedback.',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 406,
@@ -381,6 +398,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Zoom',
         interview_type: 'Final discussion',
         interview_notes: 'Offer details shared after final round.',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 407,
@@ -393,6 +412,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Zoom',
         interview_type: 'System design interview',
         interview_notes: 'Review platform scaling and API design examples.',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 408,
@@ -405,6 +426,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'HarbourFront office',
         interview_type: 'Product case interview',
         interview_notes: '',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 409,
@@ -417,6 +440,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Microsoft Teams',
         interview_type: 'Technical panel interview',
         interview_notes: 'Prepare TypeScript architecture tradeoffs.',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         interview_id: 410,
@@ -429,6 +454,8 @@ const createInterviews = (now: Date): JobInterview[] => [
         interview_location: 'Google Meet',
         interview_type: 'Hiring-manager interview',
         interview_notes: 'Completed; follow up with the hiring team.',
+        meeting_url: '',
+        is_pinned: false,
     },
 ];
 
@@ -444,6 +471,8 @@ const createArchivedInterviews = (now: Date): ArchivedJobInterview[] => [
         interview_location: 'Zoom',
         interview_type: 'Technical interview',
         interview_notes: 'Archived with rejected application.',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         archived_interview_id: 502,
@@ -456,6 +485,8 @@ const createArchivedInterviews = (now: Date): ArchivedJobInterview[] => [
         interview_location: 'Google Meet',
         interview_type: 'Portfolio review',
         interview_notes: '',
+        meeting_url: 'https://meet.google.com/archived-room',
+        is_pinned: false,
     },
     {
         archived_interview_id: 503,
@@ -468,6 +499,8 @@ const createArchivedInterviews = (now: Date): ArchivedJobInterview[] => [
         interview_location: 'Keppel Bay Tower',
         interview_type: 'Hiring-manager interview',
         interview_notes: 'Good team fit, offer received later.',
+        meeting_url: '',
+        is_pinned: false,
     },
     {
         archived_interview_id: 504,
@@ -480,6 +513,8 @@ const createArchivedInterviews = (now: Date): ArchivedJobInterview[] => [
         interview_location: 'Microsoft Teams',
         interview_type: 'Behavioural interview',
         interview_notes: '',
+        meeting_url: '',
+        is_pinned: false,
     },
 ];
 

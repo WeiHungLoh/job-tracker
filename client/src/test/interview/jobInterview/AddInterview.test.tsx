@@ -112,11 +112,13 @@ describe('AddInterview page', () => {
         expect(screen.getByLabelText('Duration (minutes)')).toHaveAttribute('step', '1');
         expect(screen.getByLabelText('Additional Notes (optional)').tagName).toBe('TEXTAREA');
         expect(screen.getByLabelText('Additional Notes (optional)')).toHaveAttribute('maxlength', '3000');
+        expect(screen.getByLabelText('Meeting URL (optional)')).toHaveAttribute('maxlength', '2048');
 
         fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2025-08-03T14:30' } });
         fireEvent.change(screen.getByLabelText('Duration (minutes)'), { target: { value: '90' } });
         userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
         userEvent.type(screen.getByLabelText('Interview Type (optional)'), 'HR');
+        userEvent.type(screen.getByLabelText('Meeting URL (optional)'), 'https://meet.example.com/room');
         userEvent.type(screen.getByLabelText('Additional Notes (optional)'), '2nd round');
         userEvent.click(screen.getByTestId('add-interview'));
 
@@ -127,15 +129,39 @@ describe('AddInterview page', () => {
             interviewLocation: 'Zoom',
             interviewType: 'HR',
             jobId: 1,
+            meetingURL: 'https://meet.example.com/room',
             notes: '2nd round',
         });
         await waitFor(() => {
             expect(screen.getByLabelText('Interview Date')).toHaveValue('');
             expect(screen.getByLabelText('Interview Location')).toHaveValue('');
             expect(screen.getByLabelText('Interview Type (optional)')).toHaveValue('');
+            expect(screen.getByLabelText('Meeting URL (optional)')).toHaveValue('');
             expect(screen.getByLabelText('Additional Notes (optional)')).toHaveValue('');
             expect(screen.getByLabelText('Duration (minutes)')).toHaveValue(60);
         });
+    });
+
+    test('rejects a meeting URL without a valid suffix and focuses the field', async () => {
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/interview/add', state: { app: mockApplication } }]}>
+                <Routes>
+                    <Route path='/interview/add' element={<AddInterview />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2025-08-03T14:30' } });
+        userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
+        userEvent.type(screen.getByLabelText('Meeting URL (optional)'), 'https://meeting');
+        userEvent.click(screen.getByTestId('add-interview'));
+
+        const error = await screen.findByText('URL must be in a valid format.');
+        const meetingURLInput = screen.getByLabelText('Meeting URL (optional)');
+        expect(meetingURLInput).toHaveAttribute('aria-invalid', 'true');
+        expect(meetingURLInput).toHaveAttribute('aria-describedby', error.id);
+        expect(document.activeElement).toBe(meetingURLInput);
+        expect(fetch).not.toHaveBeenCalled();
     });
 
     test('submits once when Enter is pressed in a form field', async () => {

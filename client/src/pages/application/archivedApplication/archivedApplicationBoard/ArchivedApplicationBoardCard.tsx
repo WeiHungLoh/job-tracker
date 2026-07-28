@@ -5,6 +5,7 @@ import type { ArchivedApplicationBoardCardProps } from './models';
 import styles from '../../applicationBoard/ApplicationBoard.module.css';
 import BoardCardActions from '../../../../components/boardCardActions/BoardCardActions';
 import FollowUpSentBadge from '../../../../components/followUpSentBadge/FollowUpSentBadge';
+import PinControl from '../../../../components/pinControl/PinControl';
 
 const EMPTY_NOTES_MESSAGE = 'You do not have any notes here';
 
@@ -28,9 +29,21 @@ const ArchivedApplicationBoardCard = ({
         >
             <div className={styles.cardHeader}>
                 <h3>{application.company_name}</h3>
-                <span className={`${styles.statusBadge} ${getApplicationBoardStatusClassName(application.job_status)}`}>
-                    {application.job_status}
-                </span>
+                <div className={styles.cardHeaderControls}>
+                    <PinControl
+                        itemLabel={application.company_name}
+                        isPinned={application.is_pinned}
+                        size='board'
+                        subject='application'
+                    />
+                    <span
+                        className={`${styles.statusBadge} ${getApplicationBoardStatusClassName(
+                            application.job_status
+                        )}`}
+                    >
+                        {application.job_status}
+                    </span>
+                </div>
             </div>
 
             <p className={styles.jobTitle}>{application.job_title}</p>
@@ -76,7 +89,7 @@ const ArchivedApplicationBoardCard = ({
                     <>
                         {application.job_posting_url !== '' && (
                             <a href={application.job_posting_url} rel='noreferrer noopener' target='_blank'>
-                                Open job posting
+                                Click here to view job posting
                             </a>
                         )}
                         {showNotes && (

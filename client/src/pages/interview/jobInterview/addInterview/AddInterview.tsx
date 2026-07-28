@@ -37,12 +37,14 @@ const AddInterview = () => {
     );
     const [interviewLocation, setInterviewLocation] = useState<string>('');
     const [interviewType, setInterviewType] = useState<string>('');
+    const [meetingURL, setMeetingURL] = useState<string>('');
     const [notes, setNotes] = useState<string>('');
     const { clearFieldError, errors, setErrors } = useFormErrors<InterviewFormField>();
     const interviewDateInputRef = useRef<HTMLInputElement>(null);
     const interviewLocationInputRef = useRef<HTMLInputElement>(null);
     const interviewDurationInputRef = useRef<HTMLInputElement>(null);
     const interviewTypeInputRef = useRef<HTMLInputElement>(null);
+    const meetingURLInputRef = useRef<HTMLInputElement>(null);
     const notesInputRef = useRef<HTMLTextAreaElement>(null);
     const pendingSubmissionRef = useRef(false);
     const navigate = useNavigate();
@@ -62,6 +64,7 @@ const AddInterview = () => {
         setInterviewDurationMinutes(String(DEFAULT_INTERVIEW_DURATION_MINUTES));
         setInterviewLocation('');
         setInterviewType('');
+        setMeetingURL('');
         setNotes('');
         setErrors({});
     };
@@ -119,6 +122,7 @@ const AddInterview = () => {
             interviewDurationValidity: interviewDurationInputRef.current?.validity,
             interviewLocation,
             interviewType,
+            meetingURL,
             notes,
         });
 
@@ -129,6 +133,7 @@ const AddInterview = () => {
                 ['interviewLocation', interviewLocationInputRef],
                 ['interviewDurationMinutes', interviewDurationInputRef],
                 ['interviewType', interviewTypeInputRef],
+                ['meetingURL', meetingURLInputRef],
                 ['notes', notesInputRef],
             ]);
             return;
@@ -141,6 +146,7 @@ const AddInterview = () => {
             interviewDurationMinutes: values.interviewDurationMinutes,
             interviewLocation: values.interviewLocation,
             interviewType: values.interviewType,
+            meetingURL: values.meetingURL,
             notes: values.notes,
         };
 
@@ -243,6 +249,21 @@ const AddInterview = () => {
                 }}
             />
             <FormFieldError id='interview-type-error' message={errors.interviewType} />
+
+            <label htmlFor='meeting-url'>Meeting URL (optional)</label>
+            <input
+                ref={meetingURLInputRef}
+                aria-describedby={errors.meetingURL ? 'meeting-url-error' : undefined}
+                aria-invalid={errors.meetingURL ? true : undefined}
+                id='meeting-url'
+                maxLength={FIELD_MAX_LENGTHS.meetingURL}
+                value={meetingURL}
+                onChange={(event) => {
+                    setMeetingURL(event.target.value);
+                    clearFieldError('meetingURL');
+                }}
+            />
+            <FormFieldError id='meeting-url-error' message={errors.meetingURL} />
 
             <label htmlFor='notes'>Additional Notes (optional)</label>
             <textarea

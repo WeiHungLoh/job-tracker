@@ -66,6 +66,7 @@ const createTables = async (): Promise<void> => {
             job_posting_url TEXT NOT NULL DEFAULT '',
             notes TEXT NOT NULL DEFAULT '',
             application_follow_up_sent_at TIMESTAMPTZ,
+            is_pinned BOOLEAN NOT NULL DEFAULT false,
             is_archived BOOLEAN NOT NULL DEFAULT false,
             CONSTRAINT job_applications_job_user_unique
                 UNIQUE (job_id, user_id)
@@ -143,9 +144,11 @@ const createTables = async (): Promise<void> => {
             interview_location TEXT NOT NULL,
             interview_type TEXT NOT NULL DEFAULT '',
             interview_notes TEXT NOT NULL DEFAULT '',
+            meeting_url TEXT NOT NULL DEFAULT '',
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
             follow_up_sent_at TIMESTAMPTZ,
             is_archived BOOLEAN NOT NULL DEFAULT false,
+            is_pinned BOOLEAN NOT NULL DEFAULT false,
             CONSTRAINT interviews_job_user_fk
                 FOREIGN KEY (job_id, user_id)
                 REFERENCES job_applications(job_id, user_id)

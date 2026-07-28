@@ -11,24 +11,28 @@ const applications = [
         id: 'older-applied',
         application_date: '2025-01-10T00:00:00Z',
         company_name: 'Beta Labs',
+        is_pinned: false,
         job_status: 'Applied',
     },
     {
         id: 'new-offer',
         application_date: '2025-03-10T00:00:00Z',
         company_name: 'Delta Works',
+        is_pinned: false,
         job_status: 'Offer',
     },
     {
         id: 'newer-applied',
         application_date: '2025-04-10T00:00:00Z',
         company_name: 'alpha Systems',
+        is_pinned: false,
         job_status: 'Applied',
     },
     {
         id: 'old-rejected',
         application_date: '2024-12-10T00:00:00Z',
         company_name: 'Charlie Group',
+        is_pinned: false,
         job_status: 'Rejected',
     },
 ] as const;
@@ -96,11 +100,58 @@ describe('application sorting', () => {
         }
     );
 
+    test.each([
+        ['job_status', ['pinned-offer', 'pinned-applied', 'unpinned-offer', 'unpinned-applied']],
+        ['application_date_desc', ['pinned-applied', 'pinned-offer', 'unpinned-applied', 'unpinned-offer']],
+        ['application_date_asc', ['pinned-offer', 'pinned-applied', 'unpinned-offer', 'unpinned-applied']],
+        ['company_name_asc', ['pinned-applied', 'pinned-offer', 'unpinned-applied', 'unpinned-offer']],
+        ['company_name_desc', ['pinned-offer', 'pinned-applied', 'unpinned-offer', 'unpinned-applied']],
+    ] as const)(
+        'keeps pinned applications first while preserving %s within both groups',
+        (sortOrder, expectedOrder) => {
+            const pinPriorityApplications = [
+                {
+                    id: 'unpinned-offer',
+                    application_date: '2025-01-01T00:00:00Z',
+                    company_name: 'Zulu',
+                    is_pinned: false,
+                    job_status: 'Offer' as const,
+                },
+                {
+                    id: 'pinned-applied',
+                    application_date: '2025-04-01T00:00:00Z',
+                    company_name: 'Alpha',
+                    is_pinned: true,
+                    job_status: 'Applied' as const,
+                },
+                {
+                    id: 'unpinned-applied',
+                    application_date: '2025-05-01T00:00:00Z',
+                    company_name: 'Alpha',
+                    is_pinned: false,
+                    job_status: 'Applied' as const,
+                },
+                {
+                    id: 'pinned-offer',
+                    application_date: '2025-02-01T00:00:00Z',
+                    company_name: 'Zulu',
+                    is_pinned: true,
+                    job_status: 'Offer' as const,
+                },
+            ];
+
+            expect(sortApplications(pinPriorityApplications, sortOrder).map((application) => application.id)).toEqual(
+                expectedOrder
+            );
+        }
+    );
+
     test('supports archived application shapes, empty arrays, and single items', () => {
         const archivedApplication = {
             archived_job_id: 1,
             application_date: '2025-01-01T00:00:00Z',
             company_name: 'Archived Company',
+            is_pinned: true,
             job_status: 'Offer' as const,
         };
 

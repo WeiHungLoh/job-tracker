@@ -17,6 +17,91 @@ const fixedNow = new Date(2026, 6, 7, 12, 0, 0, 0);
 const fixedNowMs = fixedNow.getTime();
 
 describe('demo reducer state', () => {
+    test('pins and unpins applications while preserving pin state through archive, restore, and reset', () => {
+        const state = createDemoInitialState(fixedNow);
+        const application = state.applications.find((item) => !item.is_pinned)!;
+        const pinned = demoReducer(state, {
+            type: 'UPDATE_APPLICATION_PIN',
+            payload: { jobId: application.job_id, isPinned: true },
+        });
+
+        expect(pinned.applications.find((item) => item.job_id === application.job_id)?.is_pinned).toBe(true);
+
+        const archived = demoReducer(pinned, {
+            type: 'ARCHIVE_APPLICATION',
+            payload: { jobId: application.job_id },
+        });
+        expect(
+            archived.archivedApplications.find((item) => item.archived_job_id === application.job_id)?.is_pinned
+        ).toBe(true);
+
+        const restored = demoReducer(archived, {
+            type: 'RESTORE_APPLICATION',
+            payload: { archivedJobId: application.job_id },
+        });
+        expect(restored.applications.find((item) => item.job_id === application.job_id)?.is_pinned).toBe(true);
+
+        const unpinned = demoReducer(restored, {
+            type: 'UPDATE_APPLICATION_PIN',
+            payload: { jobId: application.job_id, isPinned: false },
+        });
+        expect(unpinned.applications.find((item) => item.job_id === application.job_id)?.is_pinned).toBe(false);
+
+        const reset = demoReducer(unpinned, { type: 'RESET_DEMO', payload: { now: fixedNow } });
+        expect(reset.applications.map((item) => item.is_pinned)).toEqual(
+            createDemoInitialState(fixedNow).applications.map((item) => item.is_pinned)
+        );
+    });
+
+    test('keeps pinned applications subject to the selected status filters', () => {
+        const state = createDemoInitialState(fixedNow);
+        const offerOnlyState = demoReducer(state, {
+            type: 'UPDATE_PREFERENCES',
+            payload: { application_job_statuses: ['Offer'] },
+        });
+        const selectedApplications = selectApplications(offerOnlyState);
+
+        expect(selectedApplications.length).toBeGreaterThan(0);
+        expect(selectedApplications.every((application) => application.job_status === 'Offer')).toBe(true);
+        expect(selectedApplications.some((application) => application.is_pinned)).toBe(false);
+    });
+
+    test('pins and unpins interviews while preserving pin state through archive, restore, and reset', () => {
+        const state = createDemoInitialState(fixedNow);
+        const interview = state.interviews.find((item) => !item.is_pinned)!;
+        const pinned = demoReducer(state, {
+            type: 'UPDATE_INTERVIEW_PIN',
+            payload: { interviewId: interview.interview_id, isPinned: true },
+        });
+
+        expect(pinned.interviews.find((item) => item.interview_id === interview.interview_id)?.is_pinned).toBe(true);
+
+        const archived = demoReducer(pinned, {
+            type: 'ARCHIVE_APPLICATION',
+            payload: { jobId: interview.job_id },
+        });
+        expect(
+            archived.archivedInterviews.find((item) => item.archived_interview_id === interview.interview_id)?.is_pinned
+        ).toBe(true);
+
+        const restored = demoReducer(archived, {
+            type: 'RESTORE_APPLICATION',
+            payload: { archivedJobId: interview.job_id },
+        });
+        expect(restored.interviews.find((item) => item.interview_id === interview.interview_id)?.is_pinned).toBe(true);
+
+        const unpinned = demoReducer(restored, {
+            type: 'UPDATE_INTERVIEW_PIN',
+            payload: { interviewId: interview.interview_id, isPinned: false },
+        });
+        expect(unpinned.interviews.find((item) => item.interview_id === interview.interview_id)?.is_pinned).toBe(false);
+
+        const reset = demoReducer(unpinned, { type: 'RESET_DEMO', payload: { now: fixedNow } });
+        expect(reset.interviews.map((item) => item.is_pinned)).toEqual(
+            createDemoInitialState(fixedNow).interviews.map((item) => item.is_pinned)
+        );
+    });
+
     test('marks and undoes application and interview follow-ups independently', () => {
         const state = createDemoInitialState(fixedNow);
         const application = state.applications.find((item) => item.job_status === 'Applied');

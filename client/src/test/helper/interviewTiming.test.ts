@@ -68,6 +68,27 @@ describe('interview timing', () => {
         expect(interviews.map(({ id }) => id)).toEqual(['future', 'ended', 'in progress']);
     });
 
+    test('filters by interview time before placing pinned interviews first', () => {
+        const interviews = [
+            { ...interview(new Date(2026, 6, 13, 13, 0)), id: 'unpinned future', is_pinned: false },
+            { ...interview(new Date(2026, 6, 13, 14, 0)), id: 'pinned future', is_pinned: true },
+            { ...interview(new Date(2026, 6, 13, 9, 0)), id: 'unpinned past', is_pinned: false },
+            { ...interview(new Date(2026, 6, 13, 10, 0)), id: 'pinned past', is_pinned: true },
+        ];
+
+        expect(
+            filterAndSortInterviews(interviews, ['Upcoming Interviews', 'Past Interviews'], now).map(({ id }) => id)
+        ).toEqual(['pinned future', 'pinned past', 'unpinned future', 'unpinned past']);
+        expect(filterAndSortInterviews(interviews, ['Upcoming Interviews'], now).map(({ id }) => id)).toEqual([
+            'pinned future',
+            'unpinned future',
+        ]);
+        expect(filterAndSortInterviews(interviews, ['Past Interviews'], now).map(({ id }) => id)).toEqual([
+            'pinned past',
+            'unpinned past',
+        ]);
+    });
+
     test('formats a deterministic countdown and handles invalid values safely', () => {
         const future = getInterviewTiming(interview(new Date(2026, 6, 14, 14, 30)), now);
         const inProgress = getInterviewTiming(interview(new Date(2026, 6, 13, 11, 30)), now);

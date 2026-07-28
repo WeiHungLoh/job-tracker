@@ -114,7 +114,7 @@ describe('renders user guide properly', () => {
         await userEvent.click(screen.getByRole('button', { name: /adding and managing applications/i }));
 
         expect(screen.getByText(/enter the company name/i)).toBeVisible();
-        expect(screen.getByText(/job URLs are limited to 2048 characters/i)).toBeVisible();
+        expect(screen.getByText(/job posting URLs are limited to 2048 characters/i)).toBeVisible();
         expect(screen.getByText(/standard card list and the board layout/i)).toBeVisible();
         expect(screen.getByText(/active application board groups cards by status/i)).toBeVisible();
         expect(screen.getByRole('heading', { name: /quick capture from a job posting/i })).toBeVisible();
@@ -179,6 +179,6 @@ describe('renders user guide properly', () => {
 
         await userEvent.click(screen.getByRole('button', { name: /auto scroll and highlighting/i }));
 
-        expect(screen.getByText(/auto scroll only applies when sort by is set to job status/i)).toBeVisible();
+        expect(screen.getByText(/pinning or unpinning scrolls the moved application into view/i)).toBeVisible();
     });
 });

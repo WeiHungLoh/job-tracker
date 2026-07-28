@@ -28,7 +28,11 @@ import type { CollectionViewMode } from '../../../../components/activityControls
 import SkeletonInterviewBoard from '../../../../components/skeletonLoader/skeletonInterviewBoard/SkeletonInterviewBoard';
 import InterviewGrid from '../../interviewGrid/InterviewGrid';
 import CheckboxFilter from '../../../../components/activityControls/checkboxFilter/CheckboxFilter';
-import { INTERVIEW_TIME_FILTERS, type InterviewTimeFilter } from '../../../../helper/interviewTiming';
+import {
+    filterAndSortInterviews,
+    INTERVIEW_TIME_FILTERS,
+    type InterviewTimeFilter,
+} from '../../../../helper/interviewTiming';
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
 
@@ -76,7 +80,11 @@ const ViewArchivedInterview = () => {
             await updatePreferences({ archived_interview_time_filters: timeFilters });
             const savedInterviews = filterRequest.saveResult(
                 requestId,
-                Array.isArray(filteredInterviews) ? filteredInterviews : []
+                filterAndSortInterviews(
+                    Array.isArray(filteredInterviews) ? filteredInterviews : [],
+                    INTERVIEW_TIME_FILTERS,
+                    currentTime
+                )
             );
             if (savedInterviews) {
                 setArchivedInterviews(savedInterviews);
@@ -110,7 +118,13 @@ const ViewArchivedInterview = () => {
                     timeFilters: selectedTimeFilters,
                 });
                 if (isActive) {
-                    setArchivedInterviews(Array.isArray(fetchedInterviews) ? fetchedInterviews : []);
+                    setArchivedInterviews(
+                        filterAndSortInterviews(
+                            Array.isArray(fetchedInterviews) ? fetchedInterviews : [],
+                            INTERVIEW_TIME_FILTERS,
+                            currentTime
+                        )
+                    );
                 }
             } catch (error) {
                 showErrorToast(getErrorToastMessage(error, 'Unable to load archived interviews. Please try again.'));

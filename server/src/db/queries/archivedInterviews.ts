@@ -14,8 +14,10 @@ export const getArchivedJobInterviews = async (
             interviews.interview_duration_minutes,
             interviews.interview_location,
             interviews.interview_type,
+            interviews.meeting_url,
             interviews.interview_notes,
             interviews.follow_up_sent_at,
+            interviews.is_pinned,
             job_applications.company_name,
             job_applications.job_title,
             job_applications.job_status
@@ -37,6 +39,7 @@ export const getArchivedJobInterviews = async (
                 )
             )
          ORDER BY
+            interviews.is_pinned DESC,
             interviews.interview_date + interviews.interview_duration_minutes * INTERVAL '1 minute' > NOW() DESC,
             interviews.interview_date ASC`,
         [userId, timeFilters]

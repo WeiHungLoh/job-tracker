@@ -7,6 +7,7 @@ import styles from './InterviewCard.module.css';
 import BoardCardActions from '../../components/boardCardActions/BoardCardActions';
 import { formatInterviewCountdown, getInterviewTiming } from '../../helper/interviewTiming';
 import FollowUpSentBadge from '../../components/followUpSentBadge/FollowUpSentBadge';
+import PinControl from '../../components/pinControl/PinControl';
 
 const InterviewCard = (props: InterviewCardProps) => {
     const {
@@ -49,9 +50,28 @@ const InterviewCard = (props: InterviewCardProps) => {
             id={variant === 'job' ? String(interview.interview_id) : undefined}
         >
             <div className={styles.interviewContent}>
-                <h2>
-                    {index + 1}. {interview.company_name}
-                </h2>
+                <div className={applicationStyles.headingRow}>
+                    <h2>
+                        {index + 1}. {interview.company_name}
+                    </h2>
+                    {variant === 'job' ? (
+                        <PinControl
+                            itemLabel={interview.company_name}
+                            isPending={props.isUpdatingPin}
+                            isPinned={interview.is_pinned}
+                            onToggle={() => props.onPinToggle(interview)}
+                            size={isBoardLayout ? 'board' : 'list'}
+                            subject='interview'
+                        />
+                    ) : (
+                        <PinControl
+                            itemLabel={interview.company_name}
+                            isPinned={interview.is_pinned}
+                            size={isBoardLayout ? 'board' : 'list'}
+                            subject='interview'
+                        />
+                    )}
+                </div>
                 <p className={styles.jobTitle}>
                     {isBoardLayout ? interview.job_title : `Job Title: ${interview.job_title}`}
                 </p>
@@ -93,6 +113,11 @@ const InterviewCard = (props: InterviewCardProps) => {
                                 sentAt={interview.follow_up_sent_at}
                             />
                         )}
+                        {interview.meeting_url && (
+                            <a href={interview.meeting_url} rel='noreferrer noopener' target='_blank'>
+                                Click here to enter meeting
+                            </a>
+                        )}
                         <Link to={`${applicationRoute}#${applicationId}`} onClick={onViewApplicationClick}>
                             Click here to review corresponding job application
                         </Link>
@@ -124,6 +149,11 @@ const InterviewCard = (props: InterviewCardProps) => {
                             sentAt={interview.follow_up_sent_at}
                             undoText='Undo follow-up'
                         />
+                    )}
+                    {interview.meeting_url && (
+                        <a href={interview.meeting_url} rel='noreferrer noopener' target='_blank'>
+                            Click here to enter meeting
+                        </a>
                     )}
                 </BoardCardActions>
             ) : (

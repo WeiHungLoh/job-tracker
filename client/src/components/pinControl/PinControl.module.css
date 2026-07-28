@@ -1,0 +1,60 @@
+.button,
+.staticPin {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    color: var(--colorPrimary);
+}
+
+.button {
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.list {
+    width: 28px;
+    height: 28px;
+}
+
+.board {
+    width: 30px;
+    height: 30px;
+}
+
+.unpinned {
+    color: var(--colorTextSecondary);
+    opacity: 0.58;
+}
+
+.unpinned:hover,
+.unpinned:focus-visible {
+    border-color: var(--colorCardBorder);
+    background-color: var(--colorInputBg);
+    color: var(--colorText);
+    opacity: 1;
+}
+
+.pinned {
+    opacity: 1;
+}
+
+.pinned:hover,
+.pinned:focus-visible {
+    border-color: var(--colorCardBorder);
+    color: var(--colorPrimary);
+}
+
+.button:focus-visible {
+    outline: 2px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
+}
+
+.button:disabled {
+    cursor: wait;
+    opacity: 0.55;
+}

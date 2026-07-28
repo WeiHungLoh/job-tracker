@@ -75,6 +75,7 @@ export type JobApplication = {
     job_location: string;
     job_posting_url: string;
     notes: string;
+    is_pinned: boolean;
     has_offer_evaluation?: boolean;
     application_follow_up_sent_at?: string | null;
 };
@@ -88,6 +89,7 @@ export type ArchivedJobApplication = {
     job_location: string;
     job_posting_url: string;
     notes: string;
+    is_pinned: boolean;
     application_follow_up_sent_at?: string | null;
 };
 
@@ -168,6 +170,15 @@ export type UpdateApplicationStatusRequest = {
 };
 export type UpdateApplicationStatusResponse = null;
 
+export type UpdateApplicationPinRequest = {
+    jobId: number;
+    isPinned: boolean;
+};
+export type UpdateApplicationPinResponse = {
+    job_id: number;
+    is_pinned: boolean;
+};
+
 export type MarkApplicationFollowUpRequest = {
     jobId: number;
 };
@@ -217,6 +228,7 @@ export const APPLICATION_CSV_HEADERS: ApplicationCsvHeader[] = [
     { label: 'Application Date', key: 'application_date' },
     { label: 'Status', key: 'job_status' },
     { label: 'Location', key: 'job_location' },
-    { label: 'Job URL', key: 'job_posting_url' },
+    { label: 'Job Posting URL', key: 'job_posting_url' },
     { label: 'Notes', key: 'notes' },
+    { label: 'Pinned', key: 'is_pinned' },
 ];

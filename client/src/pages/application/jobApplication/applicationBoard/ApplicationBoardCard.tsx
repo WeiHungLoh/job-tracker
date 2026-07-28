@@ -11,6 +11,7 @@ import NoteSaveStatus from '../../../../components/noteSaveStatus/NoteSaveStatus
 import styles from '../../applicationBoard/ApplicationBoard.module.css';
 import { isApplicationStatusDisabled } from '../../applicationStatusRestrictions';
 import FollowUpSentBadge from '../../../../components/followUpSentBadge/FollowUpSentBadge';
+import PinControl from '../../../../components/pinControl/PinControl';
 
 const ApplicationBoardCard = ({
     application,
@@ -18,6 +19,7 @@ const ApplicationBoardCard = ({
     hasOfferEvaluation,
     isArchiving,
     isDeleting,
+    isUpdatingPin,
     isUpdatingStatus,
     isUndoingFollowUp,
     note,
@@ -27,6 +29,7 @@ const ApplicationBoardCard = ({
     onEditNotes,
     onNotesBlur,
     onNotesVisibilityChange,
+    onPinToggle,
     onRetryNotes,
     onStatusChange,
     onUndoFollowUp,
@@ -67,6 +70,14 @@ const ApplicationBoardCard = ({
             <div className={styles.cardHeader}>
                 <h3>{application.company_name}</h3>
                 <div className={styles.cardHeaderControls}>
+                    <PinControl
+                        itemLabel={application.company_name}
+                        isPending={isUpdatingPin}
+                        isPinned={application.is_pinned}
+                        onToggle={() => onPinToggle(application)}
+                        size='board'
+                        subject='application'
+                    />
                     <span
                         className={`${styles.statusBadge} ${getApplicationBoardStatusClassName(
                             application.job_status
@@ -161,7 +172,7 @@ const ApplicationBoardCard = ({
                     )}
                 {application.job_posting_url !== '' && (
                     <a href={application.job_posting_url} rel='noreferrer noopener' target='_blank'>
-                        Open job posting
+                        Click here to view job posting
                     </a>
                 )}
                 <div className={styles.notesField}>

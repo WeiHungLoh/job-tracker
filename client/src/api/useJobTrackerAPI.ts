@@ -35,6 +35,8 @@ import type {
     GetApplicationRelationSummaryResponse,
     UpdateApplicationStatusRequest,
     UpdateApplicationStatusResponse,
+    UpdateApplicationPinRequest,
+    UpdateApplicationPinResponse,
     MarkApplicationFollowUpRequest,
     MarkApplicationFollowUpResponse,
     UndoApplicationFollowUpRequest,
@@ -61,6 +63,8 @@ import type {
     GetInterviewCollectionSummaryResponse,
     MarkInterviewFollowUpRequest,
     MarkInterviewFollowUpResponse,
+    UpdateInterviewPinRequest,
+    UpdateInterviewPinResponse,
     UndoInterviewFollowUpRequest,
     UndoInterviewFollowUpResponse,
 } from '../pages/interview/models';
@@ -201,6 +205,13 @@ export const useJobTrackerAPI = () => {
             >(req, endpointConfig.application.updateStatus);
         };
 
+        const updateApplicationPin = async (req: UpdateApplicationPinRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                UpdateApplicationPinRequest,
+                UpdateApplicationPinResponse
+            >(req, endpointConfig.application.updatePin);
+        };
+
         const markApplicationFollowUpSent = async (req: MarkApplicationFollowUpRequest) => {
             return await makeAuthenticatedJobTrackerAPIRequest<
                 MarkApplicationFollowUpRequest,
@@ -247,6 +258,13 @@ export const useJobTrackerAPI = () => {
             return await makeAuthenticatedJobTrackerAPIRequest<DeleteAllInterviewsRequest, DeleteAllInterviewsResponse>(
                 null,
                 endpointConfig.interview.deleteAllInterviews
+            );
+        };
+
+        const updateInterviewPin = async (req: UpdateInterviewPinRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<UpdateInterviewPinRequest, UpdateInterviewPinResponse>(
+                req,
+                endpointConfig.interview.updatePin
             );
         };
 
@@ -445,6 +463,7 @@ export const useJobTrackerAPI = () => {
                 deleteAllApplications,
                 updateNotes,
                 updateStatus: updateApplicationStatus,
+                updatePin: updateApplicationPin,
                 markFollowUpSent: markApplicationFollowUpSent,
                 undoFollowUp: undoApplicationFollowUp,
             },
@@ -454,6 +473,7 @@ export const useJobTrackerAPI = () => {
                 createInterview,
                 deleteInterview,
                 deleteAllInterviews,
+                updatePin: updateInterviewPin,
                 markFollowUpSent: markInterviewFollowUpSent,
                 undoFollowUp: undoInterviewFollowUp,
             },

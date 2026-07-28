@@ -41,6 +41,12 @@ export const endpointConfig = {
             fieldMap: { jobId: 'path' },
             retry: true,
         },
+        updatePin: {
+            url: '/job-applications/:jobId/pin',
+            verb: 'PATCH',
+            fieldMap: { jobId: 'path' },
+            retry: true,
+        },
         markFollowUpSent: {
             url: '/job-applications/:jobId/follow-up',
             verb: 'PUT',
@@ -68,6 +74,12 @@ export const endpointConfig = {
             fieldMap: { interviewId: 'path' },
         },
         deleteAllInterviews: { url: '/job-interviews', verb: 'DELETE' },
+        updatePin: {
+            url: '/job-interviews/:interviewId/pin',
+            verb: 'PATCH',
+            fieldMap: { interviewId: 'path' },
+            retry: true,
+        },
         markFollowUpSent: {
             url: '/job-interviews/:interviewId/follow-up',
             verb: 'PUT',

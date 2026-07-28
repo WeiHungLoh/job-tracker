@@ -28,6 +28,7 @@ describe('CSV export data', () => {
             {
                 application_date: '2025-06-20T00:00:00Z',
                 company_name: '=SUM(1,1)',
+                is_pinned: true,
                 job_location: '   =REMOTE()',
                 job_posting_url: '+https://evil.example',
                 job_status: '-CMD',
@@ -39,6 +40,7 @@ describe('CSV export data', () => {
         expect(application).toMatchObject({
             application_date: expect.stringMatching(/20 June 2025/),
             company_name: "'=SUM(1,1)",
+            is_pinned: 'Yes',
             job_location: "'   =REMOTE()",
             job_posting_url: "'+https://evil.example",
             job_status: "'-CMD",
@@ -56,6 +58,7 @@ describe('CSV export data', () => {
                 interview_location: '\t=LOCATION()',
                 interview_notes: '\r=NOTES()',
                 interview_type: '+TECHNICAL()',
+                is_pinned: true,
                 job_status: '-CMD',
                 job_title: '@HYPERLINK("https://evil.example","Click")',
             },
@@ -68,6 +71,7 @@ describe('CSV export data', () => {
             interview_location: "'\t=LOCATION()",
             interview_notes: "'\r=NOTES()",
             interview_type: "'+TECHNICAL()",
+            is_pinned: 'Yes',
             job_status: "'-CMD",
             job_title: '\'@HYPERLINK("https://evil.example","Click")',
             notes: "'\r=NOTES()",
@@ -81,6 +85,7 @@ describe('CSV export data', () => {
                 interview_location: '',
                 interview_notes: '',
                 interview_type: '',
+                is_pinned: false,
                 job_title: 'Engineer',
             },
         ]);

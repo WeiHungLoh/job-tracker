@@ -18,6 +18,7 @@ const mockInterview = {
     interview_notes: 'Bring resume',
     interview_date: '2025-06-20T00:00:00Z',
     interview_duration_minutes: 60,
+    is_pinned: false,
 };
 
 const response = (data?: unknown, status = 200) => ({
@@ -78,6 +79,29 @@ describe('Archived job interview viewer flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all archived interviews/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+    });
+
+    test('shows pinned archived interviews as read-only in list and board views', async () => {
+        fetch.mockImplementation(async (_url: string, init?: RequestInit) =>
+            init?.method === 'GET' ? response([{ ...mockInterview, is_pinned: true }]) : response(undefined, 204)
+        );
+
+        render(
+            <MemoryRouter>
+                <ViewArchivedInterview />
+            </MemoryRouter>
+        );
+
+        expect(await screen.findByLabelText('ABC Pte Ltd interview is pinned')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /pin ABC Pte Ltd interview/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /unpin ABC Pte Ltd interview/i })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Board' }));
+
+        const board = screen.getByRole('region', { name: 'Archived interviews' });
+        expect(within(board).getByLabelText('ABC Pte Ltd interview is pinned')).toBeInTheDocument();
+        expect(within(board).queryByRole('button', { name: /pin ABC Pte Ltd interview/i })).not.toBeInTheDocument();
+        expect(within(board).queryByRole('button', { name: /unpin ABC Pte Ltd interview/i })).not.toBeInTheDocument();
     });
 
     test('shows a skeleton instead of a spinner during the initial fetch', () => {

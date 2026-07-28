@@ -19,6 +19,7 @@ import {
     MdLock,
     MdMenuBook,
     MdOutlineStickyNote2,
+    MdPushPin,
     MdWifiOff,
     MdUndo,
 } from 'react-icons/md';
@@ -45,6 +46,7 @@ const icons: Record<IconName, IconType> = {
     interview: MdEventNote,
     lock: MdLock,
     notes: MdOutlineStickyNote2,
+    pin: MdPushPin,
     darkMode: MdDarkMode,
     lightMode: MdLightMode,
     success: MdCheckCircle,

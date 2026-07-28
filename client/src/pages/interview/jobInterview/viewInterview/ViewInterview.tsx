@@ -30,6 +30,7 @@ import { getDashboardInterviewId } from '../../../dashboard/dashboardNavigation'
 import { scrollAndHighlight } from '../../../../helper/highlightElement';
 import CheckboxFilter from '../../../../components/activityControls/checkboxFilter/CheckboxFilter';
 import {
+    filterAndSortInterviews,
     getUpcomingInterviews,
     INTERVIEW_TIME_FILTERS,
     type InterviewTimeFilter,
@@ -70,6 +71,11 @@ const ViewInterview = () => {
         startPending: startUndoingFollowUp,
         stopPending: stopUndoingFollowUp,
     } = usePendingIds();
+    const {
+        pendingIds: pinningInterviewIds,
+        startPending: startPinningInterview,
+        stopPending: stopPinningInterview,
+    } = usePendingIds();
     const confirm = useConfirm();
     const navigate = useNavigate();
     const { showErrorToast, showSuccessToast } = useToast();
@@ -102,7 +108,11 @@ const ViewInterview = () => {
             }
 
             await updatePreferences({ interview_time_filters: timeFilters });
-            const normalizedInterviews = Array.isArray(filteredInterviews) ? filteredInterviews : [];
+            const normalizedInterviews = filterAndSortInterviews(
+                Array.isArray(filteredInterviews) ? filteredInterviews : [],
+                INTERVIEW_TIME_FILTERS,
+                currentTime
+            );
             const savedResult = filterRequest.saveResult(requestId, {
                 interviews: normalizedInterviews,
                 ...(timeFilters.includes('Upcoming Interviews')
@@ -148,7 +158,11 @@ const ViewInterview = () => {
 
             try {
                 const fetchedInterviews = await api.interview.listInterviews({ timeFilters: initialTimeFilters });
-                const normalizedInterviews = Array.isArray(fetchedInterviews) ? fetchedInterviews : [];
+                const normalizedInterviews = filterAndSortInterviews(
+                    Array.isArray(fetchedInterviews) ? fetchedInterviews : [],
+                    INTERVIEW_TIME_FILTERS,
+                    currentTime
+                );
                 if (dashboardInterviewIdRef.current && dashboardViewUpdatePendingRef.current) {
                     dashboardInterviewsRef.current = normalizedInterviews;
                 } else if (isActive && !dashboardViewUpdateFailedRef.current) {
@@ -165,7 +179,11 @@ const ViewInterview = () => {
                         .then((fetchedUpcomingInterviews) => {
                             if (isActive) {
                                 setUpcomingInterviews(
-                                    Array.isArray(fetchedUpcomingInterviews) ? fetchedUpcomingInterviews : []
+                                    filterAndSortInterviews(
+                                        Array.isArray(fetchedUpcomingInterviews) ? fetchedUpcomingInterviews : [],
+                                        ['Upcoming Interviews'],
+                                        currentTime
+                                    )
                                 );
                             }
                         })
@@ -224,7 +242,13 @@ const ViewInterview = () => {
                     const restoredInterviews = await api.interview.listInterviews({
                         timeFilters: selectedTimeFilters,
                     });
-                    setInterviews(Array.isArray(restoredInterviews) ? restoredInterviews : []);
+                    setInterviews(
+                        filterAndSortInterviews(
+                            Array.isArray(restoredInterviews) ? restoredInterviews : [],
+                            INTERVIEW_TIME_FILTERS,
+                            currentTime
+                        )
+                    );
                 } catch (restoreError) {
                     setInterviews([]);
                     showErrorToast(
@@ -370,6 +394,37 @@ const ViewInterview = () => {
         }
     };
 
+    const handlePinToggle = async (interview: JobInterview) => {
+        if (pinningInterviewIds.has(interview.interview_id)) {
+            return;
+        }
+
+        const isPinned = !interview.is_pinned;
+        startPinningInterview(interview.interview_id);
+        try {
+            const updatedPin = await api.interview.updatePin({
+                interviewId: interview.interview_id,
+                isPinned,
+            });
+            const updatePin = (item: JobInterview): JobInterview =>
+                item.interview_id === interview.interview_id ? { ...item, is_pinned: updatedPin.is_pinned } : item;
+
+            setInterviews((current) =>
+                filterAndSortInterviews(current.map(updatePin), INTERVIEW_TIME_FILTERS, currentTime)
+            );
+            setUpcomingInterviews((current) =>
+                filterAndSortInterviews(current.map(updatePin), ['Upcoming Interviews'], currentTime)
+            );
+            showSuccessToast(isPinned ? 'Interview pinned.' : 'Interview unpinned.');
+        } catch (error) {
+            showErrorToast(
+                getErrorToastMessage(error, `Unable to ${isPinned ? 'pin' : 'unpin'} the interview. Please try again.`)
+            );
+        } finally {
+            stopPinningInterview(interview.interview_id);
+        }
+    };
+
     const hasInterviews = interviews.length > 0;
     const filtersAreActive = selectedTimeFilters.length !== INTERVIEW_TIME_FILTERS.length;
     const emptyState = createInterviewEmptyState({
@@ -475,10 +530,12 @@ const ViewInterview = () => {
                             index={index}
                             interview={interview}
                             isDeleting={deletingInterviewIds.has(interview.interview_id)}
+                            isUpdatingPin={pinningInterviewIds.has(interview.interview_id)}
                             isUndoingFollowUp={undoingFollowUpInterviewIds.has(interview.interview_id)}
                             key={interview.interview_id}
                             layout={viewMode}
                             onDelete={() => handleDelete(interview.interview_id)}
+                            onPinToggle={handlePinToggle}
                             onUndoFollowUp={handleUndoFollowUp}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
                             variant='job'
