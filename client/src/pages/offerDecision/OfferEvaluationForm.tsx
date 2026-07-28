@@ -1,6 +1,7 @@
 import { useRef, type FormEvent, type RefObject } from 'react';
 import PrimaryButton from '../../components/button/PrimaryButton';
 import { MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL, toDatetimeLocalInputValue } from '../../helper/dateFormatter';
+import OfferDecisionFieldError, { getOfferDecisionErrorProps } from './OfferDecisionFieldError';
 import {
     OFFER_ANNUAL_LEAVE_DAYS_MAX,
     OFFER_DECISION_CATEGORIES,
@@ -42,18 +43,6 @@ type OfferEvaluationFormProps = {
     onSave: (decisionDeadlineHasBadInput: boolean, refs: OfferFieldRefs) => void;
 };
 
-const FieldError = ({ id, message }: { id: string; message?: string }) =>
-    message ? (
-        <span className={styles.fieldError} id={id}>
-            {message}
-        </span>
-    ) : null;
-
-const getErrorProps = (id: string, message?: string) => ({
-    'aria-describedby': message ? id : undefined,
-    'aria-invalid': Boolean(message),
-});
-
 const RatingFields = ({
     application,
     evaluation,
@@ -89,7 +78,11 @@ const RatingFields = ({
                 </label>
             );
         })}
-        <FieldError id={`ratings-error-${application.job_id}`} message={error} />
+        <OfferDecisionFieldError
+            className={styles.fieldError}
+            id={`ratings-error-${application.job_id}`}
+            message={error}
+        />
     </fieldset>
 );
 
@@ -118,7 +111,7 @@ const CompensationFields = ({
                 <span>Currency</span>
                 <input
                     ref={fieldRefs.currency}
-                    {...getErrorProps(`currency-error-${jobId}`, errors.currency)}
+                    {...getOfferDecisionErrorProps(`currency-error-${jobId}`, errors.currency)}
                     aria-label={`${companyName} currency`}
                     id={`currency-${jobId}`}
                     maxLength={3}
@@ -126,13 +119,17 @@ const CompensationFields = ({
                     required
                     value={details.currency}
                 />
-                <FieldError id={`currency-error-${jobId}`} message={errors.currency} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id={`currency-error-${jobId}`}
+                    message={errors.currency}
+                />
             </label>
             <label className={styles.textField} htmlFor={`monthly-base-salary-${jobId}`}>
                 <span>Monthly Base Salary</span>
                 <input
                     ref={fieldRefs.monthly_base_salary}
-                    {...getErrorProps(`monthly-base-salary-error-${jobId}`, errors.monthly_base_salary)}
+                    {...getOfferDecisionErrorProps(`monthly-base-salary-error-${jobId}`, errors.monthly_base_salary)}
                     aria-label={`${companyName} monthly base salary`}
                     id={`monthly-base-salary-${jobId}`}
                     max={OFFER_MONTHLY_BASE_SALARY_MAX}
@@ -148,26 +145,34 @@ const CompensationFields = ({
                     type='number'
                     value={details.monthly_base_salary ?? ''}
                 />
-                <FieldError id={`monthly-base-salary-error-${jobId}`} message={errors.monthly_base_salary} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id={`monthly-base-salary-error-${jobId}`}
+                    message={errors.monthly_base_salary}
+                />
             </label>
             <label className={styles.textField} htmlFor={`bonus-${jobId}`}>
                 <span>Bonus (Optional)</span>
                 <input
                     ref={fieldRefs.bonus}
-                    {...getErrorProps(`bonus-error-${jobId}`, errors.bonus)}
+                    {...getOfferDecisionErrorProps(`bonus-error-${jobId}`, errors.bonus)}
                     aria-label={`${companyName} bonus`}
                     id={`bonus-${jobId}`}
                     maxLength={OFFER_DETAILS_MAX_LENGTHS.bonus}
                     onChange={(event) => updateDetails({ bonus: event.target.value }, 'bonus')}
                     value={details.bonus}
                 />
-                <FieldError id={`bonus-error-${jobId}`} message={errors.bonus} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id={`bonus-error-${jobId}`}
+                    message={errors.bonus}
+                />
             </label>
             <label className={styles.textField} htmlFor={`annual-leave-${jobId}`}>
                 <span>Annual Leave Days (Optional)</span>
                 <input
                     ref={fieldRefs.annual_leave_days}
-                    {...getErrorProps(`annual-leave-error-${jobId}`, errors.annual_leave_days)}
+                    {...getOfferDecisionErrorProps(`annual-leave-error-${jobId}`, errors.annual_leave_days)}
                     aria-label={`${companyName} annual leave days`}
                     id={`annual-leave-${jobId}`}
                     max={OFFER_ANNUAL_LEAVE_DAYS_MAX}
@@ -182,13 +187,17 @@ const CompensationFields = ({
                     type='number'
                     value={details.annual_leave_days ?? ''}
                 />
-                <FieldError id={`annual-leave-error-${jobId}`} message={errors.annual_leave_days} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id={`annual-leave-error-${jobId}`}
+                    message={errors.annual_leave_days}
+                />
             </label>
             <label className={styles.textField} htmlFor={`work-arrangement-${jobId}`}>
                 <span>Work arrangement (Optional)</span>
                 <select
                     ref={fieldRefs.work_arrangement}
-                    {...getErrorProps(`work-arrangement-error-${jobId}`, errors.work_arrangement)}
+                    {...getOfferDecisionErrorProps(`work-arrangement-error-${jobId}`, errors.work_arrangement)}
                     aria-label={`${companyName} work arrangement`}
                     id={`work-arrangement-${jobId}`}
                     onChange={(event) =>
@@ -206,13 +215,17 @@ const CompensationFields = ({
                         </option>
                     ))}
                 </select>
-                <FieldError id={`work-arrangement-error-${jobId}`} message={errors.work_arrangement} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id={`work-arrangement-error-${jobId}`}
+                    message={errors.work_arrangement}
+                />
             </label>
             <label className={styles.textField} htmlFor={`pros-${jobId}`}>
                 <span>Pros (Optional)</span>
                 <textarea
                     ref={fieldRefs.pros}
-                    {...getErrorProps(`pros-error-${jobId}`, errors.pros)}
+                    {...getOfferDecisionErrorProps(`pros-error-${jobId}`, errors.pros)}
                     aria-label={`${companyName} pros`}
                     id={`pros-${jobId}`}
                     maxLength={OFFER_DETAILS_MAX_LENGTHS.notes}
@@ -220,13 +233,17 @@ const CompensationFields = ({
                     rows={3}
                     value={details.pros}
                 />
-                <FieldError id={`pros-error-${jobId}`} message={errors.pros} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id={`pros-error-${jobId}`}
+                    message={errors.pros}
+                />
             </label>
             <label className={styles.textField} htmlFor={`concerns-${jobId}`}>
                 <span>Cons (Optional)</span>
                 <textarea
                     ref={fieldRefs.concerns}
-                    {...getErrorProps(`concerns-error-${jobId}`, errors.concerns)}
+                    {...getOfferDecisionErrorProps(`concerns-error-${jobId}`, errors.concerns)}
                     aria-label={`${companyName} cons`}
                     id={`concerns-${jobId}`}
                     maxLength={OFFER_DETAILS_MAX_LENGTHS.notes}
@@ -234,7 +251,11 @@ const CompensationFields = ({
                     rows={3}
                     value={details.concerns}
                 />
-                <FieldError id={`concerns-error-${jobId}`} message={errors.concerns} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id={`concerns-error-${jobId}`}
+                    message={errors.concerns}
+                />
             </label>
         </fieldset>
     );
@@ -281,7 +302,10 @@ const OfferEvaluationForm = ({
                     <span>Decision deadline</span>
                     <input
                         ref={decisionDeadlineInputRef}
-                        {...getErrorProps(`decision-deadline-error-${application.job_id}`, errors.decision_deadline)}
+                        {...getOfferDecisionErrorProps(
+                            `decision-deadline-error-${application.job_id}`,
+                            errors.decision_deadline
+                        )}
                         aria-label={`${application.company_name} decision deadline`}
                         className={styles.dateTimeInput}
                         id={`decision-deadline-${application.job_id}`}
@@ -297,7 +321,8 @@ const OfferEvaluationForm = ({
                         type='datetime-local'
                         value={evaluation.details.decision_deadline}
                     />
-                    <FieldError
+                    <OfferDecisionFieldError
+                        className={styles.fieldError}
                         id={`decision-deadline-error-${application.job_id}`}
                         message={errors.decision_deadline}
                     />

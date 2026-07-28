@@ -289,7 +289,7 @@ describe('InterviewCard calendar options', () => {
 
         await userEvent.click(screen.getAllByText('Actions')[0]);
         const boardCard = screen.getAllByRole('article', { name: 'Acme interview' })[1];
-        const boardFollowUp = within(boardCard).getAllByRole('status')[1];
+        const boardFollowUp = within(boardCard).getByRole('status');
         const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to enter meeting' });
         expect(boardFollowUp.compareDocumentPosition(boardMeetingURL) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });

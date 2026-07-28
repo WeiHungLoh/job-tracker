@@ -89,6 +89,41 @@ describe('interview timing', () => {
         ]);
     });
 
+    test('sorts interviews with the same start time by company name A–Z within their pin and time groups', () => {
+        const sameUpcomingTime = new Date(2026, 6, 13, 14, 0);
+        const samePastTime = new Date(2026, 6, 13, 9, 0);
+        const interviews = [
+            {
+                ...interview(sameUpcomingTime),
+                company_name: 'Zulu Upcoming',
+                id: 'zulu upcoming',
+                is_pinned: false,
+            },
+            {
+                ...interview(samePastTime),
+                company_name: 'Beta Past',
+                id: 'beta past',
+                is_pinned: false,
+            },
+            {
+                ...interview(sameUpcomingTime),
+                company_name: 'alpha Upcoming',
+                id: 'alpha upcoming',
+                is_pinned: false,
+            },
+            {
+                ...interview(samePastTime),
+                company_name: 'Alpha Past',
+                id: 'alpha past',
+                is_pinned: false,
+            },
+        ];
+
+        expect(
+            filterAndSortInterviews(interviews, ['Upcoming Interviews', 'Past Interviews'], now).map(({ id }) => id)
+        ).toEqual(['alpha upcoming', 'zulu upcoming', 'alpha past', 'beta past']);
+    });
+
     test('formats a deterministic countdown and handles invalid values safely', () => {
         const future = getInterviewTiming(interview(new Date(2026, 6, 14, 14, 30)), now);
         const inProgress = getInterviewTiming(interview(new Date(2026, 6, 13, 11, 30)), now);

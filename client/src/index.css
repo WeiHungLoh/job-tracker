@@ -75,6 +75,8 @@
     /* Text */
     --colorText: #2b2529;
     --colorTextSecondary: #71666b;
+    --colorTooltipBg: #2b2529;
+    --colorTooltipText: #fffafb;
 
     /* Links */
     --colorLinkBg: #e0f0ff;
@@ -228,6 +230,8 @@
     /* Text */
     --colorText: #f4edf0;
     --colorTextSecondary: #c1b4ba;
+    --colorTooltipBg: #f4edf0;
+    --colorTooltipText: #211e22;
 
     /* Links */
     --colorLinkBg: #1c3048;

@@ -13,9 +13,13 @@ export type InterviewTimingSource = {
     interview_duration_minutes: number;
 };
 
-type PinnableInterviewTimingSource = InterviewTimingSource & {
+type SortableInterviewTimingSource = InterviewTimingSource & {
+    company_name?: string;
     is_pinned?: boolean;
 };
+
+const compareCompanyNames = (firstCompanyName: string, secondCompanyName: string): number =>
+    firstCompanyName.localeCompare(secondCompanyName, undefined, { sensitivity: 'base' });
 
 export type InterviewTiming = {
     end: Date;
@@ -104,7 +108,7 @@ export const formatInterviewCountdown = (timing: InterviewTiming, now = new Date
     return `${days} days ${hours} hours ${minutes} minutes`;
 };
 
-export const filterAndSortInterviews = <Interview extends PinnableInterviewTimingSource>(
+export const filterAndSortInterviews = <Interview extends SortableInterviewTimingSource>(
     interviews: readonly Interview[],
     selectedFilters: readonly InterviewTimeFilter[],
     now = new Date()
@@ -132,7 +136,11 @@ export const filterAndSortInterviews = <Interview extends PinnableInterviewTimin
             return firstTiming.isValid ? -1 : 1;
         }
 
-        return firstTiming.start.getTime() - secondTiming.start.getTime();
+        const byStartTime = firstTiming.start.getTime() - secondTiming.start.getTime();
+
+        return (
+            byStartTime || compareCompanyNames(firstInterview.company_name ?? '', secondInterview.company_name ?? '')
+        );
     });
 };
 

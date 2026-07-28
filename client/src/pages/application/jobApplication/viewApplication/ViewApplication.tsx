@@ -120,7 +120,7 @@ const ViewApplication = () => {
     const selectedJobStatuses = preferences.application_job_statuses;
     const showArchive = preferences.application_show_archive;
     const showNotes = preferences.application_show_notes;
-    const enableScroll = preferences.application_enable_scroll;
+    const isAutoScrollEnabled = preferences.application_enable_scroll;
     const viewMode = preferences.application_view_mode;
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
@@ -427,25 +427,23 @@ const ViewApplication = () => {
             return;
         }
 
-        const isPinned = !application.is_pinned;
+        const shouldPin = !application.is_pinned;
         updatingPinApplicationIdRef.current.add(application.job_id);
         startUpdatingApplicationPin(application.job_id);
 
         try {
-            const updatedApplication = await api.application.updatePin({
+            const updatedPin = await api.application.updatePin({
                 jobId: application.job_id,
-                isPinned,
+                isPinned: shouldPin,
             });
             setApplications((current) =>
                 current.map((item) =>
-                    item.job_id === updatedApplication.job_id
-                        ? { ...item, is_pinned: updatedApplication.is_pinned }
-                        : item
+                    item.job_id === updatedPin.job_id ? { ...item, is_pinned: updatedPin.is_pinned } : item
                 )
             );
-            showSuccessToast(isPinned ? 'Job application pinned.' : 'Job application unpinned.');
+            showSuccessToast(shouldPin ? 'Job application pinned.' : 'Job application unpinned.');
 
-            if (enableScroll && viewModeRef.current === 'list') {
+            if (isAutoScrollEnabled && viewModeRef.current === 'list') {
                 setTimeout(() => {
                     if (viewModeRef.current === 'list') {
                         scrollAndHighlight(
@@ -457,7 +455,7 @@ const ViewApplication = () => {
                 }, 100);
             }
         } catch (error) {
-            const fallback = isPinned
+            const fallback = shouldPin
                 ? 'Unable to pin the job application. Please try again.'
                 : 'Unable to unpin the job application. Please try again.';
             showErrorToast(getErrorToastMessage(error, fallback));
@@ -579,7 +577,7 @@ const ViewApplication = () => {
             );
 
             if (
-                shouldAutoScrollAfterStatusChange(enableScroll, preferences.application_list_sort_order) &&
+                shouldAutoScrollAfterStatusChange(isAutoScrollEnabled, preferences.application_list_sort_order) &&
                 statusRemainsVisible
             ) {
                 setTimeout(() => {
@@ -728,13 +726,13 @@ const ViewApplication = () => {
                                 label='Show archive'
                             />
                             <ToggleButton
-                                toggled={enableScroll}
+                                toggled={isAutoScrollEnabled}
                                 onToggle={() =>
                                     void handlePreferenceUpdate({
-                                        application_enable_scroll: !enableScroll,
+                                        application_enable_scroll: !isAutoScrollEnabled,
                                     })
                                 }
-                                label='Auto scroll after application moves'
+                                label='Auto-scroll to updated items'
                             />
                         </DisplayOptions>
                     )}

@@ -82,6 +82,12 @@ const InterviewCard = (props: InterviewCardProps) => {
                             <FollowUpSentBadge
                                 compact
                                 contextLabel={`${interview.job_title} at ${interview.company_name}`}
+                                isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
+                                onUndo={
+                                    variant === 'job' && props.onUndoFollowUp
+                                        ? () => props.onUndoFollowUp?.(interview)
+                                        : undefined
+                                }
                                 sentAt={interview.follow_up_sent_at}
                             />
                         )}
@@ -137,19 +143,6 @@ const InterviewCard = (props: InterviewCardProps) => {
                     }
                     compactActions
                 >
-                    {interview.follow_up_sent_at && (
-                        <FollowUpSentBadge
-                            contextLabel={`${interview.job_title} at ${interview.company_name}`}
-                            isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
-                            onUndo={
-                                variant === 'job' && props.onUndoFollowUp
-                                    ? () => props.onUndoFollowUp?.(interview)
-                                    : undefined
-                            }
-                            sentAt={interview.follow_up_sent_at}
-                            undoText='Undo follow-up'
-                        />
-                    )}
                     {interview.meeting_url && (
                         <a href={interview.meeting_url} rel='noreferrer noopener' target='_blank'>
                             Click here to enter meeting

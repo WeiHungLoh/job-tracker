@@ -40,7 +40,7 @@ const DemoViewInterview = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dashboardInterviewIdRef = useRef(getDashboardInterviewId(location.state));
-    const dashboardHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const interviewHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const { showErrorToast, showSuccessToast } = useToast();
     const [isDeletingAll, setIsDeletingAll] = useState(false);
     const deleteAllPendingRef = useRef(false);
@@ -64,6 +64,9 @@ const DemoViewInterview = () => {
         variant: 'active',
     });
     const viewMode = preferences.interview_view_mode;
+    const viewModeRef = useRef(viewMode);
+    viewModeRef.current = viewMode;
+    const isAutoScrollEnabled = preferences.application_enable_scroll;
     const isBoardView = viewMode === 'board';
 
     useEffect(() => {
@@ -86,7 +89,7 @@ const DemoViewInterview = () => {
         }
 
         if (displayedInterviews.some((interview) => interview.interview_id === interviewId)) {
-            scrollAndHighlight(String(interviewId), styles.highlighted, dashboardHighlightTimeout.current);
+            scrollAndHighlight(String(interviewId), styles.highlighted, interviewHighlightTimeout.current);
         }
 
         dashboardInterviewIdRef.current = null;
@@ -94,7 +97,7 @@ const DemoViewInterview = () => {
     }, [displayedInterviews, location.pathname, navigate, selectedTimeFilters, viewMode]);
 
     useEffect(() => {
-        const highlightTimeouts = dashboardHighlightTimeout.current;
+        const highlightTimeouts = interviewHighlightTimeout.current;
         return () => {
             Object.values(highlightTimeouts).forEach(clearTimeout);
         };
@@ -149,12 +152,24 @@ const DemoViewInterview = () => {
     };
 
     const handlePinToggle = (interview: JobInterview) => {
-        const isPinned = !interview.is_pinned;
+        const shouldPin = !interview.is_pinned;
         dispatch({
             type: 'UPDATE_INTERVIEW_PIN',
-            payload: { interviewId: interview.interview_id, isPinned },
+            payload: { interviewId: interview.interview_id, isPinned: shouldPin },
         });
-        showSuccessToast(isPinned ? 'Interview pinned.' : 'Interview unpinned.');
+        showSuccessToast(shouldPin ? 'Interview pinned.' : 'Interview unpinned.');
+
+        if (isAutoScrollEnabled && viewModeRef.current === 'list') {
+            setTimeout(() => {
+                if (viewModeRef.current === 'list') {
+                    scrollAndHighlight(
+                        String(interview.interview_id),
+                        styles.highlighted,
+                        interviewHighlightTimeout.current
+                    );
+                }
+            }, 100);
+        }
     };
 
     const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: JobInterview) => {

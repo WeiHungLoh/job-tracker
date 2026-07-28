@@ -176,9 +176,16 @@ describe('renders user guide properly', () => {
                 );
             })
         ).toBeVisible();
+        expect(screen.getByText(/applications with the same status are ordered by company A–Z/i)).toBeVisible();
+        expect(screen.getByText(/interviews at the same date and time are ordered by company A–Z/i)).toBeVisible();
 
-        await userEvent.click(screen.getByRole('button', { name: /auto scroll and highlighting/i }));
+        await userEvent.click(screen.getByRole('button', { name: /auto-scroll and highlighting/i }));
 
-        expect(screen.getByText(/pinning or unpinning scrolls the moved application into view/i)).toBeVisible();
+        expect(
+            screen.getByText(
+                /scrolls to and briefly highlights an application or interview after it is pinned or unpinned/i
+            )
+        ).toBeVisible();
+        expect(screen.getByText(/board views never automatically scroll or highlight cards/i)).toBeVisible();
     });
 });

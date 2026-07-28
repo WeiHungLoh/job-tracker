@@ -1,0 +1,25 @@
+.popper {
+    z-index: 1600 !important;
+}
+
+.arrow {
+    color: var(--colorTooltipBg) !important;
+}
+
+.tooltip {
+    max-width: 260px !important;
+    padding: 6px var(--spaceControl) !important;
+    border-radius: var(--radiusControl) !important;
+    background-color: var(--colorTooltipBg) !important;
+    color: var(--colorTooltipText) !important;
+    font-family: var(--fontFamilyBase) !important;
+    font-size: var(--fontSizeCompactControl) !important;
+    font-weight: 700 !important;
+    line-height: 1.35 !important;
+}
+
+@media (min-width: 804px) {
+    .mobileOnly {
+        display: none !important;
+    }
+}

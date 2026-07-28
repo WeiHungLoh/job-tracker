@@ -21,10 +21,27 @@
     color: var(--colorStatusAccepted);
 }
 
+.statusTrigger {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+}
+
 .copy {
     color: var(--colorText);
     font-weight: 700;
     overflow-wrap: anywhere;
+}
+
+.compactLabel {
+    color: var(--colorText);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mobileLabel {
+    display: none;
 }
 
 .time {
@@ -52,16 +69,28 @@
 }
 
 .compact {
-    display: inline-flex;
-    width: fit-content;
-    max-width: 100%;
-    margin-top: 5px;
     padding: 4px 9px;
     border-radius: var(--radiusPill);
     background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
-    color: var(--colorText);
-    font-size: var(--fontSizeCompactControl);
     font-weight: 700;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
+}
+
+@media (max-width: 803px) {
+    .badge {
+        display: flex;
+        flex-wrap: nowrap;
+        font-weight: 700;
+        overflow-wrap: normal;
+    }
+
+    .copy {
+        display: none;
+    }
+
+    .mobileLabel {
+        display: block;
+        color: var(--colorText);
+        font-weight: 700;
+        white-space: nowrap;
+    }
 }

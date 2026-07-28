@@ -101,6 +101,34 @@ describe('application sorting', () => {
     );
 
     test.each([
+        ['job_status', ['alpha', 'beta']],
+        ['application_date_desc', ['alpha', 'beta']],
+        ['application_date_asc', ['alpha', 'beta']],
+    ] as const)('uses company A–Z when the selected %s value is tied', (sortOrder, expectedOrder) => {
+        const sharedDate = '2025-02-01T00:00:00Z';
+        const tiedApplications = [
+            {
+                ...applications[0],
+                id: 'beta',
+                application_date: sortOrder === 'job_status' ? '2025-03-01T00:00:00Z' : sharedDate,
+                company_name: 'Beta Labs',
+                job_status: 'Applied' as const,
+            },
+            {
+                ...applications[1],
+                id: 'alpha',
+                application_date: sortOrder === 'job_status' ? '2025-01-01T00:00:00Z' : sharedDate,
+                company_name: 'alpha Systems',
+                job_status: 'Applied' as const,
+            },
+        ];
+
+        expect(sortApplications(tiedApplications, sortOrder).map((application) => application.id)).toEqual(
+            expectedOrder
+        );
+    });
+
+    test.each([
         ['job_status', ['pinned-offer', 'pinned-applied', 'unpinned-offer', 'unpinned-applied']],
         ['application_date_desc', ['pinned-applied', 'pinned-offer', 'unpinned-applied', 'unpinned-offer']],
         ['application_date_asc', ['pinned-offer', 'pinned-applied', 'unpinned-offer', 'unpinned-applied']],

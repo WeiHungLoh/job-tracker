@@ -60,7 +60,7 @@ const ViewInterview = () => {
     const dashboardInterviewRequestSettledRef = useRef(false);
     const dashboardViewUpdatePendingRef = useRef(false);
     const dashboardViewUpdateFailedRef = useRef(false);
-    const dashboardHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const interviewHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const {
         pendingIds: deletingInterviewIds,
         startPending: startDeletingInterview,
@@ -81,6 +81,9 @@ const ViewInterview = () => {
     const { showErrorToast, showSuccessToast } = useToast();
     const filterRequest = useFilterRequest<InterviewFilterResult>();
     const viewMode = preferences.interview_view_mode;
+    const viewModeRef = useRef(viewMode);
+    viewModeRef.current = viewMode;
+    const isAutoScrollEnabled = preferences.application_enable_scroll;
     const selectedTimeFilters = preferences.interview_time_filters;
     const isBoardView = viewMode === 'board';
     const csvData = useMemo(() => createInterviewCsvData(interviews), [interviews]);
@@ -286,7 +289,7 @@ const ViewInterview = () => {
 
         const targetId = String(interviewId);
         if (interviews.some((interview) => interview.interview_id === interviewId)) {
-            scrollAndHighlight(targetId, styles.highlighted, dashboardHighlightTimeout.current);
+            scrollAndHighlight(targetId, styles.highlighted, interviewHighlightTimeout.current);
         }
 
         dashboardInterviewIdRef.current = null;
@@ -294,7 +297,7 @@ const ViewInterview = () => {
     }, [interviews, isLoading, location.pathname, navigate, selectedTimeFilters, viewMode]);
 
     useEffect(() => {
-        const highlightTimeouts = dashboardHighlightTimeout.current;
+        const highlightTimeouts = interviewHighlightTimeout.current;
         return () => {
             Object.values(highlightTimeouts).forEach(clearTimeout);
         };
@@ -399,12 +402,12 @@ const ViewInterview = () => {
             return;
         }
 
-        const isPinned = !interview.is_pinned;
+        const shouldPin = !interview.is_pinned;
         startPinningInterview(interview.interview_id);
         try {
             const updatedPin = await api.interview.updatePin({
                 interviewId: interview.interview_id,
-                isPinned,
+                isPinned: shouldPin,
             });
             const updatePin = (item: JobInterview): JobInterview =>
                 item.interview_id === interview.interview_id ? { ...item, is_pinned: updatedPin.is_pinned } : item;
@@ -415,10 +418,22 @@ const ViewInterview = () => {
             setUpcomingInterviews((current) =>
                 filterAndSortInterviews(current.map(updatePin), ['Upcoming Interviews'], currentTime)
             );
-            showSuccessToast(isPinned ? 'Interview pinned.' : 'Interview unpinned.');
+            showSuccessToast(shouldPin ? 'Interview pinned.' : 'Interview unpinned.');
+
+            if (isAutoScrollEnabled && viewModeRef.current === 'list') {
+                setTimeout(() => {
+                    if (viewModeRef.current === 'list') {
+                        scrollAndHighlight(
+                            String(interview.interview_id),
+                            styles.highlighted,
+                            interviewHighlightTimeout.current
+                        );
+                    }
+                }, 100);
+            }
         } catch (error) {
             showErrorToast(
-                getErrorToastMessage(error, `Unable to ${isPinned ? 'pin' : 'unpin'} the interview. Please try again.`)
+                getErrorToastMessage(error, `Unable to ${shouldPin ? 'pin' : 'unpin'} the interview. Please try again.`)
             );
         } finally {
             stopPinningInterview(interview.interview_id);

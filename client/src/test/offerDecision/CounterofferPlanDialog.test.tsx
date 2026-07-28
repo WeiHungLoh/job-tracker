@@ -123,6 +123,9 @@ describe('CounterofferPlanDialog', () => {
         expect(screen.getByLabelText('Acme Ideal offer Company/Culture Fit rating')).toHaveValue('4');
         expect(screen.getByLabelText('Acme Ideal offer Work-Life Balance rating')).toHaveValue('3');
         expect(screen.getByLabelText('Acme Ideal offer Compensation rating')).toHaveValue('4');
+        const workArrangement = screen.getByLabelText('Acme Ideal offer work arrangement') as HTMLSelectElement;
+        expect(workArrangement.options[0]?.value).toBe('');
+        expect(workArrangement.options[0]?.textContent).toBe('');
         expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
     });
 
@@ -149,7 +152,7 @@ describe('CounterofferPlanDialog', () => {
         expect(screen.getByRole('progressbar', { name: 'Loading counteroffer plan' })).toBeInTheDocument();
         expect(await screen.findByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
         expect(onGet).toHaveBeenCalledOnce();
-        expect(screen.getByRole('button', { name: 'Delete counteroffer plan' })).toHaveClass(
+        expect(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' })).toHaveClass(
             primaryButtonStyles.destructive
         );
         expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(primaryButtonStyles.secondary);
@@ -276,7 +279,7 @@ describe('CounterofferPlanDialog', () => {
         renderDialog({ hasPlan: true, onClose, onDelete, onPlanAvailabilityChange });
         await screen.findByRole('heading', { name: 'Counteroffer plan' });
 
-        await click(screen.getByRole('button', { name: 'Delete counteroffer plan' }));
+        await click(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' }));
 
         expect(mockConfirm).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -319,7 +322,7 @@ describe('CounterofferPlanDialog', () => {
 
         await screen.findByRole('heading', { name: 'Counteroffer plan' });
         expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Delete counteroffer plan' })).toHaveClass(
+        expect(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' })).toHaveClass(
             primaryButtonStyles.destructive
         );
         expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();

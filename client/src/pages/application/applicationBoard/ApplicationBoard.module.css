@@ -249,6 +249,10 @@
     font-weight: 700;
 }
 
+.boardFollowUp {
+    font-size: var(--fontSizeMetadata);
+}
+
 .statusBadge,
 .upcomingBadge {
     display: inline-flex;

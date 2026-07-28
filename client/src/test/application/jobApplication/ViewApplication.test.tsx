@@ -259,7 +259,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'false');
         expect(screen.getByRole('switch', { name: 'Show archive' })).toHaveAttribute('aria-checked', 'false');
-        expect(screen.getByRole('switch', { name: 'Auto scroll after application moves' })).toHaveAttribute(
+        expect(screen.getByRole('switch', { name: 'Auto-scroll to updated items' })).toHaveAttribute(
             'aria-checked',
             'false'
         );
@@ -1725,7 +1725,7 @@ describe('Job application viewing flow', () => {
         scrollAndHighlight.mockRestore();
     });
 
-    test('restores database ordering after changing an application status', async () => {
+    test('uses the company name tie-breaker after changing an application status', async () => {
         const applications = [
             {
                 ...mockApplication,
@@ -1772,8 +1772,8 @@ describe('Job application viewing flow', () => {
 
         await waitFor(() => {
             const companyHeadings = screen.getAllByRole('heading', { level: 2 });
-            expect(companyHeadings[0]).toHaveTextContent('1. XYZ Pte Ltd');
-            expect(companyHeadings[1]).toHaveTextContent('2. Offer Pte Ltd');
+            expect(companyHeadings[0]).toHaveTextContent('1. Offer Pte Ltd');
+            expect(companyHeadings[1]).toHaveTextContent('2. XYZ Pte Ltd');
             expect(companyHeadings[2]).toHaveTextContent('3. ABC Pte Ltd');
         });
 

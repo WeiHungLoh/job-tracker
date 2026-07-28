@@ -511,7 +511,8 @@ const guideSections: readonly UserGuideSection[] = [
                     Use <strong>Sort by</strong> to order application lists by <code>Job Status</code>,{' '}
                     <code>Newest Application</code>, <code>Oldest Application</code>, <code>Company A–Z</code> or{' '}
                     <code>Company Z–A</code>. The default list order is <code>Job Status</code>, which groups
-                    applications by status and shows the newest application first within each status.
+                    applications by status. Applications with the same status are ordered by Company A–Z. Newest and
+                    Oldest Application sorts also use Company A–Z when application dates match.
                 </p>
                 <p>
                     Application boards keep columns in this order: <code>Accepted</code>, <code>Offer</code>,{' '}
@@ -522,27 +523,27 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Interview time filters are applied first. Within the matching interviews, pinned interviews appear
                     first, followed by upcoming dates (closest at the top), then past dates (earliest first). Archived
-                    interviews keep their saved pin indicator as read-only.
+                    interviews keep their saved pin indicator as read-only. Interviews at the same date and time are
+                    ordered by Company A–Z.
                 </p>
             </>
         ),
     },
     {
         id: 'highlighting',
-        title: 'Auto scroll and highlighting',
+        title: 'Auto-scroll and highlighting',
         icon: 'highlight',
         content: (
             <>
                 <p>
-                    Use the <strong>Auto scroll after application moves</strong> toggle under{' '}
-                    <strong>Display options</strong> in list view to control scrolling behavior. When enabled (green),
-                    pinning or unpinning scrolls the moved application into view. Job-status changes also scroll into
-                    view when Sort by is set to Job Status.
+                    Use <strong>Auto-scroll to updated items</strong> under <strong>Display options</strong> in
+                    Application List view. When enabled, Job Tracker scrolls to and briefly highlights an application or
+                    interview after it is pinned or unpinned.
                 </p>
                 <p>
-                    After an eligible list-view status update, the application receives a green highlight for four
-                    seconds. The page stays in place when auto scroll is disabled, another sort order is selected or the
-                    status did not change.
+                    Application status changes receive the same feedback when the Application List is sorted by Job
+                    Status and the updated application remains visible. This preference applies to Application and
+                    Interview List views. Board views never automatically scroll or highlight cards.
                 </p>
                 <p>
                     The same feedback appears when navigating from an interview to its corresponding application, but

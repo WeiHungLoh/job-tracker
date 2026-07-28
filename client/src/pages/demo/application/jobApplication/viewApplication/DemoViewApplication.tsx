@@ -101,7 +101,7 @@ const DemoViewApplication = () => {
     const selectedJobStatuses = preferences.application_job_statuses;
     const showArchive = preferences.application_show_archive;
     const showNotes = preferences.application_show_notes;
-    const enableScroll = preferences.application_enable_scroll;
+    const isAutoScrollEnabled = preferences.application_enable_scroll;
     const viewMode = preferences.application_view_mode;
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
@@ -323,7 +323,7 @@ const DemoViewApplication = () => {
             },
         });
 
-        if (shouldAutoScrollAfterStatusChange(enableScroll, preferences.application_list_sort_order)) {
+        if (shouldAutoScrollAfterStatusChange(isAutoScrollEnabled, preferences.application_list_sort_order)) {
             setTimeout(() => {
                 scrollAndHighlight(String(application.job_id), styles.highlighted, applicationHighlightTimeout.current);
             }, 100);
@@ -351,7 +351,7 @@ const DemoViewApplication = () => {
             return;
         }
 
-        const isPinned = !application.is_pinned;
+        const shouldPin = !application.is_pinned;
         updatingPinApplicationIdRef.current.add(application.job_id);
         startUpdatingApplicationPin(application.job_id);
 
@@ -359,11 +359,11 @@ const DemoViewApplication = () => {
             await Promise.resolve();
             dispatch({
                 type: 'UPDATE_APPLICATION_PIN',
-                payload: { jobId: application.job_id, isPinned },
+                payload: { jobId: application.job_id, isPinned: shouldPin },
             });
-            showSuccessToast(isPinned ? 'Job application pinned.' : 'Job application unpinned.');
+            showSuccessToast(shouldPin ? 'Job application pinned.' : 'Job application unpinned.');
 
-            if (enableScroll && viewModeRef.current === 'list') {
+            if (isAutoScrollEnabled && viewModeRef.current === 'list') {
                 setTimeout(() => {
                     if (viewModeRef.current === 'list') {
                         scrollAndHighlight(
@@ -458,13 +458,13 @@ const DemoViewApplication = () => {
                                 label='Show archive'
                             />
                             <ToggleButton
-                                toggled={enableScroll}
+                                toggled={isAutoScrollEnabled}
                                 onToggle={() =>
                                     void updatePreferences({
-                                        application_enable_scroll: !enableScroll,
+                                        application_enable_scroll: !isAutoScrollEnabled,
                                     })
                                 }
-                                label='Auto scroll after application moves'
+                                label='Auto-scroll to updated items'
                             />
                         </DisplayOptions>
                     )}

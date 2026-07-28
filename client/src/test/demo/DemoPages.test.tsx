@@ -346,7 +346,7 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'true');
         expect(screen.getByRole('switch', { name: 'Show archive' })).toHaveAttribute('aria-checked', 'true');
-        expect(screen.getByRole('switch', { name: 'Auto scroll after application moves' })).toHaveAttribute(
+        expect(screen.getByRole('switch', { name: 'Auto-scroll to updated items' })).toHaveAttribute(
             'aria-checked',
             'true'
         );
@@ -794,7 +794,7 @@ describe('demo page interactions', () => {
         expect(within(interviews).getAllByText('Actions').length).toBeGreaterThan(0);
     });
 
-    test('pins and unpins demo interviews locally with the same ordering and success feedback', async () => {
+    test('pins and unpins demo interviews locally with ordering, highlighting and success feedback', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
         renderDemo(<DemoViewInterview />, [routes.demoViewInterviews]);
 
@@ -807,6 +807,7 @@ describe('demo page interactions', () => {
             'true'
         );
         expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
+        await waitFor(() => expect(document.getElementById('410')?.className).toContain('highlighted'));
 
         await userEvent.click(screen.getByRole('button', { name: 'Unpin Summit Talent interview' }));
 

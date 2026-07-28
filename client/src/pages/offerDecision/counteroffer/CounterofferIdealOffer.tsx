@@ -15,6 +15,7 @@ import type {
     OfferDecisionCategory,
     OfferDecisionRating,
 } from '../models';
+import OfferDecisionFieldError, { getOfferDecisionErrorProps } from '../OfferDecisionFieldError';
 import styles from './CounterofferPlanDialog.module.css';
 
 type CounterofferIdealOfferProps = {
@@ -25,18 +26,6 @@ type CounterofferIdealOfferProps = {
     onChange: (plan: CounterofferPlan) => void;
     plan: CounterofferPlan;
 };
-
-const FieldError = ({ id, message }: { id: string; message?: string }) =>
-    message ? (
-        <span className={styles.fieldError} id={id}>
-            {message}
-        </span>
-    ) : null;
-
-const errorProps = (id: string, message?: string) => ({
-    'aria-describedby': message ? id : undefined,
-    'aria-invalid': Boolean(message),
-});
 
 const ReviewTerms = ({ application, plan }: { application: OfferDecisionApplication; plan: CounterofferPlan }) => (
     <dl aria-label='Ideal offer terms' className={styles.reviewGrid}>
@@ -111,7 +100,10 @@ const CounterofferIdealOffer = ({
                             <label className={styles.field} htmlFor={`${idPrefix}-monthly-base-salary`}>
                                 <span>Monthly base salary</span>
                                 <input
-                                    {...errorProps(`${idPrefix}-monthly-base-salary-error`, errors.monthly_base_salary)}
+                                    {...getOfferDecisionErrorProps(
+                                        `${idPrefix}-monthly-base-salary-error`,
+                                        errors.monthly_base_salary
+                                    )}
                                     aria-label={`${application.company_name} Ideal offer monthly base salary`}
                                     id={`${idPrefix}-monthly-base-salary`}
                                     max={OFFER_MONTHLY_BASE_SALARY_MAX}
@@ -127,7 +119,8 @@ const CounterofferIdealOffer = ({
                                     type='number'
                                     value={Number.isNaN(plan.monthly_base_salary) ? '' : plan.monthly_base_salary}
                                 />
-                                <FieldError
+                                <OfferDecisionFieldError
+                                    className={styles.fieldError}
                                     id={`${idPrefix}-monthly-base-salary-error`}
                                     message={errors.monthly_base_salary}
                                 />
@@ -135,19 +128,26 @@ const CounterofferIdealOffer = ({
                             <label className={styles.field} htmlFor={`${idPrefix}-bonus`}>
                                 <span>Bonus (Optional)</span>
                                 <input
-                                    {...errorProps(`${idPrefix}-bonus-error`, errors.bonus)}
+                                    {...getOfferDecisionErrorProps(`${idPrefix}-bonus-error`, errors.bonus)}
                                     aria-label={`${application.company_name} Ideal offer bonus`}
                                     id={`${idPrefix}-bonus`}
                                     maxLength={OFFER_DETAILS_MAX_LENGTHS.bonus}
                                     onChange={(event) => updatePlan({ bonus: event.target.value })}
                                     value={plan.bonus}
                                 />
-                                <FieldError id={`${idPrefix}-bonus-error`} message={errors.bonus} />
+                                <OfferDecisionFieldError
+                                    className={styles.fieldError}
+                                    id={`${idPrefix}-bonus-error`}
+                                    message={errors.bonus}
+                                />
                             </label>
                             <label className={styles.field} htmlFor={`${idPrefix}-annual-leave`}>
                                 <span>Annual leave days (Optional)</span>
                                 <input
-                                    {...errorProps(`${idPrefix}-annual-leave-error`, errors.annual_leave_days)}
+                                    {...getOfferDecisionErrorProps(
+                                        `${idPrefix}-annual-leave-error`,
+                                        errors.annual_leave_days
+                                    )}
                                     aria-label={`${application.company_name} Ideal offer annual leave days`}
                                     id={`${idPrefix}-annual-leave`}
                                     max={OFFER_ANNUAL_LEAVE_DAYS_MAX}
@@ -162,12 +162,19 @@ const CounterofferIdealOffer = ({
                                     type='number'
                                     value={plan.annual_leave_days ?? ''}
                                 />
-                                <FieldError id={`${idPrefix}-annual-leave-error`} message={errors.annual_leave_days} />
+                                <OfferDecisionFieldError
+                                    className={styles.fieldError}
+                                    id={`${idPrefix}-annual-leave-error`}
+                                    message={errors.annual_leave_days}
+                                />
                             </label>
                             <label className={styles.field} htmlFor={`${idPrefix}-work-arrangement`}>
                                 <span>Work arrangement (Optional)</span>
                                 <select
-                                    {...errorProps(`${idPrefix}-work-arrangement-error`, errors.work_arrangement)}
+                                    {...getOfferDecisionErrorProps(
+                                        `${idPrefix}-work-arrangement-error`,
+                                        errors.work_arrangement
+                                    )}
                                     aria-label={`${application.company_name} Ideal offer work arrangement`}
                                     id={`${idPrefix}-work-arrangement`}
                                     onChange={(event) =>
@@ -178,14 +185,15 @@ const CounterofferIdealOffer = ({
                                     }
                                     value={plan.work_arrangement}
                                 >
-                                    <option value=''>Not specified</option>
+                                    <option value=''></option>
                                     {OFFER_WORK_ARRANGEMENTS.map((arrangement) => (
                                         <option key={arrangement} value={arrangement}>
                                             {arrangement}
                                         </option>
                                     ))}
                                 </select>
-                                <FieldError
+                                <OfferDecisionFieldError
+                                    className={styles.fieldError}
                                     id={`${idPrefix}-work-arrangement-error`}
                                     message={errors.work_arrangement}
                                 />
@@ -252,13 +260,21 @@ const CounterofferIdealOffer = ({
                             </div>
                         </div>
                     </div>
-                    <FieldError id={`${idPrefix}-ratings-error`} message={errors.ratings} />
+                    <OfferDecisionFieldError
+                        className={styles.fieldError}
+                        id={`${idPrefix}-ratings-error`}
+                        message={errors.ratings}
+                    />
                 </section>
             </div>
 
             {errors.plan && (
                 <div className={styles.planError} role='alert'>
-                    <FieldError id={`${idPrefix}-plan-error`} message={errors.plan} />
+                    <OfferDecisionFieldError
+                        className={styles.fieldError}
+                        id={`${idPrefix}-plan-error`}
+                        message={errors.plan}
+                    />
                 </div>
             )}
 
@@ -285,7 +301,11 @@ const CounterofferIdealOffer = ({
                     </div>
                 </dl>
                 <p>{conclusion}</p>
-                <FieldError id='counteroffer-fit-error' message={errors.fit_rating} />
+                <OfferDecisionFieldError
+                    className={styles.fieldError}
+                    id='counteroffer-fit-error'
+                    message={errors.fit_rating}
+                />
                 {errors.fit_rating && (
                     <span
                         aria-describedby='counteroffer-fit-error'

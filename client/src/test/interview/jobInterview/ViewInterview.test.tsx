@@ -121,6 +121,8 @@ describe('Job interview viewer flow', () => {
     });
 
     test('pins and unpins an interview without refetching while preserving the time-filtered order', async () => {
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
         const laterInterview = {
             ...mockInterview,
             company_name: 'Later Interview',
@@ -182,6 +184,71 @@ describe('Job interview viewer flow', () => {
                 method: 'PATCH',
             })
         );
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 150));
+        });
+        expect(scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    test('scrolls to and highlights a pinned interview in List view when auto-scroll is enabled', async () => {
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews/1/pin')) {
+                return response({ interview_id: 1, is_pinned: true });
+            }
+            return init?.method === 'GET' ? response([mockInterview]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    ...mockPreferences,
+                    application_enable_scroll: true,
+                },
+            }
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
+
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' }));
+        expect(document.getElementById('1')?.className).toContain('highlighted');
+    });
+
+    test('does not scroll to or highlight a pinned interview in Board view', async () => {
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews/1/pin')) {
+                return response({ interview_id: 1, is_pinned: true });
+            }
+            return init?.method === 'GET' ? response([mockInterview]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    ...mockPreferences,
+                    application_enable_scroll: true,
+                    interview_view_mode: 'board',
+                },
+            }
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
+        expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 150));
+        });
+
+        expect(scrollIntoView).not.toHaveBeenCalled();
+        expect(document.getElementById('1')?.className).not.toContain('highlighted');
     });
 
     test('preserves an interview pin state and position when the update fails', async () => {

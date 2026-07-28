@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import PrimaryButton from '../../../components/button/PrimaryButton';
 import { OFFER_DECISION_CATEGORIES } from '../offerDecisionConfig';
+import { calculateOfferDecisionScore } from '../offerEvaluation';
 import type { OfferDecisionCategory, OfferDecisionRating } from '../models';
 import {
     DEFAULT_OFFER_DECISION_IMPORTANCE,
@@ -21,29 +22,20 @@ const createBalancedImportance = (): OfferDecisionImportance => ({
     ...DEFAULT_OFFER_DECISION_IMPORTANCE,
 });
 
-const getOfferName = (jobId: number, applications: readonly EvaluatedOfferDecisionApplication[]): string => {
+const getSavedFitRating = (jobId: number, applications: readonly EvaluatedOfferDecisionApplication[]): number => {
     const application = applications.find((candidate) => candidate.job_id === jobId);
-    return application ? `${application.company_name} ${application.job_title}` : 'Unknown offer';
+    return application ? calculateOfferDecisionScore(application.evaluation.ratings) : 0;
 };
 
-const joinOfferNames = (
-    jobIds: readonly number[],
-    applications: readonly EvaluatedOfferDecisionApplication[]
-): string => {
-    const names = jobIds.map((jobId) => getOfferName(jobId, applications));
-    if (names.length < 2) {
-        return names[0] ?? '';
+const getFitChangeLabel = (difference: number, savedFitRating: number): string => {
+    if (difference === 0) {
+        return 'No change';
     }
-    return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-};
+    const prefix = difference > 0 ? '+' : '';
+    const pointLabel = Math.abs(difference) === 1 ? 'percentage point' : 'percentage points';
 
-const describeImportanceChanges = (current: OfferDecisionImportance, changed: OfferDecisionImportance): string =>
-    OFFER_DECISION_CATEGORIES.filter((category) => current[category.key] !== changed[category.key])
-        .map((category) => {
-            const direction = changed[category.key] > current[category.key] ? 'increase' : 'decrease';
-            return `${direction} ${category.label} from ${current[category.key]} to ${changed[category.key]}`;
-        })
-        .join(' and ');
+    return `${prefix}${difference} ${pointLabel} from ${savedFitRating}%`;
+};
 
 const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRobustnessLabProps) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -56,25 +48,6 @@ const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRob
 
     if (!analysis) {
         return null;
-    }
-
-    const currentLeaderNames = joinOfferNames(analysis.currentTopJobIds, applications);
-    const currentSummary =
-        analysis.currentTopJobIds.length === 1
-            ? `With these priorities, ${currentLeaderNames} is your top match.`
-            : `With these priorities, ${currentLeaderNames} are tied as your top matches.`;
-
-    const changedScenario = analysis.nearestChangedScenario;
-    const changedLeaderNames = changedScenario ? joinOfferNames(changedScenario.topJobIds, applications) : '';
-    let changedSummary = 'Your top match stays the same when each priority moves one point up or down.';
-    if (analysis.identicalProfiles) {
-        changedSummary = 'These offers have the same saved ratings, so changing priorities cannot separate them.';
-    } else if (changedScenario) {
-        const changedOutcome =
-            changedScenario.topJobIds.length === 1
-                ? `${changedLeaderNames} becomes your top match.`
-                : `${changedLeaderNames} become tied as your top matches.`;
-        changedSummary = `If you ${describeImportanceChanges(importance, changedScenario.importance)}, ${changedOutcome}`;
     }
 
     const closeLab = () => {
@@ -115,7 +88,7 @@ const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRob
                 <div className={styles.content} id={PANEL_ID}>
                     <div className={styles.controls}>
                         <p className={styles.temporaryNote}>
-                            This uses your saved ratings for a quick comparison. Nothing here is saved.
+                            Move the sliders to preview how prioritising each category changes every offer&apos;s fit.
                         </p>
                         <fieldset className={styles.importanceFields} disabled={disabled}>
                             <legend>How important is each category?</legend>
@@ -159,30 +132,41 @@ const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRob
                     </div>
 
                     <div className={styles.results}>
-                        <h4>Results with these priorities</h4>
+                        <h4>New fit rating with these priorities</h4>
                         <ol aria-label='Offer results' className={styles.ranking}>
-                            {analysis.currentRanking.map((result) => (
-                                <li key={result.jobId}>
-                                    <div className={styles.rankingHeader}>
-                                        <span>
-                                            <strong>{result.companyName}</strong>
-                                            <span>{result.jobTitle}</span>
-                                        </span>
-                                        <strong>Match score: {result.score}%</strong>
-                                    </div>
-                                </li>
-                            ))}
+                            {analysis.currentRanking.map((result) => {
+                                const savedFitRating = getSavedFitRating(result.jobId, applications);
+                                const fitDifference = result.score - savedFitRating;
+                                const fitChangeClass =
+                                    fitDifference > 0
+                                        ? styles.increasedFit
+                                        : fitDifference < 0
+                                        ? styles.decreasedFit
+                                        : styles.unchangedFit;
+                                return (
+                                    <li key={result.jobId}>
+                                        <div className={styles.rankingHeader}>
+                                            <span>
+                                                <strong>{result.companyName}</strong>
+                                                <span>{result.jobTitle}</span>
+                                            </span>
+                                            <span className={styles.fitResult}>
+                                                <strong className={styles.newFitRating}>{result.score}%</strong>
+                                                <span className={`${styles.fitChange} ${fitChangeClass}`}>
+                                                    {getFitChangeLabel(fitDifference, savedFitRating)}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </li>
+                                );
+                            })}
                         </ol>
-                        <div aria-atomic='true' aria-live='polite' className={styles.summary}>
-                            <p>{currentSummary}</p>
-                            <p>{changedSummary}</p>
-                        </div>
                         <details className={styles.explanation}>
-                            <summary>How this test works</summary>
+                            <summary>How different priorities work</summary>
                             <p>
-                                The app uses your saved offer ratings and gives more weight to the categories you mark
-                                as important. It also makes small changes to your priorities to see how easily your top
-                                match changes. Nothing is saved.
+                                Each fit rating is the average of the category ratings. Moving a priority slider changes
+                                how much that category influences the comparison: 1 counts least and 5 counts most. The
+                                percentage shown is the new weighted fit rating. Your saved evaluation stays unchanged.
                             </p>
                         </details>
                     </div>

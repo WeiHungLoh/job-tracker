@@ -285,6 +285,24 @@ describe('Rose Ledger visual contract', () => {
         expect(offerEvaluationCss).not.toContain('box-shadow');
         expect(robustnessCss).not.toContain('linear-gradient');
         expect(robustnessCss).not.toContain('box-shadow');
+        expect(robustnessCss).toMatch(
+            /\.lab\s*\{[^}]*border-radius:\s*var\(--radiusCard\);[^}]*background-color:\s*var\(--colorCardBg\);/s
+        );
+        expect(robustnessCss).toMatch(
+            /\.results\s*\{[^}]*padding-left:\s*var\(--spaceSection\);[^}]*border-left:\s*1px solid var\(--colorCardBorder\);/s
+        );
+        expect(robustnessCss).toMatch(
+            /\.ranking\s*\{[^}]*border-radius:\s*var\(--radiusControl\);[^}]*background-color:\s*var\(--colorControlMutedSurface\);/s
+        );
+        expect(robustnessCss).toMatch(/\.ranking li\s*\{[^}]*border-bottom:\s*1px solid var\(--colorControlBorder\);/s);
+        expect(robustnessCss).toMatch(
+            /\.importanceHeader output\s*\{[^}]*border:\s*1px solid var\(--colorPrimary\);[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorStatIconBg\);/s
+        );
+        expect(robustnessCss).toMatch(/\.fitResult\s*\{[^}]*display:\s*grid;[^}]*justify-items:\s*end;/s);
+        expect(robustnessCss).toMatch(
+            /\.newFitRating\s*\{[^}]*color:\s*var\(--colorPrimary\);[^}]*font-size:\s*1rem;/s
+        );
+        expect(robustnessCss).toContain('.header > button {\n        align-self: flex-end;');
         expect(counterofferCss).not.toContain('linear-gradient');
         expect(counterofferCss).not.toContain('box-shadow');
         expect(counterofferCss).not.toMatch(/\.tabs\s*\{/);
@@ -295,6 +313,17 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(counterofferCss).toContain('color: var(--colorToastSuccessText);');
         expect(counterofferCss).toContain('color: var(--colorToastErrorText);');
+        expect(counterofferCss).toMatch(
+            /\.scenarioResult\s*\{[^}]*border:\s*1px solid var\(--colorCardBorder\);[^}]*background-color:\s*var\(--colorControlSurface\);/s
+        );
+        expect(counterofferCss).not.toMatch(/\.scenarioResult\s*\{[^}]*border-left:/s);
+        expect(counterofferCss).toMatch(
+            /\.resultValues > div\s*\{[^}]*padding:\s*var\(--spaceControl\);[^}]*border-radius:\s*var\(--radiusControl\);[^}]*background-color:\s*var\(--colorControlMutedSurface\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /\.scenarioResult > p\s*\{[^}]*padding-top:\s*var\(--spaceCompact\);[^}]*border-top:\s*1px solid var\(--colorCardBorder\);/s
+        );
+        expect(counterofferCss).not.toMatch(/\.scenarioResult\s*\{[^}]*background-color:\s*var\(--colorStatIconBg\);/s);
         expect(counterofferCss).toMatch(/\.applicationContext span\s*\{[^}]*font-weight:\s*600;[^}]*\}/s);
         expect(counterofferCss).toMatch(
             /\.description\s*\{[^}]*margin:\s*var\(--spaceControl\) 0 var\(--spaceSection\);[^}]*\}/s
@@ -359,14 +388,14 @@ describe('Rose Ledger visual contract', () => {
         expect(offerEvaluationCss).toMatch(
             /\.detailsReview dd\s*\{[^}]*color:\s*var\(--colorText\);[^}]*font-size:\s*var\(--fontSizeBody\);[^}]*font-weight:\s*400;/s
         );
+        expect(offerEvaluationCss).toMatch(
+            /\.detailsReview,\s*\.reviewValues\s*\{[^}]*padding:\s*var\(--spaceCompact\);[^}]*background-color:\s*var\(--colorControlMutedSurface\);/s
+        );
         expect(offerDecisionWorkspaceCss).toMatch(
             /\.comparisonSection\s*\+\s*\.comparisonSection\s*\{[^}]*padding-top:\s*var\(--spacePageGrid\);[^}]*border-top:\s*1px solid var\(--colorCardBorder\);/s
         );
         expect(offerEvaluationCss).toMatch(
             /\.reviewSection h4\s*\{[^}]*color:\s*var\(--colorPrimary\);[^}]*font-size:\s*var\(--fontSizeMetadata\);[^}]*text-transform:\s*uppercase;/s
-        );
-        expect(offerEvaluationCss).toMatch(
-            /\.detailsReview,\s*\.reviewValues\s*\{[^}]*padding:\s*var\(--spaceCompact\);[^}]*background-color:\s*var\(--colorControlMutedSurface\);/s
         );
         expect(offerEvaluationCss).toMatch(
             /\.expiredBadge\s*\{[^}]*padding:\s*4px 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
@@ -384,7 +413,13 @@ describe('Rose Ledger visual contract', () => {
     });
 
     it('groups the cohesive counteroffer implementation without generic nesting', () => {
+        const counterofferDialog = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.tsx');
+        const counterofferIdealOffer = readSource('src/pages/offerDecision/counteroffer/CounterofferIdealOffer.tsx');
+        const offerDecisionFieldError = readSource('src/pages/offerDecision/OfferDecisionFieldError.tsx');
+        const offerEvaluationForm = readSource('src/pages/offerDecision/OfferEvaluationForm.tsx');
+
         [
+            'CounterofferCurrentOffer.tsx',
             'CounterofferIdealOffer.tsx',
             'CounterofferPlanDialog.module.css',
             'CounterofferPlanDialog.tsx',
@@ -396,6 +431,14 @@ describe('Rose Ledger visual contract', () => {
         expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/CounterofferPlanDialog.tsx'))).toBe(false);
         expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/components'))).toBe(false);
         expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/utils'))).toBe(false);
+        expect(counterofferDialog).toContain("import CounterofferCurrentOffer from './CounterofferCurrentOffer';");
+        expect(counterofferDialog).not.toContain('const CurrentOfferPanel');
+        expect(offerDecisionFieldError).toContain('export const getOfferDecisionErrorProps');
+        expect(offerDecisionFieldError).toContain('const OfferDecisionFieldError');
+        expect(offerEvaluationForm).toContain('getOfferDecisionErrorProps');
+        expect(counterofferIdealOffer).toContain('getOfferDecisionErrorProps');
+        expect(offerEvaluationForm).not.toContain('const getErrorProps');
+        expect(counterofferIdealOffer).not.toContain('const errorProps');
     });
 
     it('uses the established application and Offer Comparison typography hierarchy on dashboard cards', () => {
@@ -459,6 +502,8 @@ describe('Rose Ledger visual contract', () => {
             '--colorCardBg: #fffdfb;',
             '--colorText: #2b2529;',
             '--colorTextSecondary: #71666b;',
+            '--colorTooltipBg: #2b2529;',
+            '--colorTooltipText: #fffafb;',
             '--colorPrimary: #a81f4c;',
             '--colorInteractiveBorder: #987f84;',
             '--colorLinkText: #0b57d0;',
@@ -493,6 +538,8 @@ describe('Rose Ledger visual contract', () => {
             '--colorCardBg: #211e22;',
             '--colorText: #f4edf0;',
             '--colorTextSecondary: #c1b4ba;',
+            '--colorTooltipBg: #f4edf0;',
+            '--colorTooltipText: #211e22;',
             '--colorPrimary: #ff779b;',
             '--colorInteractiveBorder: #7a6c74;',
             '--colorSelectedControlText: #261019;',
@@ -524,6 +571,7 @@ describe('Rose Ledger visual contract', () => {
         const pairs: Array<[string, string, number]> = [
             ['Text', 'PageBg', 4.5],
             ['TextSecondary', 'PageBg', 4.5],
+            ['TooltipText', 'TooltipBg', 4.5],
             ['TextSecondary', 'OverlayBg', 3],
             ['Primary', 'OverlayBg', 3],
             ['BtnPrimaryText', 'Primary', 4.5],
@@ -763,7 +811,15 @@ describe('Rose Ledger visual contract', () => {
         const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
         const calendarOptions = readSource('src/pages/interview/calendarOptions/CalendarOptions.module.css');
         const applicationBoard = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');
+        const applicationBoardCard = readSource(
+            'src/pages/application/jobApplication/applicationBoard/ApplicationBoardCard.tsx'
+        );
+        const boardCardActions = readSource('src/components/boardCardActions/BoardCardActions.module.css');
+        const boardCardActionsComponent = readSource('src/components/boardCardActions/BoardCardActions.tsx');
+        const followUpSentBadgeComponent = readSource('src/components/followUpSentBadge/FollowUpSentBadge.tsx');
         const followUpSentBadge = readSource('src/components/followUpSentBadge/FollowUpSentBadge.module.css');
+        const tooltip = readSource('src/components/tooltip/Tooltip.tsx');
+        const tooltipStyles = readSource('src/components/tooltip/Tooltip.module.css');
         const allCss = collectCssFiles(sourceRoot)
             .map((path) => readFileSync(path, 'utf8'))
             .join('\n');
@@ -772,6 +828,8 @@ describe('Rose Ledger visual contract', () => {
             expect(`${applicationCard}\n${applicationBoard}`).toContain(`var(--colorStatus${status}Text)`)
         );
         expect(applicationCard).toMatch(/\.application\s*\{[^}]*gap:\s*0;/s);
+        expect(applicationCard).toMatch(/\.application\s*\{[^}]*overflow-anchor:\s*none;/s);
+        expect(interviewCard).toMatch(/\.interview\s*\{[^}]*overflow-anchor:\s*none;/s);
         expect(applicationCard).toMatch(/\.applicationContent\s*\{[^}]*padding-right:\s*60px;/s);
         expect(applicationCard).toContain('border-radius: var(--radiusPill);');
         expect(applicationCard).toMatch(
@@ -799,10 +857,40 @@ describe('Rose Ledger visual contract', () => {
         expect(calendarOptions).toMatch(/\.trigger\s*\{[^}]*width:\s*100%;/s);
         expect(applicationBoard).toContain('border-radius: var(--radiusPill);');
         expect(applicationBoard).toMatch(/\.card a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(applicationBoard).toMatch(/\.boardFollowUp\s*\{[^}]*font-size:\s*var\(--fontSizeMetadata\);/s);
+        expect(applicationBoardCard).toContain('className={styles.boardFollowUp}');
+        expect(applicationBoardCard).toContain('<BoardCardActions');
+        expect(applicationBoardCard).toContain('compactSizing');
+        expect(boardCardActionsComponent).toContain('compactSizing?: boolean;');
+        expect(boardCardActions).toMatch(
+            /\.compactSizing summary\s*\{[^}]*min-height:\s*28px;[^}]*font-size:\s*var\(--fontSizeCompactControl\);/s
+        );
+        expect(boardCardActions).toMatch(
+            /\.compactSizing \.actionButtons button\s*\{[^}]*min-height:\s*28px;[^}]*padding:\s*6px 8px;[^}]*border-radius:\s*8px;[^}]*font-size:\s*var\(--fontSizeMetadata\);/s
+        );
         expect(followUpSentBadge).toMatch(/\.badge\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(followUpSentBadge).toMatch(/\.badge\s*\{[^}]*margin-top:\s*var\(--spaceCompact\);/s);
         expect(followUpSentBadge).toMatch(
             /\.compact\s*\{[^}]*padding:\s*4px 9px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:/s
         );
+        expect(followUpSentBadge).toMatch(/\.mobileLabel\s*\{[^}]*display:\s*none;/s);
+        expect(followUpSentBadge).not.toContain('.mobileTime');
+        expect(followUpSentBadge).not.toContain('::after');
+        expect(followUpSentBadge).toMatch(
+            /@media \(max-width:\s*803px\)[\s\S]*?\.badge\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[^}]*font-weight:\s*700;[^}]*\}[\s\S]*?\.copy\s*\{[^}]*display:\s*none;/s
+        );
+        expect(followUpSentBadgeComponent).toContain("from '../tooltip/Tooltip'");
+        expect(followUpSentBadgeComponent).toContain('<Tooltip mobileOnly');
+        expect(followUpSentBadgeComponent).toContain("<Tooltip placement='top' title='Undo'>");
+        expect(tooltip).toContain('arrow');
+        expect(tooltip).toContain("name: 'flip'");
+        expect(tooltip).toContain("name: 'preventOverflow'");
+        expect(tooltipStyles).toMatch(/\.popper\s*\{[^}]*z-index:\s*1600 !important;/s);
+        expect(tooltipStyles).toContain('background-color: var(--colorTooltipBg) !important;');
+        expect(tooltipStyles).toContain('color: var(--colorTooltipText) !important;');
+        expect(tooltipStyles).toContain('@media (min-width: 804px)');
+        expect(existsSync(resolve(sourceRoot, 'components/tooltip/JobTrackerTooltip.tsx'))).toBe(false);
+        expect(existsSync(resolve(sourceRoot, 'helper/companyNameSorting.ts'))).toBe(false);
         [
             'scrollbar-color',
             '::-webkit-scrollbar-track',

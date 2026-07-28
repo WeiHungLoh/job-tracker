@@ -292,8 +292,8 @@
 }
 
 .scenarioResult {
-    border: 1px solid var(--colorPrimary);
-    background-color: var(--colorStatIconBg);
+    border: 1px solid var(--colorCardBorder);
+    background-color: var(--colorControlSurface);
 }
 
 .resultValues {
@@ -305,6 +305,9 @@
 
 .resultValues > div {
     min-width: 0;
+    padding: var(--spaceControl);
+    border-radius: var(--radiusControl);
+    background-color: var(--colorControlMutedSurface);
 }
 
 .resultValues dt {
@@ -316,13 +319,15 @@
 .resultValues dd {
     margin: 4px 0 0;
     color: var(--colorText);
-    font-size: var(--fontSizeControl);
+    font-size: 1.125rem;
     font-weight: 800;
     overflow-wrap: anywhere;
 }
 
 .scenarioResult > p {
     margin: var(--spaceCompact) 0 0;
+    padding-top: var(--spaceCompact);
+    border-top: 1px solid var(--colorCardBorder);
     color: var(--colorText);
     font-size: var(--fontSizeControl);
     line-height: 1.5;

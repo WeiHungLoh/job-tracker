@@ -3,6 +3,7 @@ import DashboardCard from '../../shared/dashboardCard/DashboardCard';
 import LoadingSpinner from '../../../../components/loadingSpinner/LoadingSpinner';
 import formatDate from '../../../../helper/dateFormatter';
 import type { UpcomingInterviewsProps } from '../../dashboardTypes';
+import type { JobInterview } from '../../../interview/models';
 import { getUpcomingInterviews } from '../../dashboardSelectors';
 import styles from './UpcomingInterviews.module.css';
 import { getInterviewTiming } from '../../../../helper/interviewTiming';
@@ -15,7 +16,7 @@ const InterviewPreview = ({
     index,
 }: {
     currentTime: Date;
-    interview: UpcomingInterviewsProps['interviews'][number];
+    interview: JobInterview;
     index: number;
 }) => {
     const timing = getInterviewTiming(interview, currentTime);

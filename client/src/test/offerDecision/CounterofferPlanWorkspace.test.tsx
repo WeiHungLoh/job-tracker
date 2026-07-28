@@ -177,7 +177,7 @@ describe('Counteroffer plan card entry point', () => {
             within(await openCardMore('Acme')).getByRole('menuitem', { name: 'View counteroffer plan for Acme' })
         );
         await screen.findByRole('heading', { name: 'Counteroffer plan' });
-        await click(screen.getByRole('button', { name: 'Delete counteroffer plan' }));
+        await click(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' }));
         expect(screen.queryByText('Counteroffer plan deleted.')).not.toBeInTheDocument();
         expect(
             within(await openCardMore('Acme')).getByRole('menuitem', { name: 'Plan counteroffer for Acme' })

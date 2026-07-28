@@ -117,7 +117,7 @@ describe('follow-up card variants', () => {
         expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument();
     });
 
-    test('application board keeps compact status on the face and Undo inside Actions', async () => {
+    test('application board keeps the follow-up status and Undo together on the card face', async () => {
         const onUndoFollowUp = vi.fn();
         render(
             <ApplicationBoardCard
@@ -142,12 +142,12 @@ describe('follow-up card variants', () => {
             />
         );
 
-        const compactStatus = screen.getByText('Follow-up sent · 27 Jul');
+        const compactStatus = screen.getByRole('status');
         const undoButton = screen.getByRole('button', { name: 'Undo follow-up for Engineer at Acme' });
-        expect(compactStatus).toBeInTheDocument();
-        expect(compactStatus.contains(undoButton)).toBe(false);
-        expect(undoButton.closest('details')).toBeInTheDocument();
-        await userEvent.click(screen.getByText('Actions'));
+        expect(compactStatus).toHaveTextContent('Follow-up sent');
+        expect(compactStatus).not.toHaveTextContent('Follow-up sent on');
+        expect(compactStatus).toContainElement(undoButton);
+        expect(undoButton.closest('details')).not.toBeInTheDocument();
         await userEvent.click(undoButton);
 
         expect(onUndoFollowUp).toHaveBeenCalledWith(application);
@@ -180,12 +180,16 @@ describe('follow-up card variants', () => {
         );
 
         if (layout === 'board') {
-            expect(screen.getByText('Follow-up sent · 27 Jul')).toBeInTheDocument();
-            await userEvent.click(screen.getByText('Actions'));
+            expect(screen.getByRole('status')).toHaveTextContent('Follow-up sent');
+            expect(screen.getByRole('status')).not.toHaveTextContent('Follow-up sent on');
         }
         expect(screen.getAllByText(/Follow-up sent/).length).toBeGreaterThan(0);
         if (variant === 'job') {
-            expect(screen.getByRole('button', { name: 'Undo follow-up for Engineer at Acme' })).toBeInTheDocument();
+            const undoButton = screen.getByRole('button', { name: 'Undo follow-up for Engineer at Acme' });
+            expect(undoButton).toBeInTheDocument();
+            if (layout === 'board') {
+                expect(undoButton.closest('details')).not.toBeInTheDocument();
+            }
         } else {
             expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument();
         }

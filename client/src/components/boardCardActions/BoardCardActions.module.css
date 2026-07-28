@@ -17,6 +17,11 @@
     outline-offset: 2px;
 }
 
+.compactSizing summary {
+    min-height: 28px;
+    font-size: var(--fontSizeCompactControl);
+}
+
 .actionPanel {
     display: flex;
     flex-direction: column;
@@ -41,6 +46,13 @@
 
 .actionButtons button {
     width: 100%;
+}
+
+.compactSizing .actionButtons button {
+    min-height: 28px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: var(--fontSizeMetadata);
 }
 
 .compactActions {

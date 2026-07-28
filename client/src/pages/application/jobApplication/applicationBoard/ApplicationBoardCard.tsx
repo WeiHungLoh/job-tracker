@@ -103,8 +103,11 @@ const ApplicationBoardCard = ({
             <p className={styles.meta}>{formattedApplicationDate.formattedDay}</p>
             {application.application_follow_up_sent_at && application.job_status === 'Applied' && (
                 <FollowUpSentBadge
+                    className={styles.boardFollowUp}
                     compact
                     contextLabel={`${application.job_title} at ${application.company_name}`}
+                    isUndoing={isUndoingFollowUp}
+                    onUndo={onUndoFollowUp ? () => onUndoFollowUp(application) : undefined}
                     sentAt={application.application_follow_up_sent_at}
                 />
             )}
@@ -137,6 +140,7 @@ const ApplicationBoardCard = ({
 
             <BoardCardActions
                 compactPanelSpacing
+                compactSizing
                 onOpenChange={(isOpen) => onNotesVisibilityChange(application.job_id, isOpen)}
                 actions={
                     <>
@@ -159,17 +163,6 @@ const ApplicationBoardCard = ({
                     </>
                 }
             >
-                {application.application_follow_up_sent_at &&
-                    application.job_status === 'Applied' &&
-                    onUndoFollowUp && (
-                        <FollowUpSentBadge
-                            contextLabel={`${application.job_title} at ${application.company_name}`}
-                            isUndoing={isUndoingFollowUp}
-                            onUndo={() => onUndoFollowUp(application)}
-                            sentAt={application.application_follow_up_sent_at}
-                            undoText='Undo follow-up'
-                        />
-                    )}
                 {application.job_posting_url !== '' && (
                     <a href={application.job_posting_url} rel='noreferrer noopener' target='_blank'>
                         Click here to view job posting
