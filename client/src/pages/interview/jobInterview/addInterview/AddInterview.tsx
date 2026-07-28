@@ -7,7 +7,7 @@ import FormFieldError from '../../../../components/formPage/FormFieldError';
 import PrimaryButton from '../../../../components/button/PrimaryButton';
 import { focusFirstInvalidField } from '../../../../components/formPage/focusFirstInvalidField';
 import { useFormErrors } from '../../../../components/formPage/useFormErrors';
-import { MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL } from '../../../../helper/dateFormatter';
+import { isInvalidDatetimeLocalInput, MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL } from '../../../../helper/dateFormatter';
 import { routes } from '../../../../routes';
 import styles from './AddInterview.module.css';
 import { useJobTrackerAPI } from '../../../../api/useJobTrackerAPI';
@@ -29,9 +29,12 @@ import {
     createInterviewOfferDeadlineConfirmation,
     isInterviewOfferDeadlineWarningError,
 } from '../../interviewOfferDeadlineWarning';
+import { useUnsavedChangesBlocker } from '../../../../hooks/useUnsavedChangesBlocker';
+import { hasUnsavedInterviewFormChanges } from '../../interviewFormChanges';
 
 const AddInterview = () => {
     const [interviewDate, setInterviewDate] = useState<string>('');
+    const [hasInvalidInterviewDateInput, setHasInvalidInterviewDateInput] = useState(false);
     const [interviewDurationMinutes, setInterviewDurationMinutes] = useState<string>(
         String(DEFAULT_INTERVIEW_DURATION_MINUTES)
     );
@@ -54,13 +57,32 @@ const AddInterview = () => {
     const api = useJobTrackerAPI();
     const confirm = useConfirm();
     const { showErrorToast, showSuccessToast } = useToast();
+    useUnsavedChangesBlocker(
+        hasInvalidInterviewDateInput ||
+            hasUnsavedInterviewFormChanges({
+                interviewDate,
+                interviewDurationMinutes,
+                interviewLocation,
+                interviewType,
+                meetingURL,
+                notes,
+            }),
+        isLoading
+    );
 
     if (!app) {
         return <Navigate to={routes.viewApplications} replace />;
     }
 
+    const handleInterviewDateInput = (event: FormEvent<HTMLInputElement>) => {
+        setHasInvalidInterviewDateInput(
+            isInvalidDatetimeLocalInput(event.currentTarget.value, event.currentTarget.validity)
+        );
+    };
+
     const resetForm = () => {
         setInterviewDate('');
+        setHasInvalidInterviewDateInput(false);
         setInterviewDurationMinutes(String(DEFAULT_INTERVIEW_DURATION_MINUTES));
         setInterviewLocation('');
         setInterviewType('');
@@ -194,6 +216,8 @@ const AddInterview = () => {
                     setInterviewDate(e.target.value);
                     clearFieldError('interviewDate');
                 }}
+                onBlur={handleInterviewDateInput}
+                onInput={handleInterviewDateInput}
                 type='datetime-local'
                 required
             />

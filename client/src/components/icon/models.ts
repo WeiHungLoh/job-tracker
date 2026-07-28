@@ -16,6 +16,7 @@ export type IconName =
     | 'export'
     | 'guide'
     | 'highlight'
+    | 'info'
     | 'interview'
     | 'lock'
     | 'notes'

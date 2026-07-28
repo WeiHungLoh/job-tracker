@@ -12,6 +12,10 @@ import QuickCaptureProvider from '../../../pages/application/jobApplication/Quic
 
 globalThis.fetch = vi.fn();
 
+vi.mock('../../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: vi.fn(),
+}));
+
 const DUPLICATE_APPLICATION = {
     company_name: 'Morgan Stanley',
     job_title: 'Software Engineer',

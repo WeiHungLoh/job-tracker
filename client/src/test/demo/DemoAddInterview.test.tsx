@@ -10,6 +10,10 @@ import { DemoProvider, useDemo } from '../../pages/demo/context/DemoContext';
 import type { DemoAction } from '../../pages/demo/state/demoReducer';
 import type { JobApplication } from '../../pages/application/models';
 
+vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: vi.fn(),
+}));
+
 const targetApplication: JobApplication = {
     job_id: 101,
     company_name: 'HorizonAI Labs',

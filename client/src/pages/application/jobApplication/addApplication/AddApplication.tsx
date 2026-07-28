@@ -3,7 +3,7 @@ import FormFieldError from '../../../../components/formPage/FormFieldError';
 import PrimaryButton from '../../../../components/button/PrimaryButton';
 import { focusFirstInvalidField } from '../../../../components/formPage/focusFirstInvalidField';
 import { useFormErrors } from '../../../../components/formPage/useFormErrors';
-import { MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL } from '../../../../helper/dateFormatter';
+import { isInvalidDatetimeLocalInput, MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL } from '../../../../helper/dateFormatter';
 import { routes } from '../../../../routes';
 import styles from './AddApplication.module.css';
 import { useJobTrackerAPI } from '../../../../api/useJobTrackerAPI';
@@ -23,6 +23,8 @@ import { createDuplicateApplicationConfirmation } from '../../duplicateApplicati
 import { useQuickCaptureData } from '../QuickCaptureProvider';
 import Icon from '../../../../components/icon/Icon';
 import QuickCaptureBookmarklet from '../QuickCaptureBookmarklet';
+import { useUnsavedChangesBlocker } from '../../../../hooks/useUnsavedChangesBlocker';
+import { hasUnsavedApplicationFormChanges } from '../../applicationFormChanges';
 
 const getQuickCaptureHelperText = (companyName: string, jobTitle: string): string => {
     if (companyName && jobTitle) {
@@ -44,6 +46,7 @@ const AddApplication = () => {
     const [jobTitle, setJobTitle] = useState<string>(capturedData.jobTitle);
     const [jobStatus, setJobStatus] = useState<JobStatus>('Applied');
     const [applicationDate, setApplicationDate] = useState<string>('');
+    const [hasInvalidApplicationDateInput, setHasInvalidApplicationDateInput] = useState(false);
     const [jobLocation, setJobLocation] = useState<string>(capturedData.jobLocation);
     const [jobURL, setJobURL] = useState<string>(capturedData.jobURL);
     const quickCaptureHelperText = getQuickCaptureHelperText(capturedData.companyName, capturedData.jobTitle);
@@ -60,9 +63,27 @@ const AddApplication = () => {
     const api = useJobTrackerAPI();
     const confirm = useConfirm();
     const { showErrorToast, showSuccessToast } = useToast();
+    useUnsavedChangesBlocker(
+        hasInvalidApplicationDateInput ||
+            hasUnsavedApplicationFormChanges({
+                applicationDate,
+                companyName,
+                jobLocation,
+                jobStatus,
+                jobTitle,
+                jobURL,
+            }),
+        isLoading
+    );
 
     const handleToggleQuickCaptureSetup = () => {
         setIsQuickCaptureSetupExpanded((isExpanded) => !isExpanded);
+    };
+
+    const handleApplicationDateInput = (event: FormEvent<HTMLInputElement>) => {
+        setHasInvalidApplicationDateInput(
+            isInvalidDatetimeLocalInput(event.currentTarget.value, event.currentTarget.validity)
+        );
     };
 
     const resetForm = () => {
@@ -70,6 +91,7 @@ const AddApplication = () => {
         setJobTitle('');
         setJobStatus('Applied');
         setApplicationDate('');
+        setHasInvalidApplicationDateInput(false);
         setJobLocation('');
         setJobURL('');
         setErrors({});
@@ -254,6 +276,8 @@ const AddApplication = () => {
                     setApplicationDate(e.target.value);
                     clearFieldError('applicationDate');
                 }}
+                onBlur={handleApplicationDateInput}
+                onInput={handleApplicationDateInput}
                 type='datetime-local'
             />
             <FormFieldError id='app-date-error' message={errors.applicationDate} />

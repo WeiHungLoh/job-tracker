@@ -955,6 +955,29 @@ describe('Rose Ledger visual contract', () => {
         expect(declarationsByFile(/^\s*(?:-webkit-)?box-shadow\s*:[^;]+;/gm)).toEqual(expectedBoxShadowDeclarations);
     });
 
+    it('keeps persistent neutral toasts readable without a duration animation', () => {
+        const globalCss = readSource('src/index.css');
+        const lightCss = getThemeBlock(globalCss, 'light');
+        const darkCss = getThemeBlock(globalCss, 'dark');
+        const toastCss = readSource('src/components/toast/ToastContainer.module.css');
+
+        ['Accent', 'Soft', 'Bg', 'Text'].forEach((token) => {
+            expect(lightCss).toContain(`--colorToastNeutral${token}:`);
+            expect(darkCss).toContain(`--colorToastNeutral${token}:`);
+        });
+        expect(
+            contrastRatio(getHexToken(lightCss, 'colorToastNeutralText'), getHexToken(lightCss, 'colorToastNeutralBg'))
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(
+            contrastRatio(getHexToken(darkCss, 'colorToastNeutralText'), getHexToken(darkCss, 'colorToastNeutralBg'))
+        ).toBeGreaterThanOrEqual(4.5);
+        expect(toastCss).toMatch(
+            /\.neutralToast\s*\{[^}]*border-left:\s*3px solid var\(--toastAccent\);[^}]*border-bottom:\s*3px solid var\(--toastAccent\);/s
+        );
+        expect(toastCss).toMatch(/\.neutralToast::after\s*\{[^}]*display:\s*none;/s);
+        expect(toastCss).toMatch(/\.message\s*\{[^}]*white-space:\s*pre-line;/s);
+    });
+
     it('keeps the attention center distinct and matches the readable application and interview card type scale', () => {
         const attentionCenter = readSource('src/pages/dashboard/attentionCenter/AttentionCenter.module.css');
         const applicationBoard = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');

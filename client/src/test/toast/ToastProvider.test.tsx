@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { ToastProvider, useToast } from '../../components/toast/ToastProvider';
 
 const ToastHarness = () => {
-    const { showErrorToast, showSuccessToast } = useToast();
+    const { showErrorToast, showNeutralToast, showSuccessToast } = useToast();
 
     return (
         <>
@@ -11,6 +11,9 @@ const ToastHarness = () => {
             </button>
             <button type='button' onClick={() => showErrorToast('Unable to save.')}>
                 Show error
+            </button>
+            <button type='button' onClick={() => showNeutralToast('Timezone information.')}>
+                Show neutral
             </button>
         </>
     );
@@ -68,6 +71,29 @@ describe('ToastProvider durations', () => {
         expect(screen.queryByText('Unable to save.')).not.toBeInTheDocument();
     });
 
+    test('keeps neutral toasts until they are manually dismissed', () => {
+        const setTimeout = vi.spyOn(window, 'setTimeout');
+        renderToastHarness();
+
+        fireEvent.click(screen.getByRole('button', { name: /show neutral/i }));
+        const neutralToast = screen.getByRole('status');
+
+        expect(neutralToast).toHaveTextContent('Timezone information.');
+        expect(neutralToast.className).toMatch(/neutralToast/);
+        expect(neutralToast.style.getPropertyValue('--toast-duration')).toBe('');
+        expect(within(neutralToast).getByTestId('toast-neutral-icon')).toBeInTheDocument();
+        expect(within(neutralToast).getByRole('button', { name: 'Dismiss notification' })).toBeInTheDocument();
+        expect(setTimeout).not.toHaveBeenCalled();
+
+        act(() => {
+            vi.advanceTimersByTime(60_000);
+        });
+        expect(screen.getByText('Timezone information.')).toBeInTheDocument();
+
+        fireEvent.click(within(neutralToast).getByRole('button', { name: 'Dismiss notification' }));
+        expect(screen.queryByText('Timezone information.')).not.toBeInTheDocument();
+    });
+
     test('manually dismisses a toast and clears its automatic-dismiss timer', () => {
         const clearTimeout = vi.spyOn(window, 'clearTimeout');
         renderToastHarness();
@@ -87,8 +113,10 @@ describe('ToastProvider durations', () => {
 
         const [successToast, errorToast] = screen.getAllByTestId('toast');
         expect(successToast).toHaveAttribute('role', 'status');
+        expect(successToast.className).toMatch(/successToast/);
         expect(successToast.style.getPropertyValue('--toast-duration')).toBe('3000ms');
         expect(errorToast).toHaveAttribute('role', 'alert');
+        expect(errorToast.className).toMatch(/errorToast/);
         expect(errorToast.style.getPropertyValue('--toast-duration')).toBe('8000ms');
         expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
 

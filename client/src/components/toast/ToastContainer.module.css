@@ -40,6 +40,16 @@
     --toastText: var(--colorToastSuccessText);
 }
 
+.neutralToast {
+    --toastAccent: var(--colorToastNeutralAccent);
+    --toastAccentSoft: var(--colorToastNeutralSoft);
+    --toastSurface: var(--colorToastNeutralBg);
+    --toastText: var(--colorToastNeutralText);
+
+    border-left: 3px solid var(--toastAccent);
+    border-bottom: 3px solid var(--toastAccent);
+}
+
 .toast::after {
     position: absolute;
     top: -1px;
@@ -60,6 +70,10 @@
     will-change: clip-path;
 }
 
+.neutralToast::after {
+    display: none;
+}
+
 .iconTile {
     display: grid;
     width: 38px;
@@ -75,6 +89,7 @@
 .message {
     line-height: 1.45;
     overflow-wrap: anywhere;
+    white-space: pre-line;
 }
 
 .dismissButton {

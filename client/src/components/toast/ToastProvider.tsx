@@ -16,6 +16,11 @@ import styles from './ToastProvider.module.css';
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 const ERROR_TOAST_DURATION_MS = 8000;
 const SUCCESS_TOAST_DURATION_MS = 3000;
+const TOAST_DURATION_MS: Record<ToastType, number | null> = {
+    error: ERROR_TOAST_DURATION_MS,
+    neutral: null,
+    success: SUCCESS_TOAST_DURATION_MS,
+};
 
 export const ToastProvider = ({ children }: PropsWithChildren) => {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -32,14 +37,17 @@ export const ToastProvider = ({ children }: PropsWithChildren) => {
     }, []);
 
     const showToast = useCallback(
-        (message: string, type: ToastType) => {
+        (message: string, type: ToastType): number => {
             nextToastId.current += 1;
             const id = nextToastId.current;
-            const durationMs = type === 'success' ? SUCCESS_TOAST_DURATION_MS : ERROR_TOAST_DURATION_MS;
+            const durationMs = TOAST_DURATION_MS[type];
 
             setToasts((currentToasts) => [...currentToasts, { durationMs, id, message, type }]);
-            const timeout = window.setTimeout(() => dismissToast(id), durationMs);
-            toastTimeouts.current.set(id, timeout);
+            if (durationMs !== null) {
+                const timeout = window.setTimeout(() => dismissToast(id), durationMs);
+                toastTimeouts.current.set(id, timeout);
+            }
+            return id;
         },
         [dismissToast]
     );
@@ -55,10 +63,18 @@ export const ToastProvider = ({ children }: PropsWithChildren) => {
 
     const contextValue = useMemo<ToastContextValue>(
         () => ({
-            showErrorToast: (message) => showToast(message, 'error'),
-            showSuccessToast: (message) => showToast(message, 'success'),
+            showErrorToast: (message) => {
+                showToast(message, 'error');
+            },
+            showNeutralToast: (message) => {
+                const id = showToast(message, 'neutral');
+                return () => dismissToast(id);
+            },
+            showSuccessToast: (message) => {
+                showToast(message, 'success');
+            },
         }),
-        [showToast]
+        [dismissToast, showToast]
     );
 
     return (

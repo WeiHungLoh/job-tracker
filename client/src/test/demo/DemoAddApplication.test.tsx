@@ -10,6 +10,10 @@ import { DemoProvider, useDemo } from '../../pages/demo/context/DemoContext';
 import type { DemoAction } from '../../pages/demo/state/demoReducer';
 import formatDate from '../../helper/dateFormatter';
 
+vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: vi.fn(),
+}));
+
 const ACTIVE_DUPLICATE_ACTION: DemoAction = {
     type: 'CREATE_APPLICATION',
     payload: {

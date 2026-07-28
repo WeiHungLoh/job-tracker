@@ -148,6 +148,10 @@
     --colorToastSuccessText: #155724;
     --colorToastSuccessAccent: #167f68;
     --colorToastSuccessSoft: #e9f8f3;
+    --colorToastNeutralBg: #fff3cd;
+    --colorToastNeutralText: #664d03;
+    --colorToastNeutralAccent: #b58105;
+    --colorToastNeutralSoft: #ffecb5;
     --colorToastShadow: rgb(61 35 48 / 18%);
     --colorOfflineBannerBg: #d9efff;
     --colorOfflineBannerBorder: #b8daff;
@@ -320,6 +324,10 @@
     --colorToastSuccessText: #75b798;
     --colorToastSuccessAccent: #56d6af;
     --colorToastSuccessSoft: #173b32;
+    --colorToastNeutralBg: #3b2f12;
+    --colorToastNeutralText: #ffda6a;
+    --colorToastNeutralAccent: #ffc107;
+    --colorToastNeutralSoft: #4d3d16;
     --colorToastShadow: rgb(0 0 0 / 42%);
     --colorOfflineBannerBg: #132f4c;
     --colorOfflineBannerBorder: #285f8f;

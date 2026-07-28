@@ -10,6 +10,10 @@ import { defaultConfirmOptions } from '../../../components/confirmation/defaultC
 
 globalThis.fetch = vi.fn();
 
+vi.mock('../../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: vi.fn(),
+}));
+
 const mockApplication = {
     job_id: 1,
     company_name: 'IRAS',

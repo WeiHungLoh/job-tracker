@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
 import { useToast } from '../toast/ToastProvider';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
+import DeviceTimezoneNotice from '../deviceTimezoneNotice/DeviceTimezoneNotice';
 
 const ProtectedLayout = () => {
     const api = useJobTrackerAPI();
@@ -59,6 +60,7 @@ const ProtectedLayout = () => {
     return (
         <UserPreferencesProvider preferences={preferences} updatePreferences={updatePreferences}>
             <Navbar />
+            <DeviceTimezoneNotice />
             <ConfirmProvider defaultOptions={defaultConfirmOptions}>
                 <Outlet />
             </ConfirmProvider>

@@ -1,8 +1,14 @@
 import Icon from '../icon/Icon';
 import PrimaryButton from '../button/PrimaryButton';
 import type { CSSProperties } from 'react';
-import type { ToastContainerProps } from './models';
+import type { ToastContainerProps, ToastType } from './models';
 import styles from './ToastContainer.module.css';
+
+const toastStyles: Record<ToastType, string> = {
+    error: styles.errorToast,
+    neutral: styles.neutralToast,
+    success: styles.successToast,
+};
 
 const ToastContainer = ({ toasts, onDismiss }: ToastContainerProps) => {
     if (toasts.length === 0) {
@@ -13,14 +19,22 @@ const ToastContainer = ({ toasts, onDismiss }: ToastContainerProps) => {
         <div className={styles.toastContainer} data-testid='toast-container'>
             {toasts.map((toast) => (
                 <div
-                    className={`${styles.toast} ${toast.type === 'error' ? styles.errorToast : styles.successToast}`}
+                    className={`${styles.toast} ${toastStyles[toast.type]}`}
                     data-testid='toast'
                     key={toast.id}
                     role={toast.type === 'error' ? 'alert' : 'status'}
-                    style={{ '--toast-duration': `${toast.durationMs}ms` } as CSSProperties}
+                    style={
+                        toast.durationMs === null
+                            ? undefined
+                            : ({ '--toast-duration': `${toast.durationMs}ms` } as CSSProperties)
+                    }
                 >
                     <span className={styles.iconTile}>
-                        <Icon className={styles.statusIcon} name={toast.type} />
+                        <Icon
+                            className={styles.statusIcon}
+                            data-testid={`toast-${toast.type}-icon`}
+                            name={toast.type === 'neutral' ? 'info' : toast.type}
+                        />
                     </span>
                     <span className={styles.message}>{toast.message}</span>
                     <PrimaryButton

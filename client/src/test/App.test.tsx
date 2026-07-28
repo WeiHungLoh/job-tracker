@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { JOB_STATUSES } from '../pages/application/models';
 import { AUTH_FOCUSED_MODE_STORAGE_KEY } from '../components/authProductIntro/AuthProductIntro';
 import { routes } from '../routes';
+import { DEVICE_TIMEZONE_STORAGE_KEY } from '../components/deviceTimezoneNotice/DeviceTimezoneNotice';
 
 globalThis.fetch = vi.fn();
 
@@ -80,6 +81,7 @@ describe('App routing and authentication behavior', () => {
         fetch.mockReset();
         localStorage.removeItem(AUTH_FOCUSED_MODE_STORAGE_KEY);
         localStorage.removeItem('theme');
+        localStorage.removeItem(DEVICE_TIMEZONE_STORAGE_KEY);
         fetch.mockImplementation(async (url: string) => {
             if (url.endsWith('/user-preferences')) {
                 return jsonResponse(mockPreferences);
@@ -92,6 +94,7 @@ describe('App routing and authentication behavior', () => {
         vi.useRealTimers();
         localStorage.removeItem(AUTH_FOCUSED_MODE_STORAGE_KEY);
         localStorage.removeItem('theme');
+        localStorage.removeItem(DEVICE_TIMEZONE_STORAGE_KEY);
     });
 
     test('renders SignIn at the root path', async () => {
@@ -254,6 +257,14 @@ describe('App routing and authentication behavior', () => {
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/current`, {
             method: 'GET',
         });
+    });
+
+    test('shows the timezone notice only after the authenticated layout renders', async () => {
+        renderRoute('/application/add');
+
+        await screen.findByText(/company name/i);
+        expect(await screen.findByRole('status')).toHaveTextContent(/Timezone:/);
+        expect(screen.queryByRole('region', { name: 'Device time and timezone' })).not.toBeInTheDocument();
     });
 
     test.each(['/application/view', '/application/archive', '/interview/archive'])(
@@ -465,6 +476,8 @@ describe('App routing and authentication behavior', () => {
         renderRoute('/sign-up');
 
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: 'Device time and timezone' })).not.toBeInTheDocument();
+        expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();
     });
 
     test('preserves focused mode when navigating from SignIn to SignUp', async () => {
@@ -512,6 +525,8 @@ describe('App routing and authentication behavior', () => {
 
         expect(await screen.findByRole('heading', { name: /job tracker user guide/i })).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: /checking authentication/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: 'Device time and timezone' })).not.toBeInTheDocument();
+        expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -521,6 +536,7 @@ describe('App routing and authentication behavior', () => {
         expect(await screen.findByText(/HorizonAI Labs/i, {}, { timeout: 5000 })).toBeInTheDocument();
         expect(screen.getByRole('navigation')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /demo guide/i })).not.toBeInTheDocument();
+        expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -538,6 +554,8 @@ describe('App routing and authentication behavior', () => {
 
         expect(await screen.findByText(expectedText, {}, { timeout: 5000 })).toBeInTheDocument();
         expect(screen.getByRole('navigation')).toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: 'Device time and timezone' })).not.toBeInTheDocument();
+        expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalled();
     });
 

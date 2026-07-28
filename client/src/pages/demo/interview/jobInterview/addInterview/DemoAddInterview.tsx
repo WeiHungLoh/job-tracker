@@ -7,7 +7,11 @@ import FormFieldError from '../../../../../components/formPage/FormFieldError';
 import PrimaryButton from '../../../../../components/button/PrimaryButton';
 import { focusFirstInvalidField } from '../../../../../components/formPage/focusFirstInvalidField';
 import { useFormErrors } from '../../../../../components/formPage/useFormErrors';
-import { MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL } from '../../../../../helper/dateFormatter';
+import {
+    isInvalidDatetimeLocalInput,
+    MAX_DATETIME_LOCAL,
+    MIN_DATETIME_LOCAL,
+} from '../../../../../helper/dateFormatter';
 import { DEMO_INTERVIEW_CREATED_MESSAGE } from '../../../state/demoMessages';
 import {
     FIELD_MAX_LENGTHS,
@@ -32,9 +36,12 @@ import {
     createInterviewOfferDeadlineConfirmation,
     findInterviewOfferDeadlineWarnings,
 } from '../../../../interview/interviewOfferDeadlineWarning';
+import { useUnsavedChangesBlocker } from '../../../../../hooks/useUnsavedChangesBlocker';
+import { hasUnsavedInterviewFormChanges } from '../../../../interview/interviewFormChanges';
 
 const DemoAddInterview = () => {
     const [interviewDate, setInterviewDate] = useState<string>('');
+    const [hasInvalidInterviewDateInput, setHasInvalidInterviewDateInput] = useState(false);
     const [interviewDurationMinutes, setInterviewDurationMinutes] = useState<string>(
         String(DEFAULT_INTERVIEW_DURATION_MINUTES)
     );
@@ -57,13 +64,32 @@ const DemoAddInterview = () => {
     const confirm = useConfirm();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { showErrorToast, showSuccessToast } = useToast();
+    useUnsavedChangesBlocker(
+        hasInvalidInterviewDateInput ||
+            hasUnsavedInterviewFormChanges({
+                interviewDate,
+                interviewDurationMinutes,
+                interviewLocation,
+                interviewType,
+                meetingURL,
+                notes,
+            }),
+        isLoading
+    );
 
     if (!app) {
         return <Navigate to={routes.demoViewApplications} replace />;
     }
 
+    const handleInterviewDateInput = (event: FormEvent<HTMLInputElement>) => {
+        setHasInvalidInterviewDateInput(
+            isInvalidDatetimeLocalInput(event.currentTarget.value, event.currentTarget.validity)
+        );
+    };
+
     const resetForm = () => {
         setInterviewDate('');
+        setHasInvalidInterviewDateInput(false);
         setInterviewDurationMinutes(String(DEFAULT_INTERVIEW_DURATION_MINUTES));
         setInterviewLocation('');
         setInterviewType('');
@@ -210,6 +236,8 @@ const DemoAddInterview = () => {
                     setInterviewDate(e.target.value);
                     clearFieldError('interviewDate');
                 }}
+                onBlur={handleInterviewDateInput}
+                onInput={handleInterviewDateInput}
                 type='datetime-local'
                 required
             />

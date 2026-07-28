@@ -3,7 +3,11 @@ import FormFieldError from '../../../../../components/formPage/FormFieldError';
 import PrimaryButton from '../../../../../components/button/PrimaryButton';
 import { focusFirstInvalidField } from '../../../../../components/formPage/focusFirstInvalidField';
 import { useFormErrors } from '../../../../../components/formPage/useFormErrors';
-import { MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL } from '../../../../../helper/dateFormatter';
+import {
+    isInvalidDatetimeLocalInput,
+    MAX_DATETIME_LOCAL,
+    MIN_DATETIME_LOCAL,
+} from '../../../../../helper/dateFormatter';
 import {
     FIELD_MAX_LENGTHS,
     type ApplicationFormField,
@@ -21,14 +25,18 @@ import { findPotentialDuplicateApplication } from '../../../../application/possi
 import { createDuplicateApplicationConfirmation } from '../../../../application/duplicateApplicationConfirmation';
 import { useConfirm } from 'material-ui-confirm';
 import { getErrorToastMessage } from '../../../../../helper/getErrorToastMessage';
+import { useUnsavedChangesBlocker } from '../../../../../hooks/useUnsavedChangesBlocker';
+import { hasUnsavedApplicationFormChanges } from '../../../../application/applicationFormChanges';
 
 const DemoAddApplication = () => {
     const [companyName, setCompanyName] = useState<string>('');
     const [jobTitle, setJobTitle] = useState<string>('');
     const [jobStatus, setJobStatus] = useState<JobStatus>('Applied');
     const [applicationDate, setApplicationDate] = useState<string>('');
+    const [hasInvalidApplicationDateInput, setHasInvalidApplicationDateInput] = useState(false);
     const [jobLocation, setJobLocation] = useState<string>('');
     const [jobURL, setJobURL] = useState<string>('');
+    const [isSubmissionPending, setIsSubmissionPending] = useState(false);
     const { clearFieldError, errors, setErrors } = useFormErrors<ApplicationFormField>();
     const companyNameInputRef = useRef<HTMLInputElement>(null);
     const jobTitleInputRef = useRef<HTMLInputElement>(null);
@@ -40,12 +48,31 @@ const DemoAddApplication = () => {
     const { dispatch, state } = useDemo();
     const confirm = useConfirm();
     const { showErrorToast, showSuccessToast } = useToast();
+    useUnsavedChangesBlocker(
+        hasInvalidApplicationDateInput ||
+            hasUnsavedApplicationFormChanges({
+                applicationDate,
+                companyName,
+                jobLocation,
+                jobStatus,
+                jobTitle,
+                jobURL,
+            }),
+        isSubmissionPending
+    );
+
+    const handleApplicationDateInput = (event: FormEvent<HTMLInputElement>) => {
+        setHasInvalidApplicationDateInput(
+            isInvalidDatetimeLocalInput(event.currentTarget.value, event.currentTarget.validity)
+        );
+    };
 
     const resetForm = () => {
         setCompanyName('');
         setJobTitle('');
         setJobStatus('Applied');
         setApplicationDate('');
+        setHasInvalidApplicationDateInput(false);
         setJobLocation('');
         setJobURL('');
         setErrors({});
@@ -112,6 +139,7 @@ const DemoAddApplication = () => {
         }
 
         pendingSubmissionRef.current = true;
+        setIsSubmissionPending(true);
         try {
             const { confirmed } = await confirm(createDuplicateApplicationConfirmation(duplicate));
             if (confirmed) {
@@ -121,6 +149,7 @@ const DemoAddApplication = () => {
             showErrorToast(getErrorToastMessage(error, 'Unable to add the job application. Please try again.'));
         } finally {
             pendingSubmissionRef.current = false;
+            setIsSubmissionPending(false);
         }
     };
 
@@ -180,6 +209,8 @@ const DemoAddApplication = () => {
                     setApplicationDate(e.target.value);
                     clearFieldError('applicationDate');
                 }}
+                onBlur={handleApplicationDateInput}
+                onInput={handleApplicationDateInput}
                 type='datetime-local'
             />
             <FormFieldError id='app-date-error' message={errors.applicationDate} />

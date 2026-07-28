@@ -26,6 +26,10 @@ vi.mock('material-ui-confirm', () => ({
     useConfirm: () => mockConfirm,
 }));
 
+vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: vi.fn(),
+}));
+
 vi.mock('react-chartjs-2', () => ({
     Bar: ({ data, options }: { data: ChartData<'bar'>; options?: ChartOptions<'bar'> }) => (
         <div>
