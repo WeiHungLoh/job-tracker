@@ -300,7 +300,8 @@ describe('CounterofferPlanDialog', () => {
         renderDialog({ hasPlan: true, onGet });
 
         expect(screen.getByRole('progressbar', { name: 'Loading counteroffer plan' })).toBeInTheDocument();
-        expect(await screen.findByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
         expect(onGet).toHaveBeenCalledOnce();
         expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(primaryButtonStyles.secondary);
         expect(screen.getByRole('button', { name: 'Edit' })).toHaveClass(primaryButtonStyles.primary);
@@ -424,7 +425,7 @@ describe('CounterofferPlanDialog', () => {
         const onDelete = vi.fn().mockResolvedValue(undefined);
         const onPlanAvailabilityChange = vi.fn();
         renderDialog({ hasPlan: true, onClose, onDelete, onPlanAvailabilityChange });
-        await screen.findByRole('heading', { name: 'Counteroffer plan' });
+        await screen.findByRole('button', { name: 'Delete counteroffer plan' });
 
         await click(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' }));
 
@@ -457,7 +458,7 @@ describe('CounterofferPlanDialog', () => {
 
     test('cancels saved plan edits immediately without a discard confirmation', async () => {
         renderDialog({ hasPlan: true });
-        await screen.findByRole('heading', { name: 'Counteroffer plan' });
+        await screen.findByRole('button', { name: 'Edit' });
         await click(screen.getByRole('button', { name: 'Edit' }));
         fireEvent.change(screen.getByLabelText('Acme Ideal offer bonus'), {
             target: { value: 'Changed bonus' },
@@ -473,9 +474,15 @@ describe('CounterofferPlanDialog', () => {
 
     test('Escape in a saved plan field cancels edits and returns to view mode', async () => {
         const onClose = vi.fn();
-        renderDialog({ hasPlan: true, onClose });
+        const onGet = vi.fn(
+            () =>
+                new Promise<CounterofferPlan>((resolve) => {
+                    window.setTimeout(() => resolve(savedPlan), 25);
+                })
+        );
+        renderDialog({ hasPlan: true, onClose, onGet });
         await screen.findByRole('heading', { name: 'Counteroffer plan' });
-        await click(screen.getByRole('button', { name: 'Edit' }));
+        await click(await screen.findByRole('button', { name: 'Edit' }));
         const bonusInput = screen.getByLabelText('Acme Ideal offer bonus');
         fireEvent.change(bonusInput, { target: { value: 'Changed bonus' } });
 
