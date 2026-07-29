@@ -169,11 +169,20 @@ describe('demo reducer state', () => {
             type: 'MARK_INTERVIEW_FOLLOW_UP_SENT',
             payload: { interviewId: linkedInterview.interview_id, sentAt: '2026-07-07T12:01:00.000Z' },
         });
+        const interviewApplicationStatusChanged = demoReducer(interviewMarked, {
+            type: 'UPDATE_APPLICATION_STATUS',
+            payload: { jobId: interviewedApplication.job_id, jobStatus: 'Ghosted' },
+        });
         const archived = demoReducer(interviewMarked, {
             type: 'ARCHIVE_APPLICATION',
             payload: { jobId: interviewedApplication.job_id },
         });
 
+        expect(
+            interviewApplicationStatusChanged.interviews.find(
+                (interview) => interview.interview_id === linkedInterview.interview_id
+            )?.follow_up_sent_at
+        ).toBe('2026-07-07T12:01:00.000Z');
         expect(
             archived.archivedInterviews.find(
                 (interview) => interview.archived_interview_id === linkedInterview.interview_id

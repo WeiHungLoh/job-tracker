@@ -25,6 +25,9 @@ describe('dashboard offer-decision navigation state', () => {
         expect(getDashboardOfferDecisionFilter({ dashboardOfferDecisionFilter: 'Evaluated Offers' })).toBe(
             'Evaluated Offers'
         );
+        expect(getDashboardOfferDecisionFilter({ dashboardOfferDecisionFilter: 'Expired Evaluated Offers' })).toBe(
+            'Expired Evaluated Offers'
+        );
         expect(getDashboardOfferDecisionFilter({ dashboardOfferDecisionFilter: 'Previous Evaluations' })).toBeNull();
         expect(getDashboardOfferDecisionFilter(null)).toBeNull();
     });

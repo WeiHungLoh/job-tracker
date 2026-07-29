@@ -51,22 +51,48 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <h3>Needs attention</h3>
                 <p>
-                    Shows up to six applications that may require action, ordered by category priority, and suggests one
-                    next action for each selected application. Within a category, the most urgent or longest-waiting
-                    items appear first.
+                    Shows up to ten applications that may require action, ordered by category priority, and suggests one
+                    next action for each selected application. The first six are visible before scrolling through the
+                    remaining items. Within a category, the most urgent or longest-waiting items appear first.
                 </p>
+                <ol>
+                    <li>Evaluated offers due within 72 hours.</li>
+                    <li>Evaluated offers up to 14 days overdue.</li>
+                    <li>Unevaluated offers.</li>
+                    <li>Completed-interview follow-ups still unanswered 14 days after being marked as sent.</li>
+                    <li>Completed-interview follow-ups.</li>
+                    <li>Interview-status applications without a scheduled interview.</li>
+                    <li>Applied applications unchanged for 14 days after a sent follow-up.</li>
+                    <li>Applied applications eligible for an initial follow-up after seven days.</li>
+                </ol>
                 <h3>Evaluated offers due within 72 hours</h3>
                 <p>
-                    These appear first. The action opens active Offer Comparison, ensures Evaluated Offers is visible,
-                    then scrolls to and highlights the exact offer card so you can record it as Accepted or Declined.
-                    This targeted navigation always scrolls and highlights, regardless of the auto-scroll preference.
-                    Evaluated offers more than 72 hours away and offers with a passed deadline do not appear.
+                    The action opens active Offer Comparison, ensures Evaluated Offers is visible, then scrolls to and
+                    highlights the exact offer card so you can record it as Accepted or Declined. This targeted
+                    navigation always scrolls and highlights, regardless of the auto-scroll preference. Evaluated offers
+                    more than 72 hours away do not appear.
+                </p>
+                <h3>Evaluated offers up to 14 days overdue</h3>
+                <p>
+                    These appear as soon as the decision deadline is reached and remain in Needs Attention through
+                    exactly 14 days overdue. <strong>Record offer decision</strong> opens active Offer Comparison, adds
+                    Expired Evaluated Offers only when it is missing, preserves every other selected filter, then
+                    scrolls the exact offer to the top and highlights it. Offers more than 14 days overdue remain in
+                    Expired Evaluated Offers but no longer occupy Needs Attention.
                 </p>
                 <h3>Unevaluated offers</h3>
                 <p>
                     These appear next regardless of deadline because their deadline has not been recorded yet. The
                     action opens active Offer Comparison, ensures Offers to Evaluate is visible, then scrolls to and
                     highlights the exact card so you can add the offer details and decision deadline.
+                </p>
+                <h3>Unanswered completed-interview follow-ups</h3>
+                <p>
+                    After you mark the latest completed interview&apos;s follow-up as sent, the reminder disappears. If
+                    the application remains at Interview for another 14 full days, Needs Attention suggests{' '}
+                    <strong>Mark as Ghosted</strong>. This uses the same confirmation and immediate Dashboard count
+                    update as the stale Applied follow-up action. The interview follow-up time remains as historical
+                    activity because it belongs to that interview.
                 </p>
                 <h3>Completed interviews</h3>
                 <p>
@@ -75,12 +101,26 @@ const guideSections: readonly UserGuideSection[] = [
                     interview&apos;s end time, including its duration, and applications waiting longer are ranked
                     higher. These items can generate a copyable post-interview template.
                 </p>
+                <p>
+                    When an application has multiple interviews, only the latest scheduled interview controls the
+                    reminder. A newer future, ongoing or recently completed interview prevents an older sent follow-up
+                    from suggesting Ghosted. Once that newer interview has been completed for seven full days, it
+                    receives its own follow-up draft and sent timestamp.
+                </p>
                 <h3>Interview applications without a scheduled interview</h3>
                 <p>
                     Applications marked as Interview with no scheduled interview prompt you to add one. The action opens
                     Add Interview without creating an interview automatically.
                 </p>
-                <h3>Stale Applied applications</h3>
+                <h3>Applied applications unchanged after a sent follow-up</h3>
+                <p>
+                    Mark as sent stores the time. If the application remains Applied with no recorded interview for
+                    another 14 full days, Needs Attention suggests <strong>Mark as Ghosted</strong>. Job Tracker does
+                    not inspect email and does not know whether the employer replied; it only knows the application is
+                    still Applied and no interview has been recorded. Mark as Ghosted requires confirmation, and a
+                    successful change updates Dashboard counts immediately.
+                </p>
+                <h3>Initial Applied follow-ups</h3>
                 <p>
                     Applied applications with no linked interview appear after seven days, with older applications
                     ranked higher. These items can generate a copyable application follow-up template.
@@ -97,9 +137,9 @@ const guideSections: readonly UserGuideSection[] = [
                     indicator, with the full sent time and Undo in <strong>Actions</strong>. Archived cards keep the
                     sent time as read-only context. An application follow-up clears when you press <strong>Undo</strong>{' '}
                     or when the application leaves <code>Applied</code>. An interview follow-up remains until you undo
-                    it or delete the interview (including deletion through its linked application). Only the latest sent
-                    time is kept; Job Tracker does not maintain a follow-up history. Future and ongoing interviews
-                    remain in the Upcoming Interviews card.
+                    it or delete the interview (including deletion through its linked application), even when the
+                    application changes status. Only the latest sent time is kept; Job Tracker does not maintain a
+                    follow-up history. Future and ongoing interviews remain in the Upcoming Interviews card.
                 </p>
                 <h3>Application trend</h3>
                 <p>
@@ -111,12 +151,14 @@ const guideSections: readonly UserGuideSection[] = [
                 <h3>Application pipeline</h3>
                 <p>Shows current Applied, Interview, Offer, and Accepted totals.</p>
                 <h3>Closed outcomes</h3>
-                <p>Shows current Rejected, Ghosted, and Declined totals.</p>
+                <p>Shows current Rejected, Ghosted, Withdrawn, and Declined totals.</p>
                 <p>
                     Interview rate counts applications currently at <code>Interview</code>, <code>Offer</code>,{' '}
                     <code>Accepted</code> or <code>Declined</code>. Offer rate counts <code>Offer</code>,{' '}
                     <code>Accepted</code> or <code>Declined</code>. A declined application is included because it means
-                    you received an offer and chose not to accept it.
+                    you received an offer and chose not to accept it. Withdrawn counts toward Total Active Applications
+                    and both rate denominators, but not the Interview Rate or Offer Rate numerators. Applied This Week
+                    is based on application date, so a later status change does not remove it.
                 </p>
                 <p>
                     Open it by selecting <code>Dashboard</code> from the navigation bar.
@@ -147,7 +189,9 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Add applications, switch between list and board view, filter by status, edit notes, update status,
                     archive, restore, delete and export CSV records. Follow-up marking and Undo use demo state only and
-                    mirror the signed-in list, board and archived-card behavior.
+                    mirror the signed-in list, board and archived-card behavior. Demo mode supports Withdrawn, overdue
+                    offer attention, stale sent follow-ups, Mark as Ghosted confirmation, and the same Dashboard count
+                    updates without backend requests.
                 </p>
                 <h3>Offer comparison</h3>
                 <p>
@@ -356,11 +400,53 @@ const guideSections: readonly UserGuideSection[] = [
                     application date, and lets you drag cards between columns or use the <code>Move to</code> menu to
                     update status.
                 </p>
+                <h3>Job status definitions</h3>
+                <ul>
+                    <li>
+                        <strong>Applied:</strong> You submitted the application and it has not yet moved into the
+                        interview process.
+                    </li>
+                    <li>
+                        <strong>Interview:</strong> The application has entered the interview stage. An interview may
+                        already be scheduled or may still need to be scheduled.
+                    </li>
+                    <li>
+                        <strong>Offer:</strong> The employer has made an offer that you have not yet accepted or
+                        declined.
+                    </li>
+                    <li>
+                        <strong>Accepted:</strong> You accepted the employer&apos;s offer.
+                    </li>
+                    <li>
+                        <strong>Declined:</strong> You received an offer and chose not to accept it.
+                    </li>
+                    <li>
+                        <strong>Withdrawn:</strong> You voluntarily ended your candidacy before receiving an offer. Use
+                        Declined instead when an offer was received.
+                    </li>
+                    <li>
+                        <strong>Ghosted:</strong> The employer stopped responding without giving a clear final decision
+                        after a reasonable waiting or follow-up period.
+                    </li>
+                    <li>
+                        <strong>Rejected:</strong> The employer explicitly ended your candidacy without making an offer.
+                    </li>
+                </ul>
+                <p>
+                    Withdrawn means you ended the process before an offer. Declined means you rejected an offer.
+                    Rejected means the employer ended the process. Ghosted means the employer stopped responding without
+                    a clear outcome.
+                </p>
                 <p>
                     Changing a status to <code>Interview</code> displays a link for creating an interview tied to that
                     application. If an interview already exists, delete it before changing the status back to{' '}
                     <code>Applied</code>. The board also prevents moving an application back to <code>Applied</code>{' '}
                     while it still has an interview.
+                </p>
+                <p>
+                    An application with an interview may still move to Interview, Offer, Accepted, Declined, Withdrawn,
+                    Ghosted or Rejected. When a saved offer evaluation exists, only Offer, Accepted and Declined are
+                    available until the evaluation is deleted.
                 </p>
                 <p>
                     Use <strong>Filter by</strong> to show one or more statuses, or select <code>Show All</code>. The
@@ -425,6 +511,13 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Both active and archived interviews are sorted with upcoming interviews first (closest date at the
                     top), followed by past interviews (earliest date first).
+                </p>
+                <h3>Calendar exports</h3>
+                <p>
+                    When a meeting URL is saved, individual Google Calendar exports include it in the description and
+                    Apple Calendar or Outlook .ics exports include it in both the description and URL field. Bulk
+                    upcoming-interview exports use the same behaviour. The meeting URL does not replace the physical
+                    interview location, and Dashboard Upcoming Interviews remains unchanged.
                 </p>
             </>
         ),
@@ -539,7 +632,9 @@ const guideSections: readonly UserGuideSection[] = [
                     display order. List exports follow the visible list. Board exports move from left to right through
                     the visible status columns and keep each column&apos;s selected ordering. Interview and
                     archived-record viewers also provide CSV export actions under <strong>More...</strong> when at least
-                    one record is available.
+                    one record is available. Application and interview exports include the date their follow-up was sent
+                    in the same format as the record&apos;s main date, or <code>N/A</code> when no follow-up has been
+                    sent.
                 </p>
                 <p>
                     Offer Comparison exports follow its selected sections and include separate evaluation and
@@ -559,9 +654,10 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <p>
                     Application boards keep columns in this order: <code>Accepted</code>, <code>Offer</code>,{' '}
-                    <code>Declined</code>, <code>Interview</code>, <code>Applied</code>, <code>Ghosted</code> and{' '}
-                    <code>Rejected</code>. Board sorting applies inside each column and defaults to{' '}
-                    <code>Newest Application</code>. Active and archived list and board choices are saved independently.
+                    <code>Declined</code>, <code>Interview</code>, <code>Applied</code>, <code>Withdrawn</code>,{' '}
+                    <code>Ghosted</code> and <code>Rejected</code>. Board sorting applies inside each column and
+                    defaults to <code>Newest Application</code>. Active and archived list and board choices are saved
+                    independently.
                 </p>
                 <p>
                     Interview time filters are applied first. Within the matching interviews, pinned interviews appear
@@ -585,10 +681,11 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <p>
                     Application status changes receive the same feedback when the Application List is sorted by Job
-                    Status and the updated application remains visible. In Offer Comparison, the preference also
-                    controls highlighting after the first evaluation save and after changing a saved evaluation between
-                    Offer, Accepted and Declined. Board views never automatically scroll or highlight cards for these
-                    in-page updates.
+                    Status and the updated application remains visible. In Offer Comparison, the preference controls
+                    both scrolling and highlighting after saving a first evaluation and after changing a saved
+                    evaluation between Offer, Accepted and Declined. When the preference is disabled, those updates do
+                    not scroll or highlight. Board views never automatically scroll or highlight cards for these in-page
+                    updates.
                 </p>
                 <p>
                     The preference does not control targeted navigation between pages. Opening a corresponding
@@ -599,8 +696,10 @@ const guideSections: readonly UserGuideSection[] = [
                     Dashboard Evaluate offer and Record offer decision actions always target and highlight the exact
                     Offer Comparison card. Opening a dashboard interview likewise switches to Interview List when
                     needed, restores the missing Upcoming filter when necessary, and always targets that interview.
-                    Evaluation Cancel, Save evaluation and Hide details keep their dedicated scroll-only behavior and
-                    never use the highlight animation.
+                    Saving an edit to an existing evaluation scrolls to the bottom of its locked, still-expanded card.
+                    Cancelling an evaluation scrolls to the top of a new evaluation card or the bottom of an existing
+                    evaluation card, and Hide details scrolls to the top. These dedicated movements apply regardless of
+                    the preference and never use the highlight animation.
                 </p>
                 <p>
                     Active, archived and demo Application, Interview and Offer Comparison pages also provide small page

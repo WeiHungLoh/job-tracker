@@ -19,7 +19,7 @@ import useStatusChartVisibility from '../shared/useStatusChartVisibility';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
-const CLOSED_STATUSES: readonly JobStatus[] = ['Rejected', 'Ghosted', 'Declined'];
+const CLOSED_STATUSES: readonly JobStatus[] = ['Rejected', 'Ghosted', 'Withdrawn', 'Declined'];
 
 const ClosedOutcomesChart = ({ statusCounts, isLoading, onStatusSelect }: StatusChartProps) => {
     const { theme } = useTheme();

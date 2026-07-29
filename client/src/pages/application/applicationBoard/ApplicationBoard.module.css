@@ -316,6 +316,12 @@
     color: var(--colorStatusDeclinedText);
 }
 
+.withdrawn {
+    --boardStatusColor: var(--colorStatusWithdrawn);
+    background-color: var(--colorStatusWithdrawn);
+    color: var(--colorStatusWithdrawnText);
+}
+
 .statusSelectLabel,
 .notesField {
     display: flex;

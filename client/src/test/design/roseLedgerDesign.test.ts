@@ -554,6 +554,8 @@ describe('Rose Ledger visual contract', () => {
             '--colorStatusRejectedText: #ffffff;',
             '--colorStatusGhostedText: #ffffff;',
             '--colorStatusDeclinedText: #ffffff;',
+            '--colorStatusWithdrawn: #8b5e3c;',
+            '--colorStatusWithdrawnText: #ffffff;',
             '--colorLocationText: #005f56;',
             '--colorInterviewType: #6d28d9;',
             '--colorUpcomingBadge: #f57c00;',
@@ -584,6 +586,8 @@ describe('Rose Ledger visual contract', () => {
             '--colorStatusRejectedText: #ffffff;',
             '--colorStatusGhostedText: #ffffff;',
             '--colorStatusDeclinedText: #ffffff;',
+            '--colorStatusWithdrawn: #7a4a2e;',
+            '--colorStatusWithdrawnText: #ffffff;',
             '--colorLocationText: #5eead4;',
             '--colorInterviewType: #c4b5fd;',
             '--colorUpcomingBadge: #f57c00;',
@@ -625,6 +629,7 @@ describe('Rose Ledger visual contract', () => {
             ['StatusRejectedText', 'StatusRejected', 4.5],
             ['StatusGhostedText', 'StatusGhosted', 4.5],
             ['StatusDeclinedText', 'StatusDeclined', 4.5],
+            ['StatusWithdrawnText', 'StatusWithdrawn', 4.5],
         ];
 
         if (theme === 'light') {
@@ -852,8 +857,8 @@ describe('Rose Ledger visual contract', () => {
             .map((path) => readFileSync(path, 'utf8'))
             .join('\n');
 
-        ['Applied', 'Interview', 'Offer', 'Accepted', 'Rejected', 'Ghosted', 'Declined'].forEach((status) =>
-            expect(`${applicationCard}\n${applicationBoard}`).toContain(`var(--colorStatus${status}Text)`)
+        ['Applied', 'Interview', 'Offer', 'Accepted', 'Rejected', 'Withdrawn', 'Ghosted', 'Declined'].forEach(
+            (status) => expect(`${applicationCard}\n${applicationBoard}`).toContain(`var(--colorStatus${status}Text)`)
         );
         expect(applicationCard).toMatch(/\.application\s*\{[^}]*gap:\s*0;/s);
         expect(applicationCard).toMatch(/\.application\s*\{[^}]*overflow-anchor:\s*none;/s);
@@ -868,6 +873,9 @@ describe('Rose Ledger visual contract', () => {
         expect(applicationCard).toMatch(/\.buttonGroup button\s*\{[^}]*white-space: nowrap;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*grid-template-columns:\s*1fr\s+1fr;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*flex-shrink:\s*0;/s);
+        expect(interviewCard).toMatch(
+            /@media\s*\(max-width:\s*803px\)\s*\{[\s\S]*\.boardDeleteButton\s*\{[^}]*margin-right:\s*var\(--spaceCard\);/
+        );
         expect(interviewCard).toMatch(/\.interviewContent a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
         expect(interviewCard).toMatch(
             /\.board \.interviewContent \.headingRow\s*\{[^}]*align-items:\s*center;[^}]*\}/s

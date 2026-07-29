@@ -4,6 +4,8 @@ import {
     APPLICATION_LIST_SORT_OPTIONS,
     DEFAULT_APPLICATION_BOARD_SORT_ORDER,
     DEFAULT_APPLICATION_LIST_SORT_ORDER,
+    JOB_STATUSES,
+    JOB_STATUS_SORT_ORDER,
 } from '../../pages/application/models';
 
 const applications = [
@@ -58,6 +60,17 @@ describe('application sorting', () => {
             { label: 'Company Z–A', value: 'company_name_desc' },
         ]);
         expect(APPLICATION_BOARD_SORT_OPTIONS).toEqual(APPLICATION_LIST_SORT_OPTIONS.slice(1));
+        expect(JOB_STATUSES).toContain('Withdrawn');
+        expect(JOB_STATUS_SORT_ORDER).toEqual([
+            'Accepted',
+            'Offer',
+            'Declined',
+            'Interview',
+            'Applied',
+            'Withdrawn',
+            'Ghosted',
+            'Rejected',
+        ]);
     });
 
     test.each([

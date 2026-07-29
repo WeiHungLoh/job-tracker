@@ -41,6 +41,7 @@
     --colorStatusRejected: #dc3545;
     --colorStatusGhosted: #6c757d;
     --colorStatusDeclined: #663399;
+    --colorStatusWithdrawn: #8b5e3c;
     --colorStatusAppliedText: #ffffff;
     --colorStatusInterviewText: #ffffff;
     --colorStatusOfferText: #ffffff;
@@ -48,6 +49,7 @@
     --colorStatusRejectedText: #ffffff;
     --colorStatusGhostedText: #ffffff;
     --colorStatusDeclinedText: #ffffff;
+    --colorStatusWithdrawnText: #ffffff;
     --colorBadgeText: white;
 
     /* Primary accent */
@@ -296,6 +298,7 @@
     --colorStatusRejected: #b02a37;
     --colorStatusGhosted: #5c636a;
     --colorStatusDeclined: #663399;
+    --colorStatusWithdrawn: #7a4a2e;
     --colorStatusAppliedText: #ffffff;
     --colorStatusInterviewText: #ffffff;
     --colorStatusOfferText: #ffffff;
@@ -303,6 +306,7 @@
     --colorStatusRejectedText: #ffffff;
     --colorStatusGhostedText: #ffffff;
     --colorStatusDeclinedText: #ffffff;
+    --colorStatusWithdrawnText: #ffffff;
     --colorBadgeText: white;
 
     /* Misc accents */

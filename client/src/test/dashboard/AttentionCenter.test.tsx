@@ -7,6 +7,8 @@ import type { JobApplication, JobStatus } from '../../pages/application/models';
 import type { JobInterview } from '../../pages/interview/models';
 import type { OfferEvaluation } from '../../pages/offerDecision/models';
 import { render } from '../renderWithProviders';
+import { ConfirmProvider } from 'material-ui-confirm';
+import { defaultConfirmOptions } from '../../components/confirmation/defaultConfirmOptions';
 
 const currentTime = new Date('2026-07-10T12:00:00.000Z');
 
@@ -159,7 +161,34 @@ describe('AttentionCenter', () => {
         void userEvent.click(
             within(list).getByRole('button', { name: 'Record offer decision for Role 5 at Company 5' })
         );
-        expect(onRecordOfferDecision).toHaveBeenCalledWith(applications[4]);
+        expect(onRecordOfferDecision).toHaveBeenCalledWith(applications[4], 'Evaluated Offers');
+    });
+
+    test('keeps ten ranked items and makes the list scrollable after the first six', () => {
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+            if (this.getAttribute('aria-label') === 'Applications needing attention') {
+                return DOMRect.fromRect({ x: 0, y: 100, width: 800, height: 1000 });
+            }
+            if (this.tagName === 'LI' && this.parentElement) {
+                const itemIndex = Array.from(this.parentElement.children).indexOf(this);
+                const rowIndex = Math.floor(itemIndex / 2);
+                return DOMRect.fromRect({ x: 0, y: 100 + rowIndex * 120, width: 390, height: 110 });
+            }
+            return DOMRect.fromRect();
+        });
+        const applications = Array.from({ length: 12 }, (_, index) =>
+            createApplication(index + 1, 'Applied', `2026-06-${String(index + 1).padStart(2, '0')}T12:00:00.000Z`)
+        );
+
+        render(
+            <AttentionCenter applications={applications} interviews={[]} currentTime={currentTime} isLoading={false} />
+        );
+
+        const list = screen.getByRole('list', { name: 'Applications needing attention' });
+        expect(within(list).getAllByRole('listitem')).toHaveLength(10);
+        expect(list).toHaveAttribute('tabindex', '0');
+        expect(list).toHaveStyle({ overflowY: 'auto' });
+        expect(list).toHaveStyle({ maxHeight: '350px' });
     });
 
     test('opens static deterministic drafts, closes without changing the attention item, and restores the draft', async () => {
@@ -175,7 +204,9 @@ describe('AttentionCenter', () => {
         const action = screen.getByRole('button', {
             name: 'Draft application follow-up for Role 1 at Company 1',
         });
-        await userEvent.click(action);
+        await act(async () => {
+            await userEvent.click(action);
+        });
 
         expect(screen.getByRole('dialog', { name: 'Draft application follow-up' })).toBeInTheDocument();
         expect(screen.getByText('Follow-up on my Role 1 application at Company 1')).toBeInTheDocument();
@@ -191,7 +222,9 @@ describe('AttentionCenter', () => {
 
         await userEvent.click(action);
         expect(screen.getByText('Follow-up on my Role 1 application at Company 1')).toBeInTheDocument();
-        await userEvent.keyboard('{Escape}');
+        await act(async () => {
+            await userEvent.keyboard('{Escape}');
+        });
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         expect(action).toBeInTheDocument();
     });
@@ -388,6 +421,69 @@ Best regards,
 
         expect(screen.getByText("You're all caught up")).toBeInTheDocument();
         expect(screen.queryByText('Company 1')).not.toBeInTheDocument();
+    });
+
+    test('confirms Mark as Ghosted with auto-focus, Enter, and Escape cancellation', async () => {
+        const application = {
+            ...createApplication(1, 'Applied'),
+            application_follow_up_sent_at: '2026-06-26T12:00:00.000Z',
+        };
+        const onMarkApplicationGhosted = vi.fn().mockResolvedValue(undefined);
+        render(
+            <ConfirmProvider defaultOptions={defaultConfirmOptions}>
+                <AttentionCenter
+                    applications={[application]}
+                    interviews={[]}
+                    currentTime={currentTime}
+                    isLoading={false}
+                    onMarkApplicationGhosted={onMarkApplicationGhosted}
+                />
+            </ConfirmProvider>
+        );
+
+        const action = screen.getByRole('button', { name: 'Mark as Ghosted for Role 1 at Company 1' });
+        expect(screen.queryByText(/view application/i)).not.toBeInTheDocument();
+
+        await userEvent.click(action);
+        expect(screen.getByRole('dialog', { name: 'Mark as Ghosted?' })).toBeInTheDocument();
+        expect(screen.getByText('Company 1 — Role 1 will be marked as Ghosted.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Mark as Ghosted' })).toHaveFocus();
+        await userEvent.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(onMarkApplicationGhosted).not.toHaveBeenCalled();
+
+        await act(async () => {
+            await userEvent.click(action);
+            await userEvent.keyboard('{Enter}');
+        });
+        await waitFor(() => expect(onMarkApplicationGhosted).toHaveBeenCalledWith(application));
+        await waitFor(() => expect(action).not.toHaveAttribute('aria-busy'));
+    });
+
+    test('uses the same Mark as Ghosted confirmation for an unanswered interview follow-up', async () => {
+        const application = createApplication(1, 'Interview');
+        const interview = {
+            ...createInterview(1, '2026-06-18T11:00:00.000Z'),
+            follow_up_sent_at: '2026-06-26T12:00:00.000Z',
+        };
+        const onMarkApplicationGhosted = vi.fn().mockResolvedValue(undefined);
+        render(
+            <ConfirmProvider defaultOptions={defaultConfirmOptions}>
+                <AttentionCenter
+                    applications={[application]}
+                    interviews={[interview]}
+                    currentTime={currentTime}
+                    isLoading={false}
+                    onMarkApplicationGhosted={onMarkApplicationGhosted}
+                />
+            </ConfirmProvider>
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Mark as Ghosted for Role 1 at Company 1' }));
+        expect(screen.getByText('Company 1 — Role 1 will be marked as Ghosted.')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Mark as Ghosted' }));
+
+        await waitFor(() => expect(onMarkApplicationGhosted).toHaveBeenCalledWith(application));
     });
 
     test('shows a compact loading state', () => {

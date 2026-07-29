@@ -28,14 +28,20 @@ describe('renders user guide properly', () => {
 
         expect(screen.getByText(/quick visual overview/i)).toBeVisible();
         expect(screen.getByText(/interview rate counts applications currently at/i)).toBeVisible();
-        expect(screen.getByText(/shows up to six applications/i)).toBeVisible();
+        expect(screen.getByText(/shows up to ten applications/i)).toBeVisible();
         expect(
             screen.getByText(/at least seven full days have passed since the latest interview ended/i)
         ).toBeVisible();
         expect(screen.getByText(/latest interview's end time, including its duration/i)).toBeVisible();
+        expect(screen.getByText(/only the latest scheduled interview controls the reminder/i)).toBeVisible();
+        expect(
+            screen.getByText(/newer future, ongoing or recently completed interview prevents an older sent follow-up/i)
+        ).toBeVisible();
         expect(screen.getByText(/interview with no scheduled interview prompt you to add one/i)).toBeVisible();
         expect(screen.getByRole('heading', { name: 'Evaluated offers due within 72 hours' })).toBeVisible();
-        expect(screen.getByText(/passed deadline do not appear/i)).toBeVisible();
+        expect(screen.getByRole('heading', { name: 'Evaluated offers up to 14 days overdue' })).toBeVisible();
+        expect(screen.getByText(/through exactly 14 days overdue/i)).toBeVisible();
+        expect(screen.getByText(/more than 14 days overdue remain in expired evaluated offers/i)).toBeVisible();
         expect(screen.getByText(/these appear next regardless of deadline/i)).toBeVisible();
         expect(
             screen.getByText(/applied applications with no linked interview appear after seven days/i)
@@ -43,10 +49,13 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/suggests one next action for each selected application/i)).toBeVisible();
         const priorityHeadings = [
             'Evaluated offers due within 72 hours',
+            'Evaluated offers up to 14 days overdue',
             'Unevaluated offers',
+            'Unanswered completed-interview follow-ups',
             'Completed interviews',
             'Interview applications without a scheduled interview',
-            'Stale Applied applications',
+            'Applied applications unchanged after a sent follow-up',
+            'Initial Applied follow-ups',
         ].map((name) => screen.getByRole('heading', { name }));
         priorityHeadings.slice(1).forEach((heading, index) => {
             expect(
@@ -69,6 +78,18 @@ describe('renders user guide properly', () => {
         );
         expect(screen.getByText(/only the latest sent time is kept/i)).toBeVisible();
         expect(screen.getByText(/future and ongoing interviews remain in the upcoming interviews card/i)).toBeVisible();
+        expect(screen.getByText(/job tracker does not inspect email/i)).toBeVisible();
+        expect(screen.getByText(/successful change updates dashboard counts immediately/i)).toBeVisible();
+        expect(screen.getByText(/shows up to ten applications that may require action/i)).toBeVisible();
+        expect(screen.getByText(/first six are visible before scrolling/i)).toBeVisible();
+        expect(
+            screen.getByText(
+                /interview follow-up time remains as historical activity because it belongs to that interview/i
+            )
+        ).toBeVisible();
+        expect(screen.getByTestId('ug')).toHaveTextContent(
+            /interview follow-up remains until you undo it or delete the interview.*even when the application changes status/i
+        );
 
         await userEvent.click(screen.getByRole('button', { name: /demo mode/i }));
 
@@ -83,6 +104,7 @@ describe('renders user guide properly', () => {
         expect(
             screen.getByText(/post-interview follow-up marking and undo also stay entirely in demo state/i)
         ).toBeVisible();
+        expect(screen.getByText(/demo mode supports withdrawn, overdue offer attention/i)).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /^offer comparison$/i }));
 
@@ -119,6 +141,14 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/job posting URLs are limited to 2048 characters/i)).toBeVisible();
         expect(screen.getByText(/standard card list and the board layout/i)).toBeVisible();
         expect(screen.getByText(/active application board groups cards by status/i)).toBeVisible();
+        expect(screen.getByRole('heading', { name: /job status definitions/i })).toBeVisible();
+        ['Applied', 'Interview', 'Offer', 'Accepted', 'Declined', 'Withdrawn', 'Ghosted', 'Rejected'].forEach(
+            (status) => expect(screen.getByText(`${status}:`, { selector: 'strong' })).toBeVisible()
+        );
+        expect(screen.getByText(/you voluntarily ended your candidacy before receiving an offer/i)).toBeVisible();
+        expect(
+            screen.getByText(/when a saved offer evaluation exists, only offer, accepted and declined/i)
+        ).toBeVisible();
         expect(screen.getByRole('heading', { name: /quick capture from a job posting/i })).toBeVisible();
         expect(screen.getByRole('link', { name: /save to job tracker/i })).toBeVisible();
         expect(screen.getByText(/sign in to job tracker before using quick capture/i)).toBeVisible();
@@ -152,6 +182,9 @@ describe('renders user guide properly', () => {
                     Boolean(element.textContent?.includes('does not add the interview unless you choose Add Anyway'))
             )
         ).toBeVisible();
+        expect(screen.getByRole('heading', { name: /calendar exports/i })).toBeVisible();
+        expect(screen.getByText(/google calendar exports include it in the description/i)).toBeVisible();
+        expect(screen.getByText(/dashboard upcoming interviews remains unchanged/i)).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /archive mode/i }));
 
@@ -174,7 +207,7 @@ describe('renders user guide properly', () => {
 
                 return (
                     element?.tagName.toLowerCase() === 'p' &&
-                    /application boards keep columns in this order:.*accepted.*offer.*declined.*interview.*applied.*ghosted.*rejected/i.test(
+                    /application boards keep columns in this order:.*accepted.*offer.*declined.*interview.*applied.*withdrawn.*ghosted.*rejected/i.test(
                         text
                     )
                 );
@@ -190,6 +223,14 @@ describe('renders user guide properly', () => {
                 /scrolls to and briefly highlights an application or interview after it is pinned or unpinned/i
             )
         ).toBeVisible();
+        expect(
+            screen.getByText(/controls both scrolling and highlighting after saving a first evaluation/i)
+        ).toBeVisible();
+        expect(
+            screen.getByText(/when the preference is disabled, those updates do not scroll or highlight/i)
+        ).toBeVisible();
+        expect(screen.getByText(/saving an edit to an existing evaluation scrolls to the bottom/i)).toBeVisible();
+        expect(screen.getByText(/cancelling an evaluation scrolls to the top of a new evaluation card/i)).toBeVisible();
         expect(screen.getByText(/board views never automatically scroll or highlight cards/i)).toBeVisible();
     });
 });

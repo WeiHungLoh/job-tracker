@@ -76,7 +76,7 @@ describe('getAttentionItems', () => {
     test('uses only the three active statuses needed by the dashboard request', () => {
         expect(ATTENTION_APPLICATION_STATUSES).toEqual(['Applied', 'Interview', 'Offer']);
         expect(FOLLOW_UP_AFTER_DAYS).toBe(7);
-        expect(MAX_ATTENTION_ITEMS).toBe(6);
+        expect(MAX_ATTENTION_ITEMS).toBe(10);
     });
 
     test('includes Applied applications at seven full days without a separate stale category', () => {
@@ -152,10 +152,72 @@ describe('getAttentionItems', () => {
         ]);
     });
 
+    test('suggests Ghosted after exactly fourteen full days since an application follow-up was sent', () => {
+        const beforeBoundary = {
+            ...createApplication(1, 'Applied', 30),
+            application_follow_up_sent_at: new Date(now.getTime() - 14 * DAY_MS + 1).toISOString(),
+        };
+        const atBoundary = {
+            ...createApplication(2, 'Applied', 30),
+            application_follow_up_sent_at: new Date(now.getTime() - 14 * DAY_MS).toISOString(),
+        };
+        const older = {
+            ...createApplication(3, 'Applied', 30),
+            application_follow_up_sent_at: new Date(now.getTime() - 15 * DAY_MS).toISOString(),
+        };
+
+        const items = getAttentionItems([beforeBoundary, atBoundary, older], [], now);
+
+        expect(items.map((item) => [item.category, item.application.job_id])).toEqual([
+            ['application-follow-up-stale', 3],
+            ['application-follow-up-stale', 2],
+        ]);
+        expect(items[0].message).toBe(
+            'The application follow-up was marked as sent on 3 July 2026 (15 days ago). ' +
+                'The application is still Applied and no interview has been recorded.'
+        );
+    });
+
+    test('suggests Ghosted after exactly fourteen full days since the latest interview follow-up was sent', () => {
+        const beforeBoundary = {
+            ...createInterviewEndingDaysAgo(1, 1, 21),
+            follow_up_sent_at: new Date(now.getTime() - 14 * DAY_MS + 1).toISOString(),
+        };
+        const atBoundary = {
+            ...createInterviewEndingDaysAgo(2, 2, 21),
+            follow_up_sent_at: new Date(now.getTime() - 14 * DAY_MS).toISOString(),
+        };
+        const older = {
+            ...createInterviewEndingDaysAgo(3, 3, 21),
+            follow_up_sent_at: new Date(now.getTime() - 15 * DAY_MS).toISOString(),
+        };
+
+        const items = getAttentionItems(
+            [
+                createApplication(1, 'Interview', 30),
+                createApplication(2, 'Interview', 30),
+                createApplication(3, 'Interview', 30),
+            ],
+            [beforeBoundary, atBoundary, older],
+            now
+        );
+
+        expect(items.map((item) => [item.category, item.application.job_id])).toEqual([
+            ['post-interview-follow-up-stale', 3],
+            ['post-interview-follow-up-stale', 2],
+        ]);
+        expect(items[0]).toMatchObject({
+            latestCompletedInterview: { interview_id: 3 },
+            message:
+                'The follow-up for your latest recorded interview was marked as sent on 3 July 2026 (15 days ago). ' +
+                'The application is still at Interview.',
+        });
+    });
+
     test('allows a later qualifying interview when an earlier interview follow-up was sent', () => {
         const earlier = {
             ...createInterviewEndingDaysAgo(10, 1, 14),
-            follow_up_sent_at: '2026-07-05T12:00:00.000Z',
+            follow_up_sent_at: '2026-07-01T12:00:00.000Z',
         };
         const later = createInterviewEndingDaysAgo(11, 1, 7);
 
@@ -165,6 +227,26 @@ describe('getAttentionItems', () => {
             category: 'post-interview',
             latestCompletedInterview: { interview_id: 11 },
         });
+    });
+
+    test('does not reuse a stale older interview follow-up when a newer interview is not yet follow-up eligible', () => {
+        const staleEarlierFollowUp = (interviewId: number, jobId: number) => ({
+            ...createInterviewEndingDaysAgo(interviewId, jobId, 30),
+            follow_up_sent_at: '2026-06-25T12:00:00.000Z',
+        });
+
+        const items = getAttentionItems(
+            [createApplication(1, 'Interview', 40), createApplication(2, 'Interview', 40)],
+            [
+                staleEarlierFollowUp(10, 1),
+                createInterviewEndingDaysAgo(11, 1, 6),
+                staleEarlierFollowUp(20, 2),
+                createInterview(21, 2, '2026-07-19T12:00:00.000Z'),
+            ],
+            now
+        );
+
+        expect(items).toEqual([]);
     });
 
     test('includes completed interview follow-ups at exactly seven full days but not six days', () => {
@@ -281,20 +363,30 @@ describe('getAttentionItems', () => {
 
     test('uses the complete category priority order', () => {
         const applications = [
-            createApplication(1, 'Applied', 30),
+            {
+                ...createApplication(1, 'Applied', 30),
+                application_follow_up_sent_at: new Date(now.getTime() - 14 * DAY_MS).toISOString(),
+            },
             { ...createApplication(2, 'Offer', 30), has_offer_evaluation: false },
             createApplication(3, 'Interview', 30),
             createApplication(4, 'Interview', 30),
-            { ...createApplication(5, 'Offer', 30), has_offer_evaluation: true },
+            createApplication(5, 'Interview', 30),
+            createApplication(6, 'Applied', 30),
         ];
-        const interviews = [createInterviewEndingDaysAgo(1, 4, 7)];
-        const evaluations = [createOfferEvaluation(5, new Date(now.getTime() + 2 * DAY_MS).toISOString())];
+        const interviews = [
+            {
+                ...createInterviewEndingDaysAgo(1, 4, 21),
+                follow_up_sent_at: new Date(now.getTime() - 14 * DAY_MS).toISOString(),
+            },
+            createInterviewEndingDaysAgo(2, 5, 7),
+        ];
 
-        expect(getAttentionItems(applications, interviews, now, evaluations).map((item) => item.category)).toEqual([
-            'offer-decision-due',
+        expect(getAttentionItems(applications, interviews, now).map((item) => item.category)).toEqual([
             'offer-evaluation',
+            'post-interview-follow-up-stale',
             'post-interview',
             'interview-unscheduled',
+            'application-follow-up-stale',
             'application-follow-up',
         ]);
     });
@@ -309,8 +401,8 @@ describe('getAttentionItems', () => {
         });
     });
 
-    test('includes evaluated offers only from the exact 72-hour deadline boundary through the deadline', () => {
-        const applications = [1, 2, 3, 4, 5].map((jobId) => ({
+    test('includes evaluated offers from the exact 72-hour due boundary through exactly fourteen days overdue', () => {
+        const applications = [1, 2, 3, 4, 5, 6, 7].map((jobId) => ({
             ...createApplication(jobId, 'Offer', 10),
             has_offer_evaluation: true,
         }));
@@ -318,29 +410,44 @@ describe('getAttentionItems', () => {
             createOfferEvaluation(1, new Date(now.getTime() + 72 * 60 * 60 * 1000).toISOString()),
             createOfferEvaluation(2, new Date(now.getTime() + 72 * 60 * 60 * 1000 + 1).toISOString()),
             createOfferEvaluation(3, now.toISOString()),
-            createOfferEvaluation(4, new Date(now.getTime() - 1).toISOString()),
-            createOfferEvaluation(5, 'invalid'),
+            createOfferEvaluation(4, new Date(now.getTime() - MINUTE_MS).toISOString()),
+            createOfferEvaluation(5, new Date(now.getTime() - 14 * DAY_MS).toISOString()),
+            createOfferEvaluation(6, new Date(now.getTime() - 14 * DAY_MS - 1).toISOString()),
+            createOfferEvaluation(7, 'invalid'),
         ];
 
         const items = getAttentionItems(applications, [], now, evaluations);
 
-        expect(items.map((item) => item.application.job_id)).toEqual([3, 1]);
-        expect(items.every((item) => item.category === 'offer-decision-due')).toBe(true);
-        expect(items[0].message).toBe(
-            'The decision deadline is 18 July 2026 (0 minutes away). Review the evaluated offer and mark it as Accepted or Declined once decided.'
-        );
+        expect(items.map((item) => [item.category, item.application.job_id])).toEqual([
+            ['offer-decision-due', 1],
+            ['offer-decision-overdue', 5],
+            ['offer-decision-overdue', 4],
+            ['offer-decision-overdue', 3],
+        ]);
         expect(items[1].message).toBe(
+            'The decision deadline was 4 July 2026 (14 days overdue). Review the evaluated offer and mark it as Accepted or Declined once decided.'
+        );
+        expect(items[3].message).toBe(
+            'The decision deadline is 18 July 2026 (due now). Review the evaluated offer and mark it as Accepted or Declined once decided.'
+        );
+        expect(items[0].message).toBe(
             'The decision deadline is 21 July 2026 (3 days away). Review the evaluated offer and mark it as Accepted or Declined once decided.'
         );
     });
 
     test.each([
-        { remainingMinutes: 25 * 60, expectedTiming: '2 days away' },
-        { remainingMinutes: 24 * 60, expectedTiming: '24 hours away' },
+        { remainingMinutes: 3 * 24 * 60, expectedTiming: '3 days away' },
+        { remainingMinutes: 30 * 60, expectedTiming: '1 day 6 hours away' },
+        { remainingMinutes: 24 * 60, expectedTiming: '1 day away' },
         { remainingMinutes: 23 * 60 + 30, expectedTiming: '23 hours 30 minutes away' },
+        { remainingMinutes: 90, expectedTiming: '1 hour 30 minutes away' },
         { remainingMinutes: 61, expectedTiming: '1 hour 1 minute away' },
         { remainingMinutes: 60, expectedTiming: '1 hour away' },
         { remainingMinutes: 1, expectedTiming: '1 minute away' },
+        { remainingMinutes: 0.5, expectedTiming: 'less than 1 minute away' },
+        { remainingMinutes: -30, expectedTiming: '30 minutes overdue' },
+        { remainingMinutes: -90, expectedTiming: '1 hour 30 minutes overdue' },
+        { remainingMinutes: -(30 * 60), expectedTiming: '1 day 6 hours overdue' },
     ])('formats a decision deadline $expectedTiming', ({ remainingMinutes, expectedTiming }) => {
         const application = {
             ...createApplication(1, 'Offer', 10),
@@ -395,13 +502,13 @@ describe('getAttentionItems', () => {
         ).toEqual([13, 14]);
     });
 
-    test('caps the result at six', () => {
-        const applications = Array.from({ length: 7 }, (_, index) =>
+    test('caps the result at ten', () => {
+        const applications = Array.from({ length: 12 }, (_, index) =>
             createApplication(index + 1, 'Applied', 21 + index)
         );
 
         expect(getAttentionItems(applications, [], now).map((item) => item.application.job_id)).toEqual([
-            7, 6, 5, 4, 3, 2,
+            12, 11, 10, 9, 8, 7, 6, 5, 4, 3,
         ]);
     });
 

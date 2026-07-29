@@ -9,6 +9,7 @@ const STATUS_CLASS_MAP: Record<JobStatus, string> = {
     Interview: styles.interview,
     Offer: styles.offer,
     Rejected: styles.rejected,
+    Withdrawn: styles.withdrawn,
 };
 
 const STATUS_COLOR_MAP: Record<JobStatus, string> = {
@@ -19,6 +20,7 @@ const STATUS_COLOR_MAP: Record<JobStatus, string> = {
     Interview: 'var(--colorStatusInterview)',
     Offer: 'var(--colorStatusOffer)',
     Rejected: 'var(--colorStatusRejected)',
+    Withdrawn: 'var(--colorStatusWithdrawn)',
 };
 
 export const getApplicationBoardStatusClassName = (jobStatus: JobStatus): string => STATUS_CLASS_MAP[jobStatus];

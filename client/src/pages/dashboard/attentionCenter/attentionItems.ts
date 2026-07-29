@@ -5,15 +5,20 @@ import { getInterviewTiming } from '../../../helper/interviewTiming';
 import { formatLongDate } from '../../../helper/dateFormatter';
 
 export const FOLLOW_UP_AFTER_DAYS = 7;
+export const STALE_FOLLOW_UP_AFTER_DAYS = 14;
 export const OFFER_DECISION_ATTENTION_HOURS = 72;
-export const MAX_ATTENTION_ITEMS = 6;
+export const OFFER_DECISION_OVERDUE_DAYS = 14;
+export const MAX_ATTENTION_ITEMS = 10;
 export const ATTENTION_APPLICATION_STATUSES = ['Applied', 'Interview', 'Offer'] as const satisfies readonly JobStatus[];
 
 export type AttentionItemCategory =
     | 'post-interview'
+    | 'post-interview-follow-up-stale'
     | 'interview-unscheduled'
+    | 'offer-decision-overdue'
     | 'offer-decision-due'
     | 'offer-evaluation'
+    | 'application-follow-up-stale'
     | 'application-follow-up';
 
 export type AttentionItem = {
@@ -31,12 +36,16 @@ type AttentionCandidate = AttentionItem & {
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CATEGORY_PRIORITY: Record<AttentionItemCategory, number> = {
     'offer-decision-due': 0,
-    'offer-evaluation': 1,
-    'post-interview': 2,
-    'interview-unscheduled': 3,
-    'application-follow-up': 4,
+    'offer-decision-overdue': 1,
+    'offer-evaluation': 2,
+    'post-interview-follow-up-stale': 3,
+    'post-interview': 4,
+    'interview-unscheduled': 5,
+    'application-follow-up-stale': 6,
+    'application-follow-up': 7,
 };
 const OFFER_DECISION_ATTENTION_MS = OFFER_DECISION_ATTENTION_HOURS * 60 * 60 * 1000;
+const OFFER_DECISION_OVERDUE_MS = OFFER_DECISION_OVERDUE_DAYS * DAY_MS;
 
 const getElapsedDays = (startTime: number, now: Date): number | null => {
     const elapsed = now.getTime() - startTime;
@@ -49,24 +58,33 @@ const getApplicationAgeDays = (application: JobApplication, now: Date): number |
 };
 
 const formatDeadlineTiming = (remainingMs: number): string => {
-    if (remainingMs > DAY_MS) {
-        const days = Math.ceil(remainingMs / DAY_MS);
-        return `${days} days away`;
+    if (remainingMs === 0) {
+        return 'due now';
     }
 
-    const totalMinutes = Math.ceil(remainingMs / (60 * 1000));
-    const hours = Math.floor(totalMinutes / 60);
+    const absoluteMs = Math.abs(remainingMs);
+    const direction = remainingMs > 0 ? 'away' : 'overdue';
+    if (absoluteMs < 60 * 1000) {
+        return `less than 1 minute ${direction}`;
+    }
+
+    const totalMinutes = Math.ceil(absoluteMs / (60 * 1000));
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
     const parts: string[] = [];
 
-    if (hours > 0) {
+    if (days > 0) {
+        parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+    }
+    if (hours > 0 && parts.length < 2) {
         parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
     }
-    if (minutes > 0 || hours === 0) {
+    if (minutes > 0 && parts.length < 2) {
         parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
     }
 
-    return `${parts.join(' ')} away`;
+    return `${parts.join(' ')} ${direction}`;
 };
 
 export const getAttentionItems = (
@@ -99,12 +117,30 @@ export const getAttentionItems = (
                 );
                 const latestEnd = latestCompletedInterview.timing.end.getTime();
                 const interviewAgeDays = getElapsedDays(latestEnd, now);
+                const followUpSentAt = latestCompletedInterview.interview.follow_up_sent_at;
 
-                if (
-                    interviewAgeDays !== null &&
-                    interviewAgeDays >= FOLLOW_UP_AFTER_DAYS &&
-                    !latestCompletedInterview.interview.follow_up_sent_at
-                ) {
+                if (followUpSentAt) {
+                    const sentAgeDays = getElapsedDays(Date.parse(followUpSentAt), now);
+                    if (sentAgeDays !== null && sentAgeDays >= STALE_FOLLOW_UP_AFTER_DAYS) {
+                        const category: AttentionItemCategory = 'post-interview-follow-up-stale';
+                        return [
+                            {
+                                application,
+                                category,
+                                latestCompletedInterview: latestCompletedInterview.interview,
+                                message: `The follow-up for your latest recorded interview was marked as sent on ${formatLongDate(
+                                    followUpSentAt
+                                )} (${sentAgeDays} days ago). The application is still at Interview.`,
+                                priority: CATEGORY_PRIORITY[category],
+                                sortValue: sentAgeDays,
+                            },
+                        ];
+                    }
+
+                    return [];
+                }
+
+                if (interviewAgeDays !== null && interviewAgeDays >= FOLLOW_UP_AFTER_DAYS) {
                     const category: AttentionItemCategory = 'post-interview';
                     return [
                         {
@@ -155,31 +191,57 @@ export const getAttentionItems = (
             const decisionDeadline = offerEvaluationByJobId.get(application.job_id)?.details.decision_deadline ?? '';
             const deadlineTime = Date.parse(decisionDeadline);
             const remainingMs = deadlineTime - now.getTime();
-            if (!Number.isFinite(deadlineTime) || remainingMs < 0 || remainingMs > OFFER_DECISION_ATTENTION_MS) {
+            if (
+                !Number.isFinite(deadlineTime) ||
+                remainingMs > OFFER_DECISION_ATTENTION_MS ||
+                remainingMs < -OFFER_DECISION_OVERDUE_MS
+            ) {
                 return [];
             }
 
-            const category: AttentionItemCategory = 'offer-decision-due';
+            const isExpired = remainingMs <= 0;
+            const isOverdue = remainingMs < 0;
+            const category: AttentionItemCategory = isExpired ? 'offer-decision-overdue' : 'offer-decision-due';
             const deadlineTiming = formatDeadlineTiming(remainingMs);
             return [
                 {
                     application,
                     category,
-                    message: `The decision deadline is ${formatLongDate(
+                    message: `The decision deadline ${isOverdue ? 'was' : 'is'} ${formatLongDate(
                         decisionDeadline
                     )} (${deadlineTiming}). Review the evaluated offer and mark it as Accepted or Declined once decided.`,
                     priority: CATEGORY_PRIORITY[category],
-                    sortValue: -remainingMs,
+                    sortValue: isOverdue ? Math.abs(remainingMs) : -remainingMs,
                 },
             ];
         }
 
-        if (
-            application.job_status !== 'Applied' ||
-            application.application_follow_up_sent_at ||
-            linkedInterviews.length > 0 ||
-            ageDays === null
-        ) {
+        if (application.job_status !== 'Applied' || linkedInterviews.length > 0) {
+            return [];
+        }
+
+        if (application.application_follow_up_sent_at) {
+            const sentTime = Date.parse(application.application_follow_up_sent_at);
+            const sentAgeDays = getElapsedDays(sentTime, now);
+            if (sentAgeDays === null || sentAgeDays < STALE_FOLLOW_UP_AFTER_DAYS) {
+                return [];
+            }
+
+            const category: AttentionItemCategory = 'application-follow-up-stale';
+            return [
+                {
+                    application,
+                    category,
+                    message: `The application follow-up was marked as sent on ${formatLongDate(
+                        application.application_follow_up_sent_at
+                    )} (${sentAgeDays} days ago). The application is still Applied and no interview has been recorded.`,
+                    priority: CATEGORY_PRIORITY[category],
+                    sortValue: sentAgeDays,
+                },
+            ];
+        }
+
+        if (ageDays === null) {
             return [];
         }
 

@@ -5,11 +5,13 @@ import type { JobInterview } from '../../interview/models';
 import type {
     DashboardInterviewNavigationState,
     DashboardOfferDecisionNavigationState,
+    DashboardRecordOfferDecisionFilter,
 } from '../../dashboard/dashboardNavigation';
 import type { ApplicationListNavigationState } from '../../application/applicationNavigation';
 import { selectJobStatusCounts, selectOfferDecisionWorkspace, selectWeeklyApplications } from '../state/demoSelectors';
 import { useDemo } from '../context/DemoContext';
 import { routes } from '../../../routes';
+import { useToast } from '../../../components/toast/ToastProvider';
 
 const DemoDashboard = () => {
     const { dispatch, state } = useDemo();
@@ -24,6 +26,7 @@ const DemoDashboard = () => {
         application.evaluation ? [application.evaluation] : []
     );
     const navigate = useNavigate();
+    const { showSuccessToast } = useToast();
 
     const handleStatusSelect = (status: JobStatus) => {
         const navigationState: ApplicationListNavigationState = { applicationListJobStatus: status };
@@ -47,12 +50,20 @@ const DemoDashboard = () => {
         navigate(routes.demoOfferDecisions, { state: navigationState });
     };
 
-    const handleRecordOfferDecision = (application: JobApplication) => {
+    const handleRecordOfferDecision = (application: JobApplication, filter: DashboardRecordOfferDecisionFilter) => {
         const navigationState: DashboardOfferDecisionNavigationState = {
             dashboardOfferDecisionJobId: application.job_id,
-            dashboardOfferDecisionFilter: 'Evaluated Offers',
+            dashboardOfferDecisionFilter: filter,
         };
         navigate(routes.demoOfferDecisions, { state: navigationState });
+    };
+
+    const handleMarkApplicationGhosted = async (application: JobApplication) => {
+        dispatch({
+            type: 'UPDATE_APPLICATION_STATUS',
+            payload: { jobId: application.job_id, jobStatus: 'Ghosted' },
+        });
+        showSuccessToast('Application marked as Ghosted.');
     };
 
     const handleMarkApplicationFollowUpSent = (application: JobApplication) => {
@@ -82,6 +93,7 @@ const DemoDashboard = () => {
             onOpenOfferComparison={handleOpenOfferComparison}
             onRecordOfferDecision={handleRecordOfferDecision}
             onMarkApplicationFollowUpSent={handleMarkApplicationFollowUpSent}
+            onMarkApplicationGhosted={handleMarkApplicationGhosted}
             onMarkInterviewFollowUpSent={handleMarkInterviewFollowUpSent}
             onStatusSelect={handleStatusSelect}
         />

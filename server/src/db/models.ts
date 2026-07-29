@@ -1,4 +1,12 @@
-export type JobStatus = 'Accepted' | 'Applied' | 'Declined' | 'Ghosted' | 'Interview' | 'Offer' | 'Rejected';
+export type JobStatus =
+    | 'Accepted'
+    | 'Offer'
+    | 'Declined'
+    | 'Interview'
+    | 'Applied'
+    | 'Withdrawn'
+    | 'Ghosted'
+    | 'Rejected';
 export type CollectionViewMode = 'list' | 'board';
 
 export type InterviewTimeFilter = 'Upcoming Interviews' | 'Past Interviews';
@@ -62,6 +70,7 @@ export const JOB_STATUSES: readonly JobStatus[] = [
     'Interview',
     'Offer',
     'Rejected',
+    'Withdrawn',
 ];
 
 export type JobApplication = {

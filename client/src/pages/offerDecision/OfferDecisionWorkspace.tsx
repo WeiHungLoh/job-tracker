@@ -401,8 +401,10 @@ const OfferDecisionWorkspace = ({
             setExpandedJobIds((current) =>
                 current.includes(application.job_id) ? current : [...current, application.job_id]
             );
-            if (isNewEvaluation && preferences.application_enable_scroll) {
-                setHighlightedJobId(application.job_id);
+            if (isNewEvaluation) {
+                if (preferences.application_enable_scroll) {
+                    setHighlightedJobId(application.job_id);
+                }
             } else {
                 setSavedEvaluationJobId(application.job_id);
             }

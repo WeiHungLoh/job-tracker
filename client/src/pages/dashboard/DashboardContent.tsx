@@ -21,6 +21,7 @@ const DashboardContent = ({
     onRecordOfferDecision,
     onStatusSelect,
     onMarkApplicationFollowUpSent,
+    onMarkApplicationGhosted,
     onMarkInterviewFollowUpSent,
 }: DashboardContentProps) => {
     const currentTime = useCurrentTime();
@@ -47,6 +48,7 @@ const DashboardContent = ({
                     onOpenOfferComparison={onOpenOfferComparison}
                     onRecordOfferDecision={onRecordOfferDecision}
                     onMarkApplicationFollowUpSent={onMarkApplicationFollowUpSent}
+                    onMarkApplicationGhosted={onMarkApplicationGhosted}
                     onMarkInterviewFollowUpSent={onMarkInterviewFollowUpSent}
                 />
             </section>

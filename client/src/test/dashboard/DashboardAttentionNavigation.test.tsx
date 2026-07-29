@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import type { Location } from 'react-router-dom';
@@ -6,6 +6,8 @@ import Dashboard from '../../pages/dashboard/Dashboard';
 import type { JobApplication } from '../../pages/application/models';
 import { routes } from '../../routes';
 import { render } from '../renderWithProviders';
+import { ConfirmProvider } from 'material-ui-confirm';
+import { defaultConfirmOptions } from '../../components/confirmation/defaultConfirmOptions';
 
 const apiMocks = vi.hoisted(() => ({
     listApplications: vi.fn(),
@@ -13,6 +15,7 @@ const apiMocks = vi.hoisted(() => ({
     listJobStatusCounts: vi.fn(),
     listWeeklyApplications: vi.fn(),
     getActiveOfferDecisions: vi.fn(),
+    updateApplicationStatus: vi.fn(),
 }));
 
 vi.mock('../../api/useJobTrackerAPI', () => ({
@@ -21,6 +24,7 @@ vi.mock('../../api/useJobTrackerAPI', () => ({
             listApplications: apiMocks.listApplications,
             listJobStatusCounts: apiMocks.listJobStatusCounts,
             listWeeklyApplications: apiMocks.listWeeklyApplications,
+            updateStatus: apiMocks.updateApplicationStatus,
         },
         interview: {
             listInterviews: apiMocks.listInterviews,
@@ -61,12 +65,14 @@ const OfferComparisonDestination = () => {
 const renderDashboardRoutes = () =>
     render(
         <MemoryRouter initialEntries={[routes.dashboard]}>
-            <Routes>
-                <Route path={routes.dashboard} element={<Dashboard />} />
-                <Route path={routes.addInterview} element={<AddInterviewDestination />} />
-                <Route path={routes.offerDecisions} element={<OfferComparisonDestination />} />
-                <Route path={routes.viewApplications} element={<ApplicationListDestination />} />
-            </Routes>
+            <ConfirmProvider defaultOptions={defaultConfirmOptions}>
+                <Routes>
+                    <Route path={routes.dashboard} element={<Dashboard />} />
+                    <Route path={routes.addInterview} element={<AddInterviewDestination />} />
+                    <Route path={routes.offerDecisions} element={<OfferComparisonDestination />} />
+                    <Route path={routes.viewApplications} element={<ApplicationListDestination />} />
+                </Routes>
+            </ConfirmProvider>
         </MemoryRouter>
     );
 
@@ -81,6 +87,7 @@ describe('signed-in dashboard attention navigation', () => {
         apiMocks.listJobStatusCounts.mockResolvedValue([]);
         apiMocks.listWeeklyApplications.mockResolvedValue([]);
         apiMocks.getActiveOfferDecisions.mockResolvedValue({ applications: [] });
+        apiMocks.updateApplicationStatus.mockResolvedValue(null);
     });
 
     afterEach(() => {
@@ -161,5 +168,142 @@ describe('signed-in dashboard attention navigation', () => {
             })
         );
         expect(screen.queryByTestId('application-list-state')).not.toBeInTheDocument();
+        expect(apiMocks.getActiveOfferDecisions).toHaveBeenCalledWith({
+            filters: ['Evaluated Offers', 'Expired Evaluated Offers'],
+        });
+    });
+
+    test('opens the exact expired evaluated offer in Offer Comparison for a recent overdue decision', async () => {
+        apiMocks.listApplications.mockResolvedValue([{ ...application('Offer'), has_offer_evaluation: true }]);
+        apiMocks.getActiveOfferDecisions.mockResolvedValue({
+            applications: [
+                {
+                    ...application('Offer'),
+                    evaluation: {
+                        job_id: 42,
+                        ratings: {
+                            career_growth: 3,
+                            company_culture_fit: 3,
+                            work_life_balance: 3,
+                            compensation: 3,
+                        },
+                        details: {
+                            currency: 'SGD',
+                            monthly_base_salary: 8000,
+                            bonus: '',
+                            annual_leave_days: 18,
+                            work_arrangement: 'Hybrid',
+                            decision_deadline: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                            pros: '',
+                            concerns: '',
+                        },
+                    },
+                },
+            ],
+        });
+        renderDashboardRoutes();
+
+        await userEvent.click(
+            await screen.findByRole('button', {
+                name: 'Record offer decision for Software Engineer at Acme',
+            })
+        );
+
+        expect(await screen.findByTestId('offer-comparison-state')).toHaveTextContent(
+            JSON.stringify({
+                dashboardOfferDecisionJobId: 42,
+                dashboardOfferDecisionFilter: 'Expired Evaluated Offers',
+            })
+        );
+    });
+
+    test('marks a stale sent-follow-up application as Ghosted through the existing status endpoint', async () => {
+        apiMocks.listApplications.mockResolvedValue([
+            {
+                ...application('Applied'),
+                application_follow_up_sent_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+        ]);
+        apiMocks.listJobStatusCounts.mockResolvedValue([
+            { job_status: 'Applied', count: '1' },
+            { job_status: 'Ghosted', count: '0' },
+        ]);
+        renderDashboardRoutes();
+
+        await userEvent.click(
+            await screen.findByRole('button', { name: 'Mark as Ghosted for Software Engineer at Acme' })
+        );
+        await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
+
+        expect(apiMocks.updateApplicationStatus).toHaveBeenCalledWith({ jobId: 42, jobStatus: 'Ghosted' });
+        expect(await screen.findByText('Application marked as Ghosted.')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
+        expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
+        expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Closed outcomes. Ghosted: 1' })).toBeInTheDocument();
+    });
+
+    test('keeps the stale application unchanged and shows an error toast when Mark as Ghosted fails', async () => {
+        apiMocks.listApplications.mockResolvedValue([
+            {
+                ...application('Applied'),
+                application_follow_up_sent_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+        ]);
+        apiMocks.listJobStatusCounts.mockResolvedValue([
+            { job_status: 'Applied', count: '1' },
+            { job_status: 'Ghosted', count: '0' },
+        ]);
+        apiMocks.updateApplicationStatus.mockRejectedValueOnce(new Error('Database unavailable'));
+        renderDashboardRoutes();
+
+        const action = await screen.findByRole('button', {
+            name: 'Mark as Ghosted for Software Engineer at Acme',
+        });
+        await userEvent.click(action);
+        await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
+
+        expect(
+            await screen.findByText('Unable to mark the application as Ghosted. Please try again.')
+        ).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
+        expect(action).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Application pipeline. Applied: 1' })).toBeInTheDocument();
+        expect(screen.getByText('No closed outcomes yet.')).toBeInTheDocument();
+    });
+
+    test('marks an unanswered post-interview follow-up as Ghosted through the existing status endpoint', async () => {
+        apiMocks.listApplications.mockResolvedValue([application('Interview')]);
+        apiMocks.listInterviews.mockResolvedValue([
+            {
+                interview_id: 9,
+                job_id: 42,
+                company_name: 'Acme',
+                job_title: 'Software Engineer',
+                interview_date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+                interview_duration_minutes: 60,
+                interview_location: '',
+                interview_type: 'Technical',
+                interview_notes: '',
+                follow_up_sent_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+        ]);
+        apiMocks.listJobStatusCounts.mockResolvedValue([
+            { job_status: 'Interview', count: '1' },
+            { job_status: 'Ghosted', count: '0' },
+        ]);
+        renderDashboardRoutes();
+
+        await userEvent.click(
+            await screen.findByRole('button', { name: 'Mark as Ghosted for Software Engineer at Acme' })
+        );
+        await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
+
+        expect(apiMocks.updateApplicationStatus).toHaveBeenCalledWith({ jobId: 42, jobStatus: 'Ghosted' });
+        expect(await screen.findByText('Application marked as Ghosted.')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
+        expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
+        expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Closed outcomes. Ghosted: 1' })).toBeInTheDocument();
     });
 });

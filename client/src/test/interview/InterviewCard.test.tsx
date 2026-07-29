@@ -333,7 +333,9 @@ describe('InterviewCard calendar options', () => {
 
         expect(actions).toHaveAttribute('open');
         expect(getCalendarTrigger()).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Delete' }).parentElement?.className).toContain('compactActions');
+        const deleteButton = screen.getByRole('button', { name: 'Delete' });
+        expect(deleteButton.parentElement?.className).toContain('compactActions');
+        expect(deleteButton.className).toContain('boardDeleteButton');
 
         await userEvent.click(getCalendarTrigger());
         expect(screen.getByRole('group', { name: 'Calendar options' })).toBeInTheDocument();

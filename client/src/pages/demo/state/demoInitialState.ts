@@ -232,9 +232,9 @@ const applicationSeeds: ApplicationSeed[] = [
         companyName: 'Vector Learning',
         jobTitle: 'Education Platform Engineer',
         daysAgo: 38,
-        jobStatus: 'Ghosted',
+        jobStatus: 'Withdrawn',
         jobLocation: 'Remote - APAC',
-        notes: 'No response after initial recruiter call.',
+        notes: 'Withdrew before an offer after accepting another opportunity.',
     },
     {
         id: 119,

@@ -42,6 +42,10 @@
     composes: statusDeclined from '../../application/ApplicationCard.module.css';
 }
 
+.statusWithdrawn {
+    composes: statusWithdrawn from '../../application/ApplicationCard.module.css';
+}
+
 .archiveButton {
     composes: archiveButton from '../../application/ApplicationCard.module.css';
 }

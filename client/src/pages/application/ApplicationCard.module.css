@@ -41,6 +41,10 @@
     --applicationStatusAccent: var(--colorStatusDeclined);
 }
 
+.statusWithdrawn {
+    --applicationStatusAccent: var(--colorStatusWithdrawn);
+}
+
 .buttonGroup {
     margin-left: auto;
     display: grid;
@@ -198,7 +202,8 @@
 .accepted,
 .rejected,
 .ghosted,
-.declined {
+.declined,
+.withdrawn {
     padding: 4px 20px;
     border-radius: var(--radiusPill);
     font-weight: 600;
@@ -241,6 +246,11 @@
 .declined {
     background-color: var(--colorStatusDeclined);
     color: var(--colorStatusDeclinedText);
+}
+
+.withdrawn {
+    background-color: var(--colorStatusWithdrawn);
+    color: var(--colorStatusWithdrawnText);
 }
 
 @media (min-width: 804px) and (max-width: 1422px) {

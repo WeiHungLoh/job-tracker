@@ -11,6 +11,7 @@ const JOB_STATUS_CLASS_MAP: Record<JobStatus, string> = {
     Interview: styles.interview,
     Offer: styles.offer,
     Rejected: styles.rejected,
+    Withdrawn: styles.withdrawn,
 };
 
 type ApplicationStatusBadgeProps = {

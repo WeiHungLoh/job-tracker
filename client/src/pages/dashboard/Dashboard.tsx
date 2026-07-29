@@ -4,7 +4,11 @@ import DashboardContent from './DashboardContent';
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../application/models';
 import type { JobInterview } from '../interview/models';
 import type { OfferEvaluation } from '../offerDecision/models';
-import type { DashboardInterviewNavigationState, DashboardOfferDecisionNavigationState } from './dashboardNavigation';
+import type {
+    DashboardInterviewNavigationState,
+    DashboardOfferDecisionNavigationState,
+    DashboardRecordOfferDecisionFilter,
+} from './dashboardNavigation';
 import type { ApplicationListNavigationState } from '../application/applicationNavigation';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
@@ -20,7 +24,7 @@ const Dashboard = () => {
     const [weeklyApplications, setWeeklyApplications] = useState<WeeklyApplicationCount[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const api = useJobTrackerAPI();
-    const { showErrorToast } = useToast();
+    const { showErrorToast, showSuccessToast } = useToast();
     const navigate = useNavigate();
 
     const handleStatusSelect = (status: JobStatus) => {
@@ -45,12 +49,44 @@ const Dashboard = () => {
         navigate(routes.offerDecisions, { state });
     };
 
-    const handleRecordOfferDecision = (application: JobApplication) => {
+    const handleRecordOfferDecision = (application: JobApplication, filter: DashboardRecordOfferDecisionFilter) => {
         const state: DashboardOfferDecisionNavigationState = {
             dashboardOfferDecisionJobId: application.job_id,
-            dashboardOfferDecisionFilter: 'Evaluated Offers',
+            dashboardOfferDecisionFilter: filter,
         };
         navigate(routes.offerDecisions, { state });
+    };
+
+    const handleMarkApplicationGhosted = async (application: JobApplication) => {
+        try {
+            await api.application.updateStatus({ jobId: application.job_id, jobStatus: 'Ghosted' });
+            setApplications((current) =>
+                current.map((item) =>
+                    item.job_id === application.job_id
+                        ? { ...item, application_follow_up_sent_at: null, job_status: 'Ghosted' }
+                        : item
+                )
+            );
+            setStatusCounts((current) => {
+                let hasGhostedCount = false;
+                const updatedCounts = current.map((statusCount) => {
+                    if (statusCount.job_status === application.job_status) {
+                        return { ...statusCount, count: String(Math.max(0, Number(statusCount.count) - 1)) };
+                    }
+                    if (statusCount.job_status === 'Ghosted') {
+                        hasGhostedCount = true;
+                        return { ...statusCount, count: String(Number(statusCount.count) + 1) };
+                    }
+                    return statusCount;
+                });
+
+                return hasGhostedCount ? updatedCounts : [...updatedCounts, { job_status: 'Ghosted', count: '1' }];
+            });
+            showSuccessToast('Application marked as Ghosted.');
+        } catch (error) {
+            showErrorToast(getErrorToastMessage(error, 'Unable to mark the application as Ghosted. Please try again.'));
+            throw error;
+        }
     };
 
     const handleMarkApplicationFollowUpSent = async (application: JobApplication) => {
@@ -91,7 +127,7 @@ const Dashboard = () => {
                     api.interview.listInterviews({}),
                     api.application.listWeeklyApplications(),
                     api.application.listApplications({ jobStatuses: [...ATTENTION_APPLICATION_STATUSES] }),
-                    api.offerDecision.getActive({ filters: ['Evaluated Offers'] }),
+                    api.offerDecision.getActive({ filters: ['Evaluated Offers', 'Expired Evaluated Offers'] }),
                 ]);
 
                 if (!isActive) {
@@ -138,6 +174,7 @@ const Dashboard = () => {
             onOpenOfferComparison={handleOpenOfferComparison}
             onRecordOfferDecision={handleRecordOfferDecision}
             onMarkApplicationFollowUpSent={handleMarkApplicationFollowUpSent}
+            onMarkApplicationGhosted={handleMarkApplicationGhosted}
             onMarkInterviewFollowUpSent={handleMarkInterviewFollowUpSent}
             onStatusSelect={handleStatusSelect}
         />

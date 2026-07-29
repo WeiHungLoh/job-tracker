@@ -141,6 +141,7 @@ export const INTERVIEW_CSV_HEADERS: InterviewCsvHeader[] = [
     { label: 'Job Title', key: 'job_title' },
     { label: 'Location', key: 'interview_location' },
     { label: 'Interview Date', key: 'interview_date' },
+    { label: 'Follow-up Sent', key: 'follow_up_sent_at' },
     { label: 'Duration (minutes)', key: 'interview_duration_minutes' },
     { label: 'Interview Type', key: 'interview_type' },
     { label: 'Meeting URL', key: 'meeting_url' },

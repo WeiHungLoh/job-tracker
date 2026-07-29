@@ -61,7 +61,9 @@ const createTables = async (): Promise<void> => {
             job_title TEXT NOT NULL,
             application_date TIMESTAMPTZ NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            job_status TEXT NOT NULL CHECK (job_status IN (${JOB_STATUS_SQL_VALUES})),
+            job_status TEXT NOT NULL
+                CONSTRAINT job_applications_job_status_check
+                CHECK (job_status IN (${JOB_STATUS_SQL_VALUES})),
             job_location TEXT NOT NULL DEFAULT '',
             job_posting_url TEXT NOT NULL DEFAULT '',
             notes TEXT NOT NULL DEFAULT '',
@@ -158,6 +160,7 @@ const createTables = async (): Promise<void> => {
     const createUserPreferencesTable = `CREATE TABLE IF NOT EXISTS user_preferences (
             user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
             application_job_statuses TEXT[] NOT NULL DEFAULT ${JOB_STATUS_SQL_ARRAY}
+                CONSTRAINT user_preferences_application_job_statuses_check
                 CHECK (application_job_statuses <@ ${JOB_STATUS_SQL_ARRAY}),
             application_show_notes BOOLEAN NOT NULL DEFAULT true,
             application_show_archive BOOLEAN NOT NULL DEFAULT true,
@@ -172,6 +175,7 @@ const createTables = async (): Promise<void> => {
                 CONSTRAINT user_preferences_application_board_sort_order_check
                 CHECK (application_board_sort_order IN (${APPLICATION_BOARD_SORT_ORDER_SQL_VALUES})),
             archived_application_job_statuses TEXT[] NOT NULL DEFAULT ${JOB_STATUS_SQL_ARRAY}
+                CONSTRAINT user_preferences_archived_application_job_statuses_check
                 CHECK (archived_application_job_statuses <@ ${JOB_STATUS_SQL_ARRAY}),
             archived_application_show_notes BOOLEAN NOT NULL DEFAULT true,
             archived_application_view_mode TEXT NOT NULL DEFAULT 'list'

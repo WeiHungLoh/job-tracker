@@ -16,6 +16,7 @@ type CalendarInterview = Pick<
     | 'interview_notes'
     | 'interview_type'
     | 'job_title'
+    | 'meeting_url'
 >;
 
 export type CalendarEventDetails = {
@@ -23,11 +24,13 @@ export type CalendarEventDetails = {
     end: Date;
     interviewId: number;
     location: string;
+    meetingUrl: string;
     start: Date;
     title: string;
 };
 
 const populated = (value: string | null | undefined): string => value?.trim() ?? '';
+const sanitizeIcsUri = (value: string): string => value.replace(/\r\n|\r|\n/g, '');
 
 export const formatGoogleCalendarTimestamp = (date: Date): string => {
     if (Number.isNaN(date.getTime())) {
@@ -51,6 +54,7 @@ export const buildCalendarEventDetails = (interview: CalendarInterview): Calenda
     const interviewType = populated(interview.interview_type);
     const jobTitle = populated(interview.job_title);
     const notes = populated(interview.interview_notes);
+    const meetingUrl = sanitizeIcsUri(populated(interview.meeting_url));
     const descriptionLines: string[] = [];
 
     if (jobTitle) {
@@ -58,6 +62,9 @@ export const buildCalendarEventDetails = (interview: CalendarInterview): Calenda
     }
     if (interviewType) {
         descriptionLines.push(`Interview type: ${interviewType}`);
+    }
+    if (meetingUrl) {
+        descriptionLines.push(`Meeting link: ${meetingUrl}`);
     }
     if (notes) {
         if (descriptionLines.length > 0) {
@@ -71,6 +78,7 @@ export const buildCalendarEventDetails = (interview: CalendarInterview): Calenda
         end: timing.end,
         interviewId: interview.interview_id,
         location: populated(interview.interview_location),
+        meetingUrl,
         start: timing.start,
         title: `${companyName} — ${interviewType || 'Job Interview'}`,
     };
@@ -95,18 +103,23 @@ const escapeIcsText = (value: string): string =>
         .replace(/,/g, '\\,')
         .replace(/;/g, '\\;');
 
-const buildIcsEventLines = (event: CalendarEventDetails, createdAt: Date): string[] => [
-    'BEGIN:VEVENT',
-    `UID:${event.interviewId}@${UID_DOMAIN}`,
-    `DTSTAMP:${formatGoogleCalendarTimestamp(createdAt)}`,
-    `DTSTART:${formatGoogleCalendarTimestamp(event.start)}`,
-    `DTEND:${formatGoogleCalendarTimestamp(event.end)}`,
-    `SUMMARY:${escapeIcsText(event.title)}`,
-    `DESCRIPTION:${escapeIcsText(event.description)}`,
-    `LOCATION:${escapeIcsText(event.location)}`,
-    'STATUS:CONFIRMED',
-    'END:VEVENT',
-];
+const buildIcsEventLines = (event: CalendarEventDetails, createdAt: Date): string[] => {
+    const lines = [
+        'BEGIN:VEVENT',
+        `UID:${event.interviewId}@${UID_DOMAIN}`,
+        `DTSTAMP:${formatGoogleCalendarTimestamp(createdAt)}`,
+        `DTSTART:${formatGoogleCalendarTimestamp(event.start)}`,
+        `DTEND:${formatGoogleCalendarTimestamp(event.end)}`,
+        `SUMMARY:${escapeIcsText(event.title)}`,
+        `DESCRIPTION:${escapeIcsText(event.description)}`,
+        `LOCATION:${escapeIcsText(event.location)}`,
+    ];
+    if (event.meetingUrl) {
+        lines.push(`URL:${sanitizeIcsUri(event.meetingUrl)}`);
+    }
+    lines.push('STATUS:CONFIRMED', 'END:VEVENT');
+    return lines;
+};
 
 export const buildIcsContent = (event: CalendarEventDetails, createdAt = new Date()): string =>
     buildBulkIcsContent([event], createdAt);

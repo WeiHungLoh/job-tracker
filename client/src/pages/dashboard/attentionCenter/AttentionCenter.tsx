@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useConfirm, type ConfirmOptions } from 'material-ui-confirm';
 import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
 import PrimaryButton from '../../../components/button/PrimaryButton';
 import type { JobApplication } from '../../application/models';
@@ -6,6 +7,7 @@ import type { JobInterview } from '../../interview/models';
 import type { OfferEvaluation } from '../../offerDecision/models';
 import ApplicationStatusBadge from '../../application/ApplicationStatusBadge';
 import DashboardCard from '../shared/dashboardCard/DashboardCard';
+import type { DashboardRecordOfferDecisionFilter } from '../dashboardNavigation';
 import { getAttentionItems, type AttentionItem, type AttentionItemCategory } from './attentionItems';
 import { createApplicationFollowUpDraft, createPostInterviewFollowUpDraft, type FollowUpDraft } from './followUpDrafts';
 import FollowUpDraftDialog from './FollowUpDraftDialog';
@@ -19,17 +21,74 @@ type AttentionCenterProps = {
     offerEvaluations?: readonly OfferEvaluation[];
     onAddInterview?: (application: JobApplication) => void;
     onOpenOfferComparison?: (application: JobApplication) => void;
-    onRecordOfferDecision?: (application: JobApplication) => void;
+    onRecordOfferDecision?: (application: JobApplication, filter: DashboardRecordOfferDecisionFilter) => void;
+    onMarkApplicationGhosted?: (application: JobApplication) => Promise<void>;
     onMarkApplicationFollowUpSent?: (application: JobApplication) => void | Promise<void>;
     onMarkInterviewFollowUpSent?: (interview: JobInterview) => void | Promise<void>;
 };
 
+type MarkApplicationGhostedActionProps = {
+    application: JobApplication;
+    onMarkApplicationGhosted?: (application: JobApplication) => Promise<void>;
+};
+
 const ACTION_LABELS: Record<AttentionItemCategory, string> = {
     'application-follow-up': 'Draft application follow-up',
+    'application-follow-up-stale': 'Mark as Ghosted',
     'interview-unscheduled': 'Add interview',
+    'offer-decision-overdue': 'Record offer decision',
     'offer-decision-due': 'Record offer decision',
     'offer-evaluation': 'Evaluate offer',
     'post-interview': 'Draft post-interview message',
+    'post-interview-follow-up-stale': 'Mark as Ghosted',
+};
+const VISIBLE_ATTENTION_ITEMS = 6;
+
+const MarkApplicationGhostedAction = ({ application, onMarkApplicationGhosted }: MarkApplicationGhostedActionProps) => {
+    const confirm = useConfirm();
+    const [isPending, setIsPending] = useState(false);
+    const pendingRef = useRef(false);
+
+    const handleMarkAsGhosted = async () => {
+        if (!onMarkApplicationGhosted || pendingRef.current) {
+            return;
+        }
+
+        const confirmation: ConfirmOptions = {
+            title: 'Mark as Ghosted?',
+            description: `${application.company_name} — ${application.job_title} will be marked as Ghosted.`,
+            confirmationText: 'Mark as Ghosted',
+            cancellationText: 'Cancel',
+            confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
+        };
+
+        pendingRef.current = true;
+        setIsPending(true);
+        try {
+            const { confirmed } = await confirm(confirmation);
+            if (confirmed) {
+                await onMarkApplicationGhosted(application);
+            }
+        } catch {
+            // The owning Dashboard handles user-facing API errors.
+        } finally {
+            pendingRef.current = false;
+            setIsPending(false);
+        }
+    };
+
+    return (
+        <PrimaryButton
+            aria-label={`Mark as Ghosted for ${application.job_title} at ${application.company_name}`}
+            className={styles.actionButton}
+            isLoading={isPending}
+            type='button'
+            variant='secondary'
+            onClick={() => void handleMarkAsGhosted()}
+        >
+            Mark as Ghosted
+        </PrimaryButton>
+    );
 };
 
 const AttentionCenter = ({
@@ -41,9 +100,11 @@ const AttentionCenter = ({
     onAddInterview,
     onOpenOfferComparison,
     onRecordOfferDecision,
+    onMarkApplicationGhosted,
     onMarkApplicationFollowUpSent,
     onMarkInterviewFollowUpSent,
 }: AttentionCenterProps) => {
+    const attentionListRef = useRef<HTMLUListElement>(null);
     const [selectedFollowUp, setSelectedFollowUp] = useState<{
         draft: FollowUpDraft;
         item: AttentionItem;
@@ -52,6 +113,45 @@ const AttentionCenter = ({
         () => getAttentionItems(applications, interviews, currentTime, offerEvaluations),
         [applications, currentTime, interviews, offerEvaluations]
     );
+    const isAttentionListScrollable = items.length > VISIBLE_ATTENTION_ITEMS;
+
+    useLayoutEffect(() => {
+        const list = attentionListRef.current;
+        if (!list) {
+            return;
+        }
+
+        list.style.removeProperty('max-height');
+        if (!isAttentionListScrollable) {
+            return;
+        }
+
+        const visibleItems = Array.from(list.children).slice(0, VISIBLE_ATTENTION_ITEMS) as HTMLElement[];
+        const updateMaxHeight = () => {
+            const lastVisibleItem = visibleItems.at(-1);
+            if (!lastVisibleItem) {
+                return;
+            }
+
+            const visibleHeight = Math.ceil(
+                lastVisibleItem.getBoundingClientRect().bottom - list.getBoundingClientRect().top
+            );
+            if (visibleHeight > 0) {
+                list.style.maxHeight = `${visibleHeight}px`;
+            }
+        };
+
+        updateMaxHeight();
+        window.addEventListener('resize', updateMaxHeight);
+        const resizeObserver =
+            typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => updateMaxHeight());
+        visibleItems.forEach((item) => resizeObserver?.observe(item));
+
+        return () => {
+            window.removeEventListener('resize', updateMaxHeight);
+            resizeObserver?.disconnect();
+        };
+    }, [isAttentionListScrollable, items]);
 
     const handleAttentionAction = (item: AttentionItem) => {
         switch (item.category) {
@@ -73,7 +173,13 @@ const AttentionCenter = ({
                 onOpenOfferComparison?.(item.application);
                 break;
             case 'offer-decision-due':
-                onRecordOfferDecision?.(item.application);
+                onRecordOfferDecision?.(item.application, 'Evaluated Offers');
+                break;
+            case 'offer-decision-overdue':
+                onRecordOfferDecision?.(item.application, 'Expired Evaluated Offers');
+                break;
+            case 'application-follow-up-stale':
+            case 'post-interview-follow-up-stale':
                 break;
         }
     };
@@ -114,7 +220,13 @@ const AttentionCenter = ({
                         </div>
                     </div>
                 ) : (
-                    <ul className={styles.attentionList} aria-label='Applications needing attention'>
+                    <ul
+                        aria-label='Applications needing attention'
+                        className={styles.attentionList}
+                        ref={attentionListRef}
+                        style={isAttentionListScrollable ? { overflowY: 'auto' } : undefined}
+                        tabIndex={isAttentionListScrollable ? 0 : undefined}
+                    >
                         {items.map((item) => {
                             const { application, category, message } = item;
                             const actionLabel = ACTION_LABELS[category];
@@ -136,15 +248,23 @@ const AttentionCenter = ({
                                     </div>
                                     <p className={styles.reason}>{message}</p>
                                     <div className={styles.actionRow}>
-                                        <PrimaryButton
-                                            aria-label={`${actionLabel} for ${application.job_title} at ${application.company_name}`}
-                                            className={styles.actionButton}
-                                            type='button'
-                                            variant='secondary'
-                                            onClick={() => handleAttentionAction(item)}
-                                        >
-                                            {actionLabel}
-                                        </PrimaryButton>
+                                        {category === 'application-follow-up-stale' ||
+                                        category === 'post-interview-follow-up-stale' ? (
+                                            <MarkApplicationGhostedAction
+                                                application={application}
+                                                onMarkApplicationGhosted={onMarkApplicationGhosted}
+                                            />
+                                        ) : (
+                                            <PrimaryButton
+                                                aria-label={`${actionLabel} for ${application.job_title} at ${application.company_name}`}
+                                                className={styles.actionButton}
+                                                type='button'
+                                                variant='secondary'
+                                                onClick={() => handleAttentionAction(item)}
+                                            >
+                                                {actionLabel}
+                                            </PrimaryButton>
+                                        )}
                                     </div>
                                 </li>
                             );

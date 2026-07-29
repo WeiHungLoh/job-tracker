@@ -136,7 +136,12 @@ const InterviewCard = (props: InterviewCardProps) => {
                     actions={
                         <>
                             {showCalendarOptions && <CalendarOptions interview={interview} />}
-                            <PrimaryButton isLoading={isDeleting} variant='destructive' onClick={onDelete}>
+                            <PrimaryButton
+                                className={styles.boardDeleteButton}
+                                isLoading={isDeleting}
+                                variant='destructive'
+                                onClick={onDelete}
+                            >
                                 Delete
                             </PrimaryButton>
                         </>

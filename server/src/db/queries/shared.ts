@@ -5,8 +5,9 @@ export const JOB_STATUS_SORT_ORDER = `
         WHEN job_status = 'Declined' THEN 3
         WHEN job_status = 'Interview' THEN 4
         WHEN job_status = 'Applied' THEN 5
-        WHEN job_status = 'Ghosted' THEN 6
-        ELSE 7
+        WHEN job_status = 'Withdrawn' THEN 6
+        WHEN job_status = 'Ghosted' THEN 7
+        ELSE 8
     END`;
 
 export const hasAffectedRows = (result: { rowCount: number | null }): boolean => {

@@ -20,6 +20,7 @@ const JOB_STATUS_CARD_CLASS_MAP: Record<JobStatus, string> = {
     Interview: styles.statusInterview,
     Offer: styles.statusOffer,
     Rejected: styles.statusRejected,
+    Withdrawn: styles.statusWithdrawn,
 };
 
 const DemoApplicationCard = (props: DemoApplicationCardProps) => {

@@ -270,7 +270,7 @@ describe('Job application viewing flow', () => {
         expect(fetch).toHaveBeenCalledWith(
             `${
                 import.meta.env.VITE_API_URL
-            }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected`,
+            }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
             {
                 method: 'GET',
             }
@@ -691,7 +691,16 @@ describe('Job application viewing flow', () => {
             within(board)
                 .getAllByRole('heading', { level: 2 })
                 .map((heading) => heading.textContent)
-        ).toEqual(['Accepted 0', 'Offer 4', 'Declined 0', 'Interview 0', 'Applied 4', 'Ghosted 0', 'Rejected 0']);
+        ).toEqual([
+            'Accepted 0',
+            'Offer 4',
+            'Declined 0',
+            'Interview 0',
+            'Applied 4',
+            'Withdrawn 0',
+            'Ghosted 0',
+            'Rejected 0',
+        ]);
 
         const expectBoardCompanyOrder = (columnName: string, expectedCompanyOrder: string[]) => {
             expect(
@@ -745,7 +754,16 @@ describe('Job application viewing flow', () => {
             within(board)
                 .getAllByRole('heading', { level: 2 })
                 .map((heading) => heading.textContent)
-        ).toEqual(['Accepted 0', 'Offer 4', 'Declined 0', 'Interview 0', 'Applied 4', 'Ghosted 0', 'Rejected 0']);
+        ).toEqual([
+            'Accepted 0',
+            'Offer 4',
+            'Declined 0',
+            'Interview 0',
+            'Applied 4',
+            'Withdrawn 0',
+            'Ghosted 0',
+            'Rejected 0',
+        ]);
     });
 
     test.each([
@@ -866,7 +884,16 @@ describe('Job application viewing flow', () => {
             within(board)
                 .getAllByRole('heading', { level: 2 })
                 .map((heading) => heading.textContent)
-        ).toEqual(['Accepted 0', 'Offer 1', 'Declined 0', 'Interview 0', 'Applied 1', 'Ghosted 0', 'Rejected 0']);
+        ).toEqual([
+            'Accepted 0',
+            'Offer 1',
+            'Declined 0',
+            'Interview 0',
+            'Applied 1',
+            'Withdrawn 0',
+            'Ghosted 0',
+            'Rejected 0',
+        ]);
         expect(within(board).getByRole('heading', { name: 'Applied 1' })).toBeInTheDocument();
         expect(within(board).getByRole('heading', { name: 'Offer 1' })).toBeInTheDocument();
         const applicationCard = within(board).getByRole('article', { name: /ABC Pte Ltd Software Engineer/i });
@@ -1234,7 +1261,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked());
         const allStatusesUrl = `${
             import.meta.env.VITE_API_URL
-        }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected`;
+        }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`;
         const allStatusRequestsBeforeClearingFinalStatus = applicationRequestCount(allStatusesUrl);
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
@@ -2246,7 +2273,7 @@ describe('Job application viewing flow', () => {
         expect(fetch).toHaveBeenCalledWith(
             `${
                 import.meta.env.VITE_API_URL
-            }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected`,
+            }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
             { method: 'GET' }
         );
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));

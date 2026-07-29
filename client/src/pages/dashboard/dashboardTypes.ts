@@ -1,12 +1,18 @@
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../application/models';
 import type { JobInterview } from '../interview/models';
 import type { OfferEvaluation } from '../offerDecision/models';
+import type { DashboardRecordOfferDecisionFilter } from './dashboardNavigation';
 
 export type DashboardInterviewSelectHandler = (interviewId: number) => void;
 export type DashboardStatusSelectHandler = (status: JobStatus) => void;
 export type DashboardApplicationActionHandler = (application: JobApplication) => void;
 export type DashboardApplicationFollowUpHandler = (application: JobApplication) => void | Promise<void>;
 export type DashboardInterviewFollowUpHandler = (interview: JobInterview) => void | Promise<void>;
+export type DashboardMarkApplicationGhostedHandler = (application: JobApplication) => Promise<void>;
+export type DashboardRecordOfferDecisionHandler = (
+    application: JobApplication,
+    filter: DashboardRecordOfferDecisionFilter
+) => void;
 export type StatusCountMap = Partial<Record<JobStatus, number>>;
 
 export type DashboardDataProps = {
@@ -20,10 +26,11 @@ export type DashboardNavigationProps = {
     onAddInterview?: DashboardApplicationActionHandler;
     onInterviewSelect?: DashboardInterviewSelectHandler;
     onOpenOfferComparison?: DashboardApplicationActionHandler;
-    onRecordOfferDecision?: DashboardApplicationActionHandler;
+    onRecordOfferDecision?: DashboardRecordOfferDecisionHandler;
     onStatusSelect?: DashboardStatusSelectHandler;
     onMarkApplicationFollowUpSent?: DashboardApplicationFollowUpHandler;
     onMarkInterviewFollowUpSent?: DashboardInterviewFollowUpHandler;
+    onMarkApplicationGhosted?: DashboardMarkApplicationGhostedHandler;
 };
 
 export type DashboardContentProps = DashboardDataProps &

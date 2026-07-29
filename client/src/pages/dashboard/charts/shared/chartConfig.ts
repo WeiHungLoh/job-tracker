@@ -157,6 +157,7 @@ export const STATUS_COLORS: Record<JobStatus, { light: string; dark: string }> =
     Interview: { light: '#0d6efd', dark: '#0a58ca' },
     Offer: { light: '#ffc107', dark: '#d39e00' },
     Rejected: { light: '#dc3545', dark: '#b02a37' },
+    Withdrawn: { light: '#8b5e3c', dark: '#7a4a2e' },
 };
 
 export const createStatusBarChartData = (

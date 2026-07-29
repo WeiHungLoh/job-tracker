@@ -17,6 +17,7 @@ export const escapeCsvFormula = (value: unknown): unknown => {
 
 type ApplicationCsvSource = {
     application_date: string;
+    application_follow_up_sent_at?: string | null;
     company_name: string;
     is_pinned: boolean;
     job_location: string;
@@ -28,6 +29,7 @@ type ApplicationCsvSource = {
 
 type InterviewCsvSource = {
     company_name: string;
+    follow_up_sent_at?: string | null;
     interview_date: string;
     interview_duration_minutes: number;
     interview_location: string;
@@ -40,11 +42,13 @@ type InterviewCsvSource = {
 };
 
 const escapeOptionalCsvFormula = (value: string) => escapeCsvFormula(value || 'N/A');
+const formatOptionalCsvDate = (value?: string | null) => (value ? formatDate(value).formattedDate : 'N/A');
 
 export const createApplicationCsvData = <T extends ApplicationCsvSource>(applications: T[]) => {
     return applications.map((application) => ({
         ...application,
         application_date: formatDate(application.application_date).formattedDate,
+        application_follow_up_sent_at: formatOptionalCsvDate(application.application_follow_up_sent_at),
         company_name: escapeCsvFormula(application.company_name),
         is_pinned: application.is_pinned ? 'Yes' : 'No',
         job_title: escapeCsvFormula(application.job_title),
@@ -62,6 +66,7 @@ export const createInterviewCsvData = <T extends InterviewCsvSource>(interviews:
         return {
             ...interview,
             company_name: escapeCsvFormula(interview.company_name),
+            follow_up_sent_at: formatOptionalCsvDate(interview.follow_up_sent_at),
             interview_date: formatDate(interview.interview_date).formattedDate,
             interview_location: escapeOptionalCsvFormula(interview.interview_location),
             interview_notes: interviewNotes,

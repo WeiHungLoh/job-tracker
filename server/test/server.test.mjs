@@ -377,6 +377,7 @@ test('parses repeated job status query parameters', () => {
         'Interview',
         'Offer',
         'Rejected',
+        'Withdrawn',
     ]);
     assert.equal(toJobStatusQueryValues(['Accepted', 'Unknown']), undefined);
 });
@@ -967,7 +968,7 @@ test('returns 409 when a saved offer evaluation is moved outside Offer, Accepted
     }
 });
 
-test('updates an application status when there is no active interview conflict', async () => {
+test('updates an application to Withdrawn when there is no offer-evaluation restriction', async () => {
     const originalQuery = pool.query;
     pool.query = async () => ({
         rows: [{ application_exists: true, application_updated: true }],
@@ -981,7 +982,7 @@ test('updates an application status when there is no active interview conflict',
                 'Content-Type': 'application/json',
                 Cookie: `access_token=${token}`,
             },
-            body: JSON.stringify({ jobStatus: 'Interview' }),
+            body: JSON.stringify({ jobStatus: 'Withdrawn' }),
         });
 
         assert.equal(response.status, 204);

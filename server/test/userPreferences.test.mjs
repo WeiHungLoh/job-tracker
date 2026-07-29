@@ -5,10 +5,12 @@ import {
     APPLICATION_LIST_SORT_ORDERS,
     DEFAULT_APPLICATION_BOARD_SORT_ORDER,
     DEFAULT_APPLICATION_LIST_SORT_ORDER,
+    JOB_STATUSES,
     OFFER_DECISION_FILTERS,
     ARCHIVED_OFFER_DECISION_FILTERS,
 } from '../dist/db/models.js';
 import { pool } from '../dist/db/connectDB.js';
+import createTables from '../dist/db/queries/createTables.js';
 import { getUserPreferences, updateUserPreferences } from '../dist/db/queries/userPreferences.js';
 import {
     isApplicationBoardSortOrder,
@@ -51,6 +53,7 @@ test('offer comparison filter validators keep active and archived values distinc
 });
 
 test('application sort order constants, defaults, and validators agree', () => {
+    assert.equal(JOB_STATUSES.includes('Withdrawn'), true);
     assert.deepEqual(APPLICATION_LIST_SORT_ORDERS, [
         'job_status',
         'application_date_desc',
@@ -81,6 +84,30 @@ test('application sort order constants, defaults, and validators agree', () => {
     assert.equal(isApplicationBoardSortOrder(null), false);
     assert.equal(isOptionalApplicationListSortOrder(undefined), true);
     assert.equal(isOptionalApplicationBoardSortOrder(undefined), true);
+});
+
+test('fresh schema declarations support Withdrawn without runtime table alterations', async () => {
+    const originalQuery = pool.query;
+    const queries = [];
+    pool.query = async (sql) => {
+        queries.push(String(sql));
+        return { rows: [] };
+    };
+
+    try {
+        await createTables();
+    } finally {
+        pool.query = originalQuery;
+    }
+
+    const setupSql = queries.join('\n');
+    assert.match(setupSql, /job_applications_job_status_check[\s\S]*?'Withdrawn'/);
+    assert.match(setupSql, /user_preferences_application_job_statuses_check[\s\S]*?'Withdrawn'/);
+    assert.match(setupSql, /user_preferences_archived_application_job_statuses_check[\s\S]*?'Withdrawn'/);
+    assert.match(setupSql, /application_job_statuses TEXT\[\] NOT NULL DEFAULT[\s\S]*?'Withdrawn'/);
+    assert.match(setupSql, /archived_application_job_statuses TEXT\[\] NOT NULL DEFAULT[\s\S]*?'Withdrawn'/);
+    assert.doesNotMatch(setupSql, /ALTER TABLE/);
+    assert.doesNotMatch(setupSql, /array_append/);
 });
 
 test('user preference queries read and update every preference field with independent parameters', async () => {

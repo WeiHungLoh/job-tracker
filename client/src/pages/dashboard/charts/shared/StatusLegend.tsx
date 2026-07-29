@@ -16,6 +16,7 @@ const statusClassNames: Record<JobStatus, string> = {
     Interview: styles.interview,
     Offer: styles.offer,
     Rejected: styles.rejected,
+    Withdrawn: styles.withdrawn,
 };
 
 const StatusLegend = ({ label, statuses, hiddenStatuses, onStatusToggle }: StatusLegendProps) => {

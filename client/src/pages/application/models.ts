@@ -1,6 +1,14 @@
 import type { SortOption } from '../../components/activityControls/sortOptions/models';
 
-export type JobStatus = 'Accepted' | 'Applied' | 'Declined' | 'Ghosted' | 'Interview' | 'Offer' | 'Rejected';
+export type JobStatus =
+    | 'Accepted'
+    | 'Offer'
+    | 'Declined'
+    | 'Interview'
+    | 'Applied'
+    | 'Withdrawn'
+    | 'Ghosted'
+    | 'Rejected';
 
 export type JobStatusCount = {
     job_status: JobStatus;
@@ -49,6 +57,7 @@ export const JOB_STATUSES: readonly JobStatus[] = [
     'Interview',
     'Offer',
     'Rejected',
+    'Withdrawn',
 ];
 
 export const JOB_STATUS_SORT_ORDER: readonly JobStatus[] = [
@@ -57,6 +66,7 @@ export const JOB_STATUS_SORT_ORDER: readonly JobStatus[] = [
     'Declined',
     'Interview',
     'Applied',
+    'Withdrawn',
     'Ghosted',
     'Rejected',
 ];
@@ -228,6 +238,7 @@ export const APPLICATION_CSV_HEADERS: ApplicationCsvHeader[] = [
     { label: 'Company', key: 'company_name' },
     { label: 'Job Title', key: 'job_title' },
     { label: 'Application Date', key: 'application_date' },
+    { label: 'Follow-up Sent', key: 'application_follow_up_sent_at' },
     { label: 'Status', key: 'job_status' },
     { label: 'Location', key: 'job_location' },
     { label: 'Job Posting URL', key: 'job_posting_url' },

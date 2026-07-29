@@ -216,7 +216,7 @@ describe('Archived job application viewing flow', () => {
         expect(fetch).toHaveBeenCalledWith(
             `${
                 import.meta.env.VITE_API_URL
-            }/archived-job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected`,
+            }/archived-job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
             {
                 method: 'GET',
             }
@@ -496,7 +496,16 @@ describe('Archived job application viewing flow', () => {
             within(board)
                 .getAllByRole('heading', { level: 2 })
                 .map((heading) => heading.textContent)
-        ).toEqual(['Accepted 0', 'Offer 4', 'Declined 0', 'Interview 0', 'Applied 4', 'Ghosted 0', 'Rejected 0']);
+        ).toEqual([
+            'Accepted 0',
+            'Offer 4',
+            'Declined 0',
+            'Interview 0',
+            'Applied 4',
+            'Withdrawn 0',
+            'Ghosted 0',
+            'Rejected 0',
+        ]);
 
         const expectBoardCompanyOrder = (columnName: string, expectedCompanyOrder: string[]) => {
             expect(
@@ -550,7 +559,16 @@ describe('Archived job application viewing flow', () => {
             within(board)
                 .getAllByRole('heading', { level: 2 })
                 .map((heading) => heading.textContent)
-        ).toEqual(['Accepted 0', 'Offer 4', 'Declined 0', 'Interview 0', 'Applied 4', 'Ghosted 0', 'Rejected 0']);
+        ).toEqual([
+            'Accepted 0',
+            'Offer 4',
+            'Declined 0',
+            'Interview 0',
+            'Applied 4',
+            'Withdrawn 0',
+            'Ghosted 0',
+            'Rejected 0',
+        ]);
     });
 
     test.each([
@@ -684,7 +702,16 @@ describe('Archived job application viewing flow', () => {
             within(board)
                 .getAllByRole('heading', { level: 2 })
                 .map((heading) => heading.textContent)
-        ).toEqual(['Accepted 0', 'Offer 1', 'Declined 0', 'Interview 0', 'Applied 1', 'Ghosted 0', 'Rejected 0']);
+        ).toEqual([
+            'Accepted 0',
+            'Offer 1',
+            'Declined 0',
+            'Interview 0',
+            'Applied 1',
+            'Withdrawn 0',
+            'Ghosted 0',
+            'Rejected 0',
+        ]);
 
         const applicationCard = within(board).getByRole('article', { name: /ABC Pte Ltd Software Engineer/i });
         expect(within(applicationCard).getByText('20 Jun 2025')).toBeInTheDocument();
@@ -1214,7 +1241,7 @@ describe('Archived job application viewing flow', () => {
         expect(fetch).toHaveBeenCalledWith(
             `${
                 import.meta.env.VITE_API_URL
-            }/archived-job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected`,
+            }/archived-job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
             { method: 'GET' }
         );
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));

@@ -555,6 +555,31 @@ describe('OfferDecisionWorkspace', () => {
         HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     });
 
+    test('does not scroll or highlight a first saved evaluation when the preference is disabled', async () => {
+        render(<WorkspaceHarness />, {
+            initialPreferences: { application_enable_scroll: false },
+        });
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+        fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+        fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
+            target: { value: '2026-08-20T10:00' },
+        });
+        fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Beta Labs' }));
+
+        await waitFor(() =>
+            expect(screen.getByRole('button', { name: 'Edit evaluation for Beta Labs' })).toBeInTheDocument()
+        );
+        expect(screen.getByRole('article', { name: 'Beta Labs Platform Developer' }).className).not.toContain(
+            'highlight'
+        );
+        expect(scrollIntoView).not.toHaveBeenCalled();
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
     test('uses native form submission and places offer terms before ratings', async () => {
         const onSave = vi.fn().mockResolvedValue(undefined);
         render(<WorkspaceHarness onSave={onSave} />);
