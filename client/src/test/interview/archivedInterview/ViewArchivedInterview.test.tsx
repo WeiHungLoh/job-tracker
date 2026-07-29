@@ -513,6 +513,8 @@ describe('Archived job interview viewer flow', () => {
         const csv = getExportCsvText();
         expect(csv).toContain('Ended Archived Company');
         expect(csv).not.toContain('Future Archived Company');
-        expect(screen.queryByRole('button', { name: 'Export upcoming interviews (.ics)' })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Export all upcoming active interviews (.ics)' })
+        ).not.toBeInTheDocument();
     });
 });

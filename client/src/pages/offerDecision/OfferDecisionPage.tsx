@@ -169,6 +169,9 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
         }
     };
 
+    const loadAllEvaluatedOffers = async () =>
+        (await api.offerDecision.getActive({ filters: ['Evaluated Offers'] })).applications;
+
     const saveEvaluation = async (jobId: number, request: SaveOfferEvaluationRequest) => {
         const isNewEvaluation =
             data?.applications.some((application) => application.job_id === jobId && !application.evaluation) ?? false;
@@ -371,6 +374,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             getDeleteAllEvaluationSummary={getDeleteAllEvaluationSummary}
             isFiltering={isFiltering}
             isLoading={isLoading}
+            loadAllEvaluatedOffers={archived ? undefined : loadAllEvaluatedOffers}
             onDeleteCounterofferPlan={deleteCounterofferPlan}
             onDelete={deleteEvaluation}
             onDeleteAll={deleteAllEvaluations}

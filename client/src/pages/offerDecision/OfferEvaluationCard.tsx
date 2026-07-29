@@ -1,10 +1,13 @@
 import { useRef, type MouseEvent } from 'react';
 import PrimaryButton from '../../components/button/PrimaryButton';
 import ControlDropdown from '../../components/activityControls/ControlDropdown';
+import { useToast } from '../../components/toast/ToastProvider';
 import formatDate from '../../helper/dateFormatter';
+import { buildGoogleCalendarUrl, CALENDAR_ERROR_MESSAGE, downloadIcsEvent } from '../../helper/calendarEvent';
 import ApplicationStatusBadge from '../application/ApplicationStatusBadge';
 import { OFFER_DECISION_CATEGORIES } from './offerDecisionConfig';
 import { calculateOfferDecisionScore } from './offerEvaluation';
+import { buildOfferDeadlineCalendarEvent, buildOfferDeadlineIcsFilename } from './offerDeadlineCalendar';
 import OfferEvaluationForm, { type OfferFieldRefs } from './OfferEvaluationForm';
 import type {
     OfferDecisionApplication,
@@ -19,6 +22,7 @@ import type {
 import styles from './OfferEvaluation.module.css';
 
 type OfferEvaluationCardProps = {
+    allowCalendarExport: boolean;
     allowDelete: boolean;
     allowEdit: boolean;
     application: OfferDecisionApplication;
@@ -121,6 +125,7 @@ const OfferDetailsReview = ({ details }: { details: OfferDetails }) => (
 );
 
 const OfferEvaluationActionsMenu = ({
+    allowCalendarExport,
     allowEdit,
     application,
     areStatusActionsDisabled,
@@ -131,6 +136,7 @@ const OfferEvaluationActionsMenu = ({
 }: Pick<
     OfferEvaluationCardProps,
     | 'allowEdit'
+    | 'allowCalendarExport'
     | 'application'
     | 'areStatusActionsDisabled'
     | 'counterofferAction'
@@ -139,7 +145,9 @@ const OfferEvaluationActionsMenu = ({
 > & {
     onEdit: (event: MouseEvent<HTMLButtonElement>) => void;
 }) => {
-    if (!allowEdit && !counterofferAction && !onUpdateOfferStatus) {
+    const { showErrorToast } = useToast();
+
+    if (!allowCalendarExport && !allowEdit && !counterofferAction && !onUpdateOfferStatus) {
         return null;
     }
 
@@ -173,6 +181,21 @@ const OfferEvaluationActionsMenu = ({
             {counterofferLabel}
         </PrimaryButton>
     ) : null;
+    const handleGoogleCalendar = () => {
+        try {
+            const event = buildOfferDeadlineCalendarEvent(application);
+            window.open(buildGoogleCalendarUrl(event), '_blank', 'noopener,noreferrer');
+        } catch {
+            showErrorToast(CALENDAR_ERROR_MESSAGE);
+        }
+    };
+    const handleIcsDownload = () => {
+        try {
+            downloadIcsEvent(buildOfferDeadlineCalendarEvent(application), buildOfferDeadlineIcsFilename(application));
+        } catch {
+            showErrorToast(CALENDAR_ERROR_MESSAGE);
+        }
+    };
     const statusActions: Array<{ label: string; status: OfferDecisionStatus }> =
         application.job_status === 'Offer'
             ? [
@@ -191,11 +214,11 @@ const OfferEvaluationActionsMenu = ({
               ]
             : [];
 
-    if (!onUpdateOfferStatus && !allowEdit) {
+    if (!allowCalendarExport && !onUpdateOfferStatus && !allowEdit) {
         return counterofferButton;
     }
 
-    if (!onUpdateOfferStatus && !counterofferAction) {
+    if (!allowCalendarExport && !onUpdateOfferStatus && !counterofferAction) {
         return editAction;
     }
 
@@ -236,6 +259,30 @@ const OfferEvaluationActionsMenu = ({
                         {counterofferLabel}
                     </PrimaryButton>
                 )}
+                {allowCalendarExport && (
+                    <>
+                        <PrimaryButton
+                            aria-label={`Add ${application.company_name} offer deadline to Google Calendar`}
+                            className={styles.cardActionOption}
+                            onClick={handleGoogleCalendar}
+                            role='menuitem'
+                            type='button'
+                            variant='secondary'
+                        >
+                            Add to Google Calendar
+                        </PrimaryButton>
+                        <PrimaryButton
+                            aria-label={`Add ${application.company_name} offer deadline to Apple Calendar or Outlook`}
+                            className={styles.cardActionOption}
+                            onClick={handleIcsDownload}
+                            role='menuitem'
+                            type='button'
+                            variant='secondary'
+                        >
+                            Add to Apple Calendar / Outlook (.ics)
+                        </PrimaryButton>
+                    </>
+                )}
                 {onUpdateOfferStatus &&
                     statusActions.map(({ label, status }) => (
                         <PrimaryButton
@@ -259,6 +306,7 @@ const OfferEvaluationActionsMenu = ({
 };
 
 const OfferEvaluationCard = ({
+    allowCalendarExport,
     allowDelete,
     allowEdit,
     application,
@@ -380,6 +428,7 @@ const OfferEvaluationCard = ({
                                     {expanded ? 'Hide details' : 'Show details'}
                                 </PrimaryButton>
                                 <OfferEvaluationActionsMenu
+                                    allowCalendarExport={allowCalendarExport}
                                     allowEdit={allowEdit}
                                     application={application}
                                     areStatusActionsDisabled={areStatusActionsDisabled}

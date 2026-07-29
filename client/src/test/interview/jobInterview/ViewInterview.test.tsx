@@ -70,8 +70,8 @@ const calendarMocks = vi.hoisted(() => ({ downloadBulkIcsEvents: vi.fn() }));
 vi.mock('material-ui-confirm', () => ({
     useConfirm: () => mockConfirm,
 }));
-vi.mock('../../../pages/interview/calendarOptions/calendarEvent', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('../../../pages/interview/calendarOptions/calendarEvent')>()),
+vi.mock('../../../helper/calendarEvent', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../../helper/calendarEvent')>()),
     downloadBulkIcsEvents: calendarMocks.downloadBulkIcsEvents,
 }));
 
@@ -917,12 +917,14 @@ describe('Job interview viewer flow', () => {
         expect(csv).toContain('Duration (minutes)');
 
         mockConfirm.mockResolvedValueOnce({ confirmed: false });
-        await clickConfirmedAction(screen.getByRole('button', { name: 'Export upcoming interviews (.ics)' }));
+        await clickConfirmedAction(
+            screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })
+        );
         expect(mockConfirm).toHaveBeenLastCalledWith(
             expect.objectContaining({
-                title: 'Export all upcoming interviews?',
+                title: 'Export all upcoming active interviews?',
                 description:
-                    'This will download one .ics file containing all 2 upcoming interviews, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
+                    'This will download one .ics file containing all 2 upcoming active interviews from the active Interview collection, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
                 confirmationText: 'Export All',
                 cancellationText: 'Cancel',
             })
@@ -931,7 +933,9 @@ describe('Job interview viewer flow', () => {
         expect(screen.queryByText('Unable to create the calendar event. Please try again.')).not.toBeInTheDocument();
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await clickConfirmedAction(screen.getByRole('button', { name: 'Export upcoming interviews (.ics)' }));
+        await clickConfirmedAction(
+            screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })
+        );
         expect(calendarMocks.downloadBulkIcsEvents).toHaveBeenCalledOnce();
         expect(calendarMocks.downloadBulkIcsEvents.mock.calls[0][0]).toHaveLength(2);
 
@@ -939,7 +943,9 @@ describe('Job interview viewer flow', () => {
             throw new Error('generation failed');
         });
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await clickConfirmedAction(screen.getByRole('button', { name: 'Export upcoming interviews (.ics)' }));
+        await clickConfirmedAction(
+            screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })
+        );
         expect(await screen.findByText('Unable to create the calendar event. Please try again.')).toBeInTheDocument();
 
         mockConfirm.mockResolvedValueOnce({ confirmed: false });
@@ -1009,6 +1015,6 @@ describe('Job interview viewer flow', () => {
 
         await screen.findByRole('article', { name: 'Past Company interview' });
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
-        expect(screen.getByRole('button', { name: 'Export upcoming interviews (.ics)' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })).toBeDisabled();
     });
 });

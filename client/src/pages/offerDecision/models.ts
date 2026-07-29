@@ -124,6 +124,7 @@ export type OfferDecisionWorkspaceProps = {
     onDeleteAll?: () => Promise<void>;
     onFilterSelectionChange?: (filters: OfferDecisionFilter[]) => Promise<boolean>;
     onGetCounterofferPlan?: (jobId: number) => Promise<CounterofferPlan>;
+    loadAllEvaluatedOffers?: () => Promise<OfferDecisionApplication[]>;
     onSave?: (jobId: number, request: SaveOfferEvaluationRequest) => Promise<void>;
     onSaveCounterofferPlan?: (jobId: number, request: SaveCounterofferPlanRequest) => Promise<void>;
     onTargetOfferProcessed?: () => void;

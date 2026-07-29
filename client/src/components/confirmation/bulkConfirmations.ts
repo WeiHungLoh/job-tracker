@@ -160,11 +160,21 @@ export const createDeleteAllOfferEvaluationsConfirmation = (
 };
 
 export const createBulkCalendarExportConfirmation = (interviewCount: number): ConfirmOptions => {
-    const interviewLabel = formatCountLabel(interviewCount, 'upcoming interview');
+    const interviewLabel = formatCountLabel(interviewCount, 'upcoming active interview');
 
     return bulkOptions(
-        'Export all upcoming interviews?',
-        `This will download one .ics file containing all ${interviewLabel}, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.`,
+        'Export all upcoming active interviews?',
+        `This will download one .ics file containing all ${interviewLabel} from the active Interview collection, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.`,
+        'Export All'
+    );
+};
+
+export const createBulkOfferDeadlineCalendarExportConfirmation = (offerCount: number): ConfirmOptions => {
+    const offerLabel = formatCountLabel(offerCount, 'active evaluated offer deadline');
+
+    return bulkOptions(
+        'Export all active evaluated offer deadlines?',
+        `This will download one .ics file containing all ${offerLabel}, including offers you may already have added to your calendar. Importing the file again may create duplicate calendar events.`,
         'Export All'
     );
 };

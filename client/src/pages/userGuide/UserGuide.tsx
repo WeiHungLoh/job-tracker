@@ -258,6 +258,19 @@ const guideSections: readonly UserGuideSection[] = [
                     expired offers are sorted by deadline, then fit rating and name. Expired offers remain available to
                     review, edit, delete, accept or decline when their applications still have Offer status.
                 </p>
+                <h3>Offer deadline calendar exports</h3>
+                <p>
+                    Active, non-expired Evaluated Offers provide <code>Add to Google Calendar</code> and{' '}
+                    <code>Add to Apple Calendar / Outlook (.ics)</code> under the card&apos;s <code>More...</code> menu.
+                    Activity Controls also provides <code>Export all active evaluated offer deadlines (.ics)</code> to
+                    download every eligible active offer deadline in one file, regardless of the visible Offer
+                    Comparison filters. Expired, previous and archived evaluations are excluded.
+                </p>
+                <p>
+                    Calendar links and files are generated locally. Job Tracker does not connect to a calendar account
+                    or synchronize later deadline changes, so export the updated deadline again when needed. The same
+                    calendar actions are available for eligible offers in Demo Mode without making a backend request.
+                </p>
                 <h3>Try different priorities</h3>
                 <p>
                     When at least two active, non-expired offers have saved evaluations, select{' '}
@@ -514,10 +527,16 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <h3>Calendar exports</h3>
                 <p>
+                    Under Activity Controls, <code>Export all upcoming active interviews (.ics)</code> downloads every
+                    upcoming interview from the active Interview collection, regardless of the current Upcoming/Past
+                    filter. Completed and archived interviews are excluded.
+                </p>
+                <p>
                     When a meeting URL is saved, individual Google Calendar exports include it in the description and
                     Apple Calendar or Outlook .ics exports include it in both the description and URL field. Bulk
                     upcoming-interview exports use the same behaviour. The meeting URL does not replace the physical
-                    interview location, and Dashboard Upcoming Interviews remains unchanged.
+                    interview location, and Dashboard Upcoming Interviews remains unchanged. Calendar links and files
+                    are generated locally, and Job Tracker does not synchronize later calendar changes.
                 </p>
             </>
         ),

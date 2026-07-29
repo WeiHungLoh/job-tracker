@@ -41,7 +41,7 @@ const details = {
     bonus: '15% target',
     annual_leave_days: 21,
     work_arrangement: 'Hybrid' as const,
-    decision_deadline: '2026-08-15T10:00:00.000Z',
+    decision_deadline: '2099-08-15T10:00:00.000Z',
     pros: 'Strong product ownership',
     concerns: 'Two office days each week',
 };
@@ -157,6 +157,11 @@ describe('OfferDecisionWorkspace', () => {
     beforeEach(() => {
         mockConfirm.mockReset();
         mockConfirm.mockResolvedValue({ confirmed: true });
+        Object.defineProperty(URL, 'createObjectURL', {
+            configurable: true,
+            value: undefined,
+        });
+        Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: undefined });
     });
 
     test('separates unevaluated, evaluated and previous offers without global importance or save controls', () => {
@@ -185,7 +190,7 @@ describe('OfferDecisionWorkspace', () => {
             ...activeData.applications[0],
             job_id: 14,
             company_name: 'Expired Co',
-            evaluation: createEvaluation(14, undefined, '2026-07-01T10:00:00.000Z'),
+            evaluation: createEvaluation(14, undefined, '2000-07-01T10:00:00.000Z'),
         };
         const declinedOffer = {
             ...activeData.applications[2],
@@ -211,7 +216,14 @@ describe('OfferDecisionWorkspace', () => {
             within(openOfferActions('Acme'))
                 .getAllByRole('menuitem')
                 .map((item) => item.textContent)
-        ).toEqual(['Edit evaluation', 'Plan counteroffer', 'Accept offer', 'Decline offer']);
+        ).toEqual([
+            'Edit evaluation',
+            'Plan counteroffer',
+            'Add to Google Calendar',
+            'Add to Apple Calendar / Outlook (.ics)',
+            'Accept offer',
+            'Decline offer',
+        ]);
         expect(
             within(openOfferActions('Expired Co'))
                 .getAllByRole('menuitem')
@@ -253,6 +265,115 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.queryByRole('button', { name: 'Decline offer from Acme' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Edit evaluation for Acme' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'View counteroffer plan for Acme' })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Add Acme offer deadline to Google Calendar' })
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Add Acme offer deadline to Apple Calendar or Outlook' })
+        ).not.toBeInTheDocument();
+    });
+
+    test('opens eligible saved offer deadlines from the existing More menu and closes after selection', async () => {
+        const open = vi.spyOn(window, 'open').mockReturnValue(null);
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [activeData.applications[0]] }}
+                onSave={vi.fn()}
+                onUpdateOfferStatus={vi.fn()}
+                readOnly={false}
+            />
+        );
+
+        const menu = openOfferActions('Acme');
+        const googleAction = within(menu).getByRole('menuitem', {
+            name: 'Add Acme offer deadline to Google Calendar',
+        });
+        expect(googleAction).toHaveTextContent('Add to Google Calendar');
+        expect(
+            within(menu).getByRole('menuitem', {
+                name: 'Add Acme offer deadline to Apple Calendar or Outlook',
+            })
+        ).toHaveTextContent('Add to Apple Calendar / Outlook (.ics)');
+
+        await userEvent.click(googleAction);
+
+        expect(open).toHaveBeenCalledWith(
+            expect.stringContaining('https://calendar.google.com/calendar/render?'),
+            '_blank',
+            'noopener,noreferrer'
+        );
+        expect(screen.queryByRole('menu', { name: 'More actions for Acme' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Compensation and terms')).not.toBeInTheDocument();
+    });
+
+    test('downloads an eligible offer deadline with a sanitized filename and shared error handling', async () => {
+        const createObjectURL = vi.fn(() => 'blob:offer-deadline');
+        const revokeObjectURL = vi.fn();
+        let downloadedFilename = '';
+        Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+        Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+        vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+            downloadedFilename = this.download;
+        });
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [activeData.applications[0]] }}
+                onSave={vi.fn()}
+                readOnly={false}
+            />
+        );
+
+        await userEvent.click(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Add Acme offer deadline to Apple Calendar or Outlook',
+            })
+        );
+
+        expect(downloadedFilename).toBe('Acme-Offer-Decision-Deadline.ics');
+        expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+        expect(revokeObjectURL).toHaveBeenCalledWith('blob:offer-deadline');
+        expect(screen.queryByRole('menu', { name: 'More actions for Acme' })).not.toBeInTheDocument();
+
+        Object.defineProperty(URL, 'createObjectURL', {
+            configurable: true,
+            value: vi.fn(() => {
+                throw new Error('Unable to create object URL');
+            }),
+        });
+        await userEvent.click(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Add Acme offer deadline to Apple Calendar or Outlook',
+            })
+        );
+        expect(await screen.findByText('Unable to create the calendar event. Please try again.')).toBeInTheDocument();
+    });
+
+    test('hides offer deadline actions while editing and outside eligible evaluated groups', () => {
+        const expiredOffer = {
+            ...activeData.applications[0],
+            job_id: 14,
+            company_name: 'Expired Co',
+            evaluation: createEvaluation(14, undefined, '2000-07-01T10:00:00.000Z'),
+        };
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [...activeData.applications, expiredOffer] }}
+                onSave={vi.fn()}
+                onUpdateOfferStatus={vi.fn()}
+                readOnly={false}
+            />
+        );
+
+        expect(
+            within(openOfferActions('Expired Co')).queryByRole('menuitem', { name: /Calendar|calendar/ })
+        ).not.toBeInTheDocument();
+        expect(
+            within(openOfferActions('Continuum')).queryByRole('menuitem', { name: /Calendar|calendar/ })
+        ).not.toBeInTheDocument();
+
+        editOfferEvaluation('Acme');
+        expect(screen.queryByRole('button', { name: 'More actions for Acme' })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Save evaluation for Acme' })).toBeInTheDocument();
     });
 
     test('confirms Accept and Decline with the exact application and button treatment', async () => {
@@ -448,7 +569,7 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Try priorities' }));
         expect(screen.getByLabelText('Career Growth importance')).toBeEnabled();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         expect(screen.getByLabelText('Career Growth importance')).toBeDisabled();
         expect(
             screen.getByText('Save or cancel the open evaluation before trying different priorities.')
@@ -527,7 +648,7 @@ describe('OfferDecisionWorkspace', () => {
             })
         ).toBeInTheDocument();
         expect(screen.queryByLabelText('Beta Labs currency')).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Edit evaluation for Beta Labs' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'More actions for Beta Labs' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Hide details for Beta Labs' })).toBeInTheDocument();
     });
 
@@ -571,7 +692,7 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Beta Labs' }));
 
         await waitFor(() =>
-            expect(screen.getByRole('button', { name: 'Edit evaluation for Beta Labs' })).toBeInTheDocument()
+            expect(screen.getByRole('button', { name: 'More actions for Beta Labs' })).toBeInTheDocument()
         );
         expect(screen.getByRole('article', { name: 'Beta Labs Platform Developer' }).className).not.toContain(
             'highlight'
@@ -608,7 +729,7 @@ describe('OfferDecisionWorkspace', () => {
         const onSave = vi.fn().mockResolvedValue(undefined);
         const { rerender } = render(<WorkspaceHarness onSave={onSave} />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         const pros = screen.getByLabelText('Acme pros');
         await userEvent.type(pros, '{enter}Additional context');
         expect(pros).toHaveValue('Strong product ownership\nAdditional context');
@@ -619,7 +740,7 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.queryByLabelText('Acme pros')).not.toBeInTheDocument();
 
         rerender(<WorkspaceHarness />);
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: 'Changed' } });
         fireEvent.keyDown(screen.getByLabelText('Acme bonus'), { key: 'Escape' });
 
@@ -636,7 +757,7 @@ describe('OfferDecisionWorkspace', () => {
 
         expect(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' })).toBeInTheDocument();
         expect(screen.queryByLabelText('Beta Labs bonus')).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Edit evaluation for Acme' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'More actions for Acme' })).toBeInTheDocument();
     });
 
     test('unlocks a saved evaluation only on edit and relocks it after a changed save', async () => {
@@ -644,7 +765,7 @@ describe('OfferDecisionWorkspace', () => {
         render(<WorkspaceHarness onSave={onSave} />);
 
         expect(screen.queryByLabelText('Acme monthly base salary')).not.toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
 
         const saveButton = screen.getByRole('button', { name: 'Save evaluation for Acme' });
         expect(screen.getByLabelText('Acme monthly base salary')).toHaveValue(10000);
@@ -656,7 +777,7 @@ describe('OfferDecisionWorkspace', () => {
 
         await waitFor(() => expect(onSave).toHaveBeenCalledWith(11, expect.any(Object)));
         expect(screen.queryByLabelText('Acme monthly base salary')).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Edit evaluation for Acme' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'More actions for Acme' })).toBeInTheDocument();
         expect(screen.getByText('SGD 11,000')).toBeInTheDocument();
     });
 
@@ -738,7 +859,7 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Show details for Acme' }));
         expect(screen.getAllByText(formatDate(details.decision_deadline).formattedDate)).not.toHaveLength(0);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         const deadlineInput = screen.getByLabelText('Acme decision deadline');
         expect(deadlineInput).toHaveAttribute('type', 'datetime-local');
         expect(deadlineInput).toHaveClass(offerEvaluationStyles.dateTimeInput);
@@ -752,7 +873,7 @@ describe('OfferDecisionWorkspace', () => {
     test('cancels a saved edit and restores its locked values', () => {
         render(<WorkspaceHarness />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: 'Changed' } });
         fireEvent.click(screen.getByRole('button', { name: 'Cancel evaluation for Acme' }));
 
@@ -771,16 +892,16 @@ describe('OfferDecisionWorkspace', () => {
         acmeCard.scrollIntoView = acmeScrollIntoView;
         betaCard.scrollIntoView = betaScrollIntoView;
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         expect(acmeScrollIntoView).not.toHaveBeenCalled();
         fireEvent.click(screen.getByRole('button', { name: 'Cancel evaluation for Acme' }));
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Edit evaluation for Acme' })).toBeVisible());
+        await waitFor(() => expect(screen.getByRole('button', { name: 'More actions for Acme' })).toBeVisible());
         await waitFor(() => expect(acmeScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' }));
 
         acmeScrollIntoView.mockClear();
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Edit evaluation for Acme' })).toBeVisible());
+        await waitFor(() => expect(screen.getByRole('button', { name: 'More actions for Acme' })).toBeVisible());
         await waitFor(() => expect(acmeScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' }));
 
         fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
@@ -797,7 +918,7 @@ describe('OfferDecisionWorkspace', () => {
         const onSave = vi.fn().mockResolvedValue(undefined);
         render(<WorkspaceHarness onSave={onSave} />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         fireEvent.change(screen.getByLabelText('Acme monthly base salary'), { target: { value: '-1' } });
         fireEvent.change(screen.getByLabelText('Acme annual leave days'), { target: { value: '-1' } });
         fireEvent.change(screen.getByLabelText('Acme decision deadline'), {
@@ -822,7 +943,7 @@ describe('OfferDecisionWorkspace', () => {
         const onSave = vi.fn().mockResolvedValue(undefined);
         render(<WorkspaceHarness onSave={onSave} />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         const annualLeaveInput = screen.getByLabelText('Acme annual leave days');
         const scrollIntoView = vi.fn();
         annualLeaveInput.scrollIntoView = scrollIntoView;
@@ -839,7 +960,7 @@ describe('OfferDecisionWorkspace', () => {
         const onSave = vi.fn().mockResolvedValue(undefined);
         render(<WorkspaceHarness onSave={onSave} />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        editOfferEvaluation('Acme');
         const deadlineInput = screen.getByLabelText('Acme decision deadline');
         fireEvent.change(deadlineInput, { target: { value: '' } });
         Object.defineProperty(deadlineInput, 'validity', {

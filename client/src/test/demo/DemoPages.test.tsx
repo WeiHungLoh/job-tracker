@@ -20,10 +20,18 @@ import DemoRoutes from '../../pages/demo/components/demoLayout/DemoRoutes';
 import * as highlightElement from '../../helper/highlightElement';
 import type { ChartData, ChartOptions } from 'chart.js';
 
+const calendarMocks = vi.hoisted(() => ({
+    downloadBulkIcsEvents: vi.fn(),
+}));
 const mockConfirm = vi.fn();
 
 vi.mock('material-ui-confirm', () => ({
     useConfirm: () => mockConfirm,
+}));
+
+vi.mock('../../helper/calendarEvent', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../helper/calendarEvent')>()),
+    downloadBulkIcsEvents: calendarMocks.downloadBulkIcsEvents,
 }));
 
 vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
@@ -250,6 +258,7 @@ const SetEmptyApplicationFilter = ({ archived = false }: { archived?: boolean })
 describe('demo page interactions', () => {
     beforeEach(() => {
         mockConfirm.mockReset();
+        calendarMocks.downloadBulkIcsEvents.mockReset();
     });
 
     afterEach(() => {
@@ -331,6 +340,49 @@ describe('demo page interactions', () => {
         renderDemo(<DemoOfferDecisionPage archived />, [routes.demoArchivedOfferDecisions]);
 
         expect(screen.queryByRole('button', { name: 'Try priorities' })).not.toBeInTheDocument();
+        fetchSpy.mockRestore();
+    });
+
+    test('exports eligible demo offer deadlines without backend requests or archived actions', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        mockConfirm.mockResolvedValueOnce({ confirmed: true });
+        const { unmount } = renderDemo(<DemoOfferDecisionPage archived={false} />, [routes.demoOfferDecisions]);
+
+        const offerMenu = openOfferActions('Greenhouse CloudOps');
+        expect(
+            within(offerMenu).getByRole('menuitem', {
+                name: 'Add Greenhouse CloudOps offer deadline to Google Calendar',
+            })
+        ).toHaveTextContent('Add to Google Calendar');
+        expect(
+            within(offerMenu).getByRole('menuitem', {
+                name: 'Add Greenhouse CloudOps offer deadline to Apple Calendar or Outlook',
+            })
+        ).toHaveTextContent('Add to Apple Calendar / Outlook (.ics)');
+
+        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await clickConfirmedAction(
+            screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' })
+        );
+        expect(mockConfirm).toHaveBeenCalledWith(
+            expect.objectContaining({ title: 'Export all active evaluated offer deadlines?' })
+        );
+        expect(calendarMocks.downloadBulkIcsEvents).toHaveBeenCalledWith(
+            [
+                expect.objectContaining({ uid: 'offer-decision-111@jobtracker.weihungloh.com' }),
+                expect.objectContaining({ uid: 'offer-decision-112@jobtracker.weihungloh.com' }),
+            ],
+            'job-tracker-active-offer-deadlines.ics'
+        );
+        expect(fetchSpy).not.toHaveBeenCalled();
+
+        unmount();
+        renderDemo(<DemoOfferDecisionPage archived />, [routes.demoArchivedOfferDecisions]);
+        expect(
+            screen.queryByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' })
+        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /offer deadline to Google Calendar/i })).not.toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
 
@@ -1020,11 +1072,13 @@ describe('demo page interactions', () => {
         );
 
         mockConfirm.mockResolvedValueOnce({ confirmed: false });
-        await clickConfirmedAction(screen.getByRole('button', { name: 'Export upcoming interviews (.ics)' }));
+        await clickConfirmedAction(
+            screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })
+        );
         expect(mockConfirm).toHaveBeenLastCalledWith(
             expect.objectContaining({
                 description:
-                    'This will download one .ics file containing all 7 upcoming interviews, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
+                    'This will download one .ics file containing all 7 upcoming active interviews from the active Interview collection, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
             })
         );
 
@@ -1058,7 +1112,9 @@ describe('demo page interactions', () => {
             'download',
             'demo_archived_job_interviews.csv'
         );
-        expect(screen.queryByRole('button', { name: 'Export upcoming interviews (.ics)' })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Export all upcoming active interviews (.ics)' })
+        ).not.toBeInTheDocument();
     });
 
     test('clears demo application filters in reducer state without backend calls', async () => {

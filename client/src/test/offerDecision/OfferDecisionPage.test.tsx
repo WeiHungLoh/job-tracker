@@ -23,11 +23,16 @@ const mocks = vi.hoisted(() => ({
     showErrorToast: vi.fn(),
     showSuccessToast: vi.fn(),
     updateStatus: vi.fn(),
+    downloadBulkIcsEvents: vi.fn(),
 }));
 
 vi.mock('material-ui-confirm', () => ({ useConfirm: () => mocks.confirm }));
 vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
     useUnsavedChangesBlocker: vi.fn(),
+}));
+vi.mock('../../helper/calendarEvent', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../helper/calendarEvent')>()),
+    downloadBulkIcsEvents: mocks.downloadBulkIcsEvents,
 }));
 
 const openOfferActions = (companyName: string) => {
@@ -80,7 +85,7 @@ const details = {
     bonus: '15% target',
     annual_leave_days: 21,
     work_arrangement: 'Hybrid' as const,
-    decision_deadline: '2026-08-15T10:00:00.000Z',
+    decision_deadline: '2099-08-15T10:00:00.000Z',
     pros: 'Strong product ownership',
     concerns: 'Two office days each week',
 };
@@ -177,6 +182,184 @@ describe('OfferDecisionPage', () => {
 
         expect(await screen.findByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
         expect(mocks.getActive).toHaveBeenCalledWith({ filters: ['Previous Evaluations'] });
+    });
+
+    test('reuses the complete loaded Evaluated Offers group for bulk deadline export', async () => {
+        mocks.confirm.mockResolvedValueOnce({ confirmed: false });
+        render(<OfferDecisionPage archived={false} />);
+        await waitForActiveWorkspace();
+
+        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
+
+        await waitFor(() =>
+            expect(mocks.confirm).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Export all active evaluated offer deadlines?',
+                    description:
+                        'This will download one .ics file containing all 1 active evaluated offer deadline, including offers you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
+                    confirmationText: 'Export All',
+                })
+            )
+        );
+        expect(mocks.getActive).toHaveBeenCalledOnce();
+        expect(mocks.downloadBulkIcsEvents).not.toHaveBeenCalled();
+    });
+
+    test('downloads every eligible deadline in deadline order while excluding other offer groups', async () => {
+        mocks.getActive.mockResolvedValue({
+            applications: [
+                ...workspaceData.applications,
+                {
+                    ...workspaceData.applications[0],
+                    job_id: 14,
+                    company_name: 'Earlier Co',
+                    evaluation: {
+                        ...createEvaluation(14),
+                        details: { ...details, decision_deadline: '2099-08-10T10:00:00.000Z' },
+                    },
+                },
+                {
+                    ...workspaceData.applications[0],
+                    job_id: 15,
+                    company_name: 'Expired Co',
+                    evaluation: {
+                        ...createEvaluation(15),
+                        details: { ...details, decision_deadline: '2000-07-01T10:00:00.000Z' },
+                    },
+                },
+                {
+                    ...workspaceData.applications[0],
+                    job_id: 16,
+                    company_name: 'Accepted Co',
+                    job_status: 'Accepted',
+                    evaluation: createEvaluation(16),
+                },
+            ],
+        });
+        mocks.confirm.mockResolvedValueOnce({ confirmed: true });
+        render(<OfferDecisionPage archived={false} />);
+        await waitForActiveWorkspace();
+
+        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
+
+        await waitFor(() => expect(mocks.downloadBulkIcsEvents).toHaveBeenCalledOnce());
+        expect(mocks.downloadBulkIcsEvents).toHaveBeenCalledWith(
+            [
+                expect.objectContaining({
+                    title: 'Offer decision deadline — Earlier Co',
+                    uid: 'offer-decision-14@jobtracker.weihungloh.com',
+                }),
+                expect.objectContaining({
+                    title: 'Offer decision deadline — Acme',
+                    uid: 'offer-decision-11@jobtracker.weihungloh.com',
+                }),
+            ],
+            'job-tracker-active-offer-deadlines.ics'
+        );
+        const [exportedEvents] = mocks.downloadBulkIcsEvents.mock.calls[0];
+        expect(exportedEvents).toHaveLength(2);
+        expect(exportedEvents.map(({ uid }: { uid: string }) => uid)).not.toEqual(
+            expect.arrayContaining([
+                'offer-decision-12@jobtracker.weihungloh.com',
+                'offer-decision-15@jobtracker.weihungloh.com',
+                'offer-decision-16@jobtracker.weihungloh.com',
+            ])
+        );
+        expect(mocks.getActive).toHaveBeenCalledOnce();
+    });
+
+    test('loads Evaluated Offers once for bulk export without changing the visible filters', async () => {
+        mocks.confirm.mockResolvedValueOnce({ confirmed: false });
+        render(<OfferDecisionPage archived={false} />, {
+            initialPreferences: { offer_decision_filters: ['Previous Evaluations'] },
+        });
+        await screen.findByRole('heading', { name: 'Previous Evaluations' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
+
+        await waitFor(() => expect(mocks.getActive).toHaveBeenCalledTimes(2));
+        expect(mocks.getActive).toHaveBeenNthCalledWith(1, { filters: ['Previous Evaluations'] });
+        expect(mocks.getActive).toHaveBeenNthCalledWith(2, { filters: ['Evaluated Offers'] });
+        expect(screen.getByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Evaluated Offers' })).not.toBeInTheDocument();
+        expect(mocks.downloadBulkIcsEvents).not.toHaveBeenCalled();
+    });
+
+    test('does not confirm or download when an on-demand Evaluated Offers request returns no deadlines', async () => {
+        mocks.getActive
+            .mockResolvedValueOnce({ applications: [workspaceData.applications[1]] })
+            .mockResolvedValueOnce({ applications: [] });
+        render(<OfferDecisionPage archived={false} />, {
+            initialPreferences: { offer_decision_filters: ['Previous Evaluations'] },
+        });
+        await screen.findByRole('heading', { name: 'Previous Evaluations' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
+
+        await waitFor(() => expect(mocks.getActive).toHaveBeenCalledTimes(2));
+        expect(mocks.confirm).not.toHaveBeenCalled();
+        expect(mocks.downloadBulkIcsEvents).not.toHaveBeenCalled();
+    });
+
+    test('shows the API error and restores bulk export after an on-demand request fails', async () => {
+        mocks.getActive
+            .mockResolvedValueOnce({ applications: [workspaceData.applications[1]] })
+            .mockRejectedValueOnce(new JobTrackerAPIError('Unable to load deadlines.', 500));
+        render(<OfferDecisionPage archived={false} />, {
+            initialPreferences: { offer_decision_filters: ['Previous Evaluations'] },
+        });
+        await screen.findByRole('heading', { name: 'Previous Evaluations' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
+
+        await waitFor(() => expect(mocks.showErrorToast).toHaveBeenCalledWith('Unable to load deadlines.'));
+        expect(mocks.confirm).not.toHaveBeenCalled();
+        expect(mocks.downloadBulkIcsEvents).not.toHaveBeenCalled();
+        expect(
+            screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' })
+        ).toBeEnabled();
+    });
+
+    test('prevents duplicate on-demand Evaluated Offers requests during one bulk export action', async () => {
+        let resolveEvaluatedOffers!: (data: OfferDecisionWorkspaceData) => void;
+        mocks.getActive.mockResolvedValueOnce({ applications: [workspaceData.applications[1]] }).mockImplementationOnce(
+            () =>
+                new Promise<OfferDecisionWorkspaceData>((resolve) => {
+                    resolveEvaluatedOffers = resolve;
+                })
+        );
+        render(<OfferDecisionPage archived={false} />, {
+            initialPreferences: { offer_decision_filters: ['Previous Evaluations'] },
+        });
+        await screen.findByRole('heading', { name: 'Previous Evaluations' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        const exportAction = screen.getByRole('button', {
+            name: 'Export all active evaluated offer deadlines (.ics)',
+        });
+        fireEvent.click(exportAction);
+        fireEvent.click(exportAction);
+
+        expect(mocks.getActive).toHaveBeenCalledTimes(2);
+        await act(async () => resolveEvaluatedOffers({ applications: [] }));
+        expect(mocks.confirm).not.toHaveBeenCalled();
+    });
+
+    test('never exposes bulk offer deadline export in archived Offer Comparison', async () => {
+        render(<OfferDecisionPage archived />);
+        await screen.findByRole('heading', { name: 'Archived Evaluated Offers' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+
+        expect(
+            screen.queryByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' })
+        ).not.toBeInTheDocument();
+        expect(mocks.getActive).not.toHaveBeenCalled();
     });
 
     test('shows, scrolls to and highlights a dashboard-targeted evaluated offer', async () => {

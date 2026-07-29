@@ -2,12 +2,8 @@ import ControlDropdown from '../../../components/activityControls/ControlDropdow
 import Icon from '../../../components/icon/Icon';
 import { useToast } from '../../../components/toast/ToastProvider';
 import type { JobInterview } from '../models';
-import {
-    buildCalendarEventDetails,
-    buildGoogleCalendarUrl,
-    CALENDAR_ERROR_MESSAGE,
-    downloadIcsEvent,
-} from './calendarEvent';
+import { buildGoogleCalendarUrl, CALENDAR_ERROR_MESSAGE, downloadIcsEvent } from '../../../helper/calendarEvent';
+import { buildInterviewCalendarEvent, buildInterviewIcsFilename } from './interviewCalendarEvent';
 import styles from './CalendarOptions.module.css';
 
 type CalendarOptionsProps = {
@@ -19,7 +15,7 @@ const CalendarOptions = ({ interview }: CalendarOptionsProps) => {
 
     const handleGoogleCalendar = () => {
         try {
-            const event = buildCalendarEventDetails(interview);
+            const event = buildInterviewCalendarEvent(interview);
             window.open(buildGoogleCalendarUrl(event), '_blank', 'noopener,noreferrer');
         } catch {
             showErrorToast(CALENDAR_ERROR_MESSAGE);
@@ -28,7 +24,8 @@ const CalendarOptions = ({ interview }: CalendarOptionsProps) => {
 
     const handleIcsDownload = () => {
         try {
-            downloadIcsEvent(buildCalendarEventDetails(interview));
+            const event = buildInterviewCalendarEvent(interview);
+            downloadIcsEvent(event, buildInterviewIcsFilename(event));
         } catch {
             showErrorToast(CALENDAR_ERROR_MESSAGE);
         }

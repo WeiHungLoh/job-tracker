@@ -197,7 +197,7 @@ const DemoViewInterview = () => {
                                 middleAction={{
                                     disabled: upcomingInterviewCount === 0,
                                     icon: 'calendar',
-                                    label: 'Export upcoming interviews (.ics)',
+                                    label: 'Export all upcoming active interviews (.ics)',
                                     onClick: () => void exportUpcomingInterviews(),
                                 }}
                                 onDelete={() => void handleDeleteAll()}

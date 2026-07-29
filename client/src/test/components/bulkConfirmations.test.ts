@@ -73,9 +73,9 @@ describe('bulk confirmations', () => {
 
     test('uses exact bulk calendar wording and singular grammar', () => {
         expect(createBulkCalendarExportConfirmation(1)).toMatchObject({
-            title: 'Export all upcoming interviews?',
+            title: 'Export all upcoming active interviews?',
             description:
-                'This will download one .ics file containing all 1 upcoming interview, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
+                'This will download one .ics file containing all 1 upcoming active interview from the active Interview collection, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
             confirmationText: 'Export All',
             cancellationText: 'Cancel',
         });

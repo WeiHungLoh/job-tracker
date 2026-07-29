@@ -4,7 +4,8 @@ import { useToast } from '../../../components/toast/ToastProvider';
 import { createBulkCalendarExportConfirmation } from '../../../components/confirmation/bulkConfirmations';
 import { getUpcomingInterviews } from '../../../helper/interviewTiming';
 import type { JobInterview } from '../models';
-import { buildCalendarEventDetails, CALENDAR_ERROR_MESSAGE, downloadBulkIcsEvents } from './calendarEvent';
+import { CALENDAR_ERROR_MESSAGE, downloadBulkIcsEvents } from '../../../helper/calendarEvent';
+import { buildInterviewCalendarEvent, BULK_INTERVIEW_ICS_FILENAME } from './interviewCalendarEvent';
 
 export const useBulkInterviewCalendarExport = (interviews: readonly JobInterview[], currentTime: Date) => {
     const confirm = useConfirm();
@@ -26,7 +27,7 @@ export const useBulkInterviewCalendarExport = (interviews: readonly JobInterview
         }
 
         try {
-            downloadBulkIcsEvents(upcomingInterviews.map(buildCalendarEventDetails));
+            downloadBulkIcsEvents(upcomingInterviews.map(buildInterviewCalendarEvent), BULK_INTERVIEW_ICS_FILENAME);
         } catch {
             showErrorToast(CALENDAR_ERROR_MESSAGE);
         }

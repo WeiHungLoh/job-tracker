@@ -32,7 +32,7 @@ Job Tracker is a full-stack PERN application for managing job applications, inte
 -   Try different priorities to see which active offer fits best and whether a small change affects the result
 -   Keep saved evaluations as read-only history after status changes, or delete an active evaluation without deleting its application
 -   Review or delete archived offer evaluations while keeping archived records read-only
--   Add upcoming interviews to Google Calendar, Apple Calendar, and Outlook
+-   Add upcoming interviews and active offer decision deadlines to Google Calendar or export them individually or in bulk as .ics files
 -   Archive and restore applications and interviews
 -   Export application and interview data to CSV
 -   Save user display preferences

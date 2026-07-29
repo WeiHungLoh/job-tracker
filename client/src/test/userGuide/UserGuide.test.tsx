@@ -122,6 +122,12 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/your changes and results are not saved/i)).toBeVisible();
         expect(screen.getByText(/not available for expired, previous or archived evaluations/i)).toBeVisible();
         expect(screen.getByRole('heading', { name: /plan a counteroffer/i })).toBeVisible();
+        const offerCalendarHeading = screen.getByRole('heading', { name: /offer deadline calendar exports/i });
+        expect(offerCalendarHeading).toBeVisible();
+        expect(offerCalendarHeading.parentElement).toHaveTextContent(
+            /export all active evaluated offer deadlines.*regardless of the visible offer comparison filters/i
+        );
+        expect(screen.getByText(/expired, previous and archived evaluations are excluded/i)).toBeVisible();
         expect(
             screen.getByText(/read-only current offer first and one editable ideal offer directly below it/i)
         ).toBeVisible();
@@ -182,7 +188,11 @@ describe('renders user guide properly', () => {
                     Boolean(element.textContent?.includes('does not add the interview unless you choose Add Anyway'))
             )
         ).toBeVisible();
-        expect(screen.getByRole('heading', { name: /calendar exports/i })).toBeVisible();
+        const calendarExportsHeading = screen.getByRole('heading', { name: /calendar exports/i });
+        expect(calendarExportsHeading).toBeVisible();
+        expect(calendarExportsHeading.parentElement).toHaveTextContent(
+            /export all upcoming active interviews.*regardless of the current upcoming\/past filter/i
+        );
         expect(screen.getByText(/google calendar exports include it in the description/i)).toBeVisible();
         expect(screen.getByText(/dashboard upcoming interviews remains unchanged/i)).toBeVisible();
 

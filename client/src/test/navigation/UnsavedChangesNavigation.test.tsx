@@ -37,6 +37,15 @@ const click = async (element: HTMLElement) => {
     });
 };
 
+const editOfferEvaluation = async (companyName: string) => {
+    await click(screen.getByRole('button', { name: `More actions for ${companyName}` }));
+    await click(
+        within(screen.getByRole('menu', { name: `More actions for ${companyName}` })).getByRole('menuitem', {
+            name: `Edit evaluation for ${companyName}`,
+        })
+    );
+};
+
 const enterIncompleteDate = (input: HTMLInputElement) => {
     Object.defineProperty(input, 'validity', {
         configurable: true,
@@ -338,7 +347,7 @@ describe('unsaved-changes route protection', () => {
 
     test('Edit Evaluation blocks only while its draft differs from the saved evaluation', async () => {
         const { router } = renderRouter(offerDecisionRoutes, [routes.offerDecisions]);
-        await click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        await editOfferEvaluation('Acme');
 
         await act(async () => {
             void router.navigate(routes.viewApplications);
@@ -348,7 +357,7 @@ describe('unsaved-changes route protection', () => {
         await act(async () => {
             void router.navigate(routes.offerDecisions);
         });
-        await click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        await editOfferEvaluation('Acme');
         fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: 'Changed' } });
         await act(async () => {
             void router.navigate(routes.viewApplications);

@@ -48,6 +48,7 @@ import {
     isCounterofferPlanDeletionRequiredError,
     isCounterofferPlanningEligible,
 } from './counteroffer/counterofferPlan';
+import { useBulkOfferDeadlineCalendarExport } from './useBulkOfferDeadlineCalendarExport';
 
 type DraftEvaluations = Record<number, OfferEvaluation>;
 type EvaluationErrors = Record<number, OfferEvaluationFormErrors>;
@@ -149,6 +150,7 @@ const OfferDecisionWorkspace = ({
     getDeleteAllEvaluationSummary,
     isFiltering = false,
     isLoading = false,
+    loadAllEvaluatedOffers,
     onDeleteCounterofferPlan,
     onDelete,
     onDeleteAll,
@@ -191,6 +193,16 @@ const OfferDecisionWorkspace = ({
     const expiredEvaluatedOffers = groups['Expired Evaluated Offers'];
     const previousEvaluations = groups['Previous Evaluations'];
     const robustnessOffers = evaluatedOffers.filter(isEvaluatedOfferDecisionApplication);
+    const hasCompleteEvaluatedOffers = selectedFilters.includes('Evaluated Offers') || !loadAllEvaluatedOffers;
+    const {
+        canExport: canExportOfferDeadlines,
+        exportOfferDeadlines,
+        isLoadingOffers: isLoadingOfferDeadlines,
+    } = useBulkOfferDeadlineCalendarExport({
+        applications: data.applications,
+        hasCompleteEvaluatedOffers,
+        loadAllEvaluatedOffers,
+    });
     const hasOpenEvaluationDraft = Object.keys(drafts).length > 0;
     const filtersAreActive = selectedFilters.length !== filterOptions.length;
     const displayedApplicationCount = selectedFilters.reduce((count, filter) => count + groups[filter].length, 0);
@@ -504,7 +516,8 @@ const OfferDecisionWorkspace = ({
         allowEdit: boolean,
         expired: boolean,
         showExpiredBadge: boolean,
-        allowOfferStatusUpdate = false
+        allowOfferStatusUpdate = false,
+        allowCalendarExport = false
     ) => {
         const hasCounterofferPlan =
             counterofferPlanAvailability[application.job_id] ?? Boolean(application.has_counteroffer_plan);
@@ -518,6 +531,7 @@ const OfferDecisionWorkspace = ({
 
         return (
             <OfferEvaluationCard
+                allowCalendarExport={allowCalendarExport}
                 allowDelete={Boolean(onDelete) && !isDeletingAll}
                 allowEdit={allowEdit}
                 application={application}
@@ -585,7 +599,9 @@ const OfferDecisionWorkspace = ({
             <div className={styles.controlsRow}>
                 <ActivityControls
                     actions={
-                        !isLoading && !isFiltering && displayedEvaluationCount > 0 ? (
+                        !isLoading &&
+                        !isFiltering &&
+                        (displayedEvaluationCount > 0 || (!readOnly && canExportOfferDeadlines)) ? (
                             <MoreOptions
                                 csvData={csvData}
                                 csvFilename={
@@ -594,6 +610,17 @@ const OfferDecisionWorkspace = ({
                                 deleteLabel='Delete all evaluations'
                                 id={readOnly ? 'archived-offer-more-options' : 'offer-more-options'}
                                 isDeleting={isDeletingAll}
+                                middleAction={
+                                    !readOnly && canExportOfferDeadlines
+                                        ? {
+                                              disabled: isLoadingOfferDeadlines,
+                                              icon: 'calendar',
+                                              isLoading: isLoadingOfferDeadlines,
+                                              label: 'Export all active evaluated offer deadlines (.ics)',
+                                              onClick: () => void exportOfferDeadlines(),
+                                          }
+                                        : undefined
+                                }
                                 onDelete={() => void handleDeleteAll()}
                             />
                         ) : undefined
@@ -675,7 +702,7 @@ const OfferDecisionWorkspace = ({
                             description='Sorted by the nearest decision deadline, then fit rating.'
                             heading='Evaluated Offers'
                             id='evaluated-offers-heading'
-                            renderCard={(application) => renderCard(application, true, false, false, true)}
+                            renderCard={(application) => renderCard(application, true, false, false, true, true)}
                         />
                     )}
                     {selectedFilters.includes('Expired Evaluated Offers') && (
