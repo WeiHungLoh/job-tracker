@@ -48,22 +48,25 @@ test('application relation summary uses one parameterized owner/state-scoped agg
     const summary = await withMockedPoolQuery(
         async (sql, values) => {
             calls.push({ sql: compactSQL(sql), values });
-            return { rows: [{ related_interview_count: 3, offer_evaluation_count: 1 }] };
+            return { rows: [{ related_interview_count: 3, offer_evaluation_count: 1, counteroffer_plan_count: 1 }] };
         },
         () => getApplicationRelationSummary(17, 42, false)
     );
 
-    assert.deepEqual(summary, { related_interview_count: 3, offer_evaluation_count: 1 });
+    assert.deepEqual(summary, { related_interview_count: 3, offer_evaluation_count: 1, counteroffer_plan_count: 1 });
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].values, [17, 42, false]);
     assert.match(calls[0].sql, /COUNT\(DISTINCT interviews\.interview_id\)::integer AS related_interview_count/);
     assert.match(calls[0].sql, /COUNT\(DISTINCT evaluations\.job_id\)::integer AS offer_evaluation_count/);
+    assert.match(calls[0].sql, /COUNT\(DISTINCT counteroffers\.job_id\)::integer AS counteroffer_plan_count/);
     assert.match(calls[0].sql, /FROM job_applications AS applications LEFT JOIN interviews/);
     assert.match(calls[0].sql, /interviews\.job_id = applications\.job_id/);
     assert.match(calls[0].sql, /interviews\.user_id = applications\.user_id/);
     assert.match(calls[0].sql, /interviews\.is_archived = \$3/);
     assert.match(calls[0].sql, /evaluations\.job_id = applications\.job_id/);
     assert.match(calls[0].sql, /evaluations\.user_id = applications\.user_id/);
+    assert.match(calls[0].sql, /counteroffers\.job_id = applications\.job_id/);
+    assert.match(calls[0].sql, /counteroffers\.user_id = applications\.user_id/);
     assert.match(calls[0].sql, /applications\.job_id = \$1/);
     assert.match(calls[0].sql, /applications\.user_id = \$2/);
     assert.match(calls[0].sql, /applications\.is_archived = \$3/);
@@ -96,7 +99,7 @@ test('active application relation-summary route returns the scoped count from on
     const response = await withMockedPoolQuery(
         async (sql, values) => {
             calls.push({ sql: compactSQL(sql), values });
-            return { rows: [{ related_interview_count: 2, offer_evaluation_count: 1 }] };
+            return { rows: [{ related_interview_count: 2, offer_evaluation_count: 1, counteroffer_plan_count: 1 }] };
         },
         async () => {
             const routeResponse = createResponse();
@@ -106,7 +109,11 @@ test('active application relation-summary route returns the scoped count from on
     );
 
     assert.equal(response.statusCode, 200);
-    assert.deepEqual(response.body, { related_interview_count: 2, offer_evaluation_count: 1 });
+    assert.deepEqual(response.body, {
+        related_interview_count: 2,
+        offer_evaluation_count: 1,
+        counteroffer_plan_count: 1,
+    });
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].values, [17, 42, false]);
 });
@@ -119,7 +126,7 @@ test('archived application relation-summary route returns the matching archived-
     const response = await withMockedPoolQuery(
         async (sql, values) => {
             calls.push({ sql: compactSQL(sql), values });
-            return { rows: [{ related_interview_count: 4, offer_evaluation_count: 1 }] };
+            return { rows: [{ related_interview_count: 4, offer_evaluation_count: 1, counteroffer_plan_count: 1 }] };
         },
         async () => {
             const routeResponse = createResponse();
@@ -129,7 +136,11 @@ test('archived application relation-summary route returns the matching archived-
     );
 
     assert.equal(response.statusCode, 200);
-    assert.deepEqual(response.body, { related_interview_count: 4, offer_evaluation_count: 1 });
+    assert.deepEqual(response.body, {
+        related_interview_count: 4,
+        offer_evaluation_count: 1,
+        counteroffer_plan_count: 1,
+    });
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].values, [31, 8, true]);
 });

@@ -57,14 +57,16 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <h3>Evaluated offers due within 72 hours</h3>
                 <p>
-                    These appear first. The action opens Job Applications in List view, filters to Offer, then scrolls
-                    to and highlights the exact application so you can record it as Accepted or Declined. Evaluated
-                    offers more than 72 hours away and offers with a passed deadline do not appear.
+                    These appear first. The action opens active Offer Comparison, ensures Evaluated Offers is visible,
+                    then scrolls to and highlights the exact offer card so you can record it as Accepted or Declined.
+                    This targeted navigation always scrolls and highlights, regardless of the auto-scroll preference.
+                    Evaluated offers more than 72 hours away and offers with a passed deadline do not appear.
                 </p>
                 <h3>Unevaluated offers</h3>
                 <p>
                     These appear next regardless of deadline because their deadline has not been recorded yet. The
-                    action opens active Offer Comparison so you can add the offer details and decision deadline.
+                    action opens active Offer Comparison, ensures Offers to Evaluate is visible, then scrolls to and
+                    highlights the exact card so you can add the offer details and decision deadline.
                 </p>
                 <h3>Completed interviews</h3>
                 <p>
@@ -184,8 +186,9 @@ const guideSections: readonly UserGuideSection[] = [
                 <h3>Compare current offers</h3>
                 <p>
                     Open Offer Comparison from the active navigation bar. Only active applications with status{' '}
-                    <code>Offer</code> appear in Compare current offers, and only those applications can add or edit an
-                    evaluation.
+                    <code>Offer</code> appear in Offers to Evaluate, Evaluated Offers and Expired Evaluated Offers. Only
+                    Offers to Evaluate can add a first evaluation; saved evaluations can be edited in all active
+                    sections, including Previous Evaluations.
                 </p>
                 <p>
                     Select <code>Add evaluation</code> for an unevaluated offer. New fit ratings begin at 3 of 5. Select{' '}
@@ -202,13 +205,14 @@ const guideSections: readonly UserGuideSection[] = [
                     Select <code>Save evaluation</code> on that offer. A successful first save moves it from Offers to
                     evaluate into Evaluated offers, locks its fields and shows a confirmation. Select{' '}
                     <code>Edit evaluation</code> to unlock it again. Save evaluation stays available and validates the
-                    required fields when selected. You can also press Enter from a form field to save. Unsaved changes
-                    remain on screen if saving fails.
+                    required fields when selected. Press Enter from a normal form field or Shift+Enter from Pros or Cons
+                    to save; plain Enter creates a new line in those text areas. Press Escape in any evaluation field to
+                    cancel. Unsaved changes remain on screen if saving fails.
                 </p>
                 <p>
                     The decision deadline stays visible above the fit rating when details are collapsed. Evaluated and
                     expired offers are sorted by deadline, then fit rating and name. Expired offers remain available to
-                    review, edit or delete when their applications still have Offer status.
+                    review, edit, delete, accept or decline when their applications still have Offer status.
                 </p>
                 <h3>Try different priorities</h3>
                 <p>
@@ -238,21 +242,41 @@ const guideSections: readonly UserGuideSection[] = [
                     overall Fit rating. It never alters the saved evaluation or application status.
                 </p>
                 <p>
-                    Saved plans remain available to review or delete after a deadline passes, the application moves to
-                    Accepted or Declined, or the application is archived. Editing is available again only while the
-                    offer is active, not archived and within its decision window.
+                    Saved plans remain available to review or delete after a deadline passes or the application moves to
+                    Accepted or Declined. They cannot be created or edited from Expired Evaluated Offers or Previous
+                    Evaluations. Archived Offer Comparison does not expose counteroffer-plan actions.
                 </p>
                 <h3>Status changes, deletion and archive</h3>
                 <p>
-                    While a saved evaluation exists, its application can only remain at Offer or move to Accepted or
-                    Declined. Accepted and declined applications stay under Previous evaluations as read-only records.
-                    Deleting the evaluation removes only that evaluation and restores the normal status options, subject
-                    to the existing interview restriction.
+                    Under active Evaluated Offers and Expired Evaluated Offers, open <code>More...</code> to mark an
+                    Offer as <code>Accepted</code> or <code>Declined</code>. Confirming updates only that application
+                    and moves its saved evaluation to Previous Evaluations; its evaluation and counteroffer plan remain
+                    saved.
+                </p>
+                <p>
+                    Active Previous Evaluations can be edited. An Accepted application offers{' '}
+                    <code>Change to Offer</code> or <code>Change to Declined</code>, while a Declined application offers{' '}
+                    <code>Change to Offer</code> or <code>Change to Accepted</code>. Changing back to Offer keeps the
+                    evaluation and counteroffer plan and moves the card to Evaluated Offers or Expired Evaluated Offers
+                    according to its decision deadline. Saved counteroffer plans are view-only in this section. If a
+                    card has multiple workflow actions beyond Show/Hide details and Delete, those actions are grouped
+                    under <code>More...</code>.
                 </p>
                 <p>
                     <code>Show Archived</code> opens Archived Offer Comparisons. Archived evaluations are read-only but
-                    can be shown, hidden or deleted there. Deleting an application still permanently deletes its saved
-                    evaluation through the existing cascade.
+                    can only be shown, hidden or deleted there. They cannot be edited, change status, or open a
+                    counteroffer plan. Deleting an application still permanently deletes its saved evaluation and
+                    counteroffer plan through the existing cascade.
+                </p>
+                <h3>Export evaluations and counteroffer plans</h3>
+                <p>
+                    Export as CSV follows the selected Offer Comparison filters. Each non-empty selected evaluation
+                    section produces an evaluation table. A matching counteroffer-plan table is included only when that
+                    section contains at least one saved plan, and it includes only applications with saved plans. Show
+                    All can therefore export up to six tables: Evaluated, Expired Evaluated and Previous Evaluations,
+                    plus one counteroffer table for each. Counteroffer tables compare current and ideal terms, all four
+                    ratings, current and ideal Fit ratings, and the overall Fit rating change. Empty saved-plan fields
+                    are exported as <code>N/A</code>.
                 </p>
             </>
         ),
@@ -369,9 +393,20 @@ const guideSections: readonly UserGuideSection[] = [
                     <li>Interview notes are optional and limited to {FIELD_MAX_LENGTHS.notes} characters.</li>
                 </ul>
                 <p>
-                    Before saving, Job Tracker warns you if the interview overlaps another active interview or runs past
-                    another active offer&apos;s decision deadline. A warning does not add the interview unless you
-                    choose <strong>Add Anyway</strong>. Choose <strong>Cancel</strong> to keep the form unchanged.
+                    Before saving a present or future interview, Job Tracker warns you if its time range overlaps a
+                    present or future active interview. Interviews that have already ended are ignored, and adding an
+                    interview in the past does not show a scheduling-conflict warning.
+                </p>
+                <p>
+                    It also warns when a present or future interview reaches or passes another active Offer
+                    application&apos;s present or future decision deadline. Expired deadlines and deadlines belonging to
+                    Accepted or Declined applications are ignored. Adding an interview in the past does not show an
+                    offer-deadline warning. A warning does not add the interview unless you choose{' '}
+                    <strong>Add Anyway</strong>; choose <strong>Cancel</strong> to keep the form unchanged.
+                </p>
+                <p>
+                    Press Enter in a normal field to add the interview. In Additional Notes, plain Enter creates a new
+                    line and Shift+Enter submits the form.
                 </p>
                 <p>If the server rejects the submission, the entered interview details remain in the form.</p>
                 <h3>View interviews</h3>
@@ -382,9 +417,10 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <p>
                     Select <code>Click here to review corresponding job application</code> to return to the related
-                    application. The relevant active or archived Application page must be in List view. The application
-                    is then scrolled into view and highlighted for four seconds if it is visible in the current filter
-                    (e.g. if the application has status <code>Interview</code>, the filter must include that status).
+                    application. Job Tracker switches the relevant active or archived Application page from Board to
+                    List only when needed. If the application&apos;s status is not selected, that one status is added
+                    while your existing filters remain selected. The exact application is then always scrolled into view
+                    and highlighted for four seconds, regardless of the Auto-scroll preference.
                 </p>
                 <p>
                     Both active and archived interviews are sorted with upcoming interviews first (closest date at the
@@ -456,9 +492,12 @@ const guideSections: readonly UserGuideSection[] = [
             <>
                 <ul>
                     <li>Deleting an active or archived application also deletes its linked interview.</li>
-                    <li>Deleting an active or archived application also deletes its saved offer evaluation.</li>
+                    <li>
+                        Deleting an active or archived application also deletes its saved offer evaluation and
+                        counteroffer plan.
+                    </li>
                     <li>Archiving an application automatically archives its linked interview.</li>
-                    <li>Archiving preserves its saved offer evaluation as a read-only snapshot.</li>
+                    <li>Archiving preserves its saved offer evaluation and counteroffer plan data.</li>
                     <li>Unarchiving an application automatically restores its linked interview.</li>
                     <li>Unarchiving restores access to its saved evaluation; only Offer status makes it editable.</li>
                     <li>Archived records are not editable until they are restored.</li>
@@ -503,6 +542,10 @@ const guideSections: readonly UserGuideSection[] = [
                     one record is available.
                 </p>
                 <p>
+                    Offer Comparison exports follow its selected sections and include separate evaluation and
+                    counteroffer-plan tables. Export actions do not show a success toast.
+                </p>
+                <p>
                     Values that spreadsheet apps could interpret as formulas are exported as text for safer opening in
                     CSV software.
                 </p>
@@ -536,18 +579,35 @@ const guideSections: readonly UserGuideSection[] = [
         content: (
             <>
                 <p>
-                    Use <strong>Auto-scroll to updated items</strong> under <strong>Display options</strong> in
+                    Use <strong>Auto-scroll and highlight updates</strong> under <strong>Display options</strong> in
                     Application List view. When enabled, Job Tracker scrolls to and briefly highlights an application or
                     interview after it is pinned or unpinned.
                 </p>
                 <p>
                     Application status changes receive the same feedback when the Application List is sorted by Job
-                    Status and the updated application remains visible. This preference applies to Application and
-                    Interview List views. Board views never automatically scroll or highlight cards.
+                    Status and the updated application remains visible. In Offer Comparison, the preference also
+                    controls highlighting after the first evaluation save and after changing a saved evaluation between
+                    Offer, Accepted and Declined. Board views never automatically scroll or highlight cards for these
+                    in-page updates.
                 </p>
                 <p>
-                    The same feedback appears when navigating from an interview to its corresponding application, but
-                    only while the relevant Application page is in List view.
+                    The preference does not control targeted navigation between pages. Opening a corresponding
+                    application from an interview always switches to List when necessary, preserves existing filters,
+                    adds only the missing status filter, and scrolls to and highlights the exact application.
+                </p>
+                <p>
+                    Dashboard Evaluate offer and Record offer decision actions always target and highlight the exact
+                    Offer Comparison card. Opening a dashboard interview likewise switches to Interview List when
+                    needed, restores the missing Upcoming filter when necessary, and always targets that interview.
+                    Evaluation Cancel, Save evaluation and Hide details keep their dedicated scroll-only behavior and
+                    never use the highlight animation.
+                </p>
+                <p>
+                    Active, archived and demo Application, Interview and Offer Comparison pages also provide small page
+                    navigation arrows. The down arrow appears while more content remains and moves to the bottom of the
+                    page. After you scroll down, the subdued up arrow appears near the top of the screen and returns to
+                    the navigation bar. These controls are independent of the Auto-scroll preference and are not shown
+                    on Dashboard or Add forms.
                 </p>
             </>
         ),

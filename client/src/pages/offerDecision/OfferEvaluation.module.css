@@ -6,6 +6,20 @@
     background-color: var(--colorCardBg);
 }
 
+.highlighted {
+    animation: highlightFade 4s ease-in-out;
+}
+
+@keyframes highlightFade {
+    0% {
+        background-color: var(--colorHighlightAnim);
+    }
+
+    100% {
+        background-color: var(--colorCardBg);
+    }
+}
+
 .cardHeader {
     display: flex;
     align-items: flex-start;
@@ -100,11 +114,10 @@
 
 .startEvaluation {
     display: flex;
-    min-height: 150px;
     align-items: flex-start;
-    justify-content: center;
     flex-direction: column;
     gap: var(--spaceCard);
+    margin-top: var(--spaceCard);
 }
 
 .startEvaluation p {

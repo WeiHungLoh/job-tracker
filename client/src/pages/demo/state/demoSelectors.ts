@@ -113,6 +113,7 @@ export const selectOfferDecisionWorkspace = (state: DemoState): OfferDecisionWor
             application_date: application.application_date,
             evaluation: state.offerEvaluations[application.job_id] ?? null,
             has_counteroffer_plan: Boolean(state.counterofferPlans[application.job_id]),
+            counteroffer_plan: state.counterofferPlans[application.job_id] ?? null,
         }))
         .sort(compareOfferDecisionApplications);
 
@@ -130,6 +131,7 @@ export const selectArchivedOfferDecisionWorkspace = (state: DemoState): OfferDec
             application_date: application.application_date,
             evaluation: state.offerEvaluations[application.archived_job_id],
             has_counteroffer_plan: Boolean(state.counterofferPlans[application.archived_job_id]),
+            counteroffer_plan: state.counterofferPlans[application.archived_job_id] ?? null,
         }))
         .sort(compareOfferDecisionApplications);
 

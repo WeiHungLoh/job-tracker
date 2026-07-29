@@ -12,10 +12,28 @@ import type {
 import type { UserPreferences } from '../../components/userPreferences/models';
 import { render, testPreferences } from '../renderWithProviders';
 import offerEvaluationStyles from '../../pages/offerDecision/OfferEvaluation.module.css';
+import { JobTrackerAPIError } from '../../api/models';
 
 const mockConfirm = vi.hoisted(() => vi.fn());
+const mockUseUnsavedChangesBlocker = vi.hoisted(() => vi.fn());
 
 vi.mock('material-ui-confirm', () => ({ useConfirm: () => mockConfirm }));
+vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: mockUseUnsavedChangesBlocker,
+}));
+
+const openOfferActions = (companyName: string) => {
+    fireEvent.click(screen.getByRole('button', { name: `More actions for ${companyName}` }));
+    return screen.getByRole('menu', { name: `More actions for ${companyName}` });
+};
+
+const editOfferEvaluation = (companyName: string) => {
+    fireEvent.click(
+        within(openOfferActions(companyName)).getByRole('menuitem', {
+            name: `Edit evaluation for ${companyName}`,
+        })
+    );
+};
 
 const details = {
     currency: 'SGD',
@@ -162,6 +180,221 @@ describe('OfferDecisionWorkspace', () => {
         ).toBeInTheDocument();
     });
 
+    test('shows the allowed active status actions for evaluated, expired and previous offers', () => {
+        const expiredOffer = {
+            ...activeData.applications[0],
+            job_id: 14,
+            company_name: 'Expired Co',
+            evaluation: createEvaluation(14, undefined, '2026-07-01T10:00:00.000Z'),
+        };
+        const declinedOffer = {
+            ...activeData.applications[2],
+            job_id: 15,
+            company_name: 'Declined Co',
+            job_status: 'Declined' as const,
+            evaluation: createEvaluation(15),
+        };
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [...activeData.applications, expiredOffer, declinedOffer] }}
+                onDelete={vi.fn()}
+                onDeleteCounterofferPlan={vi.fn()}
+                onGetCounterofferPlan={vi.fn()}
+                onSave={vi.fn()}
+                onSaveCounterofferPlan={vi.fn()}
+                onUpdateOfferStatus={vi.fn()}
+                readOnly={false}
+            />
+        );
+
+        expect(
+            within(openOfferActions('Acme'))
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent)
+        ).toEqual(['Edit evaluation', 'Plan counteroffer', 'Accept offer', 'Decline offer']);
+        expect(
+            within(openOfferActions('Expired Co'))
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent)
+        ).toEqual(['Edit evaluation', 'Accept offer', 'Decline offer']);
+        expect(
+            within(openOfferActions('Continuum'))
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent)
+        ).toEqual(['Edit evaluation', 'Change to Offer', 'Change to Declined']);
+        expect(
+            within(openOfferActions('Declined Co'))
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent)
+        ).toEqual(['Edit evaluation', 'Change to Offer', 'Change to Accepted']);
+        expect(screen.queryByRole('button', { name: 'Accept offer from Beta Labs' })).not.toBeInTheDocument();
+    });
+
+    test('keeps edit, status and counteroffer actions out of archived Offer Comparison', () => {
+        render(
+            <OfferDecisionWorkspace
+                data={{
+                    applications: [
+                        {
+                            ...activeData.applications[0],
+                            has_counteroffer_plan: true,
+                        },
+                    ],
+                }}
+                onDeleteCounterofferPlan={vi.fn()}
+                onGetCounterofferPlan={vi.fn()}
+                onSaveCounterofferPlan={vi.fn()}
+                onUpdateOfferStatus={vi.fn()}
+                readOnly
+            />
+        );
+
+        expect(screen.queryByRole('button', { name: 'Accept offer from Acme' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Decline offer from Acme' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Edit evaluation for Acme' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'View counteroffer plan for Acme' })).not.toBeInTheDocument();
+    });
+
+    test('confirms Accept and Decline with the exact application and button treatment', async () => {
+        const onUpdateOfferStatus = vi.fn().mockResolvedValue(undefined);
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [activeData.applications[0]] }}
+                onSave={vi.fn()}
+                onUpdateOfferStatus={onUpdateOfferStatus}
+                readOnly={false}
+            />
+        );
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Accept offer from Acme' }));
+        await waitFor(() =>
+            expect(mockConfirm).toHaveBeenLastCalledWith({
+                title: 'Accept this offer?',
+                description: 'Acme — Software Engineer will be marked as Accepted.',
+                confirmationText: 'Accept Offer',
+                cancellationText: 'Cancel',
+                confirmationButtonProps: { autoFocus: true },
+            })
+        );
+        await waitFor(() => expect(onUpdateOfferStatus).toHaveBeenCalledWith(activeData.applications[0], 'Accepted'));
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Decline offer from Acme' }));
+        await waitFor(() =>
+            expect(mockConfirm).toHaveBeenLastCalledWith({
+                title: 'Decline this offer?',
+                description: 'Acme — Software Engineer will be marked as Declined.',
+                confirmationText: 'Decline Offer',
+                cancellationText: 'Cancel',
+                confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
+            })
+        );
+        await waitFor(() => expect(onUpdateOfferStatus).toHaveBeenCalledWith(activeData.applications[0], 'Declined'));
+    });
+
+    test('confirms changing a previous evaluation back to Offer', async () => {
+        const application = activeData.applications[2];
+        const onUpdateOfferStatus = vi.fn().mockResolvedValue(undefined);
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [application] }}
+                onUpdateOfferStatus={onUpdateOfferStatus}
+                readOnly={false}
+            />
+        );
+
+        fireEvent.click(
+            within(openOfferActions('Continuum')).getByRole('menuitem', { name: 'Change to Offer for Continuum' })
+        );
+
+        await waitFor(() =>
+            expect(mockConfirm).toHaveBeenLastCalledWith({
+                title: 'Change back to Offer?',
+                description: 'Continuum — Product Engineer will be marked as Offer.',
+                confirmationText: 'Change to Offer',
+                cancellationText: 'Cancel',
+                confirmationButtonProps: { autoFocus: true },
+            })
+        );
+        await waitFor(() => expect(onUpdateOfferStatus).toHaveBeenCalledWith(application, 'Offer'));
+    });
+
+    test('does not update status when the confirmation is cancelled', async () => {
+        mockConfirm.mockResolvedValueOnce({ confirmed: false });
+        const onUpdateOfferStatus = vi.fn();
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [activeData.applications[0]] }}
+                onUpdateOfferStatus={onUpdateOfferStatus}
+                readOnly={false}
+            />
+        );
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Accept offer from Acme' }));
+
+        await waitFor(() => expect(mockConfirm).toHaveBeenCalledOnce());
+        expect(onUpdateOfferStatus).not.toHaveBeenCalled();
+    });
+
+    test('scrolls and highlights a saved status change only when the preference is enabled', async () => {
+        const onUpdateOfferStatus = vi.fn().mockResolvedValue(undefined);
+        const scrollIntoView = vi.fn();
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [activeData.applications[0]] }}
+                onUpdateOfferStatus={onUpdateOfferStatus}
+                readOnly={false}
+            />,
+            { initialPreferences: { application_enable_scroll: true } }
+        );
+        const card = screen.getByRole('article', { name: 'Acme Software Engineer' });
+        card.scrollIntoView = scrollIntoView;
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Accept offer from Acme' }));
+
+        await waitFor(() => expect(onUpdateOfferStatus).toHaveBeenCalledOnce());
+        await waitFor(() => expect(card.className).toContain('highlight'));
+        expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    });
+
+    test('always scrolls and highlights a dashboard target once', async () => {
+        const onTargetOfferProcessed = vi.fn();
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+        const { rerender } = render(
+            <OfferDecisionWorkspace
+                data={activeData}
+                onTargetOfferProcessed={onTargetOfferProcessed}
+                readOnly={false}
+                selectedFilters={['Evaluated Offers']}
+                targetOfferJobId={11}
+            />
+        );
+
+        await waitFor(() =>
+            expect(scrollIntoView).toHaveBeenCalledWith({
+                behavior: 'smooth',
+                block: 'start',
+            })
+        );
+        expect(onTargetOfferProcessed).toHaveBeenCalledOnce();
+        expect(screen.getByRole('article', { name: 'Acme Software Engineer' }).className).toContain('highlight');
+
+        rerender(
+            <OfferDecisionWorkspace
+                data={activeData}
+                onTargetOfferProcessed={onTargetOfferProcessed}
+                readOnly={false}
+                selectedFilters={['Evaluated Offers']}
+                targetOfferJobId={undefined}
+            />
+        );
+        expect(scrollIntoView).toHaveBeenCalledOnce();
+
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
     test('shows decision robustness only for two active current evaluated offers', () => {
         const { rerender } = render(
             <OfferDecisionWorkspace data={robustnessData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />
@@ -298,6 +531,30 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getByRole('button', { name: 'Hide details for Beta Labs' })).toBeInTheDocument();
     });
 
+    test('scrolls to and highlights a first saved evaluation when the preference is enabled', async () => {
+        render(<WorkspaceHarness />, {
+            initialPreferences: { application_enable_scroll: true },
+        });
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+        fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+        fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
+            target: { value: '2026-08-20T10:00' },
+        });
+        fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Beta Labs' }));
+
+        await waitFor(() =>
+            expect(screen.getByRole('article', { name: 'Beta Labs Platform Developer' }).className).toContain(
+                'highlight'
+            )
+        );
+        expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
     test('uses native form submission and places offer terms before ratings', async () => {
         const onSave = vi.fn().mockResolvedValue(undefined);
         render(<WorkspaceHarness onSave={onSave} />);
@@ -320,6 +577,29 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.submit(saveButton.closest('form') as HTMLFormElement);
 
         await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+    });
+
+    test('keeps Enter as a notes newline, saves with Shift+Enter and cancels with Escape', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        const { rerender } = render(<WorkspaceHarness onSave={onSave} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        const pros = screen.getByLabelText('Acme pros');
+        await userEvent.type(pros, '{enter}Additional context');
+        expect(pros).toHaveValue('Strong product ownership\nAdditional context');
+        expect(onSave).not.toHaveBeenCalled();
+
+        fireEvent.keyDown(pros, { key: 'Enter', shiftKey: true });
+        await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+        expect(screen.queryByLabelText('Acme pros')).not.toBeInTheDocument();
+
+        rerender(<WorkspaceHarness />);
+        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: 'Changed' } });
+        fireEvent.keyDown(screen.getByLabelText('Acme bonus'), { key: 'Escape' });
+
+        expect(screen.queryByLabelText('Acme bonus')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Hide details for Acme' })).toBeInTheDocument();
     });
 
     test('cancels a new draft without affecting saved records', () => {
@@ -355,6 +635,78 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getByText('SGD 11,000')).toBeInTheDocument();
     });
 
+    test('confirms and retries when a lower evaluation requires deleting its counteroffer plan', async () => {
+        const conflict = new JobTrackerAPIError('Conflict', 409, {
+            code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+            message:
+                'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
+        });
+        const onSave = vi.fn().mockRejectedValueOnce(conflict).mockResolvedValueOnce(undefined);
+        const application = { ...activeData.applications[0], has_counteroffer_plan: true };
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [application] }}
+                onDeleteCounterofferPlan={vi.fn()}
+                onGetCounterofferPlan={vi.fn()}
+                onSave={onSave}
+                onSaveCounterofferPlan={vi.fn()}
+                readOnly={false}
+            />
+        );
+
+        editOfferEvaluation('Acme');
+        fireEvent.change(screen.getByLabelText('Acme Career Growth rating'), { target: { value: '1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        await waitFor(() =>
+            expect(mockConfirm).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Delete counteroffer plan?',
+                    confirmationText: 'Delete and Save',
+                    description: expect.stringContaining('lower fit rating than your saved counteroffer plan'),
+                    confirmationButtonProps: { autoFocus: true },
+                })
+            )
+        );
+        await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+        expect(onSave.mock.calls[1][1]).toEqual(expect.objectContaining({ deleteCounterofferPlan: true }));
+        expect(screen.queryByLabelText('Acme Career Growth rating')).not.toBeInTheDocument();
+        expect(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Plan counteroffer for Acme',
+            })
+        ).toBeInTheDocument();
+    });
+
+    test('keeps a lower edited evaluation open when counteroffer deletion is cancelled', async () => {
+        mockConfirm.mockResolvedValueOnce({ confirmed: false });
+        const onSave = vi.fn().mockRejectedValueOnce(
+            new JobTrackerAPIError('Conflict', 409, {
+                code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+                message:
+                    'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
+            })
+        );
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [{ ...activeData.applications[0], has_counteroffer_plan: true }] }}
+                onDeleteCounterofferPlan={vi.fn()}
+                onGetCounterofferPlan={vi.fn()}
+                onSave={onSave}
+                onSaveCounterofferPlan={vi.fn()}
+                readOnly={false}
+            />
+        );
+
+        editOfferEvaluation('Acme');
+        fireEvent.change(screen.getByLabelText('Acme Career Growth rating'), { target: { value: '1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        await waitFor(() => expect(mockConfirm).toHaveBeenCalledOnce());
+        expect(onSave).toHaveBeenCalledOnce();
+        expect(screen.getByLabelText('Acme Career Growth rating')).toHaveValue('1');
+    });
+
     test('uses the shared date-time input format and formatted locked deadline', () => {
         render(<WorkspaceHarness />);
 
@@ -380,9 +732,40 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Cancel evaluation for Acme' }));
 
         expect(screen.queryByLabelText('Acme bonus')).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Show details for Acme' })).toBeInTheDocument();
-        expect(screen.queryByText('15% target')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Hide details for Acme' })).toBeInTheDocument();
+        expect(screen.getByText('15% target')).toBeInTheDocument();
         expect(screen.queryByText('Changed')).not.toBeInTheDocument();
+    });
+
+    test('scrolls after saving, cancelling an evaluation or hiding details', async () => {
+        render(<WorkspaceHarness />);
+        const acmeCard = screen.getByRole('article', { name: 'Acme Software Engineer' });
+        const betaCard = screen.getByRole('article', { name: 'Beta Labs Platform Developer' });
+        const acmeScrollIntoView = vi.fn();
+        const betaScrollIntoView = vi.fn();
+        acmeCard.scrollIntoView = acmeScrollIntoView;
+        betaCard.scrollIntoView = betaScrollIntoView;
+
+        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        expect(acmeScrollIntoView).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel evaluation for Acme' }));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Edit evaluation for Acme' })).toBeVisible());
+        await waitFor(() => expect(acmeScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' }));
+
+        acmeScrollIntoView.mockClear();
+        fireEvent.click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Edit evaluation for Acme' })).toBeVisible());
+        await waitFor(() => expect(acmeScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' }));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel evaluation for Beta Labs' }));
+        await waitFor(() => expect(betaScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' }));
+
+        acmeScrollIntoView.mockClear();
+        fireEvent.click(screen.getByRole('button', { name: 'Hide details for Acme' }));
+        await waitFor(() => expect(acmeScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' }));
+        expect(betaScrollIntoView).toHaveBeenCalledOnce();
     });
 
     test('shows field validation and does not save invalid negative values or an earlier deadline', async () => {
@@ -603,6 +986,28 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getByRole('button', { name: /delete evaluation/i })).toBeInTheDocument();
     });
 
+    test('warns that deleting an evaluation also deletes its counteroffer plan', async () => {
+        const onDelete = vi.fn().mockResolvedValue(undefined);
+        render(
+            <OfferDecisionWorkspace
+                data={{
+                    applications: [{ ...activeData.applications[0], has_counteroffer_plan: true }],
+                }}
+                onDelete={onDelete}
+                readOnly={false}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Delete evaluation for Acme' }));
+
+        expect(mockConfirm).toHaveBeenCalledWith(
+            expect.objectContaining({
+                description: expect.stringContaining('offer evaluation and its counteroffer plan'),
+            })
+        );
+        await waitFor(() => expect(onDelete).toHaveBeenCalledWith(11));
+    });
+
     test('keeps expired current offers editable and expired badges out of previous evaluations', () => {
         const expiredDeadline = '2026-07-01T10:00:00.000Z';
         const expiredOffer = {
@@ -725,11 +1130,13 @@ describe('OfferDecisionWorkspace', () => {
     });
 
     test('uses the full production evaluation count for Delete All confirmation', async () => {
-        const getDeleteAllEvaluationCount = vi.fn().mockResolvedValue(7);
+        const getDeleteAllEvaluationSummary = vi
+            .fn()
+            .mockResolvedValue({ evaluationCount: 7, counterofferPlanCount: 2 });
         render(
             <OfferDecisionWorkspace
                 data={activeData}
-                getDeleteAllEvaluationCount={getDeleteAllEvaluationCount}
+                getDeleteAllEvaluationSummary={getDeleteAllEvaluationSummary}
                 onDeleteAll={vi.fn().mockResolvedValue(undefined)}
                 readOnly={false}
             />
@@ -738,9 +1145,11 @@ describe('OfferDecisionWorkspace', () => {
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         await userEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
 
-        await waitFor(() => expect(getDeleteAllEvaluationCount).toHaveBeenCalledOnce());
+        await waitFor(() => expect(getDeleteAllEvaluationSummary).toHaveBeenCalledOnce());
         expect(mockConfirm).toHaveBeenCalledWith(
-            expect.objectContaining({ description: expect.stringContaining('7 active offer evaluations') })
+            expect.objectContaining({
+                description: expect.stringMatching(/7 active offer evaluations.*2 corresponding counteroffer plans/),
+            })
         );
     });
 

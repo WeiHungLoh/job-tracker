@@ -1,6 +1,11 @@
-import { useRef, type FormEvent, type RefObject } from 'react';
+import { useRef, type FormEvent, type KeyboardEvent, type MouseEvent, type RefObject } from 'react';
 import PrimaryButton from '../../components/button/PrimaryButton';
-import { MAX_DATETIME_LOCAL, MIN_DATETIME_LOCAL, toDatetimeLocalInputValue } from '../../helper/dateFormatter';
+import {
+    isInvalidDatetimeLocalInput,
+    MAX_DATETIME_LOCAL,
+    MIN_DATETIME_LOCAL,
+    toDatetimeLocalInputValue,
+} from '../../helper/dateFormatter';
 import OfferDecisionFieldError, { getOfferDecisionErrorProps } from './OfferDecisionFieldError';
 import {
     OFFER_ANNUAL_LEAVE_DAYS_MAX,
@@ -38,6 +43,7 @@ type OfferEvaluationFormProps = {
     evaluation: OfferEvaluation;
     isSaving: boolean;
     onCancel: () => void;
+    onDecisionDeadlineValidityChange: (hasBadInput: boolean) => void;
     onDetailsChange: (details: OfferDetails, field: keyof OfferEvaluationFormErrors) => void;
     onRatingChange: (category: OfferDecisionCategory, value: OfferDecisionRating) => void;
     onSave: (decisionDeadlineHasBadInput: boolean, refs: OfferFieldRefs) => void;
@@ -267,6 +273,7 @@ const OfferEvaluationForm = ({
     evaluation,
     isSaving,
     onCancel,
+    onDecisionDeadlineValidityChange,
     onDetailsChange,
     onRatingChange,
     onSave,
@@ -291,11 +298,35 @@ const OfferEvaluationForm = ({
     };
     const submitEvaluation = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        const submitter = (event.nativeEvent as SubmitEvent).submitter;
+        if (submitter instanceof HTMLElement) {
+            submitter.blur();
+        }
         onSave(Boolean(decisionDeadlineInputRef.current?.validity.badInput), fieldRefs);
+    };
+    const cancelEvaluation = (event: MouseEvent<HTMLButtonElement>) => {
+        event.currentTarget.blur();
+        onCancel();
+    };
+    const handleDecisionDeadlineInput = (event: FormEvent<HTMLInputElement>) => {
+        onDecisionDeadlineValidityChange(
+            isInvalidDatetimeLocalInput(event.currentTarget.value, event.currentTarget.validity)
+        );
+    };
+    const handleFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            onCancel();
+            return;
+        }
+        if (event.key === 'Enter' && event.shiftKey && event.target instanceof HTMLTextAreaElement) {
+            event.preventDefault();
+            event.currentTarget.requestSubmit();
+        }
     };
 
     return (
-        <form noValidate onSubmit={submitEvaluation}>
+        <form noValidate onKeyDown={handleFormKeyDown} onSubmit={submitEvaluation}>
             <fieldset className={styles.detailsFields}>
                 <legend>Decision timing</legend>
                 <label className={styles.textField} htmlFor={`decision-deadline-${application.job_id}`}>
@@ -311,12 +342,14 @@ const OfferEvaluationForm = ({
                         id={`decision-deadline-${application.job_id}`}
                         max={MAX_DATETIME_LOCAL}
                         min={toDatetimeLocalInputValue(application.application_date) || MIN_DATETIME_LOCAL}
+                        onBlur={handleDecisionDeadlineInput}
                         onChange={(event) =>
                             onDetailsChange(
                                 { ...evaluation.details, decision_deadline: event.target.value },
                                 'decision_deadline'
                             )
                         }
+                        onInput={handleDecisionDeadlineInput}
                         required
                         type='datetime-local'
                         value={evaluation.details.decision_deadline}
@@ -345,7 +378,7 @@ const OfferEvaluationForm = ({
                 <PrimaryButton
                     aria-label={`Cancel evaluation for ${application.company_name}`}
                     disabled={isSaving}
-                    onClick={onCancel}
+                    onClick={cancelEvaluation}
                     type='button'
                     variant='secondary'
                 >

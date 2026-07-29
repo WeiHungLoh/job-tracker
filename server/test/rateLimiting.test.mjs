@@ -53,7 +53,7 @@ const getProtectedResponse = async (userId, ip) => {
 };
 
 test('uses the documented rate-limit configuration without changing sign-in values', () => {
-    assert.equal(AUTHENTICATED_API_RATE_LIMIT, 400);
+    assert.equal(AUTHENTICATED_API_RATE_LIMIT, 500);
     assert.equal(AUTHENTICATED_API_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000);
     assert.equal(SIGN_IN_IP_LIMIT, 50);
     assert.equal(SIGN_IN_EMAIL_IP_LIMIT, 10);

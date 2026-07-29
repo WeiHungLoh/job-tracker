@@ -7,7 +7,12 @@ import {
     OFFER_MONTHLY_BASE_SALARY_MAX,
     OFFER_WORK_ARRANGEMENTS,
 } from '../offerDecisionConfig';
-import { calculateCounterofferPlanResult, formatFitRatingDifference, formatRatingDifference } from './counterofferPlan';
+import {
+    buildCounterofferRequestedChanges,
+    calculateCounterofferPlanResult,
+    formatFitRatingDifference,
+    formatRatingDifference,
+} from './counterofferPlan';
 import type {
     CounterofferPlan,
     CounterofferPlanErrors,
@@ -16,6 +21,7 @@ import type {
     OfferDecisionRating,
 } from '../models';
 import OfferDecisionFieldError, { getOfferDecisionErrorProps } from '../OfferDecisionFieldError';
+import CounterofferRequestedChanges from './CounterofferRequestedChanges';
 import styles from './CounterofferPlanDialog.module.css';
 
 type CounterofferIdealOfferProps = {
@@ -69,6 +75,7 @@ const CounterofferIdealOffer = ({
 
     const idPrefix = `counteroffer-${application.job_id}-ideal`;
     const result = calculateCounterofferPlanResult(evaluation, plan);
+    const requestedChanges = buildCounterofferRequestedChanges(evaluation, plan);
     const updatePlan = (changes: Partial<CounterofferPlan>) => onChange({ ...plan, ...changes });
     const updateRating = (category: OfferDecisionCategory, rating: OfferDecisionRating) =>
         updatePlan({ ratings: { ...plan.ratings, [category]: rating } });
@@ -268,16 +275,6 @@ const CounterofferIdealOffer = ({
                 </section>
             </div>
 
-            {errors.plan && (
-                <div className={styles.planError} role='alert'>
-                    <OfferDecisionFieldError
-                        className={styles.fieldError}
-                        id={`${idPrefix}-plan-error`}
-                        message={errors.plan}
-                    />
-                </div>
-            )}
-
             <section
                 aria-labelledby={`${idPrefix}-result-heading`}
                 aria-live='polite'
@@ -301,6 +298,7 @@ const CounterofferIdealOffer = ({
                     </div>
                 </dl>
                 <p>{conclusion}</p>
+                <CounterofferRequestedChanges changes={requestedChanges} />
                 <OfferDecisionFieldError
                     className={styles.fieldError}
                     id='counteroffer-fit-error'

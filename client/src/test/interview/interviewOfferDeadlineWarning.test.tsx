@@ -97,6 +97,16 @@ describe('interview offer deadline warning', () => {
                 job_posting_url: '',
                 notes: '',
             },
+            {
+                job_id: 14,
+                company_name: 'Expired',
+                job_title: 'Expired offer',
+                application_date: '2026-01-01T00:00:00.000Z',
+                job_status: 'Offer' as const,
+                job_location: '',
+                job_posting_url: '',
+                notes: '',
+            },
         ];
         const evaluations = {
             12: { job_id: 12, ratings: {}, details: { decision_deadline: warning.decision_deadline } },
@@ -104,6 +114,11 @@ describe('interview offer deadline warning', () => {
                 job_id: 13,
                 ratings: {},
                 details: { decision_deadline: new Date(2026, 6, 24, 15, 0).toISOString() },
+            },
+            14: {
+                job_id: 14,
+                ratings: {},
+                details: { decision_deadline: new Date(2026, 6, 25, 11, 0).toISOString() },
             },
         };
 

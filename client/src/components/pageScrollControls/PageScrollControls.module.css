@@ -1,0 +1,64 @@
+.scrollButton {
+    position: fixed;
+    z-index: 30;
+    display: grid;
+    padding: 0;
+    place-items: center;
+    border: 1px solid var(--colorInteractiveBorder);
+    border-radius: 50%;
+    background-color: var(--colorControlSurface);
+    color: var(--colorPrimary);
+    cursor: pointer;
+    opacity: 0.52;
+    transition: opacity 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.scrollButton:hover {
+    border-color: var(--colorPrimary);
+    background-color: var(--colorControlMutedSurface);
+    opacity: 1;
+}
+
+.scrollButton:focus-visible {
+    outline: 2px solid var(--colorControlFocusRing);
+    outline-offset: 2px;
+    opacity: 1;
+}
+
+.scrollButton svg {
+    width: 20px;
+    height: 20px;
+}
+
+.scrollToTop {
+    top: 16px;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    transform: translateX(-50%);
+    opacity: 0.36;
+}
+
+.scrollToBottom {
+    bottom: 16px;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    transform: translateX(-50%);
+}
+
+@media (max-width: 600px) {
+    .scrollToTop {
+        top: 12px;
+    }
+
+    .scrollToBottom {
+        bottom: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scrollButton {
+        transition: none;
+    }
+}

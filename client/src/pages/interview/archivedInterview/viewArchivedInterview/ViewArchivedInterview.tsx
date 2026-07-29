@@ -3,10 +3,6 @@ import type { ArchivedJobInterview } from '../../models';
 import { createInterviewCsvData } from '../../../../helper/csvExport';
 import { createDeleteConfirmation } from '../../../../components/confirmation/deleteConfirmation';
 import { createDeleteAllInterviewsConfirmation } from '../../../../components/confirmation/bulkConfirmations';
-import {
-    ARCHIVED_APPLICATION_BOARD_MESSAGE,
-    getApplicationUnavailableMessage,
-} from '../../applicationNavigationMessages';
 import { INTERVIEW_CSV_HEADERS } from '../../models';
 import { useNavigate } from 'react-router-dom';
 import SkeletonCard from '../../../../components/skeletonLoader/skeletonCard/SkeletonCard';
@@ -35,6 +31,7 @@ import {
 } from '../../../../helper/interviewTiming';
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
+import type { ApplicationListNavigationState } from '../../../application/applicationNavigation';
 
 const ViewArchivedInterview = () => {
     const api = useJobTrackerAPI();
@@ -52,7 +49,7 @@ const ViewArchivedInterview = () => {
     } = usePendingIds();
     const confirm = useConfirm();
     const navigate = useNavigate();
-    const { showErrorToast } = useToast();
+    const { showErrorToast, showSuccessToast } = useToast();
     const filterRequest = useFilterRequest<ArchivedJobInterview[]>();
     const viewMode = preferences.archived_interview_view_mode;
     const selectedTimeFilters = preferences.archived_interview_time_filters;
@@ -155,6 +152,7 @@ const ViewArchivedInterview = () => {
                 setArchivedInterviews((current) =>
                     current.filter((interview) => interview.archived_interview_id !== archivedInterviewId)
                 );
+                showSuccessToast('Archived interview deleted.');
             } finally {
                 stopDeletingInterview(archivedInterviewId);
             }
@@ -191,6 +189,7 @@ const ViewArchivedInterview = () => {
 
             await api.archivedInterview.deleteAllInterviews();
             setArchivedInterviews([]);
+            showSuccessToast('Archived interviews deleted.');
         } catch (error) {
             showErrorToast(
                 getErrorToastMessage(
@@ -215,49 +214,14 @@ const ViewArchivedInterview = () => {
         variant: 'archived',
     });
 
-    const handleViewApplicationClick = async (
-        event: MouseEvent<HTMLAnchorElement>,
-        interview: ArchivedJobInterview
-    ) => {
+    const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: ArchivedJobInterview) => {
         event.preventDefault();
 
-        if (preferences.archived_application_view_mode === 'board') {
-            showErrorToast(ARCHIVED_APPLICATION_BOARD_MESSAGE);
-            return;
-        }
-
-        try {
-            const applications = await api.archivedApplication.listApplications({
-                jobStatuses: preferences.archived_application_job_statuses,
-            });
-            const applicationExists = applications.some(
-                (application) => application.archived_job_id === interview.archived_job_id
-            );
-
-            if (!applicationExists) {
-                showErrorToast(
-                    getApplicationUnavailableMessage(
-                        preferences.archived_application_job_statuses,
-                        interview.job_status,
-                        {
-                            applicationLabel: 'This archived job application',
-                            applicationsPageLabel: 'archived applications',
-                            statusFilterLabel: 'archived job status filter',
-                        }
-                    )
-                );
-                return;
-            }
-
-            navigate(`${routes.archivedApplications}#${interview.archived_job_id}`);
-        } catch (error) {
-            showErrorToast(
-                getErrorToastMessage(
-                    error,
-                    'Unable to check the corresponding archived job application. Please try again.'
-                )
-            );
-        }
+        const state: ApplicationListNavigationState = {
+            applicationListJobStatus: interview.job_status,
+            applicationListTargetId: interview.archived_job_id,
+        };
+        navigate(routes.archivedApplications, { state });
     };
 
     return (

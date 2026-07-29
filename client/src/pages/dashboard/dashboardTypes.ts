@@ -20,7 +20,7 @@ export type DashboardNavigationProps = {
     onAddInterview?: DashboardApplicationActionHandler;
     onInterviewSelect?: DashboardInterviewSelectHandler;
     onOpenOfferComparison?: DashboardApplicationActionHandler;
-    onOpenOfferDecisionApplication?: DashboardApplicationActionHandler;
+    onRecordOfferDecision?: DashboardApplicationActionHandler;
     onStatusSelect?: DashboardStatusSelectHandler;
     onMarkApplicationFollowUpSent?: DashboardApplicationFollowUpHandler;
     onMarkInterviewFollowUpSent?: DashboardInterviewFollowUpHandler;

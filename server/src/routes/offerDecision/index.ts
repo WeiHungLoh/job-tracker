@@ -160,15 +160,6 @@ router.put(
                 );
                 return;
             }
-            if (result === 'plan_unchanged') {
-                sendCodedError(
-                    res,
-                    422,
-                    'COUNTEROFFER_PLAN_UNCHANGED',
-                    'The Ideal offer must change at least one term or rating.'
-                );
-                return;
-            }
             if (result === 'fit_below_current') {
                 sendCodedError(
                     res,
@@ -235,6 +226,15 @@ router.put(
             }
             if (result === 'deadline_before_application') {
                 sendError(res, 422, 'Decision deadline cannot be earlier than the application date.');
+                return;
+            }
+            if (result === 'counteroffer_above_evaluation') {
+                sendCodedError(
+                    res,
+                    409,
+                    'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+                    'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.'
+                );
                 return;
             }
 

@@ -43,7 +43,11 @@ import EmptyState from '../../../../../components/emptyState/EmptyState';
 import { routes } from '../../../../../routes';
 import { createApplicationEmptyState } from '../../../../application/applicationEmptyState';
 import { getApplicationsInBoardOrder } from '../../../../application/applicationBoard/applicationBoardUtils';
-import { getDashboardApplicationId, getDashboardJobStatus } from '../../../../dashboard/dashboardNavigation';
+import {
+    getApplicationListJobStatuses,
+    getApplicationListJobStatus,
+    getApplicationListTargetId,
+} from '../../../../application/applicationNavigation';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
 import { shouldAutoScrollAfterStatusChange } from '../../../../application/applicationSorting';
 import usePendingIds from '../../../../../hooks/usePendingIds';
@@ -57,8 +61,8 @@ const DemoViewApplication = () => {
     const { preferences, updatePreferences } = useUserPreferences();
     const location = useLocation();
     const navigate = useNavigate();
-    const dashboardJobStatusRef = useRef(getDashboardJobStatus(location.state));
-    const dashboardApplicationIdRef = useRef(getDashboardApplicationId(location.state));
+    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
     const [editingApplicationId, setEditingApplicationId] = useState<number | null>(null);
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
     const confirm = useConfirm();
@@ -121,32 +125,38 @@ const DemoViewApplication = () => {
     });
 
     useEffect(() => {
-        const dashboardJobStatus = dashboardJobStatusRef.current;
-        if (!dashboardJobStatus) {
+        const navigationJobStatus = navigationJobStatusRef.current;
+        if (!navigationJobStatus) {
             return;
         }
 
-        dashboardJobStatusRef.current = null;
+        navigationJobStatusRef.current = null;
+        const navigationApplicationId = navigationApplicationIdRef.current;
+        const navigationJobStatuses = getApplicationListJobStatuses(
+            selectedJobStatuses,
+            navigationJobStatus,
+            navigationApplicationId
+        );
         const preferenceUpdates: {
             application_job_statuses?: JobStatus[];
             application_view_mode?: CollectionViewMode;
         } = {};
-        if (selectedJobStatuses.length !== 1 || selectedJobStatuses[0] !== dashboardJobStatus) {
-            preferenceUpdates.application_job_statuses = [dashboardJobStatus];
+        if (navigationJobStatuses !== selectedJobStatuses) {
+            preferenceUpdates.application_job_statuses = navigationJobStatuses;
         }
-        if (dashboardApplicationIdRef.current && isBoardView) {
+        if (navigationApplicationId && isBoardView) {
             preferenceUpdates.application_view_mode = 'list';
         }
         if (Object.keys(preferenceUpdates).length > 0) {
             void updatePreferences(preferenceUpdates);
         }
-        if (!dashboardApplicationIdRef.current) {
+        if (!navigationApplicationId) {
             navigate(location.pathname, { replace: true, state: null });
         }
     }, [isBoardView, location.pathname, navigate, selectedJobStatuses, updatePreferences]);
 
     useEffect(() => {
-        const targetApplicationId = dashboardApplicationIdRef.current;
+        const targetApplicationId = navigationApplicationIdRef.current;
         if (isBoardView || !targetApplicationId) {
             return;
         }
@@ -155,7 +165,7 @@ const DemoViewApplication = () => {
             scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
         }
 
-        dashboardApplicationIdRef.current = null;
+        navigationApplicationIdRef.current = null;
         navigate(location.pathname, { replace: true, state: null });
     }, [isBoardView, location.pathname, navigate, visibleApplicationIds]);
 
@@ -223,8 +233,15 @@ const DemoViewApplication = () => {
         try {
             const relatedInterviewCount = state.interviews.filter((interview) => interview.job_id === jobId).length;
             const offerEvaluationCount = state.offerEvaluations[jobId] ? 1 : 0;
+            const counterofferPlanCount = state.counterofferPlans[jobId] ? 1 : 0;
             const confirmationResult = await confirm(
-                createApplicationRelationConfirmation(action, 'active', relatedInterviewCount, offerEvaluationCount)
+                createApplicationRelationConfirmation(
+                    action,
+                    'active',
+                    relatedInterviewCount,
+                    offerEvaluationCount,
+                    counterofferPlanCount
+                )
             );
 
             if (!confirmationResult?.confirmed) {
@@ -240,6 +257,7 @@ const DemoViewApplication = () => {
                 payload: { jobId },
             });
             notesAutosave.clearNoteState(jobId);
+            showSuccessToast(action === 'archive' ? 'Job application archived.' : 'Job application deleted.');
         } finally {
             pendingApplicationActionIdsRef.current.delete(jobId);
             if (action === 'archive') {
@@ -265,6 +283,9 @@ const DemoViewApplication = () => {
         const offerEvaluationCount = state.applications.filter(
             (application) => state.offerEvaluations[application.job_id]
         ).length;
+        const counterofferPlanCount = state.applications.filter(
+            (application) => state.counterofferPlans[application.job_id]
+        ).length;
 
         try {
             if (state.applications.length === 0) {
@@ -273,12 +294,18 @@ const DemoViewApplication = () => {
 
             const confirmation =
                 action === 'archive'
-                    ? createArchiveAllConfirmation(state.applications.length, interviewCount, offerEvaluationCount)
+                    ? createArchiveAllConfirmation(
+                          state.applications.length,
+                          interviewCount,
+                          offerEvaluationCount,
+                          counterofferPlanCount
+                      )
                     : createDeleteAllApplicationsConfirmation(
                           state.applications.length,
                           interviewCount,
                           offerEvaluationCount,
-                          'active'
+                          'active',
+                          counterofferPlanCount
                       );
             const { confirmed } = await confirm(confirmation);
 
@@ -292,6 +319,7 @@ const DemoViewApplication = () => {
 
             dispatch({ type: action === 'archive' ? 'ARCHIVE_ALL_APPLICATIONS' : 'DELETE_ALL_APPLICATIONS' });
             notesAutosave.clearAllNoteStates();
+            showSuccessToast(action === 'archive' ? 'Job applications archived.' : 'Job applications deleted.');
         } finally {
             bulkActionPendingRef.current = false;
             setPendingBulkAction(null);
@@ -322,6 +350,7 @@ const DemoViewApplication = () => {
                 jobStatus: newStatus,
             },
         });
+        showSuccessToast('Job application status updated.');
 
         if (shouldAutoScrollAfterStatusChange(isAutoScrollEnabled, preferences.application_list_sort_order)) {
             setTimeout(() => {
@@ -339,6 +368,7 @@ const DemoViewApplication = () => {
             type: 'UPDATE_APPLICATION_STATUS',
             payload: { jobId: application.job_id, jobStatus: newStatus },
         });
+        showSuccessToast('Job application status updated.');
     };
 
     const handleUndoFollowUp = (application: JobApplication) => {
@@ -464,7 +494,7 @@ const DemoViewApplication = () => {
                                         application_enable_scroll: !isAutoScrollEnabled,
                                     })
                                 }
-                                label='Auto-scroll to updated items'
+                                label='Auto-scroll and highlight updates'
                             />
                         </DisplayOptions>
                     )}

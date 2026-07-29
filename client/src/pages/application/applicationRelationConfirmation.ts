@@ -23,29 +23,45 @@ export const createApplicationRelationConfirmation = (
     action: ApplicationRelationAction,
     state: CollectionState,
     relatedInterviewCount: number,
-    offerEvaluationCount = 0
+    offerEvaluationCount = 0,
+    counterofferPlanCount = 0
 ): ConfirmOptions => {
     const actionLabel = ACTION_LABELS[action];
     const relatedInterviewLabel = formatCountLabel(relatedInterviewCount, `related ${state} interview`);
     const relatedInterviews = relatedInterviewCount > 0 ? ` and its ${relatedInterviewLabel}` : '';
     const permanence = action === 'delete' ? ` ${PERMANENT_DELETION_WARNING}` : '';
 
-    if (offerEvaluationCount > 0) {
+    if (offerEvaluationCount > 0 || counterofferPlanCount > 0) {
         const evaluationLabel =
             offerEvaluationCount === 1
                 ? 'saved offer evaluation'
                 : formatCountLabel(offerEvaluationCount, 'saved offer evaluation');
         const relations = [
             ...(relatedInterviewCount > 0 ? [`its ${relatedInterviewLabel}`] : []),
-            `its ${evaluationLabel}`,
+            ...(offerEvaluationCount > 0 ? [`its ${evaluationLabel}`] : []),
+            ...(counterofferPlanCount > 0 ? ['its counteroffer plan'] : []),
         ];
+        const finalRelation = relations.at(-1);
+        const precedingRelations = relations.slice(0, -1);
         const relationDescription =
-            relations.length === 1 ? ` and ${relations[0]}` : `, ${relations[0]}, and ${relations[1]}`;
+            relations.length === 1
+                ? ` and ${finalRelation}`
+                : `, ${precedingRelations.join(', ')}, and ${finalRelation}`;
+        const savedItems =
+            offerEvaluationCount > 0 && counterofferPlanCount > 0
+                ? 'The saved offer evaluation and counteroffer plan'
+                : offerEvaluationCount > 0
+                ? 'The saved offer evaluation'
+                : 'The counteroffer plan';
         const lifecycle =
             action === 'archive'
-                ? ' The saved offer evaluation becomes read-only while archived.'
+                ? ` ${savedItems} ${
+                      offerEvaluationCount + counterofferPlanCount === 1 ? 'becomes' : 'become'
+                  } read-only while archived.`
                 : action === 'unarchive'
-                ? ' The saved offer evaluation becomes editable again.'
+                ? ` ${savedItems} ${
+                      offerEvaluationCount + counterofferPlanCount === 1 ? 'becomes' : 'become'
+                  } editable again.`
                 : permanence;
 
         return {

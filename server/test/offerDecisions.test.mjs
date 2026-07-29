@@ -219,6 +219,12 @@ test('validates required offer details and bounded optional details', () => {
 test('validates one normalized offer evaluation request instead of a bulk request', () => {
     assert.equal(typeof httpValidation.isSaveOfferEvaluationRequest, 'function');
     assert.equal(httpValidation.isSaveOfferEvaluationRequest(validRequest), true);
+    assert.equal(httpValidation.isSaveOfferEvaluationRequest({ ...validRequest, deleteCounterofferPlan: true }), true);
+    assert.equal(httpValidation.isSaveOfferEvaluationRequest({ ...validRequest, deleteCounterofferPlan: false }), true);
+    assert.equal(
+        httpValidation.isSaveOfferEvaluationRequest({ ...validRequest, deleteCounterofferPlan: 'true' }),
+        false
+    );
     assert.equal(httpValidation.isSaveOfferEvaluationRequest({ ...validRequest, ratings: null }), false);
     assert.equal(httpValidation.isSaveOfferEvaluationRequest({ ...validRequest, details: null }), false);
     assert.equal(httpValidation.isSaveOfferEvaluationRequest({ evaluations: [], importance: validValues }), false);
@@ -279,7 +285,15 @@ test('loads the active workspace in one user-scoped query and maps optional eval
                         decision_deadline: new Date(validDetails.decision_deadline),
                         pros: 'Strong product ownership',
                         concerns: 'Two office days each week',
-                        has_counteroffer_plan: true,
+                        counteroffer_job_id: 11,
+                        counteroffer_monthly_base_salary: 11000,
+                        counteroffer_bonus: '20% target',
+                        counteroffer_annual_leave_days: 24,
+                        counteroffer_work_arrangement: 'Remote',
+                        counteroffer_career_growth_rating: 5,
+                        counteroffer_company_culture_fit_rating: 5,
+                        counteroffer_work_life_balance_rating: 4,
+                        counteroffer_compensation_rating: 5,
                     },
                     {
                         job_id: 12,
@@ -288,7 +302,7 @@ test('loads the active workspace in one user-scoped query and maps optional eval
                         job_status: 'Offer',
                         application_date: '2026-07-02T08:00:00.000Z',
                         evaluation_job_id: null,
-                        has_counteroffer_plan: false,
+                        counteroffer_job_id: null,
                     },
                 ],
             };
@@ -302,7 +316,8 @@ test('loads the active workspace in one user-scoped query and maps optional eval
     assert.match(calls[0].sql, /evaluations\.user_id = applications\.user_id/);
     assert.match(calls[0].sql, /applications\.user_id = \$1/);
     assert.match(calls[0].sql, /applications\.is_archived = \$2/);
-    assert.match(calls[0].sql, /EXISTS\s*\(\s*SELECT 1\s+FROM offer_counteroffer_plans/s);
+    assert.match(calls[0].sql, /LEFT JOIN offer_counteroffer_plans AS plans/);
+    assert.match(calls[0].sql, /plans\.user_id = applications\.user_id/);
     assert.match(calls[0].sql, /applications\.job_status = 'Offer'/);
     assert.match(calls[0].sql, /'Offers to Evaluate' = ANY\(\$3::text\[\]\)/);
     assert.match(calls[0].sql, /'Evaluated Offers' = ANY\(\$3::text\[\]\)/);
@@ -331,6 +346,18 @@ test('loads the active workspace in one user-scoped query and maps optional eval
                     details: validDetails,
                 },
                 has_counteroffer_plan: true,
+                counteroffer_plan: {
+                    monthly_base_salary: 11000,
+                    bonus: '20% target',
+                    annual_leave_days: 24,
+                    work_arrangement: 'Remote',
+                    ratings: {
+                        career_growth: 5,
+                        company_culture_fit: 5,
+                        work_life_balance: 4,
+                        compensation: 5,
+                    },
+                },
             },
             {
                 job_id: 12,
@@ -340,6 +367,7 @@ test('loads the active workspace in one user-scoped query and maps optional eval
                 application_date: '2026-07-02T08:00:00.000Z',
                 evaluation: null,
                 has_counteroffer_plan: false,
+                counteroffer_plan: null,
             },
         ],
     });
@@ -459,7 +487,7 @@ test('allows an individual rating trade-off when the Ideal offer fit does not fa
     );
 });
 
-test('rolls back the whole counteroffer save for invalid Ideal offer relationships', async () => {
+test('rolls back the whole counteroffer save when the Ideal fit is below the current fit', async () => {
     const current = {
         job_id: 11,
         job_status: 'Offer',
@@ -474,55 +502,73 @@ test('rolls back the whole counteroffer save for invalid Ideal offer relationshi
         annual_leave_days: 21,
         work_arrangement: 'Hybrid',
     };
-    const cases = [
-        [
-            {
-                ...validCounterofferRequest,
-                ratings: {
-                    career_growth: 3,
-                    company_culture_fit: 3,
-                    work_life_balance: 3,
-                    compensation: 3,
-                },
-            },
-            'fit_below_current',
-        ],
-        [
-            {
-                ...validCounterofferRequest,
-                monthly_base_salary: current.monthly_base_salary,
-                ratings: {
-                    career_growth: current.career_growth_rating,
-                    company_culture_fit: current.company_culture_fit_rating,
-                    work_life_balance: current.work_life_balance_rating,
-                    compensation: current.compensation_rating,
-                },
-            },
-            'plan_unchanged',
-        ],
-    ];
-
-    for (const [request, expectedResult] of cases) {
-        const calls = [];
-        await withMockedPoolClient(
-            async (sql) => {
-                calls.push(compactSQL(sql));
-                if (String(sql).includes('FOR UPDATE OF applications, evaluations')) {
-                    return { rows: [current] };
-                }
-                return { rows: [], rowCount: 1 };
-            },
-            async () => {
-                assert.equal(await offerDecisionQueries.saveCounterofferPlan(7, 11, request), expectedResult);
+    const request = {
+        ...validCounterofferRequest,
+        ratings: {
+            career_growth: 3,
+            company_culture_fit: 3,
+            work_life_balance: 3,
+            compensation: 3,
+        },
+    };
+    const calls = [];
+    await withMockedPoolClient(
+        async (sql) => {
+            calls.push(compactSQL(sql));
+            if (String(sql).includes('FOR UPDATE OF applications, evaluations')) {
+                return { rows: [current] };
             }
-        );
+            return { rows: [], rowCount: 1 };
+        },
+        async () => {
+            assert.equal(await offerDecisionQueries.saveCounterofferPlan(7, 11, request), 'fit_below_current');
+        }
+    );
 
-        assert.equal(calls.at(-1), 'ROLLBACK');
-        assert.equal(
-            calls.some((sql) => sql.includes('INSERT INTO offer_counteroffer_plans')),
-            false
-        );
-    }
+    assert.equal(calls.at(-1), 'ROLLBACK');
+    assert.equal(
+        calls.some((sql) => sql.includes('INSERT INTO offer_counteroffer_plans')),
+        false
+    );
+});
+
+test('saves an unchanged counteroffer plan when its fit matches the current offer', async () => {
+    const calls = [];
+    await withMockedPoolClient(
+        async (sql) => {
+            calls.push(compactSQL(sql));
+            if (String(sql).includes('FOR UPDATE OF applications, evaluations')) {
+                return {
+                    rows: [
+                        {
+                            job_id: 11,
+                            job_status: 'Offer',
+                            is_archived: false,
+                            decision_deadline: '2099-08-15T10:00:00.000Z',
+                            career_growth_rating: 4,
+                            company_culture_fit_rating: 4,
+                            work_life_balance_rating: 4,
+                            compensation_rating: 4,
+                            monthly_base_salary: 11000,
+                            bonus: '15% target',
+                            annual_leave_days: 21,
+                            work_arrangement: 'Hybrid',
+                        },
+                    ],
+                };
+            }
+            return { rows: [], rowCount: 1 };
+        },
+        async () => {
+            assert.equal(await offerDecisionQueries.saveCounterofferPlan(7, 11, validCounterofferRequest), 'saved');
+        }
+    );
+
+    assert.equal(calls.at(-1), 'COMMIT');
+    assert.equal(
+        calls.some((sql) => sql.includes('INSERT INTO offer_counteroffer_plans')),
+        true
+    );
 });
 
 test('rejects unavailable, archived, previous and expired counteroffer saves before writing', async () => {
@@ -632,6 +678,9 @@ test('saves one offer evaluation at the application timestamp atomically', async
                     rows: [{ job_id: 11, job_status: 'Offer', application_date: validDetails.decision_deadline }],
                 };
             }
+            if (String(sql).includes('FROM offer_counteroffer_plans')) {
+                return { rows: [] };
+            }
             return { rows: [], rowCount: 1 };
         },
         async (wasReleased) => {
@@ -646,12 +695,107 @@ test('saves one offer evaluation at the application timestamp atomically', async
     assert.match(calls[1].sql, /applications\.application_date/);
     assert.match(calls[1].sql, /FOR UPDATE OF applications/);
     assert.deepEqual(calls[1].values, [7, 11]);
-    assert.match(calls[2].sql, /INSERT INTO offer_evaluations/);
-    assert.match(calls[2].sql, /monthly_base_salary/);
-    assert.doesNotMatch(calls[2].sql, /importance|equity|\bbase_salary\b/);
-    assert.match(calls[2].sql, /ON CONFLICT \(job_id, user_id\) DO UPDATE/);
-    assert.doesNotMatch(calls[2].sql, /updated_at/);
-    assert.equal(calls[3].sql, 'COMMIT');
+    assert.match(calls[2].sql, /FROM offer_counteroffer_plans/);
+    assert.match(calls[2].sql, /FOR UPDATE/);
+    assert.match(calls[3].sql, /INSERT INTO offer_evaluations/);
+    assert.match(calls[3].sql, /monthly_base_salary/);
+    assert.doesNotMatch(calls[3].sql, /importance|equity|\bbase_salary\b/);
+    assert.match(calls[3].sql, /ON CONFLICT \(job_id, user_id\) DO UPDATE/);
+    assert.doesNotMatch(calls[3].sql, /updated_at/);
+    assert.equal(calls[4].sql, 'COMMIT');
+});
+
+test('requires confirmation before saving an evaluation below its counteroffer fit rating', async () => {
+    const calls = [];
+    await withMockedPoolClient(
+        async (sql) => {
+            calls.push(compactSQL(sql));
+            if (String(sql).includes('FOR UPDATE OF applications')) {
+                return {
+                    rows: [{ job_id: 11, job_status: 'Offer', application_date: validDetails.decision_deadline }],
+                };
+            }
+            if (String(sql).includes('FROM offer_counteroffer_plans')) {
+                return {
+                    rows: [
+                        {
+                            monthly_base_salary: 11000,
+                            bonus: '',
+                            annual_leave_days: 21,
+                            work_arrangement: 'Hybrid',
+                            career_growth_rating: 4,
+                            company_culture_fit_rating: 4,
+                            work_life_balance_rating: 4,
+                            compensation_rating: 4,
+                        },
+                    ],
+                };
+            }
+            return { rows: [], rowCount: 1 };
+        },
+        async () => {
+            assert.equal(
+                await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest),
+                'counteroffer_above_evaluation'
+            );
+        }
+    );
+
+    assert.equal(calls.at(-1), 'ROLLBACK');
+    assert.equal(
+        calls.some((sql) => sql.includes('DELETE FROM offer_counteroffer_plans')),
+        false
+    );
+    assert.equal(
+        calls.some((sql) => sql.includes('INSERT INTO offer_evaluations')),
+        false
+    );
+});
+
+test('atomically deletes the counteroffer before saving a confirmed lower evaluation', async () => {
+    const calls = [];
+    await withMockedPoolClient(
+        async (sql) => {
+            calls.push(compactSQL(sql));
+            if (String(sql).includes('FOR UPDATE OF applications')) {
+                return {
+                    rows: [{ job_id: 11, job_status: 'Offer', application_date: validDetails.decision_deadline }],
+                };
+            }
+            if (String(sql).includes('FROM offer_counteroffer_plans')) {
+                return {
+                    rows: [
+                        {
+                            monthly_base_salary: 11000,
+                            bonus: '',
+                            annual_leave_days: 21,
+                            work_arrangement: 'Hybrid',
+                            career_growth_rating: 4,
+                            company_culture_fit_rating: 4,
+                            work_life_balance_rating: 4,
+                            compensation_rating: 4,
+                        },
+                    ],
+                };
+            }
+            return { rows: [], rowCount: 1 };
+        },
+        async () => {
+            assert.equal(
+                await offerDecisionQueries.saveOfferEvaluation(7, 11, {
+                    ...validRequest,
+                    deleteCounterofferPlan: true,
+                }),
+                'saved'
+            );
+        }
+    );
+
+    const counterofferDeleteIndex = calls.findIndex((sql) => sql.includes('DELETE FROM offer_counteroffer_plans'));
+    const evaluationSaveIndex = calls.findIndex((sql) => sql.includes('INSERT INTO offer_evaluations'));
+    assert.ok(counterofferDeleteIndex > 0);
+    assert.ok(evaluationSaveIndex > counterofferDeleteIndex);
+    assert.equal(calls.at(-1), 'COMMIT');
 });
 
 test('rolls back before upsert when the deadline is earlier than the application date', async () => {
@@ -802,12 +946,31 @@ test('maps singular save results to unavailable, deadline, and success responses
         [],
         [{ job_id: 11, job_status: 'Offer', application_date: '2026-07-18T10:01:00.000Z' }],
         [{ job_id: 11, job_status: 'Offer', application_date: validDetails.decision_deadline }],
+        [{ job_id: 11, job_status: 'Offer', application_date: validDetails.decision_deadline }],
+    ];
+    const counterofferRows = [
+        [
+            {
+                monthly_base_salary: 11000,
+                bonus: '',
+                annual_leave_days: 21,
+                work_arrangement: 'Hybrid',
+                career_growth_rating: 4,
+                company_culture_fit_rating: 4,
+                work_life_balance_rating: 4,
+                compensation_rating: 4,
+            },
+        ],
+        [],
     ];
 
     await withMockedPoolClient(
         async (sql) => {
             if (String(sql).includes('FOR UPDATE OF applications')) {
                 return { rows: lockedRows.shift() };
+            }
+            if (String(sql).includes('FROM offer_counteroffer_plans')) {
+                return { rows: counterofferRows.shift() };
             }
             return { rows: [] };
         },
@@ -824,6 +987,15 @@ test('maps singular save results to unavailable, deadline, and success responses
             assert.equal(deadlineResponse.statusCode, 422);
             assert.deepEqual(deadlineResponse.body, {
                 message: 'Decision deadline cannot be earlier than the application date.',
+            });
+
+            const counterofferResponse = createResponse();
+            await handler({ body: validRequest, params: { jobId: '11' }, user: { id: 7 } }, counterofferResponse);
+            assert.equal(counterofferResponse.statusCode, 409);
+            assert.deepEqual(counterofferResponse.body, {
+                code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+                message:
+                    'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
             });
 
             const successResponse = createResponse();

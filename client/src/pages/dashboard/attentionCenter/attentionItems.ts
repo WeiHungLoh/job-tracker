@@ -167,7 +167,7 @@ export const getAttentionItems = (
                     category,
                     message: `The decision deadline is ${formatLongDate(
                         decisionDeadline
-                    )} (${deadlineTiming}). Record the application as Accepted or Declined once decided.`,
+                    )} (${deadlineTiming}). Review the evaluated offer and mark it as Accepted or Declined once decided.`,
                     priority: CATEGORY_PRIORITY[category],
                     sortValue: -remainingMs,
                 },

@@ -182,9 +182,9 @@ describe('Rose Ledger visual contract', () => {
             'src/components/confirmation/bulkConfirmations.ts',
             'src/components/confirmation/deleteConfirmation.ts',
             'src/pages/application/applicationRelationConfirmation.ts',
+            'src/pages/application/applicationNavigation.ts',
             'src/pages/application/duplicateApplicationConfirmation.ts',
             'src/pages/interview/interviewConflictConfirmation.tsx',
-            'src/pages/interview/applicationNavigationMessages.ts',
             'src/pages/dashboard/dashboardNavigation.ts',
             'src/components/passwordStrengthMeter/passwordStrength.ts',
             'src/components/activityControls/useControlDropdown.ts',
@@ -270,6 +270,7 @@ describe('Rose Ledger visual contract', () => {
     });
 
     it('keeps Offer Comparison inside the existing solid-surface design system', () => {
+        const offerDecisionWorkspace = readSource('src/pages/offerDecision/OfferDecisionWorkspace.tsx');
         const offerDecisionWorkspaceCss = readSource('src/pages/offerDecision/OfferDecisionWorkspace.module.css');
         const offerEvaluationCss = readSource('src/pages/offerDecision/OfferEvaluation.module.css');
         const offerDecisionSkeletonCss = readSource('src/pages/offerDecision/OfferDecisionSkeleton.module.css');
@@ -281,6 +282,9 @@ describe('Rose Ledger visual contract', () => {
 
         expect(offerDecisionWorkspaceCss).not.toContain('linear-gradient');
         expect(offerDecisionWorkspaceCss).not.toContain('box-shadow');
+        expect(offerDecisionWorkspaceCss).toMatch(/\.workspace\s*\{[^}]*overflow-anchor:\s*none;/s);
+        expect(offerDecisionWorkspace).toContain("import evaluationStyles from './OfferEvaluation.module.css';");
+        expect(offerDecisionWorkspace).toContain('evaluationStyles.highlighted');
         expect(offerEvaluationCss).not.toContain('linear-gradient');
         expect(offerEvaluationCss).not.toContain('box-shadow');
         expect(robustnessCss).not.toContain('linear-gradient');
@@ -320,9 +324,9 @@ describe('Rose Ledger visual contract', () => {
         expect(counterofferCss).toMatch(
             /\.resultValues > div\s*\{[^}]*padding:\s*var\(--spaceControl\);[^}]*border-radius:\s*var\(--radiusControl\);[^}]*background-color:\s*var\(--colorControlMutedSurface\);/s
         );
-        expect(counterofferCss).toMatch(
-            /\.scenarioResult > p\s*\{[^}]*padding-top:\s*var\(--spaceCompact\);[^}]*border-top:\s*1px solid var\(--colorCardBorder\);/s
-        );
+        expect(counterofferCss).toMatch(/\.scenarioResult > p\s*\{[^}]*padding-top:\s*var\(--spaceCompact\);/s);
+        expect(counterofferCss).not.toMatch(/\.scenarioResult > p\s*\{[^}]*border-top:/s);
+        expect(counterofferCss).not.toMatch(/\.requestedChanges\s*\{[^}]*border-top:/s);
         expect(counterofferCss).not.toMatch(/\.scenarioResult\s*\{[^}]*background-color:\s*var\(--colorStatIconBg\);/s);
         expect(counterofferCss).toMatch(/\.applicationContext span\s*\{[^}]*font-weight:\s*600;[^}]*\}/s);
         expect(counterofferCss).toMatch(
@@ -358,6 +362,26 @@ describe('Rose Ledger visual contract', () => {
         expect(counterofferCss).toMatch(
             /@media \(max-width: 600px\)[\s\S]*?\.dialogPaper\s*\{[^}]*max-height:\s*calc\(100dvh - 16px\);/s
         );
+        expect(counterofferCss).toMatch(
+            /\.requestedChangeValue\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;/s
+        );
+        expect(counterofferCss).toMatch(
+            /\.requestedChangeColumns\s*\{[^}]*align-items:\s*stretch;[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /@media \(max-width: 600px\)[\s\S]*?\.requestedChangeColumns\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /\.requestedChangeColumn\s*\{[^}]*grid-template-rows:\s*auto minmax\(0,\s*1fr\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /\.requestedChangeColumn:first-child \.requestedChangeValue\s*\{[^}]*border-left-color:\s*var\(--colorToastErrorAccent\);[^}]*background-color:\s*var\(--colorToastErrorBg\);[^}]*color:\s*var\(--colorToastErrorText\);/s
+        );
+        expect(counterofferCss).toMatch(
+            /\.requestedChangeColumn:last-child \.requestedChangeValue\s*\{[^}]*border-left-color:\s*var\(--colorToastSuccessAccent\);[^}]*background-color:\s*var\(--colorToastSuccessBg\);[^}]*color:\s*var\(--colorToastSuccessText\);/s
+        );
+        expect(counterofferCss).not.toContain('.requestedChangeArrow');
+        expect(counterofferCss).not.toContain('.requestedChangeDifference');
         expect(robustnessCss).toMatch(/\.lab\s*\{[^}]*background-color:\s*var\(--colorCardBg\);/s);
         expect(robustnessCss).toContain('border: 1px solid var(--colorCardBorder);');
         expect(robustnessCss).toContain('accent-color: var(--colorPrimary);');
@@ -423,6 +447,7 @@ describe('Rose Ledger visual contract', () => {
             'CounterofferIdealOffer.tsx',
             'CounterofferPlanDialog.module.css',
             'CounterofferPlanDialog.tsx',
+            'CounterofferRequestedChanges.tsx',
             'counterofferPlan.ts',
         ].forEach((fileName) =>
             expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/counteroffer', fileName))).toBe(true)
@@ -432,6 +457,9 @@ describe('Rose Ledger visual contract', () => {
         expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/components'))).toBe(false);
         expect(existsSync(resolve(sourceRoot, 'pages/offerDecision/utils'))).toBe(false);
         expect(counterofferDialog).toContain("import CounterofferCurrentOffer from './CounterofferCurrentOffer';");
+        expect(counterofferIdealOffer).toContain(
+            "import CounterofferRequestedChanges from './CounterofferRequestedChanges';"
+        );
         expect(counterofferDialog).not.toContain('const CurrentOfferPanel');
         expect(offerDecisionFieldError).toContain('export const getOfferDecisionErrorProps');
         expect(offerDecisionFieldError).toContain('const OfferDecisionFieldError');

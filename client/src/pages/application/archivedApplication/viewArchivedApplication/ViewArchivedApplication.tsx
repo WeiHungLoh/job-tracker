@@ -43,6 +43,11 @@ import SortOptions from '../../../../components/activityControls/sortOptions/Sor
 import { sortApplications } from '../../applicationSorting';
 import { getApplicationsInBoardOrder } from '../../applicationBoard/applicationBoardUtils';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
+import {
+    getApplicationListJobStatuses,
+    getApplicationListJobStatus,
+    getApplicationListTargetId,
+} from '../../applicationNavigation';
 
 const ViewArchivedApplication = () => {
     const api = useJobTrackerAPI();
@@ -50,6 +55,8 @@ const ViewArchivedApplication = () => {
     const [archivedApplications, setArchivedApplications] = useState<ArchivedJobApplication[]>([]);
     const location = useLocation();
     const navigate = useNavigate();
+    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const confirm = useConfirm();
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -67,7 +74,7 @@ const ViewArchivedApplication = () => {
         startPending: startUnarchivingApplication,
         stopPending: stopUnarchivingApplication,
     } = usePendingIds();
-    const { showErrorToast } = useToast();
+    const { showErrorToast, showSuccessToast } = useToast();
     const filterRequest = useFilterRequest<ArchivedJobApplication[]>();
     const selectedJobStatuses = preferences.archived_application_job_statuses;
     const showNotes = preferences.archived_application_show_notes;
@@ -175,10 +182,37 @@ const ViewArchivedApplication = () => {
         let isActive = true;
 
         const fetchApplications = async () => {
+            const navigationJobStatus = navigationJobStatusRef.current;
+            const navigationApplicationId = navigationApplicationIdRef.current;
+            const initialJobStatuses = getApplicationListJobStatuses(
+                selectedJobStatuses,
+                navigationJobStatus,
+                navigationApplicationId
+            );
+
             try {
-                const fetchedApplications = await api.archivedApplication.listApplications({
-                    jobStatuses: selectedJobStatuses,
-                });
+                const preferenceUpdates: UpdateUserPreferencesRequest = {};
+                if (initialJobStatuses !== selectedJobStatuses) {
+                    preferenceUpdates.archived_application_job_statuses = initialJobStatuses;
+                }
+                if (navigationApplicationId && isBoardView) {
+                    preferenceUpdates.archived_application_view_mode = 'list';
+                }
+                const preferenceUpdate =
+                    Object.keys(preferenceUpdates).length > 0
+                        ? updatePreferences(preferenceUpdates).catch((error: unknown) => {
+                              showErrorToast(
+                                  getErrorToastMessage(
+                                      error,
+                                      'Unable to filter archived job applications. Please try again.'
+                                  )
+                              );
+                          })
+                        : Promise.resolve();
+                const [fetchedApplications] = await Promise.all([
+                    api.archivedApplication.listApplications({ jobStatuses: initialJobStatuses }),
+                    preferenceUpdate,
+                ]);
                 if (isActive) {
                     setArchivedApplications(Array.isArray(fetchedApplications) ? fetchedApplications : []);
                 }
@@ -198,6 +232,21 @@ const ViewArchivedApplication = () => {
             isActive = false;
         };
     }, []);
+
+    useEffect(() => {
+        const targetApplicationId = navigationApplicationIdRef.current;
+        if (isLoading || isBoardView || !targetApplicationId) {
+            return;
+        }
+
+        if (archivedApplications.some((application) => application.archived_job_id === targetApplicationId)) {
+            scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+        }
+
+        navigationApplicationIdRef.current = null;
+        navigationJobStatusRef.current = null;
+        navigate(location.pathname, { replace: true, state: null });
+    }, [archivedApplications, isBoardView, isLoading, location.pathname, navigate]);
 
     useEffect(() => {
         const targetApplicationId = location.hash.substring(1);
@@ -235,7 +284,8 @@ const ViewArchivedApplication = () => {
                     action,
                     'archived',
                     summary.related_interview_count,
-                    summary.offer_evaluation_count
+                    summary.offer_evaluation_count,
+                    summary.counteroffer_plan_count
                 )
             );
 
@@ -252,6 +302,7 @@ const ViewArchivedApplication = () => {
             setArchivedApplications((current) =>
                 current.filter((application) => application.archived_job_id !== archivedJobId)
             );
+            showSuccessToast(action === 'unarchive' ? 'Job application unarchived.' : 'Job application deleted.');
         } catch (error) {
             const fallback =
                 action === 'unarchive'
@@ -294,13 +345,15 @@ const ViewArchivedApplication = () => {
                     ? createUnarchiveAllConfirmation(
                           summary.application_count,
                           summary.related_interview_count,
-                          summary.offer_evaluation_count
+                          summary.offer_evaluation_count,
+                          summary.counteroffer_plan_count
                       )
                     : createDeleteAllApplicationsConfirmation(
                           summary.application_count,
                           summary.related_interview_count,
                           summary.offer_evaluation_count,
-                          'archived'
+                          'archived',
+                          summary.counteroffer_plan_count
                       );
             const { confirmed } = await confirm(confirmation);
 
@@ -315,6 +368,7 @@ const ViewArchivedApplication = () => {
             }
 
             setArchivedApplications([]);
+            showSuccessToast(action === 'unarchive' ? 'Job applications unarchived.' : 'Job applications deleted.');
         } catch (error) {
             const fallback = !countsLoaded
                 ? 'Unable to load archived application counts. Please try again.'

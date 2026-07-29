@@ -1,4 +1,5 @@
 import {
+    buildCounterofferRequestedChanges,
     buildCounterofferConclusion,
     calculateCounterofferPlanResult,
     createCounterofferPlanFromEvaluation,
@@ -95,6 +96,7 @@ describe('counteroffer plan calculations and validation', () => {
     test.each([
         [70, 80, '+10 percentage points'],
         [80, 75, '−5 percentage points'],
+        [79, 80, '+1 percentage point'],
         [75, 75, 'No change'],
     ])('formats an overall %s to %s fit change unambiguously', (current, ideal, expected) => {
         expect(formatFitRatingDifference(current, ideal)).toBe(expected);
@@ -116,7 +118,203 @@ describe('counteroffer plan calculations and validation', () => {
         ).toEqual(result);
     });
 
-    test('blocks an unchanged or lower-fit Ideal offer while allowing an equal-fit trade-off', () => {
+    test('builds requested offer-field changes in a fixed order with Current and Ideal values only', () => {
+        expect(
+            buildCounterofferRequestedChanges(
+                currentEvaluation,
+                createPlan({
+                    monthly_base_salary: 11500,
+                    bonus: ' 15% target ',
+                    annual_leave_days: 22,
+                    work_arrangement: 'Remote',
+                })
+            )
+        ).toEqual([
+            {
+                key: 'monthly_base_salary',
+                label: 'Monthly base salary',
+                currentValue: 'SGD 10,000',
+                idealValue: 'SGD 11,500',
+            },
+            {
+                key: 'bonus',
+                label: 'Bonus',
+                currentValue: '10% target',
+                idealValue: '15% target',
+            },
+            {
+                key: 'annual_leave_days',
+                label: 'Annual leave',
+                currentValue: '20 days',
+                idealValue: '22 days',
+            },
+            {
+                key: 'work_arrangement',
+                label: 'Work arrangement',
+                currentValue: 'Hybrid',
+                idealValue: 'Remote',
+            },
+        ]);
+    });
+
+    test('formats salary and annual-leave values without treating missing leave as zero', () => {
+        expect(
+            buildCounterofferRequestedChanges(
+                currentEvaluation,
+                createPlan({
+                    monthly_base_salary: 9500,
+                    annual_leave_days: 18,
+                })
+            )
+        ).toEqual([
+            {
+                key: 'monthly_base_salary',
+                label: 'Monthly base salary',
+                currentValue: 'SGD 10,000',
+                idealValue: 'SGD 9,500',
+            },
+            {
+                key: 'annual_leave_days',
+                label: 'Annual leave',
+                currentValue: '20 days',
+                idealValue: '18 days',
+            },
+        ]);
+
+        expect(
+            buildCounterofferRequestedChanges(
+                {
+                    ...currentEvaluation,
+                    details: { ...currentEvaluation.details, annual_leave_days: null },
+                },
+                createPlan({ monthly_base_salary: 10000, annual_leave_days: 1 })
+            )
+        ).toEqual([
+            {
+                key: 'annual_leave_days',
+                label: 'Annual leave',
+                currentValue: 'Not included',
+                idealValue: '1 day',
+            },
+        ]);
+
+        expect(
+            buildCounterofferRequestedChanges(
+                currentEvaluation,
+                createPlan({ monthly_base_salary: 10000, annual_leave_days: null })
+            )
+        ).toEqual([
+            {
+                key: 'annual_leave_days',
+                label: 'Annual leave',
+                currentValue: '20 days',
+                idealValue: 'Not included',
+            },
+        ]);
+
+        expect(
+            buildCounterofferRequestedChanges(
+                currentEvaluation,
+                createPlan({ monthly_base_salary: 10000, annual_leave_days: 21 })
+            )
+        ).toEqual([
+            {
+                key: 'annual_leave_days',
+                label: 'Annual leave',
+                currentValue: '20 days',
+                idealValue: '21 days',
+            },
+        ]);
+    });
+
+    test('treats bonus as trimmed text and formats both empty-value transitions', () => {
+        const longBonus = 'Performance-based-bonus-with-an-unusually-long-unbroken-value';
+
+        expect(
+            buildCounterofferRequestedChanges(
+                {
+                    ...currentEvaluation,
+                    details: { ...currentEvaluation.details, bonus: '   ' },
+                },
+                createPlan({ monthly_base_salary: 10000, bonus: longBonus })
+            )
+        ).toEqual([
+            {
+                key: 'bonus',
+                label: 'Bonus',
+                currentValue: 'Not included',
+                idealValue: longBonus,
+            },
+        ]);
+
+        expect(
+            buildCounterofferRequestedChanges(
+                currentEvaluation,
+                createPlan({ monthly_base_salary: 10000, bonus: '   ' })
+            )
+        ).toEqual([
+            {
+                key: 'bonus',
+                label: 'Bonus',
+                currentValue: '10% target',
+                idealValue: 'Not included',
+            },
+        ]);
+
+        expect(
+            buildCounterofferRequestedChanges(
+                {
+                    ...currentEvaluation,
+                    details: { ...currentEvaluation.details, bonus: ' 10% target ' },
+                },
+                createPlan({ monthly_base_salary: 10000, bonus: '10% target' })
+            )
+        ).toEqual([]);
+    });
+
+    test('formats both work-arrangement empty-value transitions without a numeric difference', () => {
+        expect(
+            buildCounterofferRequestedChanges(
+                {
+                    ...currentEvaluation,
+                    details: { ...currentEvaluation.details, work_arrangement: '' },
+                },
+                createPlan({ monthly_base_salary: 10000, work_arrangement: 'Hybrid' })
+            )
+        ).toEqual([
+            {
+                key: 'work_arrangement',
+                label: 'Work arrangement',
+                currentValue: 'Not specified',
+                idealValue: 'Hybrid',
+            },
+        ]);
+
+        expect(
+            buildCounterofferRequestedChanges(
+                currentEvaluation,
+                createPlan({ monthly_base_salary: 10000, work_arrangement: '' })
+            )
+        ).toEqual([
+            {
+                key: 'work_arrangement',
+                label: 'Work arrangement',
+                currentValue: 'Hybrid',
+                idealValue: 'Not specified',
+            },
+        ]);
+    });
+
+    test('returns no requested offer-field changes when only ratings differ', () => {
+        expect(
+            buildCounterofferRequestedChanges(currentEvaluation, {
+                ...createCounterofferPlanFromEvaluation(currentEvaluation),
+                ratings: createPlan().ratings,
+            })
+        ).toEqual([]);
+    });
+
+    test('allows an unchanged or equal-fit Ideal offer while blocking a lower fit', () => {
         const unchanged = createCounterofferPlanFromEvaluation(currentEvaluation);
         const lowerFit = createPlan({
             ratings: {
@@ -127,11 +325,9 @@ describe('counteroffer plan calculations and validation', () => {
             },
         });
 
-        expect(validateCounterofferPlan(unchanged, currentEvaluation)).toMatchObject({
-            isValid: false,
-            errors: {
-                plan: 'Change at least one term or rating for the Ideal offer.',
-            },
+        expect(validateCounterofferPlan(unchanged, currentEvaluation)).toEqual({
+            isValid: true,
+            request: unchanged,
         });
         expect(validateCounterofferPlan(lowerFit, currentEvaluation)).toMatchObject({
             isValid: false,
@@ -203,7 +399,7 @@ describe('counteroffer plan calculations and validation', () => {
             'Your Ideal offer would change the fit rating from 75% to 80%. Add another evaluated offer to compare them.'
         );
         expect(buildCounterofferConclusion(currentApplication, 75, [higherOffer])).toBe(
-            'Your Ideal offer has the same fit rating as the current offer, with a different combination of terms and ratings.'
+            'Your Ideal offer has the same fit rating as the current offer.'
         );
     });
 

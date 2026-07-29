@@ -2,10 +2,6 @@ import { type MouseEvent, useMemo, useRef, useState } from 'react';
 import { createInterviewCsvData } from '../../../../../helper/csvExport';
 import { createDeleteConfirmation } from '../../../../../components/confirmation/deleteConfirmation';
 import { createDeleteAllInterviewsConfirmation } from '../../../../../components/confirmation/bulkConfirmations';
-import {
-    ARCHIVED_APPLICATION_BOARD_MESSAGE,
-    getApplicationUnavailableMessage,
-} from '../../../../interview/applicationNavigationMessages';
 import { INTERVIEW_CSV_HEADERS, type ArchivedJobInterview } from '../../../../interview/models';
 import { routes } from '../../../../../routes';
 import styles from '../../../../interview/InterviewListPage.module.css';
@@ -28,6 +24,7 @@ import {
     type InterviewTimeFilter,
 } from '../../../../../helper/interviewTiming';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
+import type { ApplicationListNavigationState } from '../../../../application/applicationNavigation';
 
 const DemoViewArchivedInterview = () => {
     const { dispatch, state, updatePreferences } = useDemo();
@@ -35,7 +32,7 @@ const DemoViewArchivedInterview = () => {
     const { preferences } = useUserPreferences();
     const confirm = useConfirm();
     const navigate = useNavigate();
-    const { showErrorToast } = useToast();
+    const { showSuccessToast } = useToast();
     const [isDeletingAll, setIsDeletingAll] = useState(false);
     const deleteAllPendingRef = useRef(false);
     const selectedTimeFilters = preferences.archived_interview_time_filters;
@@ -64,6 +61,7 @@ const DemoViewArchivedInterview = () => {
         }
 
         dispatch({ type: 'DELETE_ARCHIVED_INTERVIEW', payload: { archivedInterviewId } });
+        showSuccessToast('Archived interview deleted.');
     };
 
     const handleDeleteAll = async () => {
@@ -88,6 +86,7 @@ const DemoViewArchivedInterview = () => {
             }
 
             dispatch({ type: 'DELETE_ALL_ARCHIVED_INTERVIEWS' });
+            showSuccessToast('Archived interviews deleted.');
         } finally {
             deleteAllPendingRef.current = false;
             setIsDeletingAll(false);
@@ -102,29 +101,11 @@ const DemoViewArchivedInterview = () => {
     const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: ArchivedJobInterview) => {
         event.preventDefault();
 
-        if (preferences.archived_application_view_mode === 'board') {
-            showErrorToast(ARCHIVED_APPLICATION_BOARD_MESSAGE);
-            return;
-        }
-
-        const applicationExists = state.archivedApplications.some(
-            (application) =>
-                application.archived_job_id === interview.archived_job_id &&
-                preferences.archived_application_job_statuses.includes(application.job_status)
-        );
-
-        if (!applicationExists) {
-            showErrorToast(
-                getApplicationUnavailableMessage(preferences.archived_application_job_statuses, interview.job_status, {
-                    applicationLabel: 'This archived job application',
-                    applicationsPageLabel: 'archived applications',
-                    statusFilterLabel: 'archived job status filter',
-                })
-            );
-            return;
-        }
-
-        navigate(`${routes.demoArchivedApplications}#${interview.archived_job_id}`);
+        const navigationState: ApplicationListNavigationState = {
+            applicationListJobStatus: interview.job_status,
+            applicationListTargetId: interview.archived_job_id,
+        };
+        navigate(routes.demoArchivedApplications, { state: navigationState });
     };
 
     return (

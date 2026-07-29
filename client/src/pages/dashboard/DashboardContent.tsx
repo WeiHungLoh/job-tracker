@@ -18,7 +18,7 @@ const DashboardContent = ({
     offerEvaluations = [],
     onInterviewSelect,
     onOpenOfferComparison,
-    onOpenOfferDecisionApplication,
+    onRecordOfferDecision,
     onStatusSelect,
     onMarkApplicationFollowUpSent,
     onMarkInterviewFollowUpSent,
@@ -45,7 +45,7 @@ const DashboardContent = ({
                     onAddInterview={onAddInterview}
                     offerEvaluations={offerEvaluations}
                     onOpenOfferComparison={onOpenOfferComparison}
-                    onOpenOfferDecisionApplication={onOpenOfferDecisionApplication}
+                    onRecordOfferDecision={onRecordOfferDecision}
                     onMarkApplicationFollowUpSent={onMarkApplicationFollowUpSent}
                     onMarkInterviewFollowUpSent={onMarkInterviewFollowUpSent}
                 />

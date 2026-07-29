@@ -164,11 +164,13 @@ export type ApplicationCollectionSummary = {
     application_count: number;
     related_interview_count: number;
     offer_evaluation_count: number;
+    counteroffer_plan_count: number;
 };
 
 export type ApplicationRelationSummary = {
     related_interview_count: number;
     offer_evaluation_count: number;
+    counteroffer_plan_count: number;
 };
 
 export type OfferDecisionValues = {
@@ -203,6 +205,10 @@ export type OfferEvaluationInput = {
     details: OfferDetails;
 };
 
+export type SaveOfferEvaluationInput = OfferEvaluationInput & {
+    deleteCounterofferPlan?: boolean;
+};
+
 export type OfferEvaluation = {
     job_id: number;
     ratings: OfferDecisionValues;
@@ -217,6 +223,7 @@ export type OfferDecisionApplication = {
     application_date: string;
     evaluation: OfferEvaluation | null;
     has_counteroffer_plan: boolean;
+    counteroffer_plan: CounterofferPlan | null;
 };
 
 export type OfferDecisionWorkspace = {

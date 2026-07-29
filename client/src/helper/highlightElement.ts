@@ -4,10 +4,11 @@
  */
 export const scrollAndHighlight = (
     elementId: string,
-    highlightClass: string,
-    timeouts: Record<string, ReturnType<typeof setTimeout>>
+    highlightClass: string | undefined,
+    timeouts: Record<string, ReturnType<typeof setTimeout>>,
+    block?: ScrollLogicalPosition
 ): void => {
-    const highlightClasses = highlightClass.split(/\s+/).filter(Boolean);
+    const highlightClasses = highlightClass?.split(/\s+/).filter(Boolean) ?? [];
 
     setTimeout(() => {
         if (typeof document === 'undefined') {
@@ -24,9 +25,14 @@ export const scrollAndHighlight = (
             clearTimeout(existing);
         }
 
-        element.classList.remove(...highlightClasses);
+        if (highlightClasses.length > 0) {
+            element.classList.remove(...highlightClasses);
+        }
         if (typeof element.scrollIntoView === 'function') {
-            element.scrollIntoView({ behavior: 'smooth' });
+            element.scrollIntoView({ behavior: 'smooth', ...(block ? { block } : {}) });
+        }
+        if (highlightClasses.length === 0) {
+            return;
         }
         element.classList.add(...highlightClasses);
         timeouts[elementId] = setTimeout(() => {

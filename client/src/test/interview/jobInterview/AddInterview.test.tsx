@@ -190,6 +190,35 @@ describe('AddInterview page', () => {
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
     });
 
+    test('keeps Enter as a notes newline and submits once with Shift+Enter', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            status: 201,
+            headers: new Headers({ 'content-type': 'text/plain' }),
+            text: async () => 'Successfully added an interview!',
+        });
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/interview/add', state: { app: mockApplication } }]}>
+                <Routes>
+                    <Route path='/interview/add' element={<AddInterview />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2025-08-03T14:30' } });
+        userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
+        const notes = screen.getByLabelText('Additional Notes (optional)');
+        await userEvent.type(notes, 'First line{enter}Second line');
+        expect(notes).toHaveValue('First line\nSecond line');
+        expect(fetch).not.toHaveBeenCalled();
+
+        fireEvent.keyDown(notes, { key: 'Enter', shiftKey: true });
+
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+        expect(JSON.parse(String(fetch.mock.calls[0][1]?.body)).notes).toBe('First line\nSecond line');
+    });
+
     test('View Interviews and Back do not submit the form', () => {
         render(
             <MemoryRouter initialEntries={[{ pathname: '/interview/add', state: { app: mockApplication } }]}>

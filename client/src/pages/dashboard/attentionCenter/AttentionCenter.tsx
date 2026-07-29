@@ -19,7 +19,7 @@ type AttentionCenterProps = {
     offerEvaluations?: readonly OfferEvaluation[];
     onAddInterview?: (application: JobApplication) => void;
     onOpenOfferComparison?: (application: JobApplication) => void;
-    onOpenOfferDecisionApplication?: (application: JobApplication) => void;
+    onRecordOfferDecision?: (application: JobApplication) => void;
     onMarkApplicationFollowUpSent?: (application: JobApplication) => void | Promise<void>;
     onMarkInterviewFollowUpSent?: (interview: JobInterview) => void | Promise<void>;
 };
@@ -40,7 +40,7 @@ const AttentionCenter = ({
     offerEvaluations = [],
     onAddInterview,
     onOpenOfferComparison,
-    onOpenOfferDecisionApplication,
+    onRecordOfferDecision,
     onMarkApplicationFollowUpSent,
     onMarkInterviewFollowUpSent,
 }: AttentionCenterProps) => {
@@ -73,7 +73,7 @@ const AttentionCenter = ({
                 onOpenOfferComparison?.(item.application);
                 break;
             case 'offer-decision-due':
-                onOpenOfferDecisionApplication?.(item.application);
+                onRecordOfferDecision?.(item.application);
                 break;
         }
     };

@@ -139,6 +139,24 @@ describe('Demo Add Interview scheduling conflicts', () => {
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
 
+    test('keeps Enter as a notes newline and submits with Shift+Enter', async () => {
+        renderDemoAddInterview();
+        const initialCount = getActiveInterviewCount();
+        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2031-01-10T10:30' } });
+        userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
+        const notes = screen.getByLabelText('Additional Notes (optional)');
+        await userEvent.type(notes, 'First line{enter}Second line');
+
+        expect(notes).toHaveValue('First line\nSecond line');
+        expect(getActiveInterviewCount()).toBe(initialCount);
+
+        fireEvent.keyDown(notes, { key: 'Enter', shiftKey: true });
+
+        const warningDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
+        fireEvent.click(within(warningDialog).getByRole('button', { name: 'Add Anyway' }));
+        await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
+    });
+
     test('confirming both warnings dispatches once, shows success once, and resets once', async () => {
         renderDemoAddInterview([createInterviewAction(101)]);
         await waitFor(() => expect(getActiveInterviewCount()).toBeGreaterThan(0));

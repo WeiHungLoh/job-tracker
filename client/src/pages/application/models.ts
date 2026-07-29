@@ -108,6 +108,7 @@ export type ApplicationCollectionSummary = {
     application_count: number;
     related_interview_count: number;
     offer_evaluation_count: number;
+    counteroffer_plan_count: number;
 };
 export type GetApplicationCollectionSummaryRequest = null;
 export type GetApplicationCollectionSummaryResponse = ApplicationCollectionSummary;
@@ -115,6 +116,7 @@ export type GetApplicationCollectionSummaryResponse = ApplicationCollectionSumma
 export type ApplicationRelationSummary = {
     related_interview_count: number;
     offer_evaluation_count: number;
+    counteroffer_plan_count: number;
 };
 export type GetApplicationRelationSummaryRequest = {
     jobId: number;

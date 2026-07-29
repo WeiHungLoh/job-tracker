@@ -181,7 +181,11 @@ const DeviceTimezoneNotice = () => {
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            dismissTimezoneToastRef.current?.();
+            dismissTimezoneToastRef.current = null;
+        };
     }, [checkDeviceTimezone]);
 
     return null;

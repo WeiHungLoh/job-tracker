@@ -3,6 +3,7 @@ import DeviceTimezoneNotice, {
     DEVICE_TIMEZONE_STORAGE_KEY,
 } from '../../components/deviceTimezoneNotice/DeviceTimezoneNotice';
 import { ToastProvider } from '../../components/toast/ToastProvider';
+import { useState } from 'react';
 
 const detectedTimezone = {
     offset: 'GMT+8',
@@ -35,6 +36,19 @@ const renderNotice = () =>
             <DeviceTimezoneNotice />
         </ToastProvider>
     );
+
+const NoticeUnmountHarness = () => {
+    const [isVisible, setIsVisible] = useState(true);
+
+    return (
+        <ToastProvider>
+            <button type='button' onClick={() => setIsVisible(false)}>
+                Unmount notice
+            </button>
+            {isVisible && <DeviceTimezoneNotice />}
+        </ToastProvider>
+    );
+};
 
 const getStoredTimezone = () => JSON.parse(localStorage.getItem(DEVICE_TIMEZONE_STORAGE_KEY) ?? '');
 
@@ -212,6 +226,15 @@ describe('DeviceTimezoneNotice', () => {
 
         unmount();
         expect(removeEventListener).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+    });
+
+    test('dismisses its persistent notice when the component unmounts', () => {
+        render(<NoticeUnmountHarness />);
+        expect(screen.getByRole('status')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Unmount notice' }));
+
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
     test('uses a browser-derived GMT fallback when shortOffset is unavailable', () => {

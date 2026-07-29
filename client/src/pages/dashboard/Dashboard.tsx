@@ -4,7 +4,8 @@ import DashboardContent from './DashboardContent';
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../application/models';
 import type { JobInterview } from '../interview/models';
 import type { OfferEvaluation } from '../offerDecision/models';
-import type { DashboardApplicationNavigationState, DashboardInterviewNavigationState } from './dashboardNavigation';
+import type { DashboardInterviewNavigationState, DashboardOfferDecisionNavigationState } from './dashboardNavigation';
+import type { ApplicationListNavigationState } from '../application/applicationNavigation';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
 import { useToast } from '../../components/toast/ToastProvider';
@@ -23,7 +24,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
 
     const handleStatusSelect = (status: JobStatus) => {
-        const state: DashboardApplicationNavigationState = { dashboardJobStatus: status };
+        const state: ApplicationListNavigationState = { applicationListJobStatus: status };
         navigate(routes.viewApplications, { state });
     };
 
@@ -36,16 +37,20 @@ const Dashboard = () => {
         navigate(routes.addInterview, { state: { app: application } });
     };
 
-    const handleOpenOfferComparison = () => {
-        navigate(routes.offerDecisions);
+    const handleOpenOfferComparison = (application: JobApplication) => {
+        const state: DashboardOfferDecisionNavigationState = {
+            dashboardOfferDecisionJobId: application.job_id,
+            dashboardOfferDecisionFilter: 'Offers to Evaluate',
+        };
+        navigate(routes.offerDecisions, { state });
     };
 
-    const handleOpenOfferDecisionApplication = (application: JobApplication) => {
-        const state: DashboardApplicationNavigationState = {
-            dashboardJobStatus: 'Offer',
-            dashboardApplicationId: application.job_id,
+    const handleRecordOfferDecision = (application: JobApplication) => {
+        const state: DashboardOfferDecisionNavigationState = {
+            dashboardOfferDecisionJobId: application.job_id,
+            dashboardOfferDecisionFilter: 'Evaluated Offers',
         };
-        navigate(routes.viewApplications, { state });
+        navigate(routes.offerDecisions, { state });
     };
 
     const handleMarkApplicationFollowUpSent = async (application: JobApplication) => {
@@ -131,7 +136,7 @@ const Dashboard = () => {
             onAddInterview={handleAddInterview}
             onInterviewSelect={handleInterviewSelect}
             onOpenOfferComparison={handleOpenOfferComparison}
-            onOpenOfferDecisionApplication={handleOpenOfferDecisionApplication}
+            onRecordOfferDecision={handleRecordOfferDecision}
             onMarkApplicationFollowUpSent={handleMarkApplicationFollowUpSent}
             onMarkInterviewFollowUpSent={handleMarkInterviewFollowUpSent}
             onStatusSelect={handleStatusSelect}

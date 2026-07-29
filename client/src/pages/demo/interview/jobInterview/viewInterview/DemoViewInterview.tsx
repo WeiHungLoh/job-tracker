@@ -2,10 +2,6 @@ import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { createInterviewCsvData } from '../../../../../helper/csvExport';
 import { createDeleteConfirmation } from '../../../../../components/confirmation/deleteConfirmation';
 import { createDeleteAllInterviewsConfirmation } from '../../../../../components/confirmation/bulkConfirmations';
-import {
-    ACTIVE_APPLICATION_BOARD_MESSAGE,
-    getApplicationUnavailableMessage,
-} from '../../../../interview/applicationNavigationMessages';
 import { INTERVIEW_CSV_HEADERS, type JobInterview } from '../../../../interview/models';
 import { routes } from '../../../../../routes';
 import styles from '../../../../interview/InterviewListPage.module.css';
@@ -31,6 +27,7 @@ import {
 } from '../../../../../helper/interviewTiming';
 import { useBulkInterviewCalendarExport } from '../../../../interview/calendarOptions/useBulkInterviewCalendarExport';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
+import type { ApplicationListNavigationState } from '../../../../application/applicationNavigation';
 
 const DemoViewInterview = () => {
     const { dispatch, state, updatePreferences } = useDemo();
@@ -41,7 +38,7 @@ const DemoViewInterview = () => {
     const location = useLocation();
     const dashboardInterviewIdRef = useRef(getDashboardInterviewId(location.state));
     const interviewHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-    const { showErrorToast, showSuccessToast } = useToast();
+    const { showSuccessToast } = useToast();
     const [isDeletingAll, setIsDeletingAll] = useState(false);
     const deleteAllPendingRef = useRef(false);
     const selectedTimeFilters = preferences.interview_time_filters;
@@ -111,6 +108,7 @@ const DemoViewInterview = () => {
         }
 
         dispatch({ type: 'DELETE_INTERVIEW', payload: { interviewId } });
+        showSuccessToast('Interview deleted.');
     };
 
     const handleDeleteAll = async () => {
@@ -135,6 +133,7 @@ const DemoViewInterview = () => {
             }
 
             dispatch({ type: 'DELETE_ALL_INTERVIEWS' });
+            showSuccessToast('Interviews deleted.');
         } finally {
             deleteAllPendingRef.current = false;
             setIsDeletingAll(false);
@@ -175,29 +174,11 @@ const DemoViewInterview = () => {
     const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: JobInterview) => {
         event.preventDefault();
 
-        if (preferences.application_view_mode === 'board') {
-            showErrorToast(ACTIVE_APPLICATION_BOARD_MESSAGE);
-            return;
-        }
-
-        const applicationExists = state.applications.some(
-            (application) =>
-                application.job_id === interview.job_id &&
-                preferences.application_job_statuses.includes(application.job_status)
-        );
-
-        if (!applicationExists) {
-            showErrorToast(
-                getApplicationUnavailableMessage(preferences.application_job_statuses, interview.job_status, {
-                    applicationLabel: 'This job application',
-                    applicationsPageLabel: 'active applications',
-                    statusFilterLabel: 'job status filter',
-                })
-            );
-            return;
-        }
-
-        navigate(`${routes.demoViewApplications}#${interview.job_id}`);
+        const navigationState: ApplicationListNavigationState = {
+            applicationListJobStatus: interview.job_status,
+            applicationListTargetId: interview.job_id,
+        };
+        navigate(routes.demoViewApplications, { state: navigationState });
     };
 
     return (

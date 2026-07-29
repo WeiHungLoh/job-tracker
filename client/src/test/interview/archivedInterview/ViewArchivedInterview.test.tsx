@@ -1,9 +1,14 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import ViewArchivedInterview from '../../../pages/interview/archivedInterview/viewArchivedInterview/ViewArchivedInterview';
 import type { UpdateUserPreferencesRequest } from '../../../components/userPreferences/models';
 import { render, testPreferences } from '../../renderWithProviders';
 import userEvent from '@testing-library/user-event';
+
+const LocationStateProbe = () => {
+    const location = useLocation();
+    return <output data-testid='location-state'>{JSON.stringify(location.state)}</output>;
+};
 
 globalThis.fetch = vi.fn();
 
@@ -237,20 +242,21 @@ describe('Archived job interview viewer flow', () => {
         expect(await screen.findByRole('region', { name: 'Archived interviews' })).toBeInTheDocument();
     });
 
-    test('shows error toast when corresponding archived job application is not available', async () => {
-        fetch.mockResolvedValueOnce(response([mockInterview])).mockResolvedValueOnce(response([]));
-
+    test('navigates to the corresponding archived application without a preflight request', async () => {
         render(
             <MemoryRouter>
                 <ViewArchivedInterview />
-            </MemoryRouter>
+                <LocationStateProbe />
+            </MemoryRouter>,
+            { initialPreferences: { archived_application_job_statuses: ['Offer'] } }
         );
 
         await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
 
-        expect(
-            await screen.findByText(/this archived job application is not available in archived applications/i)
-        ).toBeInTheDocument();
+        expect(screen.getByTestId('location-state')).toHaveTextContent(
+            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+        );
+        expect(fetch).toHaveBeenCalledTimes(1);
     });
 
     test('renders only the archived interview Board skeleton for a saved Board preference', () => {
@@ -300,10 +306,11 @@ describe('Archived job interview viewer flow', () => {
         expect(fetch).toHaveBeenCalledTimes(1);
     });
 
-    test('blocks archived corresponding navigation before the API when archived applications use Board view', async () => {
+    test('navigates to the corresponding archived application when archived applications use Board view', async () => {
         render(
             <MemoryRouter>
                 <ViewArchivedInterview />
+                <LocationStateProbe />
             </MemoryRouter>,
             {
                 initialPreferences: {
@@ -314,11 +321,9 @@ describe('Archived job interview viewer flow', () => {
 
         await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
 
-        expect(
-            await screen.findByText(
-                'The corresponding archived job application can only be opened while archived applications are displayed in List view. Switch to List view and try again.'
-            )
-        ).toBeInTheDocument();
+        expect(screen.getByTestId('location-state')).toHaveTextContent(
+            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+        );
         expect(fetch).toHaveBeenCalledTimes(1);
     });
 

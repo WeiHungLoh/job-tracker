@@ -52,7 +52,7 @@ describe('AttentionCenter', () => {
     test('renders one category-specific action after every factual attention reason', () => {
         const onAddInterview = vi.fn();
         const onOpenOfferComparison = vi.fn();
-        const onOpenOfferDecisionApplication = vi.fn();
+        const onRecordOfferDecision = vi.fn();
         const applications = [
             createApplication(1, 'Interview'),
             createApplication(2, 'Interview'),
@@ -91,7 +91,7 @@ describe('AttentionCenter', () => {
                 onAddInterview={onAddInterview}
                 offerEvaluations={offerEvaluations}
                 onOpenOfferComparison={onOpenOfferComparison}
-                onOpenOfferDecisionApplication={onOpenOfferDecisionApplication}
+                onRecordOfferDecision={onRecordOfferDecision}
             />
         );
 
@@ -134,7 +134,7 @@ describe('AttentionCenter', () => {
         ).toBeInTheDocument();
         expect(
             within(list).getByText(
-                'The decision deadline is 12 July 2026 (2 days away). Record the application as Accepted or Declined once decided.'
+                'The decision deadline is 12 July 2026 (2 days away). Review the evaluated offer and mark it as Accepted or Declined once decided.'
             )
         ).toBeInTheDocument();
         expect(
@@ -159,7 +159,7 @@ describe('AttentionCenter', () => {
         void userEvent.click(
             within(list).getByRole('button', { name: 'Record offer decision for Role 5 at Company 5' })
         );
-        expect(onOpenOfferDecisionApplication).toHaveBeenCalledWith(applications[4]);
+        expect(onRecordOfferDecision).toHaveBeenCalledWith(applications[4]);
     });
 
     test('opens static deterministic drafts, closes without changing the attention item, and restores the draft', async () => {

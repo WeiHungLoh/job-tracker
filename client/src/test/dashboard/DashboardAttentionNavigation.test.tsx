@@ -53,13 +53,18 @@ const AddInterviewDestination = () => {
     return <p>Add Interview destination for {location.state?.app?.company_name ?? 'missing application'}</p>;
 };
 
+const OfferComparisonDestination = () => {
+    const location = useLocation();
+    return <output data-testid='offer-comparison-state'>{JSON.stringify(location.state)}</output>;
+};
+
 const renderDashboardRoutes = () =>
     render(
         <MemoryRouter initialEntries={[routes.dashboard]}>
             <Routes>
                 <Route path={routes.dashboard} element={<Dashboard />} />
                 <Route path={routes.addInterview} element={<AddInterviewDestination />} />
-                <Route path={routes.offerDecisions} element={<h1>Active Offer Comparison destination</h1>} />
+                <Route path={routes.offerDecisions} element={<OfferComparisonDestination />} />
                 <Route path={routes.viewApplications} element={<ApplicationListDestination />} />
             </Routes>
         </MemoryRouter>
@@ -105,10 +110,15 @@ describe('signed-in dashboard attention navigation', () => {
             })
         );
 
-        expect(await screen.findByRole('heading', { name: 'Active Offer Comparison destination' })).toBeInTheDocument();
+        expect(await screen.findByTestId('offer-comparison-state')).toHaveTextContent(
+            JSON.stringify({
+                dashboardOfferDecisionJobId: 42,
+                dashboardOfferDecisionFilter: 'Offers to Evaluate',
+            })
+        );
     });
 
-    test('opens the exact evaluated offer in the Offer application list for a due decision', async () => {
+    test('opens the exact evaluated offer in Offer Comparison for a due decision', async () => {
         apiMocks.listApplications.mockResolvedValue([{ ...application('Offer'), has_offer_evaluation: true }]);
         apiMocks.getActiveOfferDecisions.mockResolvedValue({
             applications: [
@@ -144,8 +154,12 @@ describe('signed-in dashboard attention navigation', () => {
             })
         );
 
-        expect(await screen.findByTestId('application-list-state')).toHaveTextContent(
-            JSON.stringify({ dashboardJobStatus: 'Offer', dashboardApplicationId: 42 })
+        expect(await screen.findByTestId('offer-comparison-state')).toHaveTextContent(
+            JSON.stringify({
+                dashboardOfferDecisionJobId: 42,
+                dashboardOfferDecisionFilter: 'Evaluated Offers',
+            })
         );
+        expect(screen.queryByTestId('application-list-state')).not.toBeInTheDocument();
     });
 });

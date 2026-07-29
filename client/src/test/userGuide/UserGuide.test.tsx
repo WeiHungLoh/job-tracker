@@ -56,8 +56,8 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/copyable application follow-up template/i)).toBeVisible();
         expect(screen.getByText(/copyable post-interview template/i)).toBeVisible();
         expect(screen.getByText(/opens add interview/i)).toBeVisible();
-        expect(screen.getByText(/opens job applications in list view/i)).toBeVisible();
-        expect(screen.getByText(/opens active offer comparison/i)).toBeVisible();
+        expect(screen.getByText(/ensures evaluated offers is visible/i)).toBeVisible();
+        expect(screen.getByText(/ensures offers to evaluate is visible/i)).toBeVisible();
         expect(screen.getByText(/templates are generated locally and are never sent by job tracker/i)).toBeVisible();
         expect(screen.getByText(/replace bracketed placeholders/i)).toBeVisible();
         expect(screen.getByText(/copying a message does not mark it as sent/i)).toBeVisible();
@@ -87,13 +87,13 @@ describe('renders user guide properly', () => {
         await userEvent.click(screen.getByRole('button', { name: /^offer comparison$/i }));
 
         expect(screen.getByText(/open offer comparison from the active navigation bar/i)).toBeVisible();
-        expect(screen.getByText(/only those applications can add or edit an evaluation/i)).toBeVisible();
+        expect(screen.getByText(/saved evaluations can be edited in all active sections/i)).toBeVisible();
         expect(screen.getByText(/currency starts as/i)).toBeVisible();
         expect(screen.getByText(/successful first save moves it from offers to evaluate/i)).toBeVisible();
         expect(screen.getByText(/save evaluation stays available/i)).toBeVisible();
         expect(screen.getByText(/decision deadline stays visible above the fit rating/i)).toBeVisible();
         expect(
-            screen.getByText(/review, edit or delete when their applications still have offer status/i)
+            screen.getByText(/review, edit, delete, accept or decline when their applications still have offer status/i)
         ).toBeVisible();
         expect(screen.getByText(/when at least two active, non-expired offers have saved evaluations/i)).toBeVisible();
         expect(screen.getByText(/results show your top match/i)).toBeVisible();
@@ -107,9 +107,11 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/individual rating differences use rating points/i)).toBeVisible();
         expect(screen.getByText(/fit rating differences use percentage points/i)).toBeVisible();
         expect(screen.getByText(/saved plans remain available to review or delete/i)).toBeVisible();
-        expect(screen.getByText(/while a saved evaluation exists/i)).toBeVisible();
-        expect(screen.getByText(/deleting the evaluation removes only that evaluation/i)).toBeVisible();
+        expect(screen.getByText(/under active evaluated offers and expired evaluated offers/i)).toBeVisible();
+        expect(screen.getByText(/active previous evaluations can be edited/i)).toBeVisible();
+        expect(screen.getByText(/change to declined/i)).toBeVisible();
         expect(screen.getByText(/archived evaluations are read-only/i)).toBeVisible();
+        expect(screen.getByText(/show all can therefore export up to six tables/i)).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /adding and managing applications/i }));
 
@@ -140,7 +142,9 @@ describe('renders user guide properly', () => {
 
         expect(screen.getByText(/interview location is separate from job location/i)).toBeVisible();
         expect(screen.getByText(/interview notes are optional and limited to 3000 characters/i)).toBeVisible();
-        expect(screen.getByText(/runs past another active offer's decision deadline/i)).toBeVisible();
+        expect(
+            screen.getByText(/reaches or passes another active offer application's present or future/i)
+        ).toBeVisible();
         expect(
             screen.getByText(
                 (_, element) =>

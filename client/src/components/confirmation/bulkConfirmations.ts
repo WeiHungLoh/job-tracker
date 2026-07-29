@@ -28,6 +28,7 @@ const applicationDescription = (
     applicationCount: number,
     interviewCount: number,
     offerEvaluationCount: number,
+    counterofferPlanCount: number,
     state: CollectionState
 ) => {
     const applicationLabel = formatCountLabel(applicationCount, `${state} job application`);
@@ -35,17 +36,33 @@ const applicationDescription = (
     const filterLabel = state === 'archived' ? 'archived job-status filters' : 'job-status filters';
     const permanence = action === 'Delete' ? ` ${PERMANENT_DELETION_WARNING}` : '';
 
-    if (offerEvaluationCount > 0) {
+    if (offerEvaluationCount > 0 || counterofferPlanCount > 0) {
         const possessive = applicationCount === 1 ? 'its' : 'their';
-        const evaluationLabel = formatCountLabel(offerEvaluationCount, 'saved offer evaluation');
+        const relations = [
+            `${possessive} ${interviewLabel}`,
+            ...(offerEvaluationCount > 0
+                ? [`${possessive} ${formatCountLabel(offerEvaluationCount, 'saved offer evaluation')}`]
+                : []),
+            ...(counterofferPlanCount > 0
+                ? [`${possessive} ${formatCountLabel(counterofferPlanCount, 'counteroffer plan')}`]
+                : []),
+        ];
+        const finalRelation = relations.at(-1);
+        const relationDescription = `${relations.slice(0, -1).join(', ')}, and ${finalRelation}`;
+        const savedItemLabel =
+            offerEvaluationCount > 0 && counterofferPlanCount > 0
+                ? 'Saved offer evaluations and counteroffer plans'
+                : offerEvaluationCount > 0
+                ? 'Saved offer evaluations'
+                : 'Counteroffer plans';
         const lifecycle =
             action === 'Archive'
-                ? ' Saved offer evaluations become read-only while archived.'
+                ? ` ${savedItemLabel} become read-only while archived.`
                 : action === 'Unarchive'
-                ? ' Saved offer evaluations become editable again.'
+                ? ` ${savedItemLabel} become editable again.`
                 : permanence;
 
-        return `${action} all ${applicationLabel}, ${possessive} ${interviewLabel}, and ${possessive} ${evaluationLabel}? This affects every ${state} application you own, including applications not visible under the current ${filterLabel}.${lifecycle}`;
+        return `${action} all ${applicationLabel}, ${relationDescription}? This affects every ${state} application you own, including applications not visible under the current ${filterLabel}.${lifecycle}`;
     }
 
     return `${action} all ${applicationLabel} and ${
@@ -56,22 +73,38 @@ const applicationDescription = (
 export const createArchiveAllConfirmation = (
     applicationCount: number,
     interviewCount: number,
-    offerEvaluationCount = 0
+    offerEvaluationCount = 0,
+    counterofferPlanCount = 0
 ): ConfirmOptions =>
     bulkOptions(
         'Confirm Archive All',
-        applicationDescription('Archive', applicationCount, interviewCount, offerEvaluationCount, 'active'),
+        applicationDescription(
+            'Archive',
+            applicationCount,
+            interviewCount,
+            offerEvaluationCount,
+            counterofferPlanCount,
+            'active'
+        ),
         'Archive All'
     );
 
 export const createUnarchiveAllConfirmation = (
     applicationCount: number,
     interviewCount: number,
-    offerEvaluationCount = 0
+    offerEvaluationCount = 0,
+    counterofferPlanCount = 0
 ): ConfirmOptions =>
     bulkOptions(
         'Confirm Unarchive All',
-        applicationDescription('Unarchive', applicationCount, interviewCount, offerEvaluationCount, 'archived'),
+        applicationDescription(
+            'Unarchive',
+            applicationCount,
+            interviewCount,
+            offerEvaluationCount,
+            counterofferPlanCount,
+            'archived'
+        ),
         'Unarchive All'
     );
 
@@ -79,11 +112,19 @@ export const createDeleteAllApplicationsConfirmation = (
     applicationCount: number,
     interviewCount: number,
     offerEvaluationCount: number,
-    state: CollectionState
+    state: CollectionState,
+    counterofferPlanCount = 0
 ): ConfirmOptions =>
     bulkOptions(
         'Confirm Delete All',
-        applicationDescription('Delete', applicationCount, interviewCount, offerEvaluationCount, state),
+        applicationDescription(
+            'Delete',
+            applicationCount,
+            interviewCount,
+            offerEvaluationCount,
+            counterofferPlanCount,
+            state
+        ),
         'Delete All'
     );
 
@@ -102,13 +143,18 @@ export const createDeleteAllInterviewsConfirmation = (
 
 export const createDeleteAllOfferEvaluationsConfirmation = (
     evaluationCount: number,
-    state: CollectionState
+    state: CollectionState,
+    counterofferPlanCount = 0
 ): ConfirmOptions => {
     const evaluationLabel = formatCountLabel(evaluationCount, `${state} offer evaluation`);
+    const counterofferDescription =
+        counterofferPlanCount > 0
+            ? ` This also deletes ${formatCountLabel(counterofferPlanCount, 'corresponding counteroffer plan')}.`
+            : '';
 
     return bulkOptions(
         'Confirm Delete All',
-        `Delete all ${evaluationLabel} you own? This removes only saved evaluations for ${state} applications. Applications and offers without evaluations are not deleted. ${PERMANENT_DELETION_WARNING}`,
+        `Delete all ${evaluationLabel} you own? This removes only saved evaluations for ${state} applications.${counterofferDescription} Applications and offers without evaluations are not deleted. ${PERMANENT_DELETION_WARNING}`,
         'Delete All'
     );
 };

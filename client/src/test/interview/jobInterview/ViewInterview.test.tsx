@@ -630,20 +630,21 @@ describe('Job interview viewer flow', () => {
         expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
     });
 
-    test('shows error toast when corresponding job application is not available', async () => {
-        fetch.mockResolvedValueOnce(response([mockInterview])).mockResolvedValueOnce(response([]));
-
+    test('navigates to the corresponding application without a preflight request when its status filter is missing', async () => {
         render(
             <MemoryRouter>
                 <ViewInterview />
-            </MemoryRouter>
+                <LocationStateProbe />
+            </MemoryRouter>,
+            { initialPreferences: { application_job_statuses: ['Offer'] } }
         );
 
         await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
 
-        expect(
-            await screen.findByText(/this job application is not available in active applications/i)
-        ).toBeInTheDocument();
+        expect(screen.getByTestId('location-state')).toHaveTextContent(
+            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+        );
+        expect(fetch).toHaveBeenCalledTimes(1);
     });
 
     test('renders only the responsive interview Board skeleton for a saved Board preference', () => {
@@ -718,10 +719,11 @@ describe('Job interview viewer flow', () => {
         expect(within(viewToggle).getByRole('button', { name: 'Board' })).toHaveAttribute('aria-pressed', 'false');
     });
 
-    test('blocks corresponding navigation before the API when applications use Board view', async () => {
+    test('navigates to the corresponding application when applications currently use Board view', async () => {
         render(
             <MemoryRouter>
                 <ViewInterview />
+                <LocationStateProbe />
             </MemoryRouter>,
             { initialPreferences: { application_view_mode: 'board' } }
         );
@@ -729,11 +731,9 @@ describe('Job interview viewer flow', () => {
         const link = await screen.findByRole('link', { name: /review corresponding job application/i });
         await userEvent.click(link);
 
-        expect(
-            await screen.findByText(
-                'The corresponding job application can only be opened while active applications are displayed in List view. Switch to List view and try again.'
-            )
-        ).toBeInTheDocument();
+        expect(screen.getByTestId('location-state')).toHaveTextContent(
+            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+        );
         expect(fetch).toHaveBeenCalledTimes(1);
     });
 

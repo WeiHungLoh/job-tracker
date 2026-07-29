@@ -15,7 +15,7 @@ export const ALLOWED_ORIGINS = new Set<string>(
     process.env.NODE_ENV === 'production' ? PRODUCTION_ORIGINS : [...PRODUCTION_ORIGINS, ...DEVELOPMENT_ORIGINS]
 );
 
-export const AUTHENTICATED_API_RATE_LIMIT = 400;
+export const AUTHENTICATED_API_RATE_LIMIT = 500;
 export const AUTHENTICATED_API_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
 export const SIGN_IN_EMAIL_IP_LIMIT = 10;

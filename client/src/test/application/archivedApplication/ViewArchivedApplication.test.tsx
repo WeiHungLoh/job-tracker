@@ -1,11 +1,12 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import ViewArchivedApplication from '../../../pages/application/archivedApplication/viewArchivedApplication/ViewArchivedApplication';
 import { render } from '../../renderWithProviders';
 import userEvent from '@testing-library/user-event';
 import { JOB_STATUSES } from '../../../pages/application/models';
 import { routes } from '../../../routes';
 import type { UpdateUserPreferencesRequest, UserPreferences } from '../../../components/userPreferences/models';
+import * as highlightElement from '../../../helper/highlightElement';
 
 globalThis.fetch = vi.fn();
 
@@ -61,6 +62,11 @@ const mockConfirm = vi.fn();
 vi.mock('material-ui-confirm', () => ({
     useConfirm: () => mockConfirm,
 }));
+
+const LocationStateProbe = () => {
+    const location = useLocation();
+    return <output data-testid='location-state'>{JSON.stringify(location.state)}</output>;
+};
 
 const clickConfirmedAction = async (button: HTMLElement) => {
     await act(async () => {
@@ -140,6 +146,47 @@ describe('Archived job application viewing flow', () => {
             }
             return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
         });
+    });
+
+    test('preserves filters, switches to List once and highlights a corresponding archived application', async () => {
+        const initialPreferences = {
+            ...mockPreferences,
+            archived_application_job_statuses: ['Offer'] as UserPreferences['archived_application_job_statuses'],
+            archived_application_view_mode: 'board' as const,
+        };
+        const updatePreferences = vi.fn(async (updates: UpdateUserPreferencesRequest) => ({
+            ...initialPreferences,
+            ...updates,
+        }));
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+
+        render(
+            <MemoryRouter
+                initialEntries={[
+                    {
+                        pathname: '/application/archived',
+                        state: { applicationListJobStatus: 'Applied', applicationListTargetId: 1 },
+                    },
+                ]}
+            >
+                <ViewArchivedApplication />
+                <LocationStateProbe />
+            </MemoryRouter>,
+            { initialPreferences, updatePreferences }
+        );
+
+        await waitFor(() =>
+            expect(updatePreferences).toHaveBeenCalledWith({
+                archived_application_job_statuses: ['Offer', 'Applied'],
+                archived_application_view_mode: 'list',
+            })
+        );
+        await waitFor(() =>
+            expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything())
+        );
+        expect(updatePreferences).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(screen.getByTestId('location-state')).toHaveTextContent('null'));
+        scrollAndHighlight.mockRestore();
     });
 
     test('displays archived job application details and action buttons', async () => {

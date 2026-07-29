@@ -258,6 +258,7 @@ describe('demo page interactions', () => {
 
     test('edits and saves one offer evaluation in demo state without fetching', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        mockConfirm.mockResolvedValue({ confirmed: true });
         renderDemo(<DemoOfferDecisionPage archived={false} />, [routes.demoOfferDecisions]);
 
         expect(screen.getByRole('heading', { name: 'Evaluated Offers' })).toBeInTheDocument();
@@ -273,7 +274,7 @@ describe('demo page interactions', () => {
             await userEvent.click(screen.getByRole('button', { name: 'Save evaluation for Greenhouse CloudOps' }));
         });
 
-        expect(screen.queryByText('Offer evaluation saved.')).not.toBeInTheDocument();
+        expect(await screen.findByText('Offer evaluation saved.')).toBeInTheDocument();
         expect(screen.queryByText('Offer evaluation added.')).not.toBeInTheDocument();
         expect(screen.queryByLabelText('Greenhouse CloudOps Company/Culture Fit rating')).not.toBeInTheDocument();
         expect(screen.getByText('SGD 10,500')).toBeInTheDocument();
@@ -282,6 +283,34 @@ describe('demo page interactions', () => {
                 name: 'Edit evaluation for Greenhouse CloudOps',
             })
         ).toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
+    });
+
+    test('records an evaluated offer decision in demo state without fetching', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        mockConfirm.mockResolvedValue({ confirmed: true });
+        renderDemo(<DemoOfferDecisionPage archived={false} />, [routes.demoOfferDecisions]);
+
+        fireEvent.click(
+            within(openOfferActions('Greenhouse CloudOps')).getByRole('menuitem', {
+                name: 'Accept offer from Greenhouse CloudOps',
+            })
+        );
+
+        expect(await screen.findByText('Offer marked as Accepted.')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
+        expect(screen.getByRole('article', { name: 'Greenhouse CloudOps DevOps UI Engineer' })).toBeInTheDocument();
+
+        fireEvent.click(
+            within(openOfferActions('Greenhouse CloudOps')).getByRole('menuitem', {
+                name: 'Change to Offer for Greenhouse CloudOps',
+            })
+        );
+
+        expect(await screen.findByText('Application marked as Offer.')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Evaluated Offers' })).toBeInTheDocument();
+        expect(screen.getByRole('article', { name: 'Greenhouse CloudOps DevOps UI Engineer' })).toBeInTheDocument();
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
@@ -305,7 +334,7 @@ describe('demo page interactions', () => {
         fetchSpy.mockRestore();
     });
 
-    test('shows a success toast only when an offer evaluation is first added', async () => {
+    test('shows success toasts when an offer evaluation is deleted or added', async () => {
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         renderDemo(<DemoOfferDecisionPage archived={false} />, [routes.demoOfferDecisions]);
 
@@ -313,7 +342,7 @@ describe('demo page interactions', () => {
         expect(
             await screen.findByRole('button', { name: 'Add evaluation for Greenhouse CloudOps' })
         ).toBeInTheDocument();
-        expect(screen.queryByText('Offer evaluation deleted.')).not.toBeInTheDocument();
+        expect(await screen.findByText('Offer evaluation deleted.')).toBeInTheDocument();
 
         await act(async () => {
             await userEvent.click(screen.getByRole('button', { name: 'Add evaluation for Greenhouse CloudOps' }));
@@ -350,7 +379,7 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'true');
         expect(screen.getByRole('switch', { name: 'Show archive' })).toHaveAttribute('aria-checked', 'true');
-        expect(screen.getByRole('switch', { name: 'Auto-scroll to updated items' })).toHaveAttribute(
+        expect(screen.getByRole('switch', { name: 'Auto-scroll and highlight updates' })).toHaveAttribute(
             'aria-checked',
             'true'
         );
@@ -391,7 +420,7 @@ describe('demo page interactions', () => {
         expect(scrollAndHighlight).not.toHaveBeenCalled();
     });
 
-    test('updates board status and archives without success toasts', async () => {
+    test('shows success feedback for board status changes and archiving', async () => {
         renderDemo(<DemoViewApplication />);
 
         await userEvent.click(screen.getByRole('button', { name: 'Board' }));
@@ -406,13 +435,14 @@ describe('demo page interactions', () => {
         fireEvent.change(screen.getByLabelText(/Move HorizonAI Labs to status/i), {
             target: { value: 'Rejected' },
         });
+        expect(await screen.findByText('Job application status updated.')).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'List' }));
         expect(screen.getAllByText(/Job Status: Rejected/i).length).toBeGreaterThan(0);
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         await clickConfirmedAction(screen.getAllByRole('button', { name: 'Archive' })[0]);
-        expect(screen.queryByText('Application archived.')).not.toBeInTheDocument();
+        expect(await screen.findByText('Job application archived.')).toBeInTheDocument();
     });
 
     test('unarchives an application from the archived board into active demo state without fetching', async () => {
@@ -471,7 +501,7 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('heading', { name: '1. Aster Security' })).toBeInTheDocument();
     }, 20_000);
 
-    test('restores and deletes archived applications without success toasts', async () => {
+    test('shows success feedback when restoring and deleting archived applications', async () => {
         renderDemo(<DemoViewArchivedApplication />, [routes.demoArchivedApplications]);
 
         expect(screen.getByText(/Riverlane Studio/i)).toBeInTheDocument();
@@ -483,12 +513,12 @@ describe('demo page interactions', () => {
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         await clickConfirmedAction(screen.getAllByRole('button', { name: 'Unarchive' })[0]);
-        expect(screen.queryByText('Application restored.')).not.toBeInTheDocument();
+        expect(await screen.findByText('Job application unarchived.')).toBeInTheDocument();
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all archived applications/i }));
-        expect(screen.queryByText('Archived applications deleted.')).not.toBeInTheDocument();
+        expect(await screen.findByText('Job applications deleted.')).toBeInTheDocument();
         expect(await screen.findByRole('heading', { name: 'No archived applications yet' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'View active applications' })).toHaveAttribute(
             'href',
@@ -753,7 +783,7 @@ describe('demo page interactions', () => {
         expect(screen.getByTestId('demo-interview-count')).toHaveTextContent(initialInterviewCount || '');
     });
 
-    test('deletes interviews without success toasts', async () => {
+    test('shows success feedback when deleting interviews', async () => {
         renderDemo(<DemoViewInterview />, [routes.demoViewInterviews]);
 
         expect(within(screen.getByRole('region', { name: 'Active interviews' })).getAllByRole('article')).toHaveLength(
@@ -764,7 +794,7 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all interviews/i }));
         await waitFor(() => expect(mockConfirm).toHaveBeenCalled());
-        expect(screen.queryByText('Interviews deleted.')).not.toBeInTheDocument();
+        expect(await screen.findByText('Interviews deleted.')).toBeInTheDocument();
         expect(await screen.findByRole('heading', { name: 'No interviews yet' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'View applications' })).toHaveAttribute(
             'href',
@@ -881,23 +911,31 @@ describe('demo page interactions', () => {
         }
     });
 
-    test('blocks demo active corresponding navigation when active applications use Board view', async () => {
+    test('opens a corresponding demo application in List view while preserving existing filters', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
         renderDemo(
             <>
                 <SetCollectionViewMode />
-                <DemoViewInterview />
+                <SetApplicationCsvFilter />
+                <DemoRouteHarness />
             </>,
             [routes.demoViewInterviews]
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
-        await userEvent.click(screen.getAllByRole('link', { name: /review corresponding job application/i })[0]);
+        await userEvent.click(screen.getByRole('button', { name: 'Filter active CSV to Offer' }));
+        const link = screen.getAllByRole('link', { name: /review corresponding job application/i })[0];
+        const targetId = link.getAttribute('href')?.split('#')[1];
+        await userEvent.click(link);
 
-        expect(
-            await screen.findByText(
-                'The corresponding job application can only be opened while active applications are displayed in List view. Switch to List view and try again.'
-            )
-        ).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
+        await waitFor(() => expect(document.getElementById(targetId ?? '')?.className).toContain('highlighted'));
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Interview' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Applied' })).not.toBeChecked();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
     });
 
     test('uses demo-only links for archived interview empty state', async () => {
@@ -915,11 +953,13 @@ describe('demo page interactions', () => {
         expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
     });
 
-    test('supports archived demo interview Board mode and guards archived corresponding navigation', async () => {
+    test('supports archived demo interview Board mode and opens its corresponding application consistently', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
         renderDemo(
             <>
                 <SetCollectionViewMode archived />
-                <DemoViewArchivedInterview />
+                <SetApplicationCsvFilter archived />
+                <DemoRouteHarness />
             </>,
             [routes.demoArchivedInterviews]
         );
@@ -940,13 +980,18 @@ describe('demo page interactions', () => {
             })
         );
         await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
-        await userEvent.click(screen.getAllByRole('link', { name: /review corresponding job application/i })[0]);
+        await userEvent.click(screen.getByRole('button', { name: 'Filter archived CSV to Offer' }));
+        const link = screen.getAllByRole('link', { name: /review corresponding job application/i })[0];
+        const targetId = link.getAttribute('href')?.split('#')[1];
+        await userEvent.click(link);
 
-        expect(
-            await screen.findByText(
-                'The corresponding archived job application can only be opened while archived applications are displayed in List view. Switch to List view and try again.'
-            )
-        ).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
+        await waitFor(() => expect(document.getElementById(targetId ?? '')?.className).toContain('highlighted'));
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Accepted' })).toBeChecked();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
     });
 
     test('keeps demo interview CSV filtered while bulk calendar and Delete All use the complete active collection', async () => {
@@ -1173,37 +1218,45 @@ describe('demo page interactions', () => {
 
         expect(await screen.findByRole('heading', { name: 'Offers to Evaluate' })).toBeInTheDocument();
         expect(screen.getByText('Quantum Ledger')).toBeInTheDocument();
+        await waitFor(() =>
+            expect(
+                screen.getByRole('article', { name: 'Quantum Ledger Frontend Infrastructure Engineer' }).className
+            ).toContain('highlight')
+        );
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
 
-    test('opens and highlights the exact due demo offer in application List view', async () => {
+    test('opens, scrolls to and highlights the exact due demo offer in Offer Comparison', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
         const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
         renderDemo(
             <>
                 <PrepareDueDemoOffer />
-                <SetCollectionViewMode />
                 <DemoRouteHarness />
             </>,
             [routes.demoDashboard]
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
         await userEvent.click(
             await screen.findByRole('button', {
                 name: 'Record offer decision for DevOps UI Engineer at Greenhouse CloudOps',
             })
         );
 
-        await waitFor(() =>
-            expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true')
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' }));
+        expect(screen.getByRole('article', { name: 'Greenhouse CloudOps DevOps UI Engineer' })).toBeInTheDocument();
+        expect(scrollAndHighlight).toHaveBeenCalledWith(
+            'offer-evaluation-111',
+            expect.any(String),
+            expect.anything(),
+            'start'
         );
-        await waitFor(() =>
-            expect(scrollAndHighlight).toHaveBeenCalledWith('111', expect.any(String), expect.anything())
-        );
-        expect(screen.getByRole('heading', { name: /Greenhouse CloudOps/ })).toBeInTheDocument();
         expect(fetchSpy).not.toHaveBeenCalled();
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
         scrollAndHighlight.mockRestore();
         fetchSpy.mockRestore();
     });

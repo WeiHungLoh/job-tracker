@@ -45,7 +45,11 @@ import { createApplicationEmptyState } from '../../applicationEmptyState';
 import SortOptions from '../../../../components/activityControls/sortOptions/SortOptions';
 import { shouldAutoScrollAfterStatusChange, sortApplications } from '../../applicationSorting';
 import { getApplicationsInBoardOrder } from '../../applicationBoard/applicationBoardUtils';
-import { getDashboardApplicationId, getDashboardJobStatus } from '../../../dashboard/dashboardNavigation';
+import {
+    getApplicationListJobStatuses,
+    getApplicationListJobStatus,
+    getApplicationListTargetId,
+} from '../../applicationNavigation';
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useAutosaveNotes from '../../../../hooks/useAutosaveNotes';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
@@ -56,8 +60,8 @@ const ViewApplication = () => {
     const { preferences, updatePreferences } = useUserPreferences();
     const location = useLocation();
     const navigate = useNavigate();
-    const dashboardJobStatusRef = useRef(getDashboardJobStatus(location.state));
-    const dashboardApplicationIdRef = useRef(getDashboardApplicationId(location.state));
+    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
     const [applications, setApplications] = useState<JobApplication[]>([]);
     const [editingApplicationId, setEditingApplicationId] = useState<number | null>(null);
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
@@ -249,19 +253,20 @@ const ViewApplication = () => {
         let isActive = true;
 
         const fetchData = async () => {
-            const dashboardJobStatus = dashboardJobStatusRef.current;
-            const dashboardApplicationId = dashboardApplicationIdRef.current;
-            const initialJobStatuses = dashboardJobStatus ? [dashboardJobStatus] : selectedJobStatuses;
+            const navigationJobStatus = navigationJobStatusRef.current;
+            const navigationApplicationId = navigationApplicationIdRef.current;
+            const initialJobStatuses = getApplicationListJobStatuses(
+                selectedJobStatuses,
+                navigationJobStatus,
+                navigationApplicationId
+            );
 
             try {
                 const preferenceUpdates: UpdateUserPreferencesRequest = {};
-                if (
-                    dashboardJobStatus &&
-                    (selectedJobStatuses.length !== 1 || selectedJobStatuses[0] !== dashboardJobStatus)
-                ) {
+                if (initialJobStatuses !== selectedJobStatuses) {
                     preferenceUpdates.application_job_statuses = initialJobStatuses;
                 }
-                if (dashboardApplicationId && isBoardView) {
+                if (navigationApplicationId && isBoardView) {
                     preferenceUpdates.application_view_mode = 'list';
                 }
                 const preferenceUpdate =
@@ -285,8 +290,8 @@ const ViewApplication = () => {
             } catch (error) {
                 showErrorToast(getErrorToastMessage(error, 'Unable to load job application data. Please try again.'));
             } finally {
-                if (dashboardJobStatusRef.current && !dashboardApplicationIdRef.current) {
-                    dashboardJobStatusRef.current = null;
+                if (navigationJobStatusRef.current && !navigationApplicationIdRef.current) {
+                    navigationJobStatusRef.current = null;
                     navigate(location.pathname, { replace: true, state: null });
                 }
                 if (isActive) {
@@ -302,7 +307,7 @@ const ViewApplication = () => {
     }, []);
 
     useEffect(() => {
-        const targetApplicationId = dashboardApplicationIdRef.current;
+        const targetApplicationId = navigationApplicationIdRef.current;
         if (isLoading || isBoardView || !targetApplicationId) {
             return;
         }
@@ -311,8 +316,8 @@ const ViewApplication = () => {
             scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
         }
 
-        dashboardApplicationIdRef.current = null;
-        dashboardJobStatusRef.current = null;
+        navigationApplicationIdRef.current = null;
+        navigationJobStatusRef.current = null;
         navigate(location.pathname, { replace: true, state: null });
     }, [applications, isBoardView, isLoading, location.pathname, navigate]);
 
@@ -362,7 +367,8 @@ const ViewApplication = () => {
                     action,
                     'active',
                     summary.related_interview_count,
-                    summary.offer_evaluation_count
+                    summary.offer_evaluation_count,
+                    summary.counteroffer_plan_count
                 )
             );
 
@@ -382,6 +388,7 @@ const ViewApplication = () => {
             notesAutosave.clearNoteState(jobId);
             setApplications((current) => current.filter((application) => application.job_id !== jobId));
             setInterviews((current) => current.filter((interview) => interview.job_id !== jobId));
+            showSuccessToast(action === 'archive' ? 'Job application archived.' : 'Job application deleted.');
         } catch (error) {
             const fallback =
                 action === 'archive'
@@ -490,13 +497,15 @@ const ViewApplication = () => {
                     ? createArchiveAllConfirmation(
                           summary.application_count,
                           summary.related_interview_count,
-                          summary.offer_evaluation_count
+                          summary.offer_evaluation_count,
+                          summary.counteroffer_plan_count
                       )
                     : createDeleteAllApplicationsConfirmation(
                           summary.application_count,
                           summary.related_interview_count,
                           summary.offer_evaluation_count,
-                          'active'
+                          'active',
+                          summary.counteroffer_plan_count
                       );
             const { confirmed } = await confirm(confirmation);
 
@@ -516,6 +525,7 @@ const ViewApplication = () => {
             notesAutosave.clearAllNoteStates();
             setApplications([]);
             setInterviews([]);
+            showSuccessToast(action === 'archive' ? 'Job applications archived.' : 'Job applications deleted.');
         } catch (error) {
             const fallback = !countsLoaded
                 ? 'Unable to load active application counts. Please try again.'
@@ -575,6 +585,7 @@ const ViewApplication = () => {
                     )
                     .filter((item) => selectedJobStatuses.includes(item.job_status))
             );
+            showSuccessToast('Job application status updated.');
 
             if (
                 shouldAutoScrollAfterStatusChange(isAutoScrollEnabled, preferences.application_list_sort_order) &&
@@ -627,6 +638,7 @@ const ViewApplication = () => {
                 jobId: application.job_id,
                 jobStatus: newStatus,
             });
+            showSuccessToast('Job application status updated.');
         } catch (error) {
             setApplications((current) => {
                 const applicationStillVisible = current.some((item) => item.job_id === application.job_id);
@@ -732,7 +744,7 @@ const ViewApplication = () => {
                                         application_enable_scroll: !isAutoScrollEnabled,
                                     })
                                 }
-                                label='Auto-scroll to updated items'
+                                label='Auto-scroll and highlight updates'
                             />
                         </DisplayOptions>
                     )}

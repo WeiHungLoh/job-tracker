@@ -10,6 +10,7 @@ import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
 import { useToast } from '../toast/ToastProvider';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import DeviceTimezoneNotice from '../deviceTimezoneNotice/DeviceTimezoneNotice';
+import PageScrollControls from '../pageScrollControls/PageScrollControls';
 
 const ProtectedLayout = () => {
     const api = useJobTrackerAPI();
@@ -61,6 +62,7 @@ const ProtectedLayout = () => {
         <UserPreferencesProvider preferences={preferences} updatePreferences={updatePreferences}>
             <Navbar />
             <DeviceTimezoneNotice />
+            <PageScrollControls />
             <ConfirmProvider defaultOptions={defaultConfirmOptions}>
                 <Outlet />
             </ConfirmProvider>

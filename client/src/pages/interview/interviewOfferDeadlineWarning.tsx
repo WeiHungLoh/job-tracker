@@ -156,7 +156,12 @@ export const findInterviewOfferDeadlineWarnings = (
         .flatMap((application) => {
             const deadlineValue = evaluations[application.job_id]?.details.decision_deadline;
             const deadline = deadlineValue ? new Date(deadlineValue) : undefined;
-            if (!deadline || Number.isNaN(deadline.getTime()) || deadline.getTime() > interviewEnd) {
+            if (
+                !deadline ||
+                Number.isNaN(deadline.getTime()) ||
+                deadline < currentTime ||
+                deadline.getTime() > interviewEnd
+            ) {
                 return [];
             }
 

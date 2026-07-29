@@ -3,10 +3,6 @@ import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { createInterviewCsvData } from '../../../../helper/csvExport';
 import { createDeleteConfirmation } from '../../../../components/confirmation/deleteConfirmation';
 import { createDeleteAllInterviewsConfirmation } from '../../../../components/confirmation/bulkConfirmations';
-import {
-    ACTIVE_APPLICATION_BOARD_MESSAGE,
-    getApplicationUnavailableMessage,
-} from '../../applicationNavigationMessages';
 import { INTERVIEW_CSV_HEADERS, type JobInterview } from '../../models';
 import SkeletonCard from '../../../../components/skeletonLoader/skeletonCard/SkeletonCard';
 import { routes } from '../../../../routes';
@@ -38,6 +34,7 @@ import {
 import { useBulkInterviewCalendarExport } from '../../calendarOptions/useBulkInterviewCalendarExport';
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
+import type { ApplicationListNavigationState } from '../../../application/applicationNavigation';
 
 type InterviewFilterResult = {
     interviews: JobInterview[];
@@ -318,6 +315,7 @@ const ViewInterview = () => {
                 setUpcomingInterviews((current) =>
                     current.filter((interview) => interview.interview_id !== interviewId)
                 );
+                showSuccessToast('Interview deleted.');
             } finally {
                 stopDeletingInterview(interviewId);
             }
@@ -356,6 +354,7 @@ const ViewInterview = () => {
             await api.interview.deleteAllInterviews();
             setInterviews([]);
             setUpcomingInterviews([]);
+            showSuccessToast('Interviews deleted.');
         } catch (error) {
             showErrorToast(
                 getErrorToastMessage(
@@ -449,37 +448,14 @@ const ViewInterview = () => {
         variant: 'active',
     });
 
-    const handleViewApplicationClick = async (event: MouseEvent<HTMLAnchorElement>, interview: JobInterview) => {
+    const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: JobInterview) => {
         event.preventDefault();
 
-        if (preferences.application_view_mode === 'board') {
-            showErrorToast(ACTIVE_APPLICATION_BOARD_MESSAGE);
-            return;
-        }
-
-        try {
-            const applications = await api.application.listApplications({
-                jobStatuses: preferences.application_job_statuses,
-            });
-            const applicationExists = applications.some((application) => application.job_id === interview.job_id);
-
-            if (!applicationExists) {
-                showErrorToast(
-                    getApplicationUnavailableMessage(preferences.application_job_statuses, interview.job_status, {
-                        applicationLabel: 'This job application',
-                        applicationsPageLabel: 'active applications',
-                        statusFilterLabel: 'job status filter',
-                    })
-                );
-                return;
-            }
-
-            navigate(`${routes.viewApplications}#${interview.job_id}`);
-        } catch (error) {
-            showErrorToast(
-                getErrorToastMessage(error, 'Unable to check the corresponding job application. Please try again.')
-            );
-        }
+        const state: ApplicationListNavigationState = {
+            applicationListJobStatus: interview.job_status,
+            applicationListTargetId: interview.job_id,
+        };
+        navigate(routes.viewApplications, { state });
     };
 
     return (

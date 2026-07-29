@@ -476,6 +476,9 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                         details: { ...request.details },
                     },
                 },
+                counterofferPlans: request.deleteCounterofferPlan
+                    ? removeCounterofferPlans(state.counterofferPlans, [jobId])
+                    : state.counterofferPlans,
             };
         }
 

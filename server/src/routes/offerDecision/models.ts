@@ -2,18 +2,18 @@ import type {
     CounterofferPlan,
     CounterofferPlanInput,
     OfferDecisionWorkspace,
-    OfferEvaluationInput,
+    SaveOfferEvaluationInput,
 } from '../../db/models.js';
 import type { CodedErrorResponse, EmptyResponse, ErrorResponse } from '../../http/models.js';
 
-export type SaveOfferEvaluationRequest = OfferEvaluationInput;
+export type SaveOfferEvaluationRequest = SaveOfferEvaluationInput;
 
 export type GetOfferDecisionsQuery = {
     filters?: string | string[];
 };
 
 export type GetOfferDecisionsResponse = OfferDecisionWorkspace | ErrorResponse;
-export type SaveOfferEvaluationResponse = EmptyResponse | ErrorResponse;
+export type SaveOfferEvaluationResponse = EmptyResponse | CodedErrorResponse;
 export type DeleteOfferEvaluationResponse = EmptyResponse | ErrorResponse;
 export type DeleteAllOfferEvaluationsResponse = EmptyResponse | ErrorResponse;
 export type SaveCounterofferPlanRequest = CounterofferPlanInput;

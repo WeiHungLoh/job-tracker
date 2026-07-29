@@ -92,8 +92,26 @@ test('offer deadline lookup is user-scoped, active-only, excludes the target job
     assert.match(queryCall.sql, /applications\.job_status = 'Offer'/);
     assert.match(queryCall.sql, /applications\.job_id <> \$1/);
     assert.match(queryCall.sql, /\$3::timestamptz >= NOW\(\)/);
+    assert.match(queryCall.sql, /evaluations\.decision_deadline >= NOW\(\)/);
     assert.match(queryCall.sql, /evaluations\.decision_deadline <= \$3::timestamptz \+ \$4 \* INTERVAL '1 minute'/);
     assert.match(queryCall.sql, /ORDER BY evaluations\.decision_deadline ASC/);
+});
+
+test('scheduling conflict lookup ignores interviews that have already ended', async () => {
+    let queryCall;
+
+    await withMockedPoolQuery(
+        async (sql, values) => {
+            queryCall = { sql: compactSQL(sql), values };
+            return { rows: [] };
+        },
+        () => getInterviewSchedulingConflicts(11, 42, VALID_INTERVIEW.interviewDate, 60)
+    );
+
+    assert.match(
+        queryCall.sql,
+        /interviews\.interview_date \+ interviews\.interview_duration_minutes \* INTERVAL '1 minute' > NOW\(\)/
+    );
 });
 
 test('an active offer deadline warning returns 409 and does not insert', async () => {

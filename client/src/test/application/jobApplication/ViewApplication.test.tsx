@@ -259,7 +259,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'false');
         expect(screen.getByRole('switch', { name: 'Show archive' })).toHaveAttribute('aria-checked', 'false');
-        expect(screen.getByRole('switch', { name: 'Auto-scroll to updated items' })).toHaveAttribute(
+        expect(screen.getByRole('switch', { name: 'Auto-scroll and highlight updates' })).toHaveAttribute(
             'aria-checked',
             'false'
         );
@@ -1258,7 +1258,9 @@ describe('Job application viewing flow', () => {
         const offerUrl = `${import.meta.env.VITE_API_URL}/job-applications?jobStatuses=Offer`;
 
         render(
-            <MemoryRouter initialEntries={[{ pathname: '/application/view', state: { dashboardJobStatus: 'Offer' } }]}>
+            <MemoryRouter
+                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Offer' } }]}
+            >
                 <ViewApplication />
                 <LocationStateProbe />
             </MemoryRouter>,
@@ -1290,7 +1292,7 @@ describe('Job application viewing flow', () => {
                 initialEntries={[
                     {
                         pathname: '/application/view',
-                        state: { dashboardJobStatus: 'Offer', dashboardApplicationId: 1 },
+                        state: { applicationListJobStatus: 'Offer', applicationListTargetId: 1 },
                     },
                 ]}
             >
@@ -1302,7 +1304,7 @@ describe('Job application viewing flow', () => {
 
         await waitFor(() =>
             expect(updatePreferences).toHaveBeenCalledWith({
-                application_job_statuses: ['Offer'],
+                application_job_statuses: ['Applied', 'Offer'],
                 application_view_mode: 'list',
             })
         );
@@ -1319,7 +1321,9 @@ describe('Job application viewing flow', () => {
         const offerUrl = `${import.meta.env.VITE_API_URL}/job-applications?jobStatuses=Offer`;
 
         render(
-            <MemoryRouter initialEntries={[{ pathname: '/application/view', state: { dashboardJobStatus: 'Offer' } }]}>
+            <MemoryRouter
+                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Offer' } }]}
+            >
                 <ViewApplication />
             </MemoryRouter>,
             { initialPreferences: { application_job_statuses: ['Offer'] }, updatePreferences }
@@ -1335,7 +1339,7 @@ describe('Job application viewing flow', () => {
 
         render(
             <MemoryRouter
-                initialEntries={[{ pathname: '/application/view', state: { dashboardJobStatus: 'Unknown' } }]}
+                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Unknown' } }]}
             >
                 <ViewApplication />
             </MemoryRouter>,
@@ -1350,13 +1354,43 @@ describe('Job application viewing flow', () => {
         const updatePreferences = vi.fn().mockRejectedValue(new Error('save failed'));
 
         render(
-            <MemoryRouter initialEntries={[{ pathname: '/application/view', state: { dashboardJobStatus: 'Offer' } }]}>
+            <MemoryRouter
+                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Offer' } }]}
+            >
                 <ViewApplication />
             </MemoryRouter>,
             { updatePreferences }
         );
 
         expect(await screen.findByText('Unable to filter job applications. Please try again.')).toBeInTheDocument();
+    });
+
+    test('does not resave List mode or an already-selected status before highlighting a navigation target', async () => {
+        const updatePreferences = vi.fn();
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+
+        render(
+            <MemoryRouter
+                initialEntries={[
+                    {
+                        pathname: '/application/view',
+                        state: { applicationListJobStatus: 'Applied', applicationListTargetId: 1 },
+                    },
+                ]}
+            >
+                <ViewApplication />
+            </MemoryRouter>,
+            {
+                initialPreferences: { application_job_statuses: ['Applied'], application_view_mode: 'list' },
+                updatePreferences,
+            }
+        );
+
+        await waitFor(() =>
+            expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything())
+        );
+        expect(updatePreferences).not.toHaveBeenCalled();
+        scrollAndHighlight.mockRestore();
     });
 
     test('keeps filter checkboxes enabled while applications are loading', async () => {

@@ -1,4 +1,5 @@
 import Icon from '../icon/Icon';
+import LoadingSpinner from '../loadingSpinner/LoadingSpinner';
 import styles from './PinControl.module.css';
 
 type PinControlSubject = 'application' | 'interview';
@@ -41,7 +42,7 @@ const PinControl = ({ itemLabel, subject, isPending = false, isPinned, onToggle,
             title={`${action} ${subject}`}
             type='button'
         >
-            <Icon name='pin' size={15} />
+            {isPending ? <LoadingSpinner size='sm' /> : <Icon name='pin' size={15} />}
         </button>
     );
 };

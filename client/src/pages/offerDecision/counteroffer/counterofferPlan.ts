@@ -4,6 +4,7 @@ import {
     OFFER_MONTHLY_BASE_SALARY_MAX,
     OFFER_WORK_ARRANGEMENTS,
 } from '../offerDecisionConfig';
+import { JobTrackerAPIError } from '../../../api/models';
 import { calculateOfferDecisionScore, isOfferDecisionValues } from '../offerEvaluation';
 import type {
     CounterofferPlan,
@@ -13,6 +14,14 @@ import type {
     OfferDecisionValues,
     OfferEvaluation,
 } from '../models';
+
+export const isCounterofferPlanDeletionRequiredError = (error: unknown): boolean =>
+    error instanceof JobTrackerAPIError &&
+    error.status === 409 &&
+    typeof error.data === 'object' &&
+    error.data !== null &&
+    'code' in error.data &&
+    error.data.code === 'OFFER_EVALUATION_BELOW_COUNTEROFFER';
 
 export const isCounterofferPlanningEligible = (
     application: OfferDecisionApplication,
@@ -32,6 +41,71 @@ export const createCounterofferPlanFromEvaluation = (evaluation: OfferEvaluation
     ratings: { ...evaluation.ratings },
 });
 
+export type CounterofferRequestedChange = {
+    key: 'monthly_base_salary' | 'bonus' | 'annual_leave_days' | 'work_arrangement';
+    label: string;
+    currentValue: string;
+    idealValue: string;
+};
+
+const formatCurrencyAmount = (currency: string, amount: number | null): string =>
+    amount === null ? 'Not included' : `${currency} ${amount.toLocaleString()}`;
+
+const formatAnnualLeave = (days: number | null): string => {
+    if (days === null) {
+        return 'Not included';
+    }
+    return `${days} ${days === 1 ? 'day' : 'days'}`;
+};
+
+export const buildCounterofferRequestedChanges = (
+    currentEvaluation: OfferEvaluation,
+    plan: CounterofferPlan
+): CounterofferRequestedChange[] => {
+    const changes: CounterofferRequestedChange[] = [];
+    const { details } = currentEvaluation;
+
+    if (details.monthly_base_salary !== plan.monthly_base_salary) {
+        changes.push({
+            key: 'monthly_base_salary',
+            label: 'Monthly base salary',
+            currentValue: formatCurrencyAmount(details.currency, details.monthly_base_salary),
+            idealValue: formatCurrencyAmount(details.currency, plan.monthly_base_salary),
+        });
+    }
+
+    const currentBonus = details.bonus.trim();
+    const idealBonus = plan.bonus.trim();
+    if (currentBonus !== idealBonus) {
+        changes.push({
+            key: 'bonus',
+            label: 'Bonus',
+            currentValue: currentBonus || 'Not included',
+            idealValue: idealBonus || 'Not included',
+        });
+    }
+
+    if (details.annual_leave_days !== plan.annual_leave_days) {
+        changes.push({
+            key: 'annual_leave_days',
+            label: 'Annual leave',
+            currentValue: formatAnnualLeave(details.annual_leave_days),
+            idealValue: formatAnnualLeave(plan.annual_leave_days),
+        });
+    }
+
+    if (details.work_arrangement !== plan.work_arrangement) {
+        changes.push({
+            key: 'work_arrangement',
+            label: 'Work arrangement',
+            currentValue: details.work_arrangement || 'Not specified',
+            idealValue: plan.work_arrangement || 'Not specified',
+        });
+    }
+
+    return changes;
+};
+
 export const formatRatingDifference = (current: number, ideal: number): string => {
     const difference = ideal - current;
     if (difference === 0) {
@@ -48,7 +122,8 @@ export const formatFitRatingDifference = (current: number, ideal: number): strin
         return 'No change';
     }
 
-    return `${difference > 0 ? '+' : '−'}${Math.abs(difference)} percentage points`;
+    const unit = Math.abs(difference) === 1 ? 'percentage point' : 'percentage points';
+    return `${difference > 0 ? '+' : '−'}${Math.abs(difference)} ${unit}`;
 };
 
 export const calculateCounterofferPlanResult = (currentEvaluation: OfferEvaluation, plan: CounterofferPlan) => {
@@ -73,13 +148,6 @@ export const counterofferPlanValuesAreEqual = (first: CounterofferPlan, second: 
     first.annual_leave_days === second.annual_leave_days &&
     first.work_arrangement === second.work_arrangement &&
     ratingsAreEqual(first.ratings, second.ratings);
-
-const planMatchesEvaluation = (plan: CounterofferPlan, evaluation: OfferEvaluation): boolean =>
-    plan.monthly_base_salary === evaluation.details.monthly_base_salary &&
-    plan.bonus === evaluation.details.bonus &&
-    plan.annual_leave_days === evaluation.details.annual_leave_days &&
-    plan.work_arrangement === evaluation.details.work_arrangement &&
-    ratingsAreEqual(plan.ratings, evaluation.ratings);
 
 export const validateCounterofferPlan = (
     plan: CounterofferPlan,
@@ -120,10 +188,6 @@ export const validateCounterofferPlan = (
         errors.ratings = 'Ratings must be whole numbers from 1 to 5.';
     }
 
-    if (Object.keys(errors).length === 0 && planMatchesEvaluation(normalizedPlan, currentEvaluation)) {
-        errors.plan = 'Change at least one term or rating for the Ideal offer.';
-    }
-
     const currentFitRating = calculateOfferDecisionScore(currentEvaluation.ratings);
     if (!errors.ratings && calculateOfferDecisionScore(normalizedPlan.ratings) < currentFitRating) {
         const idealFitRating = calculateOfferDecisionScore(normalizedPlan.ratings);
@@ -162,7 +226,7 @@ export const buildCounterofferConclusion = (
 
     const currentFitRating = calculateOfferDecisionScore(evaluation.ratings);
     if (idealFitRating === currentFitRating) {
-        return 'Your Ideal offer has the same fit rating as the current offer, with a different combination of terms and ratings.';
+        return 'Your Ideal offer has the same fit rating as the current offer.';
     }
 
     const otherOffers = applications

@@ -2,7 +2,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import type { JobApplication } from '../../../application/models';
 import type { CreateInterviewRequest } from '../../models';
 import type { Location } from 'react-router-dom';
-import type { FormEvent } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
 import FormFieldError from '../../../../components/formPage/FormFieldError';
 import PrimaryButton from '../../../../components/button/PrimaryButton';
 import { focusFirstInvalidField } from '../../../../components/formPage/focusFirstInvalidField';
@@ -191,8 +191,15 @@ const AddInterview = () => {
         }
     };
 
+    const handleFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+        if (event.key === 'Enter' && event.shiftKey && event.target instanceof HTMLTextAreaElement) {
+            event.preventDefault();
+            event.currentTarget.requestSubmit();
+        }
+    };
+
     return (
-        <form className={styles.addInterview} noValidate onSubmit={handleAdd}>
+        <form className={styles.addInterview} noValidate onKeyDown={handleFormKeyDown} onSubmit={handleAdd}>
             <div className={styles.context}>
                 <h2>You are adding an interview for:</h2>
                 <p>

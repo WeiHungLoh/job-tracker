@@ -3,9 +3,10 @@ import DashboardContent from '../../dashboard/DashboardContent';
 import type { JobApplication, JobStatus } from '../../application/models';
 import type { JobInterview } from '../../interview/models';
 import type {
-    DashboardApplicationNavigationState,
     DashboardInterviewNavigationState,
+    DashboardOfferDecisionNavigationState,
 } from '../../dashboard/dashboardNavigation';
+import type { ApplicationListNavigationState } from '../../application/applicationNavigation';
 import { selectJobStatusCounts, selectOfferDecisionWorkspace, selectWeeklyApplications } from '../state/demoSelectors';
 import { useDemo } from '../context/DemoContext';
 import { routes } from '../../../routes';
@@ -25,7 +26,7 @@ const DemoDashboard = () => {
     const navigate = useNavigate();
 
     const handleStatusSelect = (status: JobStatus) => {
-        const navigationState: DashboardApplicationNavigationState = { dashboardJobStatus: status };
+        const navigationState: ApplicationListNavigationState = { applicationListJobStatus: status };
         navigate(routes.demoViewApplications, { state: navigationState });
     };
 
@@ -38,16 +39,20 @@ const DemoDashboard = () => {
         navigate(routes.demoAddInterview, { state: { app: application } });
     };
 
-    const handleOpenOfferComparison = () => {
-        navigate(routes.demoOfferDecisions);
+    const handleOpenOfferComparison = (application: JobApplication) => {
+        const navigationState: DashboardOfferDecisionNavigationState = {
+            dashboardOfferDecisionJobId: application.job_id,
+            dashboardOfferDecisionFilter: 'Offers to Evaluate',
+        };
+        navigate(routes.demoOfferDecisions, { state: navigationState });
     };
 
-    const handleOpenOfferDecisionApplication = (application: JobApplication) => {
-        const navigationState: DashboardApplicationNavigationState = {
-            dashboardJobStatus: 'Offer',
-            dashboardApplicationId: application.job_id,
+    const handleRecordOfferDecision = (application: JobApplication) => {
+        const navigationState: DashboardOfferDecisionNavigationState = {
+            dashboardOfferDecisionJobId: application.job_id,
+            dashboardOfferDecisionFilter: 'Evaluated Offers',
         };
-        navigate(routes.demoViewApplications, { state: navigationState });
+        navigate(routes.demoOfferDecisions, { state: navigationState });
     };
 
     const handleMarkApplicationFollowUpSent = (application: JobApplication) => {
@@ -75,7 +80,7 @@ const DemoDashboard = () => {
             onAddInterview={handleAddInterview}
             onInterviewSelect={handleInterviewSelect}
             onOpenOfferComparison={handleOpenOfferComparison}
-            onOpenOfferDecisionApplication={handleOpenOfferDecisionApplication}
+            onRecordOfferDecision={handleRecordOfferDecision}
             onMarkApplicationFollowUpSent={handleMarkApplicationFollowUpSent}
             onMarkInterviewFollowUpSent={handleMarkInterviewFollowUpSent}
             onStatusSelect={handleStatusSelect}

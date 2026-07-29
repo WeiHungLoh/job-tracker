@@ -16,7 +16,7 @@ import {
     type CounterofferPlanInput,
     type OfferDetails,
     type OfferDecisionValues,
-    type OfferEvaluationInput,
+    type SaveOfferEvaluationInput,
 } from '../db/models.js';
 import {
     OFFER_ANNUAL_LEAVE_DAYS_MAX,
@@ -166,13 +166,17 @@ export const isOfferDetails = (value: unknown): value is OfferDetails => {
     );
 };
 
-export const isSaveOfferEvaluationRequest = (value: unknown): value is OfferEvaluationInput => {
+export const isSaveOfferEvaluationRequest = (value: unknown): value is SaveOfferEvaluationInput => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
         return false;
     }
 
-    const request = value as Partial<OfferEvaluationInput>;
-    return isOfferDecisionValues(request.ratings) && isOfferDetails(request.details);
+    const request = value as Partial<SaveOfferEvaluationInput>;
+    return (
+        isOfferDecisionValues(request.ratings) &&
+        isOfferDetails(request.details) &&
+        (request.deleteCounterofferPlan === undefined || typeof request.deleteCounterofferPlan === 'boolean')
+    );
 };
 
 export const isSaveCounterofferPlanRequest = (value: unknown): value is CounterofferPlanInput => {

@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { JobTrackerAPIError } from '../../api/models';
-import OfferDecisionPage from '../../pages/offerDecision/OfferDecisionPage';
+import RoutedOfferDecisionPage from '../../pages/offerDecision/OfferDecisionPage';
 import type { OfferDecisionWorkspaceData, OfferEvaluation } from '../../pages/offerDecision/models';
 import { parseDatetimeLocal } from '../../helper/dateFormatter';
 import type { UpdateUserPreferencesRequest } from '../../components/userPreferences/models';
@@ -21,9 +22,13 @@ const mocks = vi.hoisted(() => ({
     saveEvaluation: vi.fn(),
     showErrorToast: vi.fn(),
     showSuccessToast: vi.fn(),
+    updateStatus: vi.fn(),
 }));
 
 vi.mock('material-ui-confirm', () => ({ useConfirm: () => mocks.confirm }));
+vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: vi.fn(),
+}));
 
 const openOfferActions = (companyName: string) => {
     fireEvent.click(screen.getByRole('button', { name: `More actions for ${companyName}` }));
@@ -42,6 +47,7 @@ vi.mock('../../api/useJobTrackerAPI', () => ({
     useJobTrackerAPI: () => ({
         application: {
             getSummary: mocks.getActiveApplicationSummary,
+            updateStatus: mocks.updateStatus,
         },
         archivedApplication: {
             getSummary: mocks.getArchivedApplicationSummary,
@@ -123,6 +129,12 @@ const workspaceData: OfferDecisionWorkspaceData = {
 
 const waitForActiveWorkspace = () => screen.findByRole('heading', { name: 'Evaluated Offers' });
 
+const OfferDecisionPage = ({ archived }: { archived: boolean }) => (
+    <MemoryRouter>
+        <RoutedOfferDecisionPage archived={archived} />
+    </MemoryRouter>
+);
+
 describe('OfferDecisionPage', () => {
     beforeEach(() => {
         Object.values(mocks).forEach((mock) => mock.mockReset());
@@ -131,8 +143,14 @@ describe('OfferDecisionPage', () => {
         mocks.deleteAllArchivedEvaluations.mockResolvedValue(null);
         mocks.deleteEvaluation.mockResolvedValue(null);
         mocks.deleteCounterofferPlan.mockResolvedValue(null);
-        mocks.getActiveApplicationSummary.mockResolvedValue({ offer_evaluation_count: 2 });
-        mocks.getArchivedApplicationSummary.mockResolvedValue({ offer_evaluation_count: 2 });
+        mocks.getActiveApplicationSummary.mockResolvedValue({
+            offer_evaluation_count: 2,
+            counteroffer_plan_count: 1,
+        });
+        mocks.getArchivedApplicationSummary.mockResolvedValue({
+            offer_evaluation_count: 2,
+            counteroffer_plan_count: 1,
+        });
         mocks.getActive.mockResolvedValue(workspaceData);
         mocks.getArchived.mockResolvedValue(workspaceData);
         mocks.getCounterofferPlan.mockResolvedValue({
@@ -149,6 +167,7 @@ describe('OfferDecisionPage', () => {
         });
         mocks.saveCounterofferPlan.mockResolvedValue(null);
         mocks.saveEvaluation.mockResolvedValue(null);
+        mocks.updateStatus.mockResolvedValue(null);
     });
 
     test('requests the saved active filters initially', async () => {
@@ -158,6 +177,95 @@ describe('OfferDecisionPage', () => {
 
         expect(await screen.findByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
         expect(mocks.getActive).toHaveBeenCalledWith({ filters: ['Previous Evaluations'] });
+    });
+
+    test('shows, scrolls to and highlights a dashboard-targeted evaluated offer', async () => {
+        const updatePreferences = vi.fn(async (updates: UpdateUserPreferencesRequest) => ({
+            ...testPreferences,
+            ...updates,
+        }));
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+        render(
+            <MemoryRouter
+                initialEntries={[
+                    {
+                        pathname: '/offer-comparison',
+                        state: {
+                            dashboardOfferDecisionJobId: 11,
+                            dashboardOfferDecisionFilter: 'Evaluated Offers',
+                        },
+                    },
+                ]}
+            >
+                <RoutedOfferDecisionPage archived={false} />
+            </MemoryRouter>,
+            {
+                initialPreferences: { offer_decision_filters: ['Previous Evaluations'] },
+                updatePreferences,
+            }
+        );
+
+        await waitFor(() =>
+            expect(mocks.getActive).toHaveBeenCalledWith({
+                filters: ['Previous Evaluations', 'Evaluated Offers'],
+            })
+        );
+        await waitFor(() =>
+            expect(scrollIntoView).toHaveBeenCalledWith({
+                behavior: 'smooth',
+                block: 'start',
+            })
+        );
+        expect(updatePreferences).toHaveBeenCalledWith({
+            offer_decision_filters: ['Previous Evaluations', 'Evaluated Offers'],
+        });
+        expect(screen.getByRole('article', { name: 'Acme Engineer' }).className).toContain('highlight');
+
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    test('forces Offers to Evaluate for a dashboard evaluate-offer target', async () => {
+        const updatePreferences = vi.fn(async (updates: UpdateUserPreferencesRequest) => ({
+            ...testPreferences,
+            ...updates,
+        }));
+
+        render(
+            <MemoryRouter
+                initialEntries={[
+                    {
+                        pathname: '/offer-comparison',
+                        state: {
+                            dashboardOfferDecisionJobId: 13,
+                            dashboardOfferDecisionFilter: 'Offers to Evaluate',
+                        },
+                    },
+                ]}
+            >
+                <RoutedOfferDecisionPage archived={false} />
+            </MemoryRouter>,
+            {
+                initialPreferences: { offer_decision_filters: ['Previous Evaluations'] },
+                updatePreferences,
+            }
+        );
+
+        await waitFor(() =>
+            expect(mocks.getActive).toHaveBeenCalledWith({
+                filters: ['Previous Evaluations', 'Offers to Evaluate'],
+            })
+        );
+        await waitFor(() =>
+            expect(screen.getByRole('article', { name: 'Beta Labs Platform Developer' }).className).toContain(
+                'highlight'
+            )
+        );
+        expect(updatePreferences).toHaveBeenCalledWith({
+            offer_decision_filters: ['Previous Evaluations', 'Offers to Evaluate'],
+        });
     });
 
     test('fetches active offer filters before saving the changed selection', async () => {
@@ -396,7 +504,7 @@ describe('OfferDecisionPage', () => {
         expect(mocks.showSuccessToast).toHaveBeenCalledWith('Offer evaluation added.');
     });
 
-    test('does not show a success toast when a saved evaluation is updated', async () => {
+    test('shows a success toast when a saved evaluation is updated', async () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
@@ -405,7 +513,118 @@ describe('OfferDecisionPage', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
 
         await waitFor(() => expect(mocks.saveEvaluation).toHaveBeenCalledOnce());
-        expect(mocks.showSuccessToast).not.toHaveBeenCalled();
+        expect(mocks.showSuccessToast).toHaveBeenCalledWith('Offer evaluation saved.');
+    });
+
+    test('updates an evaluated offer status locally and shows its offer-decision success toast', async () => {
+        mocks.getActive.mockResolvedValue({
+            applications: [
+                { ...workspaceData.applications[0], has_counteroffer_plan: true },
+                ...workspaceData.applications.slice(1),
+            ],
+        });
+        render(<OfferDecisionPage archived={false} />);
+        await waitForActiveWorkspace();
+
+        fireEvent.click(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Accept offer from Acme',
+            })
+        );
+
+        await waitFor(() =>
+            expect(mocks.updateStatus).toHaveBeenCalledWith({
+                jobId: 11,
+                jobStatus: 'Accepted',
+            })
+        );
+        expect(mocks.showSuccessToast).toHaveBeenCalledWith('Offer marked as Accepted.');
+        expect(screen.getByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
+        expect(screen.getByRole('article', { name: 'Acme Engineer' })).toBeInTheDocument();
+        expect(
+            within(openOfferActions('Acme')).getByRole('menuitem', { name: 'View counteroffer plan for Acme' })
+        ).toBeInTheDocument();
+    });
+
+    test('changes a previous evaluation back to Offer without losing the evaluation', async () => {
+        render(<OfferDecisionPage archived={false} />);
+        await waitForActiveWorkspace();
+
+        fireEvent.click(
+            within(openOfferActions('Past Co')).getByRole('menuitem', {
+                name: 'Change to Offer for Past Co',
+            })
+        );
+
+        await waitFor(() =>
+            expect(mocks.updateStatus).toHaveBeenCalledWith({
+                jobId: 12,
+                jobStatus: 'Offer',
+            })
+        );
+        expect(mocks.showSuccessToast).toHaveBeenCalledWith('Application marked as Offer.');
+        expect(screen.getByRole('heading', { name: 'Evaluated Offers' })).toBeInTheDocument();
+        expect(screen.getByRole('article', { name: 'Past Co Developer' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add evaluation for Past Co' })).not.toBeInTheDocument();
+    });
+
+    test('keeps an evaluated offer active and shows the backend message when its status update fails', async () => {
+        mocks.updateStatus.mockRejectedValueOnce(new JobTrackerAPIError('Status update failed.', 422));
+        render(<OfferDecisionPage archived={false} />);
+        await waitForActiveWorkspace();
+
+        fireEvent.click(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Decline offer from Acme',
+            })
+        );
+
+        await waitFor(() => expect(mocks.showErrorToast).toHaveBeenCalledWith('Status update failed.'));
+        expect(screen.getByRole('heading', { name: 'Evaluated Offers' })).toBeInTheDocument();
+        expect(mocks.showSuccessToast).not.toHaveBeenCalledWith('Offer marked as Declined.');
+    });
+
+    test('confirms counteroffer deletion before saving a lower edited evaluation without an error toast', async () => {
+        mocks.getActive.mockResolvedValue({
+            applications: [{ ...workspaceData.applications[0], has_counteroffer_plan: true }],
+        });
+        mocks.saveEvaluation
+            .mockRejectedValueOnce(
+                new JobTrackerAPIError('Conflict', 409, {
+                    code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+                    message:
+                        'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
+                })
+            )
+            .mockResolvedValueOnce(null);
+
+        render(<OfferDecisionPage archived={false} />);
+        await waitForActiveWorkspace();
+
+        editOfferEvaluation('Acme');
+        fireEvent.change(screen.getByLabelText('Acme Career Growth rating'), { target: { value: '1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        await waitFor(() =>
+            expect(mocks.confirm).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Delete counteroffer plan?',
+                    confirmationText: 'Delete and Save',
+                    confirmationButtonProps: { autoFocus: true },
+                })
+            )
+        );
+        await waitFor(() => expect(mocks.saveEvaluation).toHaveBeenCalledTimes(2));
+        expect(mocks.saveEvaluation.mock.calls[1][0]).toEqual(
+            expect.objectContaining({ jobId: 11, deleteCounterofferPlan: true })
+        );
+        expect(mocks.showErrorToast).not.toHaveBeenCalled();
+        expect(mocks.showSuccessToast).toHaveBeenCalledWith('Offer evaluation saved.');
+        expect(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Plan counteroffer for Acme',
+            })
+        ).toBeInTheDocument();
     });
 
     test('shows inline validation without a duplicate toast for an earlier decision deadline', async () => {
@@ -453,7 +672,7 @@ describe('OfferDecisionPage', () => {
         await waitFor(() => expect(mocks.deleteEvaluation).toHaveBeenCalledWith({ jobId: 11 }));
         expect(await screen.findByRole('button', { name: 'Add evaluation for Acme' })).toBeInTheDocument();
         expect(mocks.getActive).toHaveBeenCalledOnce();
-        expect(mocks.showSuccessToast).not.toHaveBeenCalled();
+        expect(mocks.showSuccessToast).toHaveBeenCalledWith('Offer evaluation deleted.');
     });
 
     test('removes deleted previous history locally without deleting the application', async () => {
@@ -467,7 +686,7 @@ describe('OfferDecisionPage', () => {
             expect(screen.queryByRole('article', { name: 'Past Co Developer' })).not.toBeInTheDocument();
         });
         expect(mocks.getActive).toHaveBeenCalledOnce();
-        expect(mocks.showSuccessToast).not.toHaveBeenCalled();
+        expect(mocks.showSuccessToast).toHaveBeenCalledWith('Offer evaluation deleted.');
     });
 
     test('loads archived comparisons as read-only but keeps deletion available', async () => {

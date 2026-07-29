@@ -134,4 +134,13 @@ describe('single-application relation confirmations', () => {
             'Archive this active job application, its 2 related active interviews, and its saved offer evaluation? The saved offer evaluation becomes read-only while archived.'
         );
     });
+
+    test('includes the counteroffer plan in application lifecycle confirmations', () => {
+        expect(createApplicationRelationConfirmation('archive', 'active', 2, 1, 1).description).toBe(
+            'Archive this active job application, its 2 related active interviews, its saved offer evaluation, and its counteroffer plan? The saved offer evaluation and counteroffer plan become read-only while archived.'
+        );
+        expect(createApplicationRelationConfirmation('delete', 'active', 0, 1, 1).description).toBe(
+            'Delete this active job application, its saved offer evaluation, and its counteroffer plan? This action is permanent and cannot be undone.'
+        );
+    });
 });

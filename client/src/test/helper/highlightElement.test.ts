@@ -33,4 +33,20 @@ describe('scrollAndHighlight', () => {
         expect(element).not.toHaveClass('actual_highlight');
         expect(timeouts.target).toBeUndefined();
     });
+
+    test('still scrolls without crashing when a highlight class is unavailable', () => {
+        const element = document.createElement('div');
+        const scrollIntoView = vi.fn();
+        const timeouts: Record<string, ReturnType<typeof setTimeout>> = {};
+
+        element.id = 'target';
+        element.scrollIntoView = scrollIntoView;
+        document.body.append(element);
+
+        expect(() => scrollAndHighlight('target', undefined, timeouts, 'start')).not.toThrow();
+        vi.advanceTimersByTime(100);
+
+        expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+        expect(timeouts.target).toBeUndefined();
+    });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createApplicationCsvData } from '../../../../../helper/csvExport';
 import { createApplicationRelationConfirmation } from '../../../../application/applicationRelationConfirmation';
 import {
@@ -35,13 +35,26 @@ import { routes } from '../../../../../routes';
 import { createApplicationEmptyState } from '../../../../application/applicationEmptyState';
 import { getApplicationsInBoardOrder } from '../../../../application/applicationBoard/applicationBoardUtils';
 import usePendingIds from '../../../../../hooks/usePendingIds';
+import { useToast } from '../../../../../components/toast/ToastProvider';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+    getApplicationListJobStatuses,
+    getApplicationListJobStatus,
+    getApplicationListTargetId,
+} from '../../../../application/applicationNavigation';
+import { scrollAndHighlight } from '../../../../../helper/highlightElement';
 
 const DemoViewArchivedApplication = () => {
     const { dispatch, state } = useDemo();
     const { preferences, updatePreferences } = useUserPreferences();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
     const archivedApplications = useMemo(() => selectArchivedApplications(state), [state]);
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const confirm = useConfirm();
+    const { showSuccessToast } = useToast();
     const [pendingBulkAction, setPendingBulkAction] = useState<'delete' | 'unarchive' | null>(null);
     const bulkActionPendingRef = useRef(false);
     const pendingApplicationActionIdsRef = useRef<Set<number>>(new Set());
@@ -74,6 +87,48 @@ const DemoViewArchivedApplication = () => {
         timeouts: showCorrespondingAppTimeout.current,
         visibleIds: visibleApplicationIds,
     });
+
+    useEffect(() => {
+        const navigationJobStatus = navigationJobStatusRef.current;
+        if (!navigationJobStatus) {
+            return;
+        }
+
+        navigationJobStatusRef.current = null;
+        const navigationApplicationId = navigationApplicationIdRef.current;
+        const navigationJobStatuses = getApplicationListJobStatuses(
+            selectedJobStatuses,
+            navigationJobStatus,
+            navigationApplicationId
+        );
+        const preferenceUpdates: {
+            archived_application_job_statuses?: JobStatus[];
+            archived_application_view_mode?: CollectionViewMode;
+        } = {};
+        if (navigationJobStatuses !== selectedJobStatuses) {
+            preferenceUpdates.archived_application_job_statuses = navigationJobStatuses;
+        }
+        if (navigationApplicationId && isBoardView) {
+            preferenceUpdates.archived_application_view_mode = 'list';
+        }
+        if (Object.keys(preferenceUpdates).length > 0) {
+            void updatePreferences(preferenceUpdates);
+        }
+    }, [isBoardView, selectedJobStatuses, updatePreferences]);
+
+    useEffect(() => {
+        const targetApplicationId = navigationApplicationIdRef.current;
+        if (isBoardView || !targetApplicationId) {
+            return;
+        }
+
+        if (visibleApplicationIds.includes(String(targetApplicationId))) {
+            scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+        }
+
+        navigationApplicationIdRef.current = null;
+        navigate(location.pathname, { replace: true, state: null });
+    }, [isBoardView, location.pathname, navigate, visibleApplicationIds]);
 
     const handleViewModeChange = (nextViewMode: CollectionViewMode) => {
         void updatePreferences({ archived_application_view_mode: nextViewMode });
@@ -114,8 +169,15 @@ const DemoViewArchivedApplication = () => {
                 (interview) => interview.archived_job_id === archivedJobId
             ).length;
             const offerEvaluationCount = state.offerEvaluations[archivedJobId] ? 1 : 0;
+            const counterofferPlanCount = state.counterofferPlans[archivedJobId] ? 1 : 0;
             const confirmationResult = await confirm(
-                createApplicationRelationConfirmation(action, 'archived', relatedInterviewCount, offerEvaluationCount)
+                createApplicationRelationConfirmation(
+                    action,
+                    'archived',
+                    relatedInterviewCount,
+                    offerEvaluationCount,
+                    counterofferPlanCount
+                )
             );
 
             if (!confirmationResult?.confirmed) {
@@ -126,6 +188,7 @@ const DemoViewArchivedApplication = () => {
                 type: action === 'unarchive' ? 'RESTORE_APPLICATION' : 'DELETE_ARCHIVED_APPLICATION',
                 payload: { archivedJobId },
             });
+            showSuccessToast(action === 'unarchive' ? 'Job application unarchived.' : 'Job application deleted.');
         } finally {
             pendingApplicationActionIdsRef.current.delete(archivedJobId);
             if (action === 'unarchive') {
@@ -153,6 +216,9 @@ const DemoViewArchivedApplication = () => {
         const offerEvaluationCount = state.archivedApplications.filter(
             (application) => state.offerEvaluations[application.archived_job_id]
         ).length;
+        const counterofferPlanCount = state.archivedApplications.filter(
+            (application) => state.counterofferPlans[application.archived_job_id]
+        ).length;
 
         try {
             if (state.archivedApplications.length === 0) {
@@ -164,13 +230,15 @@ const DemoViewArchivedApplication = () => {
                     ? createUnarchiveAllConfirmation(
                           state.archivedApplications.length,
                           interviewCount,
-                          offerEvaluationCount
+                          offerEvaluationCount,
+                          counterofferPlanCount
                       )
                     : createDeleteAllApplicationsConfirmation(
                           state.archivedApplications.length,
                           interviewCount,
                           offerEvaluationCount,
-                          'archived'
+                          'archived',
+                          counterofferPlanCount
                       );
             const { confirmed } = await confirm(confirmation);
 
@@ -181,6 +249,7 @@ const DemoViewArchivedApplication = () => {
             dispatch({
                 type: action === 'unarchive' ? 'UNARCHIVE_ALL_APPLICATIONS' : 'DELETE_ALL_ARCHIVED_APPLICATIONS',
             });
+            showSuccessToast(action === 'unarchive' ? 'Job applications unarchived.' : 'Job applications deleted.');
         } finally {
             bulkActionPendingRef.current = false;
             setPendingBulkAction(null);

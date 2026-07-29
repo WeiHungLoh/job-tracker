@@ -7,6 +7,9 @@ import { render } from '../renderWithProviders';
 const mockConfirm = vi.hoisted(() => vi.fn().mockResolvedValue({ confirmed: true }));
 
 vi.mock('material-ui-confirm', () => ({ useConfirm: () => mockConfirm }));
+vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
+    useUnsavedChangesBlocker: vi.fn(),
+}));
 
 const click = async (element: HTMLElement) => {
     fireEvent.click(element);
@@ -143,8 +146,12 @@ describe('Counteroffer plan card entry point', () => {
         expect(screen.queryByRole('button', { name: 'Plan counteroffer for Expired Co' })).not.toBeInTheDocument();
 
         expect(screen.queryByRole('button', { name: 'More actions for Previous Co' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'More actions for Saved Previous' })).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'View counteroffer plan for Saved Previous' })).toBeVisible();
+        expect(screen.getByRole('button', { name: 'Edit evaluation for Previous Co' })).toBeVisible();
+        expect(
+            within(await openCardMore('Saved Previous')).getByRole('menuitem', {
+                name: 'View counteroffer plan for Saved Previous',
+            })
+        ).toBeVisible();
     });
 
     test('changes the card action label after saving and back after deleting', async () => {
@@ -178,7 +185,7 @@ describe('Counteroffer plan card entry point', () => {
         );
         await screen.findByRole('heading', { name: 'Counteroffer plan' });
         await click(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' }));
-        expect(screen.queryByText('Counteroffer plan deleted.')).not.toBeInTheDocument();
+        expect(screen.getByText('Counteroffer plan deleted.')).toBeInTheDocument();
         expect(
             within(await openCardMore('Acme')).getByRole('menuitem', { name: 'Plan counteroffer for Acme' })
         ).toBeVisible();

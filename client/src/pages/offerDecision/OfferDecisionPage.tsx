@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import EmptyState from '../../components/emptyState/EmptyState';
 import OfferDecisionWorkspace from './OfferDecisionWorkspace';
 import type {
     OfferDecisionFilter,
+    OfferDecisionApplication,
+    OfferDecisionStatus,
     OfferDecisionWorkspaceData,
     SaveCounterofferPlanRequest,
     SaveOfferEvaluationRequest,
@@ -13,12 +16,28 @@ import { useToast } from '../../components/toast/ToastProvider';
 import { useUserPreferences } from '../../components/userPreferences/UserPreferencesProvider';
 import useFilterRequest from '../../hooks/useFilterRequest';
 import { isArchivedOfferDecisionFilter } from './offerDecisionConfig';
+import { isCounterofferPlanDeletionRequiredError } from './counteroffer/counterofferPlan';
+import { getDashboardOfferDecisionFilter, getDashboardOfferDecisionJobId } from '../dashboard/dashboardNavigation';
 
 type OfferDecisionPageProps = {
     archived: boolean;
 };
 
 const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const targetOfferJobId = archived ? null : getDashboardOfferDecisionJobId(location.state);
+    const targetOfferFilter = archived
+        ? null
+        : getDashboardOfferDecisionFilter(location.state) ?? (targetOfferJobId === null ? null : 'Evaluated Offers');
+    const hasOfferDecisionTarget =
+        !archived &&
+        typeof location.state === 'object' &&
+        location.state !== null &&
+        'dashboardOfferDecisionJobId' in location.state;
+    const clearTarget = useCallback(() => {
+        navigate(location.pathname, { replace: true, state: null });
+    }, [location.pathname, navigate]);
     const [data, setData] = useState<OfferDecisionWorkspaceData>();
     const [isLoading, setIsLoading] = useState(true);
     const [isFiltering, setIsFiltering] = useState(false);
@@ -28,7 +47,13 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
     const { showErrorToast, showSuccessToast } = useToast();
     const { preferences, updatePreferences } = useUserPreferences();
     const filterRequest = useFilterRequest<OfferDecisionWorkspaceData>();
-    const selectedFilters = archived ? preferences.archived_offer_decision_filters : preferences.offer_decision_filters;
+    const savedFilters = archived ? preferences.archived_offer_decision_filters : preferences.offer_decision_filters;
+    const [navigationFilters, setNavigationFilters] = useState<OfferDecisionFilter[] | undefined>(() =>
+        !archived && targetOfferJobId !== null && targetOfferFilter && !savedFilters.includes(targetOfferFilter)
+            ? [...savedFilters, targetOfferFilter]
+            : undefined
+    );
+    const selectedFilters = navigationFilters ?? savedFilters;
 
     const loadWorkspace = async (filters: OfferDecisionFilter[] = selectedFilters) => {
         const requestId = ++requestIdRef.current;
@@ -62,10 +87,27 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
     useEffect(() => {
         void loadWorkspace();
 
+        if (navigationFilters) {
+            setIsFiltering(true);
+            void updatePreferences({ offer_decision_filters: navigationFilters })
+                .catch((error) =>
+                    showErrorToast(
+                        getErrorToastMessage(error, 'Unable to save offer comparison filters. Please try again.')
+                    )
+                )
+                .finally(() => setIsFiltering(false));
+        }
+
         return () => {
             requestIdRef.current += 1;
         };
     }, [archived]);
+
+    useEffect(() => {
+        if (hasOfferDecisionTarget && targetOfferJobId === null) {
+            clearTarget();
+        }
+    }, [clearTarget, hasOfferDecisionTarget, targetOfferJobId]);
 
     const handleFilterSelection = async (filters: OfferDecisionFilter[]) => {
         const requestId = filterRequest.startRequest();
@@ -88,6 +130,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             if (savedWorkspace) {
                 setData(savedWorkspace);
             }
+            setNavigationFilters(undefined);
             return true;
         } catch (error) {
             if (!filterRequest.isLatestRequest(requestId)) {
@@ -110,10 +153,13 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
         }
     };
 
-    const getDeleteAllEvaluationCount = async (): Promise<number> => {
+    const getDeleteAllEvaluationSummary = async () => {
         try {
             const summary = archived ? await api.archivedApplication.getSummary() : await api.application.getSummary();
-            return summary.offer_evaluation_count;
+            return {
+                evaluationCount: summary.offer_evaluation_count,
+                counterofferPlanCount: summary.counteroffer_plan_count,
+            };
         } catch (error) {
             const fallback = archived
                 ? 'Unable to load archived offer evaluation counts. Please try again.'
@@ -143,15 +189,22 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
                                       ratings: { ...request.ratings },
                                       details: { ...request.details },
                                   },
+                                  has_counteroffer_plan:
+                                      request.deleteCounterofferPlan === true
+                                          ? false
+                                          : application.has_counteroffer_plan,
+                                  counteroffer_plan:
+                                      request.deleteCounterofferPlan === true ? null : application.counteroffer_plan,
                               }
                             : application
                     ),
                 };
             });
-            if (isNewEvaluation) {
-                showSuccessToast('Offer evaluation added.');
-            }
+            showSuccessToast(isNewEvaluation ? 'Offer evaluation added.' : 'Offer evaluation saved.');
         } catch (error) {
+            if (isCounterofferPlanDeletionRequiredError(error)) {
+                throw error;
+            }
             showErrorToast(getErrorToastMessage(error, 'Unable to save the offer evaluation. Please try again.'));
             throw error;
         }
@@ -172,11 +225,19 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
                             return [application];
                         }
                         return !archived && application.job_status === 'Offer'
-                            ? [{ ...application, evaluation: null, has_counteroffer_plan: false }]
+                            ? [
+                                  {
+                                      ...application,
+                                      evaluation: null,
+                                      has_counteroffer_plan: false,
+                                      counteroffer_plan: null,
+                                  },
+                              ]
                             : [];
                     }),
                 };
             });
+            showSuccessToast('Offer evaluation deleted.');
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to delete offer evaluation. Please try again.'));
             throw error;
@@ -202,7 +263,16 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
                               if (!application.evaluation) {
                                   return [application];
                               }
-                              return application.job_status === 'Offer' ? [{ ...application, evaluation: null }] : [];
+                              return application.job_status === 'Offer'
+                                  ? [
+                                        {
+                                            ...application,
+                                            evaluation: null,
+                                            has_counteroffer_plan: false,
+                                            counteroffer_plan: null,
+                                        },
+                                    ]
+                                  : [];
                           }),
                 };
             });
@@ -220,7 +290,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
         }
     };
 
-    const setCounterofferPlanAvailability = (jobId: number, hasCounterofferPlan: boolean) => {
+    const setCounterofferPlan = (jobId: number, counterofferPlan: SaveCounterofferPlanRequest | null) => {
         setData((current) => {
             if (!current) {
                 return current;
@@ -228,7 +298,11 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             return {
                 applications: current.applications.map((application) =>
                     application.job_id === jobId
-                        ? { ...application, has_counteroffer_plan: hasCounterofferPlan }
+                        ? {
+                              ...application,
+                              has_counteroffer_plan: counterofferPlan !== null,
+                              counteroffer_plan: counterofferPlan,
+                          }
                         : application
                 ),
             };
@@ -241,12 +315,43 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
 
     const saveCounterofferPlan = async (jobId: number, request: SaveCounterofferPlanRequest) => {
         await api.offerDecision.saveCounterofferPlan({ jobId, ...request });
-        setCounterofferPlanAvailability(jobId, true);
+        setCounterofferPlan(jobId, request);
     };
 
     const deleteCounterofferPlan = async (jobId: number) => {
         await api.offerDecision.deleteCounterofferPlan({ jobId });
-        setCounterofferPlanAvailability(jobId, false);
+        setCounterofferPlan(jobId, null);
+    };
+
+    const updateOfferStatus = async (application: OfferDecisionApplication, status: OfferDecisionStatus) => {
+        try {
+            await api.application.updateStatus({
+                jobId: application.job_id,
+                jobStatus: status,
+            });
+            setData((current) =>
+                current
+                    ? {
+                          applications: current.applications.map((item) =>
+                              item.job_id === application.job_id ? { ...item, job_status: status } : item
+                          ),
+                      }
+                    : current
+            );
+            showSuccessToast(status === 'Offer' ? 'Application marked as Offer.' : `Offer marked as ${status}.`);
+        } catch (error) {
+            showErrorToast(
+                getErrorToastMessage(
+                    error,
+                    status === 'Accepted'
+                        ? 'Unable to accept the offer. Please try again.'
+                        : status === 'Declined'
+                        ? 'Unable to decline the offer. Please try again.'
+                        : 'Unable to change the application back to Offer. Please try again.'
+                )
+            );
+            throw error;
+        }
     };
 
     if (!isLoading && (loadFailed || !data)) {
@@ -263,7 +368,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
     return (
         <OfferDecisionWorkspace
             data={data ?? { applications: [] }}
-            getDeleteAllEvaluationCount={getDeleteAllEvaluationCount}
+            getDeleteAllEvaluationSummary={getDeleteAllEvaluationSummary}
             isFiltering={isFiltering}
             isLoading={isLoading}
             onDeleteCounterofferPlan={deleteCounterofferPlan}
@@ -273,7 +378,11 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             onGetCounterofferPlan={getCounterofferPlan}
             onSave={archived ? undefined : saveEvaluation}
             onSaveCounterofferPlan={saveCounterofferPlan}
+            onTargetOfferProcessed={targetOfferJobId === null ? undefined : clearTarget}
+            onUpdateOfferStatus={archived ? undefined : updateOfferStatus}
             readOnly={archived}
+            selectedFilters={selectedFilters}
+            targetOfferJobId={targetOfferJobId ?? undefined}
         />
     );
 };

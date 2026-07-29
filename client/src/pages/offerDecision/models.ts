@@ -43,6 +43,7 @@ export type OfferDecisionApplication = {
     application_date: string;
     evaluation: OfferEvaluation | null;
     has_counteroffer_plan?: boolean;
+    counteroffer_plan?: CounterofferPlan | null;
 };
 
 export type OfferDecisionWorkspaceData = {
@@ -55,6 +56,8 @@ export type OfferDecisionFilter =
     | 'Expired Evaluated Offers'
     | 'Previous Evaluations';
 
+export type OfferDecisionStatus = 'Accepted' | 'Declined' | 'Offer';
+
 export type ArchivedOfferDecisionFilter = Exclude<OfferDecisionFilter, 'Offers to Evaluate'>;
 
 export type OfferDecisionGroups = Record<OfferDecisionFilter, OfferDecisionApplication[]>;
@@ -62,6 +65,7 @@ export type OfferDecisionGroups = Record<OfferDecisionFilter, OfferDecisionAppli
 export type SaveOfferEvaluationRequest = {
     ratings: OfferDecisionValues;
     details: OfferDetails;
+    deleteCounterofferPlan?: boolean;
 };
 
 export type SaveOfferEvaluationAPIRequest = SaveOfferEvaluationRequest & {
@@ -105,9 +109,14 @@ export type DeleteOfferEvaluationResponse = null;
 export type DeleteAllOfferEvaluationsRequest = null;
 export type DeleteAllOfferEvaluationsResponse = null;
 
+export type OfferEvaluationDeletionSummary = {
+    evaluationCount: number;
+    counterofferPlanCount: number;
+};
+
 export type OfferDecisionWorkspaceProps = {
     data: OfferDecisionWorkspaceData;
-    getDeleteAllEvaluationCount?: () => Promise<number>;
+    getDeleteAllEvaluationSummary?: () => Promise<OfferEvaluationDeletionSummary>;
     isFiltering?: boolean;
     isLoading?: boolean;
     onDeleteCounterofferPlan?: (jobId: number) => Promise<void>;
@@ -117,7 +126,11 @@ export type OfferDecisionWorkspaceProps = {
     onGetCounterofferPlan?: (jobId: number) => Promise<CounterofferPlan>;
     onSave?: (jobId: number, request: SaveOfferEvaluationRequest) => Promise<void>;
     onSaveCounterofferPlan?: (jobId: number, request: SaveCounterofferPlanRequest) => Promise<void>;
+    onTargetOfferProcessed?: () => void;
+    onUpdateOfferStatus?: (application: OfferDecisionApplication, status: OfferDecisionStatus) => Promise<void>;
     readOnly: boolean;
+    selectedFilters?: OfferDecisionFilter[];
+    targetOfferJobId?: number;
 };
 
 export type CounterofferPlan = {
@@ -135,7 +148,6 @@ export type CounterofferPlanErrors = {
     bonus?: string;
     fit_rating?: string;
     monthly_base_salary?: string;
-    plan?: string;
     ratings?: string;
     work_arrangement?: string;
 };

@@ -1,9 +1,9 @@
-import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
 import { useConfirm } from 'material-ui-confirm';
 import { JobTrackerAPIError } from '../../../api/models';
 import PrimaryButton from '../../../components/button/PrimaryButton';
@@ -14,7 +14,6 @@ import CounterofferCurrentOffer from './CounterofferCurrentOffer';
 import CounterofferIdealOffer from './CounterofferIdealOffer';
 import {
     buildCounterofferConclusion,
-    counterofferPlanValuesAreEqual,
     createCounterofferPlanFromEvaluation,
     isCounterofferPlanningEligible,
     validateCounterofferPlan,
@@ -88,7 +87,6 @@ const CounterofferPlanDialog = ({
         return !validation.isValid && validation.errors.fit_rating ? { fit_rating: validation.errors.fit_rating } : {};
     }, [application, mode, plan]);
     const errors = { ...submittedErrors, ...liveErrors };
-    const dirty = Boolean(plan && baselinePlan && !counterofferPlanValuesAreEqual(plan, baselinePlan));
 
     const initializeNewPlan = (selectedApplication: OfferDecisionApplication) => {
         const nextPlan = createCounterofferPlanFromEvaluation(selectedApplication.evaluation!);
@@ -166,30 +164,14 @@ const CounterofferPlanDialog = ({
         setSubmittedErrors({});
     };
 
-    const confirmDiscard = async (): Promise<boolean> => {
-        if (!dirty) {
-            return true;
-        }
-        const { confirmed } = await confirm({
-            title: 'Discard counteroffer changes?',
-            description: 'Your unsaved Ideal offer terms and ratings will be lost.',
-            confirmationText: 'Discard changes',
-            cancellationText: 'Keep editing',
-        });
-        return confirmed;
-    };
-
-    const requestClose = async () => {
-        if (isSaving || isDeleting || !(await confirmDiscard())) {
+    const requestClose = () => {
+        if (isSaving || isDeleting) {
             return;
         }
         onClose();
     };
 
-    const cancelChanges = async () => {
-        if (!(await confirmDiscard())) {
-            return;
-        }
+    const cancelChanges = () => {
         if (mode === 'create') {
             onClose();
             return;
@@ -231,11 +213,11 @@ const CounterofferPlanDialog = ({
         if (!validation.isValid) {
             setSubmittedErrors(validation.errors);
             focusFirstError(validation.errors);
-            showErrorToast(
-                validation.errors.fit_rating
-                    ? 'The Ideal offer has a lower fit rating than the current offer. Review the highlighted ratings before saving.'
-                    : 'Review the highlighted Ideal offer fields before saving.'
-            );
+            if (validation.errors.fit_rating) {
+                showErrorToast(
+                    'The Ideal offer has a lower fit rating than the current offer. Review the highlighted ratings before saving.'
+                );
+            }
             return;
         }
 
@@ -258,6 +240,26 @@ const CounterofferPlanDialog = ({
         }
     };
 
+    const submitPlan = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        void savePlan();
+    };
+
+    const handlePlanKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+        const target = event.target;
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            cancelChanges();
+            return;
+        }
+        if (event.key !== 'Enter' || !(target instanceof HTMLInputElement) || target.type === 'range') {
+            return;
+        }
+        event.preventDefault();
+        void savePlan();
+    };
+
     const deletePlan = async () => {
         if (isDeleting) {
             return;
@@ -277,6 +279,7 @@ const CounterofferPlanDialog = ({
         try {
             await onDelete(application.job_id);
             onPlanAvailabilityChange(application.job_id, false);
+            showSuccessToast('Counteroffer plan deleted.');
             onClose();
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to delete the counteroffer plan. Please try again.'));
@@ -293,7 +296,7 @@ const CounterofferPlanDialog = ({
             aria-describedby='counteroffer-plan-description'
             fullWidth
             maxWidth='md'
-            onClose={() => void requestClose()}
+            onClose={requestClose}
             open
             PaperProps={{ className: styles.dialogPaper }}
         >
@@ -316,16 +319,22 @@ const CounterofferPlanDialog = ({
                     <div className={styles.loadError} role='alert'>
                         <p>Unable to load the counteroffer plan. Please try again.</p>
                         <div>
-                            <Button onClick={() => void loadPlan(application)} variant='contained'>
+                            <PrimaryButton onClick={() => void loadPlan(application)} type='button' variant='default'>
                                 Try again
-                            </Button>
-                            <Button onClick={onClose} variant='outlined'>
+                            </PrimaryButton>
+                            <PrimaryButton onClick={onClose} type='button' variant='secondary'>
                                 Close
-                            </Button>
+                            </PrimaryButton>
                         </div>
                     </div>
                 ) : plan ? (
-                    <div className={styles.planFlow}>
+                    <form
+                        className={styles.planFlow}
+                        id='counteroffer-plan-form'
+                        noValidate
+                        onKeyDown={handlePlanKeyDown}
+                        onSubmit={submitPlan}
+                    >
                         <CounterofferCurrentOffer application={application} />
                         <CounterofferIdealOffer
                             application={application}
@@ -339,7 +348,7 @@ const CounterofferPlanDialog = ({
                             onChange={updatePlan}
                             plan={plan}
                         />
-                    </div>
+                    </form>
                 ) : null}
             </DialogContent>
             {!isLoading && !loadFailed && plan && (
@@ -374,19 +383,20 @@ const CounterofferPlanDialog = ({
                         <>
                             <PrimaryButton
                                 disabled={isSaving}
-                                onClick={() => void cancelChanges()}
+                                onClick={cancelChanges}
                                 type='button'
                                 variant='secondary'
                             >
                                 {mode === 'create' ? 'Cancel' : 'Cancel changes'}
                             </PrimaryButton>
                             <PrimaryButton
-                                disabled={isSaving}
-                                onClick={() => void savePlan()}
-                                type='button'
+                                aria-label='Save'
+                                form='counteroffer-plan-form'
+                                isLoading={isSaving}
+                                type='submit'
                                 variant='default'
                             >
-                                {isSaving ? 'Saving…' : 'Save'}
+                                Save
                             </PrimaryButton>
                         </>
                     )}

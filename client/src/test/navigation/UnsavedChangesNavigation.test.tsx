@@ -9,6 +9,8 @@ import DemoAddApplication from '../../pages/demo/application/jobApplication/addA
 import { DemoProvider } from '../../pages/demo/context/DemoContext';
 import DemoAddInterview from '../../pages/demo/interview/jobInterview/addInterview/DemoAddInterview';
 import AddInterview from '../../pages/interview/jobInterview/addInterview/AddInterview';
+import OfferDecisionWorkspace from '../../pages/offerDecision/OfferDecisionWorkspace';
+import type { OfferDecisionWorkspaceData } from '../../pages/offerDecision/models';
 import { routes } from '../../routes';
 import { render } from '../renderWithProviders';
 
@@ -191,6 +193,63 @@ const interviewRoutes: RouteObject[] = [
     },
 ];
 
+const offerDecisionData: OfferDecisionWorkspaceData = {
+    applications: [
+        {
+            job_id: 41,
+            company_name: 'Acme',
+            job_title: 'Software Engineer',
+            job_status: 'Offer',
+            application_date: '2026-07-01T08:00:00.000Z',
+            evaluation: {
+                job_id: 41,
+                ratings: {
+                    career_growth: 5,
+                    company_culture_fit: 4,
+                    work_life_balance: 3,
+                    compensation: 4,
+                },
+                details: {
+                    currency: 'SGD',
+                    monthly_base_salary: 10000,
+                    bonus: '15% target',
+                    annual_leave_days: 21,
+                    work_arrangement: 'Hybrid',
+                    decision_deadline: '2026-08-15T10:00:00.000Z',
+                    pros: 'Strong product ownership',
+                    concerns: 'Two office days each week',
+                },
+            },
+        },
+        {
+            job_id: 42,
+            company_name: 'Beta Labs',
+            job_title: 'Platform Developer',
+            job_status: 'Offer',
+            application_date: '2026-07-02T08:00:00.000Z',
+            evaluation: null,
+        },
+    ],
+};
+
+const offerDecisionRoutes: RouteObject[] = [
+    {
+        path: routes.offerDecisions,
+        element: (
+            <OfferDecisionWorkspace
+                data={offerDecisionData}
+                onDelete={vi.fn()}
+                onSave={vi.fn().mockResolvedValue(undefined)}
+                readOnly={false}
+            />
+        ),
+    },
+    {
+        path: routes.viewApplications,
+        element: <h1>Applications destination</h1>,
+    },
+];
+
 describe('unsaved-changes route protection', () => {
     beforeEach(() => {
         vi.mocked(fetch).mockReset();
@@ -237,6 +296,72 @@ describe('unsaved-changes route protection', () => {
         await click(screen.getByRole('button', { name: 'View Job Applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
+    });
+
+    test('Add Evaluation blocks only after a non-default field changes and uses the shared Leave Page focus', async () => {
+        const { router } = renderRouter(offerDecisionRoutes, [routes.offerDecisions]);
+        await click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+
+        await act(async () => {
+            void router.navigate(routes.viewApplications);
+        });
+        expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
+
+        await act(async () => {
+            void router.navigate(routes.offerDecisions);
+        });
+        await click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+        fireEvent.change(screen.getByLabelText('Beta Labs bonus'), { target: { value: '20% target' } });
+        await act(async () => {
+            void router.navigate(routes.viewApplications);
+        });
+
+        const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
+        const leavePageButton = within(dialog).getByRole('button', { name: 'Leave Page' });
+        expect(leavePageButton).toHaveFocus();
+        expect(leavePageButton).toHaveClass('MuiButton-colorError');
+        await click(within(dialog).getByRole('button', { name: 'Stay' }));
+        expect(screen.getByLabelText('Beta Labs bonus')).toHaveValue('20% target');
+    });
+
+    test('an incomplete Add Evaluation decision deadline activates the blocker', async () => {
+        const { router } = renderRouter(offerDecisionRoutes, [routes.offerDecisions]);
+        await click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+
+        enterIncompleteDate(screen.getByLabelText('Beta Labs decision deadline'));
+        await act(async () => {
+            void router.navigate(routes.viewApplications);
+        });
+
+        expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
+    });
+
+    test('Edit Evaluation blocks only while its draft differs from the saved evaluation', async () => {
+        const { router } = renderRouter(offerDecisionRoutes, [routes.offerDecisions]);
+        await click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+
+        await act(async () => {
+            void router.navigate(routes.viewApplications);
+        });
+        expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
+
+        await act(async () => {
+            void router.navigate(routes.offerDecisions);
+        });
+        await click(screen.getByRole('button', { name: 'Edit evaluation for Acme' }));
+        fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: 'Changed' } });
+        await act(async () => {
+            void router.navigate(routes.viewApplications);
+        });
+        await click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Stay' }));
+
+        fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: '15% target' } });
+        await act(async () => {
+            void router.navigate(routes.viewApplications);
+        });
+
+        expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     test.each([

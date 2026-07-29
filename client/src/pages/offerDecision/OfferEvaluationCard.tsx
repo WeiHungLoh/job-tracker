@@ -1,3 +1,4 @@
+import { useRef, type MouseEvent } from 'react';
 import PrimaryButton from '../../components/button/PrimaryButton';
 import ControlDropdown from '../../components/activityControls/ControlDropdown';
 import formatDate from '../../helper/dateFormatter';
@@ -13,6 +14,7 @@ import type {
     OfferDetails,
     OfferEvaluation,
     OfferEvaluationFormErrors,
+    OfferDecisionStatus,
 } from './models';
 import styles from './OfferEvaluation.module.css';
 
@@ -20,6 +22,7 @@ type OfferEvaluationCardProps = {
     allowDelete: boolean;
     allowEdit: boolean;
     application: OfferDecisionApplication;
+    areStatusActionsDisabled: boolean;
     counterofferAction?: {
         hasPlan: boolean;
         onOpen: () => void;
@@ -28,15 +31,19 @@ type OfferEvaluationCardProps = {
     errors: OfferEvaluationFormErrors;
     expanded: boolean;
     expired: boolean;
+    id: string;
     isDeleting: boolean;
     isSaving: boolean;
+    isStatusUpdating: boolean;
     onCancel: () => void;
+    onDecisionDeadlineValidityChange: (hasBadInput: boolean) => void;
     onDelete?: () => void;
     onDetailsChange: (details: OfferDetails, field: keyof OfferEvaluationFormErrors) => void;
     onEdit: () => void;
     onRatingChange: (category: OfferDecisionCategory, value: OfferDecisionRating) => void;
     onSave: (decisionDeadlineHasBadInput: boolean, refs: OfferFieldRefs) => void;
     onStart: () => void;
+    onUpdateOfferStatus?: (status: OfferDecisionStatus) => void;
     onToggleExpanded: () => void;
 };
 
@@ -116,11 +123,33 @@ const OfferDetailsReview = ({ details }: { details: OfferDetails }) => (
 const OfferEvaluationActionsMenu = ({
     allowEdit,
     application,
+    areStatusActionsDisabled,
     counterofferAction,
+    isStatusUpdating,
     onEdit,
-}: Pick<OfferEvaluationCardProps, 'allowEdit' | 'application' | 'counterofferAction' | 'onEdit'>) => {
-    if (!allowEdit && !counterofferAction) {
+    onUpdateOfferStatus,
+}: Pick<
+    OfferEvaluationCardProps,
+    | 'allowEdit'
+    | 'application'
+    | 'areStatusActionsDisabled'
+    | 'counterofferAction'
+    | 'isStatusUpdating'
+    | 'onUpdateOfferStatus'
+> & {
+    onEdit: (event: MouseEvent<HTMLButtonElement>) => void;
+}) => {
+    if (!allowEdit && !counterofferAction && !onUpdateOfferStatus) {
         return null;
+    }
+
+    const menuLabel = `More actions for ${application.company_name}`;
+    if (isStatusUpdating) {
+        return (
+            <PrimaryButton aria-label={menuLabel} isLoading type='button' variant='secondary'>
+                More...
+            </PrimaryButton>
+        );
     }
 
     const editAction = (
@@ -144,16 +173,32 @@ const OfferEvaluationActionsMenu = ({
             {counterofferLabel}
         </PrimaryButton>
     ) : null;
+    const statusActions: Array<{ label: string; status: OfferDecisionStatus }> =
+        application.job_status === 'Offer'
+            ? [
+                  { label: 'Accept offer', status: 'Accepted' },
+                  { label: 'Decline offer', status: 'Declined' },
+              ]
+            : application.job_status === 'Accepted'
+            ? [
+                  { label: 'Change to Offer', status: 'Offer' },
+                  { label: 'Change to Declined', status: 'Declined' },
+              ]
+            : application.job_status === 'Declined'
+            ? [
+                  { label: 'Change to Offer', status: 'Offer' },
+                  { label: 'Change to Accepted', status: 'Accepted' },
+              ]
+            : [];
 
-    if (!allowEdit) {
+    if (!onUpdateOfferStatus && !allowEdit) {
         return counterofferButton;
     }
 
-    if (!counterofferAction) {
+    if (!onUpdateOfferStatus && !counterofferAction) {
         return editAction;
     }
 
-    const menuLabel = `More actions for ${application.company_name}`;
     return (
         <ControlDropdown
             closeOnSelect
@@ -167,26 +212,47 @@ const OfferEvaluationActionsMenu = ({
             triggerStyle='activity'
         >
             <div className={styles.cardActionOptions}>
-                <PrimaryButton
-                    aria-label={`Edit evaluation for ${application.company_name}`}
-                    className={styles.cardActionOption}
-                    onClick={onEdit}
-                    role='menuitem'
-                    type='button'
-                    variant='secondary'
-                >
-                    Edit evaluation
-                </PrimaryButton>
-                <PrimaryButton
-                    aria-label={`${counterofferLabel} for ${application.company_name}`}
-                    className={styles.cardActionOption}
-                    onClick={counterofferAction.onOpen}
-                    role='menuitem'
-                    type='button'
-                    variant='secondary'
-                >
-                    {counterofferLabel}
-                </PrimaryButton>
+                {allowEdit && (
+                    <PrimaryButton
+                        aria-label={`Edit evaluation for ${application.company_name}`}
+                        className={styles.cardActionOption}
+                        onClick={onEdit}
+                        role='menuitem'
+                        type='button'
+                        variant='secondary'
+                    >
+                        Edit evaluation
+                    </PrimaryButton>
+                )}
+                {counterofferAction && (
+                    <PrimaryButton
+                        aria-label={`${counterofferLabel} for ${application.company_name}`}
+                        className={styles.cardActionOption}
+                        onClick={counterofferAction.onOpen}
+                        role='menuitem'
+                        type='button'
+                        variant='secondary'
+                    >
+                        {counterofferLabel}
+                    </PrimaryButton>
+                )}
+                {onUpdateOfferStatus &&
+                    statusActions.map(({ label, status }) => (
+                        <PrimaryButton
+                            aria-label={`${label} ${application.job_status === 'Offer' ? 'from' : 'for'} ${
+                                application.company_name
+                            }`}
+                            className={styles.cardActionOption}
+                            disabled={areStatusActionsDisabled}
+                            key={status}
+                            onClick={() => onUpdateOfferStatus(status)}
+                            role='menuitem'
+                            type='button'
+                            variant='secondary'
+                        >
+                            {label}
+                        </PrimaryButton>
+                    ))}
             </div>
         </ControlDropdown>
     );
@@ -196,28 +262,63 @@ const OfferEvaluationCard = ({
     allowDelete,
     allowEdit,
     application,
+    areStatusActionsDisabled,
     counterofferAction,
     draft,
     errors,
     expanded,
     expired,
+    id,
     isDeleting,
     isSaving,
+    isStatusUpdating,
     onCancel,
+    onDecisionDeadlineValidityChange,
     onDelete,
     onDetailsChange,
     onEdit,
     onRatingChange,
     onSave,
     onStart,
+    onUpdateOfferStatus,
     onToggleExpanded,
 }: OfferEvaluationCardProps) => {
+    const cardRef = useRef<HTMLElement>(null);
     const savedEvaluation = application.evaluation;
     const evaluation = draft ?? savedEvaluation;
     const editing = Boolean(draft);
+    const scrollToCard = (block: ScrollLogicalPosition) => {
+        window.setTimeout(() => {
+            cardRef.current?.scrollIntoView?.({ behavior: 'smooth', block });
+        }, 0);
+    };
+    const handleCancel = () => {
+        onCancel();
+        scrollToCard(savedEvaluation ? 'end' : 'start');
+    };
+    const handleEditClick = (event: MouseEvent<HTMLButtonElement>) => {
+        event.currentTarget.blur();
+        onEdit();
+    };
+    const handleStart = (event: MouseEvent<HTMLButtonElement>) => {
+        event.currentTarget.blur();
+        onStart();
+    };
+    const handleToggleExpanded = (event: MouseEvent<HTMLButtonElement>) => {
+        event.currentTarget.blur();
+        onToggleExpanded();
+        if (expanded) {
+            scrollToCard('start');
+        }
+    };
 
     return (
-        <article aria-label={`${application.company_name} ${application.job_title}`} className={styles.evaluationCard}>
+        <article
+            aria-label={`${application.company_name} ${application.job_title}`}
+            className={styles.evaluationCard}
+            id={id}
+            ref={cardRef}
+        >
             <header className={styles.cardHeader}>
                 <div>
                     <h3>{application.company_name}</h3>
@@ -234,7 +335,7 @@ const OfferEvaluationCard = ({
                     <p>Add the offer terms and ratings when you are ready to compare it.</p>
                     <PrimaryButton
                         aria-label={`Add evaluation for ${application.company_name}`}
-                        onClick={onStart}
+                        onClick={handleStart}
                         type='button'
                         variant='compact'
                     >
@@ -254,7 +355,8 @@ const OfferEvaluationCard = ({
                             errors={errors}
                             evaluation={evaluation}
                             isSaving={isSaving}
-                            onCancel={onCancel}
+                            onCancel={handleCancel}
+                            onDecisionDeadlineValidityChange={onDecisionDeadlineValidityChange}
                             onDetailsChange={onDetailsChange}
                             onRatingChange={onRatingChange}
                             onSave={onSave}
@@ -270,7 +372,8 @@ const OfferEvaluationCard = ({
                             <div className={styles.cardActions}>
                                 <PrimaryButton
                                     aria-label={`${expanded ? 'Hide' : 'Show'} details for ${application.company_name}`}
-                                    onClick={onToggleExpanded}
+                                    disabled={isStatusUpdating}
+                                    onClick={handleToggleExpanded}
                                     type='button'
                                     variant='secondary'
                                 >
@@ -279,12 +382,16 @@ const OfferEvaluationCard = ({
                                 <OfferEvaluationActionsMenu
                                     allowEdit={allowEdit}
                                     application={application}
+                                    areStatusActionsDisabled={areStatusActionsDisabled}
                                     counterofferAction={savedEvaluation ? counterofferAction : undefined}
-                                    onEdit={onEdit}
+                                    isStatusUpdating={isStatusUpdating}
+                                    onEdit={handleEditClick}
+                                    onUpdateOfferStatus={onUpdateOfferStatus}
                                 />
                                 {savedEvaluation && allowDelete && onDelete && (
                                     <PrimaryButton
                                         aria-label={`Delete evaluation for ${application.company_name}`}
+                                        disabled={isStatusUpdating}
                                         isLoading={isDeleting}
                                         onClick={onDelete}
                                         type='button'

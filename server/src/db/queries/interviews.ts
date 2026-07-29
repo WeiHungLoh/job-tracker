@@ -43,6 +43,8 @@ export const getInterviewSchedulingConflicts = async (
             AND interviews.is_archived = false
             AND applications.is_archived = false
             AND $3::timestamptz >= NOW()
+            AND interviews.interview_date
+                + interviews.interview_duration_minutes * INTERVAL '1 minute' > NOW()
             AND $3::timestamptz < interviews.interview_date
                 + interviews.interview_duration_minutes * INTERVAL '1 minute'
             AND interviews.interview_date
@@ -85,6 +87,7 @@ export const getInterviewOfferDeadlineWarnings = async (
             AND applications.job_status = 'Offer'
             AND applications.job_id <> $1
             AND $3::timestamptz >= NOW()
+            AND evaluations.decision_deadline >= NOW()
             AND evaluations.decision_deadline
                 <= $3::timestamptz + $4 * INTERVAL '1 minute'
         ORDER BY evaluations.decision_deadline ASC, applications.job_id ASC`,

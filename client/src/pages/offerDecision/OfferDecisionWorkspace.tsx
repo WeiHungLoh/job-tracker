@@ -1,5 +1,5 @@
-import { useRef, useState, type ReactNode } from 'react';
-import { useConfirm } from 'material-ui-confirm';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useConfirm, type ConfirmOptions } from 'material-ui-confirm';
 import ActivityControls from '../../components/activityControls/ActivityControls';
 import CheckboxFilter from '../../components/activityControls/checkboxFilter/CheckboxFilter';
 import MoreOptions from '../../components/activityControls/moreOptions/MoreOptions';
@@ -27,6 +27,7 @@ import type {
     OfferDecisionWorkspaceProps,
     OfferEvaluation,
     OfferEvaluationFormErrors,
+    OfferDecisionStatus,
 } from './models';
 import { createOfferEvaluationCsvData } from './offerDecisionCsv';
 import { createOfferDecisionEmptyState } from './offerDecisionEmptyState';
@@ -38,9 +39,15 @@ import { isEvaluatedOfferDecisionApplication } from './robustness/offerDecisionR
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import { useToast } from '../../components/toast/ToastProvider';
 import { useUserPreferences } from '../../components/userPreferences/UserPreferencesProvider';
+import { useUnsavedChangesBlocker } from '../../hooks/useUnsavedChangesBlocker';
+import { scrollAndHighlight } from '../../helper/highlightElement';
 import styles from './OfferDecisionWorkspace.module.css';
+import evaluationStyles from './OfferEvaluation.module.css';
 import CounterofferPlanDialog from './counteroffer/CounterofferPlanDialog';
-import { isCounterofferPlanningEligible } from './counteroffer/counterofferPlan';
+import {
+    isCounterofferPlanDeletionRequiredError,
+    isCounterofferPlanningEligible,
+} from './counteroffer/counterofferPlan';
 
 type DraftEvaluations = Record<number, OfferEvaluation>;
 type EvaluationErrors = Record<number, OfferEvaluationFormErrors>;
@@ -67,6 +74,42 @@ const removeRecordValue = <T,>(record: Record<number, T>, jobId: number): Record
     const updatedRecord = { ...record };
     delete updatedRecord[jobId];
     return updatedRecord;
+};
+
+const getEvaluationCardId = (jobId: number): string => `offer-evaluation-${jobId}`;
+
+const createCounterofferDeletionConfirmation = (companyName: string): ConfirmOptions => ({
+    title: 'Delete counteroffer plan?',
+    description: `The edited evaluation for ${companyName} has a lower fit rating than your saved counteroffer plan. Delete the counteroffer plan and save this evaluation?`,
+    confirmationText: 'Delete and Save',
+    cancellationText: 'Cancel',
+    confirmationButtonProps: { autoFocus: true },
+});
+
+const createOfferOutcomeConfirmation = (
+    application: OfferDecisionApplication,
+    status: OfferDecisionStatus
+): ConfirmOptions => {
+    if (status === 'Offer') {
+        return {
+            title: 'Change back to Offer?',
+            description: `${application.company_name} — ${application.job_title} will be marked as Offer.`,
+            confirmationText: 'Change to Offer',
+            cancellationText: 'Cancel',
+            confirmationButtonProps: { autoFocus: true },
+        };
+    }
+
+    const isAccepting = status === 'Accepted';
+    return {
+        title: `${isAccepting ? 'Accept' : 'Decline'} this offer?`,
+        description: `${application.company_name} — ${application.job_title} will be marked as ${status}.`,
+        confirmationText: isAccepting ? 'Accept Offer' : 'Decline Offer',
+        cancellationText: 'Cancel',
+        confirmationButtonProps: isAccepting
+            ? { autoFocus: true }
+            : { autoFocus: true, color: 'error', variant: 'contained' },
+    };
 };
 
 const getCardCount = (count: number): 'one' | 'two' | 'many' => {
@@ -103,7 +146,7 @@ const ComparisonSection = ({
 
 const OfferDecisionWorkspace = ({
     data,
-    getDeleteAllEvaluationCount,
+    getDeleteAllEvaluationSummary,
     isFiltering = false,
     isLoading = false,
     onDeleteCounterofferPlan,
@@ -113,22 +156,34 @@ const OfferDecisionWorkspace = ({
     onGetCounterofferPlan,
     onSave,
     onSaveCounterofferPlan,
+    onTargetOfferProcessed,
+    onUpdateOfferStatus,
     readOnly,
+    selectedFilters: selectedFiltersOverride,
+    targetOfferJobId,
 }: OfferDecisionWorkspaceProps) => {
     const confirm = useConfirm();
     const { preferences, updatePreferences } = useUserPreferences();
     const { showErrorToast } = useToast();
     const filterOptions = readOnly ? ARCHIVED_OFFER_DECISION_FILTERS : ACTIVE_OFFER_DECISION_FILTERS;
-    const selectedFilters = readOnly ? preferences.archived_offer_decision_filters : preferences.offer_decision_filters;
+    const selectedFilters =
+        selectedFiltersOverride ??
+        (readOnly ? preferences.archived_offer_decision_filters : preferences.offer_decision_filters);
     const [drafts, setDrafts] = useState<DraftEvaluations>({});
     const [errors, setErrors] = useState<EvaluationErrors>({});
     const [expandedJobIds, setExpandedJobIds] = useState<number[]>([]);
     const [savingJobId, setSavingJobId] = useState<number>();
+    const [savedEvaluationJobId, setSavedEvaluationJobId] = useState<number>();
+    const [invalidDeadlineJobIds, setInvalidDeadlineJobIds] = useState<number[]>([]);
     const [deletingJobId, setDeletingJobId] = useState<number>();
     const [isDeletingAll, setIsDeletingAll] = useState(false);
     const [counterofferPlanAvailability, setCounterofferPlanAvailability] = useState<Record<number, boolean>>({});
     const [counterofferApplication, setCounterofferApplication] = useState<OfferDecisionApplication | null>(null);
+    const [statusUpdatingJobId, setStatusUpdatingJobId] = useState<number>();
+    const [highlightedJobId, setHighlightedJobId] = useState<number>();
     const deleteAllPendingRef = useRef(false);
+    const statusUpdatePendingRef = useRef(false);
+    const highlightTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
     const groups = groupOfferDecisionApplications(data.applications);
     const offersToEvaluate = groups['Offers to Evaluate'];
@@ -145,6 +200,74 @@ const OfferDecisionWorkspace = ({
     );
     const evaluationCount = evaluatedOffers.length + expiredEvaluatedOffers.length + previousEvaluations.length;
     const csvData = createOfferEvaluationCsvData(groups, selectedFilters);
+    const hasUnsavedEvaluationChanges =
+        invalidDeadlineJobIds.length > 0 ||
+        Object.values(drafts).some((draft) => {
+            const savedEvaluation = data.applications.find(
+                (application) => application.job_id === draft.job_id
+            )?.evaluation;
+            return !offerEvaluationsAreEqual(draft, savedEvaluation ?? createDefaultOfferEvaluation(draft.job_id));
+        });
+    useUnsavedChangesBlocker(hasUnsavedEvaluationChanges, savingJobId !== undefined);
+
+    useEffect(
+        () => () => {
+            Object.values(highlightTimeoutsRef.current).forEach(clearTimeout);
+        },
+        []
+    );
+
+    useEffect(() => {
+        if (savedEvaluationJobId === undefined) {
+            return;
+        }
+        document
+            .getElementById(getEvaluationCardId(savedEvaluationJobId))
+            ?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
+        setSavedEvaluationJobId(undefined);
+    }, [savedEvaluationJobId]);
+
+    useEffect(() => {
+        if (targetOfferJobId === undefined || isLoading || isFiltering) {
+            return;
+        }
+
+        scrollAndHighlight(
+            getEvaluationCardId(targetOfferJobId),
+            evaluationStyles.highlighted,
+            highlightTimeoutsRef.current,
+            'start'
+        );
+        onTargetOfferProcessed?.();
+    }, [isFiltering, isLoading, onTargetOfferProcessed, targetOfferJobId]);
+
+    useEffect(() => {
+        if (highlightedJobId === undefined) {
+            return;
+        }
+
+        scrollAndHighlight(
+            getEvaluationCardId(highlightedJobId),
+            evaluationStyles.highlighted,
+            highlightTimeoutsRef.current,
+            'start'
+        );
+        setHighlightedJobId(undefined);
+    }, [highlightedJobId]);
+
+    const clearInvalidDeadline = (jobId: number) => {
+        setInvalidDeadlineJobIds((current) => current.filter((currentJobId) => currentJobId !== jobId));
+    };
+
+    const setInvalidDeadline = (jobId: number, hasBadInput: boolean) => {
+        setInvalidDeadlineJobIds((current) => {
+            const hasJobId = current.includes(jobId);
+            if (hasBadInput === hasJobId) {
+                return current;
+            }
+            return hasBadInput ? [...current, jobId] : current.filter((currentJobId) => currentJobId !== jobId);
+        });
+    };
 
     const handleFilterSelection = async (filters: OfferDecisionFilter[]) => {
         if (onFilterSelectionChange) {
@@ -179,6 +302,7 @@ const OfferDecisionWorkspace = ({
             [application.job_id]: createDefaultOfferEvaluation(application.job_id),
         }));
         setErrors((current) => removeRecordValue(current, application.job_id));
+        clearInvalidDeadline(application.job_id);
     };
 
     const editEvaluation = (application: OfferDecisionApplication) => {
@@ -189,11 +313,22 @@ const OfferDecisionWorkspace = ({
 
         setDrafts((current) => ({ ...current, [application.job_id]: cloneEvaluation(evaluation) }));
         setErrors((current) => removeRecordValue(current, application.job_id));
+        clearInvalidDeadline(application.job_id);
     };
 
     const cancelEvaluation = (jobId: number) => {
         setDrafts((current) => removeRecordValue(current, jobId));
         setErrors((current) => removeRecordValue(current, jobId));
+        clearInvalidDeadline(jobId);
+    };
+
+    const cancelEvaluationEdit = (application: OfferDecisionApplication) => {
+        cancelEvaluation(application.job_id);
+        if (application.evaluation) {
+            setExpandedJobIds((current) =>
+                current.includes(application.job_id) ? current : [...current, application.job_id]
+            );
+        }
     };
 
     const updateEvaluation = (jobId: number, update: (evaluation: OfferEvaluation) => OfferEvaluation) => {
@@ -231,18 +366,46 @@ const OfferDecisionWorkspace = ({
             ]);
             return;
         }
+        const isNewEvaluation = application.evaluation === null;
         if (application.evaluation && offerEvaluationsAreEqual(draft, application.evaluation)) {
             cancelEvaluation(application.job_id);
+            setExpandedJobIds((current) =>
+                current.includes(application.job_id) ? current : [...current, application.job_id]
+            );
+            setSavedEvaluationJobId(application.job_id);
             return;
         }
 
         setSavingJobId(application.job_id);
         try {
-            await onSave(application.job_id, validation.values);
+            try {
+                await onSave(application.job_id, validation.values);
+            } catch (error) {
+                if (!isCounterofferPlanDeletionRequiredError(error)) {
+                    return;
+                }
+                const { confirmed } = await confirm(createCounterofferDeletionConfirmation(application.company_name));
+                if (!confirmed) {
+                    return;
+                }
+                await onSave(application.job_id, {
+                    ...validation.values,
+                    deleteCounterofferPlan: true,
+                });
+                setCounterofferPlanAvailability((current) => ({
+                    ...current,
+                    [application.job_id]: false,
+                }));
+            }
             cancelEvaluation(application.job_id);
             setExpandedJobIds((current) =>
                 current.includes(application.job_id) ? current : [...current, application.job_id]
             );
+            if (isNewEvaluation && preferences.application_enable_scroll) {
+                setHighlightedJobId(application.job_id);
+            } else {
+                setSavedEvaluationJobId(application.job_id);
+            }
         } catch {
             // The page-level adapter owns user-facing API error handling.
         } finally {
@@ -250,11 +413,13 @@ const OfferDecisionWorkspace = ({
         }
     };
 
-    const handleDelete = async (jobId: number) => {
+    const handleDelete = async (application: OfferDecisionApplication, hasCounterofferPlan: boolean) => {
+        const { job_id: jobId } = application;
         if (!onDelete || drafts[jobId] || deletingJobId !== undefined || deleteAllPendingRef.current) {
             return;
         }
-        const { confirmed } = await confirm(createDeleteConfirmation('offer evaluation'));
+        const deleteTarget = hasCounterofferPlan ? 'offer evaluation and its counteroffer plan' : 'offer evaluation';
+        const { confirmed } = await confirm(createDeleteConfirmation(deleteTarget));
         if (!confirmed) {
             return;
         }
@@ -277,15 +442,19 @@ const OfferDecisionWorkspace = ({
         deleteAllPendingRef.current = true;
         setIsDeletingAll(true);
         try {
-            const deleteAllEvaluationCount = getDeleteAllEvaluationCount
-                ? await getDeleteAllEvaluationCount()
-                : evaluationCount;
-            if (deleteAllEvaluationCount === 0) {
+            const deletionSummary = getDeleteAllEvaluationSummary
+                ? await getDeleteAllEvaluationSummary()
+                : { evaluationCount, counterofferPlanCount: 0 };
+            if (deletionSummary.evaluationCount === 0) {
                 return;
             }
 
             const { confirmed } = await confirm(
-                createDeleteAllOfferEvaluationsConfirmation(deleteAllEvaluationCount, readOnly ? 'archived' : 'active')
+                createDeleteAllOfferEvaluationsConfirmation(
+                    deletionSummary.evaluationCount,
+                    readOnly ? 'archived' : 'active',
+                    deletionSummary.counterofferPlanCount
+                )
             );
             if (!confirmed) {
                 return;
@@ -303,16 +472,43 @@ const OfferDecisionWorkspace = ({
         }
     };
 
+    const handleOfferStatusUpdate = async (application: OfferDecisionApplication, status: OfferDecisionStatus) => {
+        if (!onUpdateOfferStatus || statusUpdatePendingRef.current) {
+            return;
+        }
+
+        statusUpdatePendingRef.current = true;
+        setStatusUpdatingJobId(application.job_id);
+        try {
+            const { confirmed } = await confirm(createOfferOutcomeConfirmation(application, status));
+            if (!confirmed) {
+                return;
+            }
+            await onUpdateOfferStatus(application, status);
+            setExpandedJobIds((current) => current.filter((jobId) => jobId !== application.job_id));
+            if (preferences.application_enable_scroll) {
+                setHighlightedJobId(application.job_id);
+            }
+        } catch {
+            // The page-level adapter owns user-facing API error handling.
+        } finally {
+            statusUpdatePendingRef.current = false;
+            setStatusUpdatingJobId(undefined);
+        }
+    };
+
     const renderCard = (
         application: OfferDecisionApplication,
         allowEdit: boolean,
         expired: boolean,
-        showExpiredBadge: boolean
+        showExpiredBadge: boolean,
+        allowOfferStatusUpdate = false
     ) => {
         const hasCounterofferPlan =
             counterofferPlanAvailability[application.job_id] ?? Boolean(application.has_counteroffer_plan);
         const canCreateCounterofferPlan = isCounterofferPlanningEligible(application, readOnly);
         const canOpenCounterofferPlan =
+            !readOnly &&
             Boolean(onGetCounterofferPlan) &&
             Boolean(onDeleteCounterofferPlan) &&
             Boolean(onSaveCounterofferPlan) &&
@@ -323,6 +519,7 @@ const OfferDecisionWorkspace = ({
                 allowDelete={Boolean(onDelete) && !isDeletingAll}
                 allowEdit={allowEdit}
                 application={application}
+                areStatusActionsDisabled={statusUpdatingJobId !== undefined}
                 counterofferAction={
                     canOpenCounterofferPlan
                         ? {
@@ -335,11 +532,14 @@ const OfferDecisionWorkspace = ({
                 errors={errors[application.job_id] ?? {}}
                 expanded={expandedJobIds.includes(application.job_id)}
                 expired={showExpiredBadge && expired}
+                id={getEvaluationCardId(application.job_id)}
                 isDeleting={deletingJobId === application.job_id}
                 isSaving={savingJobId === application.job_id}
+                isStatusUpdating={statusUpdatingJobId === application.job_id}
                 key={application.job_id}
-                onCancel={() => cancelEvaluation(application.job_id)}
-                onDelete={onDelete ? () => void handleDelete(application.job_id) : undefined}
+                onCancel={() => cancelEvaluationEdit(application)}
+                onDecisionDeadlineValidityChange={(hasBadInput) => setInvalidDeadline(application.job_id, hasBadInput)}
+                onDelete={onDelete ? () => void handleDelete(application, hasCounterofferPlan) : undefined}
                 onDetailsChange={(details, field) => {
                     updateEvaluation(application.job_id, (evaluation) => ({ ...evaluation, details }));
                     clearFieldError(application.job_id, field);
@@ -354,6 +554,13 @@ const OfferDecisionWorkspace = ({
                 }}
                 onSave={(badInput, refs) => void handleSave(application, badInput, refs)}
                 onStart={() => startEvaluation(application)}
+                onUpdateOfferStatus={
+                    allowOfferStatusUpdate &&
+                    onUpdateOfferStatus &&
+                    ['Offer', 'Accepted', 'Declined'].includes(application.job_status)
+                        ? (status) => void handleOfferStatusUpdate(application, status)
+                        : undefined
+                }
                 onToggleExpanded={() =>
                     setExpandedJobIds((current) =>
                         current.includes(application.job_id)
@@ -466,7 +673,7 @@ const OfferDecisionWorkspace = ({
                             description='Sorted by the nearest decision deadline, then fit rating.'
                             heading='Evaluated Offers'
                             id='evaluated-offers-heading'
-                            renderCard={(application) => renderCard(application, true, false, false)}
+                            renderCard={(application) => renderCard(application, true, false, false, true)}
                         />
                     )}
                     {selectedFilters.includes('Expired Evaluated Offers') && (
@@ -475,16 +682,16 @@ const OfferDecisionWorkspace = ({
                             description='The decision deadline has passed. Update the evaluation if the offer is still open.'
                             heading='Expired Evaluated Offers'
                             id='expired-evaluated-offers-heading'
-                            renderCard={(application) => renderCard(application, true, true, true)}
+                            renderCard={(application) => renderCard(application, true, true, true, true)}
                         />
                     )}
                     {selectedFilters.includes('Previous Evaluations') && (
                         <ComparisonSection
                             applications={previousEvaluations}
-                            description='These records stay read-only after the application leaves Offer status.'
+                            description='Review or update evaluations after an offer is accepted or declined.'
                             heading='Previous Evaluations'
                             id='previous-evaluations-heading'
-                            renderCard={(application) => renderCard(application, false, false, false)}
+                            renderCard={(application) => renderCard(application, true, false, false, true)}
                         />
                     )}
                 </>

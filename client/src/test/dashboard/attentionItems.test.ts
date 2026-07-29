@@ -327,10 +327,10 @@ describe('getAttentionItems', () => {
         expect(items.map((item) => item.application.job_id)).toEqual([3, 1]);
         expect(items.every((item) => item.category === 'offer-decision-due')).toBe(true);
         expect(items[0].message).toBe(
-            'The decision deadline is 18 July 2026 (0 minutes away). Record the application as Accepted or Declined once decided.'
+            'The decision deadline is 18 July 2026 (0 minutes away). Review the evaluated offer and mark it as Accepted or Declined once decided.'
         );
         expect(items[1].message).toBe(
-            'The decision deadline is 21 July 2026 (3 days away). Record the application as Accepted or Declined once decided.'
+            'The decision deadline is 21 July 2026 (3 days away). Review the evaluated offer and mark it as Accepted or Declined once decided.'
         );
     });
 
