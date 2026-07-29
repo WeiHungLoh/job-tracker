@@ -278,6 +278,13 @@ describe('Rose Ledger visual contract', () => {
         const counterofferCss = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.module.css');
         const counterofferDialog = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.tsx');
         const followUpDialog = readSource('src/pages/dashboard/attentionCenter/FollowUpDraftDialog.tsx');
+        const needsAttentionSettingsCss = readSource(
+            'src/pages/dashboard/attentionCenter/NeedsAttentionSettingsDialog.module.css'
+        );
+        const needsAttentionSettingsDialog = readSource(
+            'src/pages/dashboard/attentionCenter/NeedsAttentionSettingsDialog.tsx'
+        );
+        const pageScrollControls = readSource('src/components/pageScrollControls/PageScrollControls.tsx');
         const activityControlsCss = readSource('src/components/activityControls/ActivityControls.module.css');
 
         expect(offerDecisionWorkspaceCss).not.toContain('linear-gradient');
@@ -332,30 +339,51 @@ describe('Rose Ledger visual contract', () => {
         expect(counterofferCss).toMatch(
             /\.description\s*\{[^}]*margin:\s*var\(--spaceControl\) 0 var\(--spaceSection\);[^}]*\}/s
         );
-        expect(counterofferCss).toMatch(
-            /@media \(max-width: 600px\)[\s\S]*?\.actions\s*\{[^}]*display:\s*grid\s*!important;/
-        );
+        expect(counterofferCss).not.toMatch(/@media \(max-width: 600px\)[\s\S]*?\.actions\s*\{/);
         expect(counterofferCss).toMatch(
             /\.actions\s*\{[^}]*padding:\s*var\(--spaceCompact\) var\(--spaceSection\) !important;/s
         );
+        expect(counterofferCss).toMatch(/\.actionSpacer\s*\{[^}]*flex:\s*1;/s);
         expect(counterofferCss).toMatch(
             /\.dialogContent\s*\{[^}]*padding:\s*0 var\(--spaceSection\) var\(--spaceSection\) !important;/s
         );
-        expect(counterofferCss).toMatch(
-            /@media \(max-width: 600px\)[\s\S]*?\.actions > button\s*\{[^}]*min-height:\s*36px;[^}]*box-sizing:\s*border-box;/s
+        expect(counterofferDialog).toContain('<DialogTitle className={styles.dialogTitle}>{title}</DialogTitle>');
+        expect(counterofferCss).toMatch(/\.dialogTitle\s*\{[^}]*padding-left:\s*var\(--spaceSection\) !important;/s);
+        expect(counterofferCss).not.toMatch(/@media \(max-width: 768px\)[\s\S]*?\.dialogContent\s*\{/);
+        expect(counterofferCss).not.toContain(".actions[data-button-count='2']");
+        expect(counterofferCss).not.toContain(".actions[data-button-count='3']");
+        expect(counterofferCss).not.toMatch(/@media \(max-width: 600px\)[\s\S]*?\.actionSpacer\s*\{/);
+        expect(needsAttentionSettingsCss).toMatch(
+            /\.actions\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*flex-end;[^}]*padding:\s*var\(--spaceCompact\) var\(--spaceSection\) !important;/s
         );
-        expect(counterofferCss).toMatch(
-            /@media \(max-width: 768px\)[\s\S]*?\.dialogContent\s*\{[^}]*padding-right:\s*var\(--spaceCard\) !important;[^}]*padding-left:\s*var\(--spaceCard\) !important;/s
+        expect(needsAttentionSettingsDialog).toContain(
+            "<section className={styles.reminderSettings} aria-labelledby='reminder-order-heading'>"
         );
-        expect(counterofferCss).toMatch(
-            /@media \(max-width: 600px\)[\s\S]*?\.actions\s*\{[^}]*padding-right:\s*var\(--spaceCard\) !important;[^}]*padding-left:\s*var\(--spaceCard\) !important;/s
+        expect(needsAttentionSettingsCss).toMatch(
+            /\.listSettings,\s*\.reminderSettings\s*\{[^}]*padding:\s*var\(--spaceCard\);[^}]*border:\s*1px solid var\(--colorCardBorder\);[^}]*border-radius:\s*var\(--radiusCard\);/s
         );
-        expect(counterofferCss).toMatch(
-            /@media \(max-width: 600px\)[\s\S]*?\.actions\[data-button-count='2'\]\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/s
+        expect(needsAttentionSettingsCss).toMatch(/\.listSettings\s*\{[^}]*background-color:\s*var\(--colorCardBg\);/s);
+        expect(needsAttentionSettingsCss).toMatch(
+            /\.reminderSettings\s*\{[^}]*background-color:\s*var\(--colorControlSurface\);/s
         );
-        expect(counterofferCss).toMatch(
-            /@media \(max-width: 600px\)[\s\S]*?\.actions\[data-button-count='3'\]\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\);/s
+        expect(needsAttentionSettingsCss).toMatch(/\.reset\s*\{[^}]*margin-right:\s*auto;/s);
+        expect(needsAttentionSettingsCss).toMatch(
+            /\.option\s*\{[^}]*border:\s*1px solid var\(--colorCardBorder\);[^}]*border-radius:\s*var\(--radiusCard\);[^}]*background-color:\s*var\(--colorCardBg\);/s
         );
+        expect(needsAttentionSettingsCss).toMatch(
+            /\.priority\s*\{[^}]*border:\s*1px solid var\(--colorPrimary\);[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorStatIconBg\);/s
+        );
+        expect(needsAttentionSettingsCss).toMatch(
+            /\.optionDetails\s*\{[^}]*border-top:\s*1px solid var\(--colorControlBorder\);/s
+        );
+        expect(needsAttentionSettingsCss).not.toMatch(
+            /@media \(max-width: 550px\)[\s\S]*?\.actions\s*\{[^}]*flex-direction:\s*column;/
+        );
+        expect(needsAttentionSettingsCss).not.toMatch(
+            /@media \(max-width: 550px\)[\s\S]*?\.reset\s*\{[^}]*width:\s*100%;/
+        );
+        expect(pageScrollControls).not.toContain('MdKeyboardArrowDown');
+        expect(pageScrollControls).not.toContain('Scroll to bottom');
         expect(counterofferCss).toMatch(
             /@media \(max-width: 768px\)[\s\S]*?\.idealColumns\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);/s
         );
@@ -472,6 +500,9 @@ describe('Rose Ledger visual contract', () => {
     it('uses the established application and Offer Comparison typography hierarchy on dashboard cards', () => {
         const dashboardCardCss = readSource('src/pages/dashboard/shared/dashboardCard/DashboardCard.module.css');
         const attentionCenterCss = readSource('src/pages/dashboard/attentionCenter/AttentionCenter.module.css');
+        const attentionSettingsCss = readSource(
+            'src/pages/dashboard/attentionCenter/NeedsAttentionSettingsDialog.module.css'
+        );
         const attentionCenterDesktopCss = attentionCenterCss.slice(0, attentionCenterCss.indexOf('@media'));
         const followUpDialogCss = readSource('src/pages/dashboard/attentionCenter/FollowUpDraftDialog.module.css');
 
@@ -499,6 +530,11 @@ describe('Rose Ledger visual contract', () => {
         expect(followUpDialogCss).not.toContain('box-shadow');
         expect(followUpDialogCss).toContain('white-space: pre-wrap;');
         expect(followUpDialogCss).toContain('overflow-wrap: anywhere;');
+        expect(attentionSettingsCss).toMatch(/\.content\s*>\s*p\s*\{[^}]*font-size:\s*var\(--fontSizeControl\);/s);
+        expect(attentionSettingsCss).toMatch(
+            /\.optionCopy\s*>\s*span\s*\{[^}]*font-size:\s*var\(--fontSizeControl\);/s
+        );
+        expect(attentionSettingsCss).toMatch(/\.timingLabel\s*\{[^}]*font-size:\s*var\(--fontSizeControl\);/s);
     });
 
     it('defines both approved palettes and the shared metric aliases', () => {
@@ -910,6 +946,9 @@ describe('Rose Ledger visual contract', () => {
             /\.compact\s*\{[^}]*padding:\s*4px 9px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:/s
         );
         expect(followUpSentBadge).toMatch(/\.mobileLabel\s*\{[^}]*display:\s*none;/s);
+        expect(followUpSentBadge).toMatch(
+            /\.copy,\s*\.compactLabel,\s*\.mobileLabel\s*\{[^}]*color:\s*var\(--colorToastSuccessText\);[^}]*font-weight:\s*700;/s
+        );
         expect(followUpSentBadge).not.toContain('.mobileTime');
         expect(followUpSentBadge).not.toContain('::after');
         expect(followUpSentBadge).toMatch(

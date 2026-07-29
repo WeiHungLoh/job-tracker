@@ -1,5 +1,4 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import CounterofferPlanDialog from '../../pages/offerDecision/counteroffer/CounterofferPlanDialog';
 import primaryButtonStyles from '../../components/button/PrimaryButton.module.css';
 import type {
@@ -238,7 +237,7 @@ describe('CounterofferPlanDialog', () => {
         expect(screen.queryByText('Change at least one term or rating for the Ideal offer.')).not.toBeInTheDocument();
     });
 
-    test('submits with Enter and shows the shared loading spinner without replacing the Save label', async () => {
+    test('submits with Enter from the dialog and shows the shared loading spinner without replacing the Save label', async () => {
         let resolveSave: (() => void) | undefined;
         const onSave = vi.fn(
             () =>
@@ -248,7 +247,7 @@ describe('CounterofferPlanDialog', () => {
         );
         renderDialog({ onSave });
 
-        await userEvent.type(screen.getByLabelText('Acme Ideal offer bonus'), '{enter}');
+        fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter' });
 
         await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
         const saveButton = screen.getByRole('button', { name: 'Save' });
@@ -504,10 +503,9 @@ describe('CounterofferPlanDialog', () => {
         });
 
         await screen.findByRole('heading', { name: 'Counteroffer plan' });
+        const deleteButton = await within(screen.getByRole('dialog')).findByText('Delete', { selector: 'button' });
         expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
-        expect(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' })).toHaveClass(
-            primaryButtonStyles.destructive
-        );
+        expect(deleteButton).toHaveClass(primaryButtonStyles.destructive);
         expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
         expect(screen.queryByRole('slider')).not.toBeInTheDocument();
     });

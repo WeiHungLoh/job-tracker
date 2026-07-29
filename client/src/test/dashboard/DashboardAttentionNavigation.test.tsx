@@ -12,7 +12,7 @@ import { defaultConfirmOptions } from '../../components/confirmation/defaultConf
 const apiMocks = vi.hoisted(() => ({
     listApplications: vi.fn(),
     listInterviews: vi.fn(),
-    listJobStatusCounts: vi.fn(),
+    getDashboardApplicationSummary: vi.fn(),
     listWeeklyApplications: vi.fn(),
     getActiveOfferDecisions: vi.fn(),
     updateApplicationStatus: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('../../api/useJobTrackerAPI', () => ({
     useJobTrackerAPI: () => ({
         application: {
             listApplications: apiMocks.listApplications,
-            listJobStatusCounts: apiMocks.listJobStatusCounts,
+            getDashboardApplicationSummary: apiMocks.getDashboardApplicationSummary,
             listWeeklyApplications: apiMocks.listWeeklyApplications,
             updateStatus: apiMocks.updateApplicationStatus,
         },
@@ -84,7 +84,10 @@ const ApplicationListDestination = () => {
 describe('signed-in dashboard attention navigation', () => {
     beforeEach(() => {
         apiMocks.listInterviews.mockResolvedValue([]);
-        apiMocks.listJobStatusCounts.mockResolvedValue([]);
+        apiMocks.getDashboardApplicationSummary.mockResolvedValue({
+            statusCounts: [],
+            interviewedApplicationCount: 0,
+        });
         apiMocks.listWeeklyApplications.mockResolvedValue([]);
         apiMocks.getActiveOfferDecisions.mockResolvedValue({ applications: [] });
         apiMocks.updateApplicationStatus.mockResolvedValue(null);
@@ -224,10 +227,13 @@ describe('signed-in dashboard attention navigation', () => {
                 application_follow_up_sent_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
             },
         ]);
-        apiMocks.listJobStatusCounts.mockResolvedValue([
-            { job_status: 'Applied', count: '1' },
-            { job_status: 'Ghosted', count: '0' },
-        ]);
+        apiMocks.getDashboardApplicationSummary.mockResolvedValue({
+            statusCounts: [
+                { job_status: 'Applied', count: '1' },
+                { job_status: 'Ghosted', count: '0' },
+            ],
+            interviewedApplicationCount: 0,
+        });
         renderDashboardRoutes();
 
         await userEvent.click(
@@ -250,10 +256,13 @@ describe('signed-in dashboard attention navigation', () => {
                 application_follow_up_sent_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
             },
         ]);
-        apiMocks.listJobStatusCounts.mockResolvedValue([
-            { job_status: 'Applied', count: '1' },
-            { job_status: 'Ghosted', count: '0' },
-        ]);
+        apiMocks.getDashboardApplicationSummary.mockResolvedValue({
+            statusCounts: [
+                { job_status: 'Applied', count: '1' },
+                { job_status: 'Ghosted', count: '0' },
+            ],
+            interviewedApplicationCount: 0,
+        });
         apiMocks.updateApplicationStatus.mockRejectedValueOnce(new Error('Database unavailable'));
         renderDashboardRoutes();
 
@@ -288,10 +297,13 @@ describe('signed-in dashboard attention navigation', () => {
                 follow_up_sent_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
             },
         ]);
-        apiMocks.listJobStatusCounts.mockResolvedValue([
-            { job_status: 'Interview', count: '1' },
-            { job_status: 'Ghosted', count: '0' },
-        ]);
+        apiMocks.getDashboardApplicationSummary.mockResolvedValue({
+            statusCounts: [
+                { job_status: 'Interview', count: '1' },
+                { job_status: 'Ghosted', count: '0' },
+            ],
+            interviewedApplicationCount: 1,
+        });
         renderDashboardRoutes();
 
         await userEvent.click(

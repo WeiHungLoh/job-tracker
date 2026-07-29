@@ -28,7 +28,6 @@ export const DemoProvider = ({ children }: PropsWithChildren) => {
         },
         [state.preferences]
     );
-
     const contextValue = useMemo(() => ({ dispatch, state, updatePreferences }), [state, updatePreferences]);
 
     return <DemoContext.Provider value={contextValue}>{children}</DemoContext.Provider>;

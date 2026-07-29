@@ -116,6 +116,10 @@
     margin: 6px 0 0;
 }
 
+.settingsButton {
+    flex: 0 0 auto;
+}
+
 @media (max-width: 803px) {
     .applicationDetails h3,
     .centered h3 {

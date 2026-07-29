@@ -26,12 +26,20 @@ import {
     trendTooltipPlugin,
 } from '../shared/chartConfig';
 import { getWeeklyInterviewCounts } from '../../dashboardSelectors';
+import PrimaryButton from '../../../../components/button/PrimaryButton';
 
 ChartJS.register(CategoryScale, Legend, LineElement, LinearScale, PointElement, Title, Tooltip);
 
 const formatTotal = (count: number, singular: string): string => `${count} ${count === 1 ? singular : `${singular}s`}`;
 
-const ApplicationsLineChart = ({ interviews, weeklyApplications, isLoading }: ApplicationsLineChartProps) => {
+const ApplicationsLineChart = ({
+    interviews,
+    weeklyApplications,
+    hasError = false,
+    interviewsAvailable = true,
+    isLoading,
+    onRetry,
+}: ApplicationsLineChartProps) => {
     const { theme } = useTheme();
     const [applicationsVisible, setApplicationsVisible] = useState(true);
     const [interviewsVisible, setInterviewsVisible] = useState(true);
@@ -51,7 +59,10 @@ const ApplicationsLineChart = ({ interviews, weeklyApplications, isLoading }: Ap
         [weeks]
     );
     const total = useMemo(() => counts.reduce((sum, count) => sum + count, 0), [counts]);
-    const interviewCounts = useMemo(() => getWeeklyInterviewCounts(interviews, weeks), [interviews, weeks]);
+    const interviewCounts = useMemo(
+        () => (interviewsAvailable ? getWeeklyInterviewCounts(interviews, weeks) : []),
+        [interviews, interviewsAvailable, weeks]
+    );
     const interviewTotal = useMemo(() => interviewCounts.reduce((sum, count) => sum + count, 0), [interviewCounts]);
     const thisWeekCount = counts.at(-1) ?? 0;
     const lastWeekCount = counts.at(-2);
@@ -81,13 +92,17 @@ const ApplicationsLineChart = ({ interviews, weeklyApplications, isLoading }: Ap
                     borderColor: STATUS_COLORS.Applied[theme],
                     hidden: !applicationsVisible,
                 },
-                {
-                    label: 'Interviews',
-                    data: interviewCounts,
-                    backgroundColor: STATUS_COLORS.Interview[theme],
-                    borderColor: STATUS_COLORS.Interview[theme],
-                    hidden: !interviewsVisible,
-                },
+                ...(interviewsAvailable
+                    ? [
+                          {
+                              label: 'Interviews',
+                              data: interviewCounts,
+                              backgroundColor: STATUS_COLORS.Interview[theme],
+                              borderColor: STATUS_COLORS.Interview[theme],
+                              hidden: !interviewsVisible,
+                          },
+                      ]
+                    : []),
             ],
         };
     }, [applicationsVisible, counts, interviewCounts, interviewsVisible, theme, weeks]);
@@ -99,7 +114,7 @@ const ApplicationsLineChart = ({ interviews, weeklyApplications, isLoading }: Ap
             title='Job Search Activity'
             description='Applications submitted and interviews scheduled over the past eight weeks.'
         >
-            {!isLoading && (
+            {!isLoading && !hasError && (
                 <div className={styles.summary} aria-label='Weekly application summary'>
                     <div className={`${styles.summaryItem} ${styles.current}`}>
                         <span>Applications this week</span>
@@ -115,7 +130,18 @@ const ApplicationsLineChart = ({ interviews, weeklyApplications, isLoading }: Ap
                     </div>
                 </div>
             )}
-            {isLoading ? (
+            {hasError ? (
+                <div className={styles.centered}>
+                    <div>
+                        <p>Unable to load application trends.</p>
+                        {onRetry && (
+                            <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
+                                Try Again
+                            </PrimaryButton>
+                        )}
+                    </div>
+                </div>
+            ) : isLoading ? (
                 <div className={styles.centered}>
                     <LoadingSpinner size='sm' />
                 </div>
@@ -167,7 +193,8 @@ const ApplicationsLineChart = ({ interviews, weeklyApplications, isLoading }: Ap
                         />
                     </div>
                     <p className={styles.total}>
-                        8-week totals: {formatTotal(total, 'application')} · {formatTotal(interviewTotal, 'interview')}
+                        8-week totals: {formatTotal(total, 'application')}
+                        {interviewsAvailable ? ` · ${formatTotal(interviewTotal, 'interview')}` : ''}
                     </p>
                 </>
             )}

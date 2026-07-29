@@ -4,8 +4,8 @@ import type {
     ApplicationRelationSummary,
     JobApplication,
     JobStatus,
-    JobStatusCount,
     WeeklyApplicationCount,
+    DashboardApplicationSummary,
 } from '../../db/models.js';
 import type { ErrorResponse } from '../../http/models.js';
 export type { EmptyResponse } from '../../http/models.js';
@@ -64,7 +64,7 @@ export type MarkApplicationFollowUpResponse =
 
 export type CreateApplicationResponse = string | DuplicateApplicationErrorResponse | ErrorResponse;
 export type ListApplicationsResponse = JobApplication[] | ErrorResponse;
-export type ListJobStatusCountsResponse = JobStatusCount[] | ErrorResponse;
+export type GetDashboardApplicationSummaryResponse = DashboardApplicationSummary | ErrorResponse;
 export type ListWeeklyApplicationsResponse = WeeklyApplicationCount[] | ErrorResponse;
 export type GetApplicationCollectionSummaryResponse = ApplicationCollectionSummary | ErrorResponse;
 export type GetApplicationRelationSummaryResponse = ApplicationRelationSummary | ErrorResponse;

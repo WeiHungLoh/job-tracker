@@ -193,7 +193,7 @@ describe('counteroffer plan calculations and validation', () => {
             {
                 key: 'annual_leave_days',
                 label: 'Annual leave',
-                currentValue: 'Not included',
+                currentValue: '-',
                 idealValue: '1 day',
             },
         ]);
@@ -208,7 +208,7 @@ describe('counteroffer plan calculations and validation', () => {
                 key: 'annual_leave_days',
                 label: 'Annual leave',
                 currentValue: '20 days',
-                idealValue: 'Not included',
+                idealValue: '-',
             },
         ]);
 
@@ -242,7 +242,7 @@ describe('counteroffer plan calculations and validation', () => {
             {
                 key: 'bonus',
                 label: 'Bonus',
-                currentValue: 'Not included',
+                currentValue: '-',
                 idealValue: longBonus,
             },
         ]);
@@ -257,7 +257,7 @@ describe('counteroffer plan calculations and validation', () => {
                 key: 'bonus',
                 label: 'Bonus',
                 currentValue: '10% target',
-                idealValue: 'Not included',
+                idealValue: '-',
             },
         ]);
 

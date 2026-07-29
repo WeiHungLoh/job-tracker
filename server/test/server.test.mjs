@@ -79,6 +79,27 @@ test('returns security headers without identifying Express', async () => {
     assert.match(response.headers.get('content-security-policy'), /default-src 'self'/);
 });
 
+test('allows loopback development origins on any local port', async () => {
+    const origin = 'http://127.0.0.1:5174';
+    const response = await fetch(`${baseUrl}/authentication/sessions/current`, {
+        headers: { Origin: origin },
+    });
+
+    assert.equal(response.status, 401);
+    assert.equal(response.headers.get('access-control-allow-origin'), origin);
+    assert.equal(response.headers.get('access-control-allow-credentials'), 'true');
+});
+
+test('rejects unconfigured non-loopback origins', async () => {
+    const response = await fetch(`${baseUrl}/authentication/sessions/current`, {
+        headers: { Origin: 'https://untrusted.example' },
+    });
+
+    assert.equal(response.status, 403);
+    assert.deepEqual(await response.json(), { message: 'Origin is not allowed.' });
+    assert.equal(response.headers.get('access-control-allow-origin'), null);
+});
+
 test('creates new user preference rows with enabled display defaults', async () => {
     const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
     const userPreferencesTable = createTablesSource.match(
@@ -150,6 +171,46 @@ test('creates the optional interview meeting URL field without startup migration
     );
     assert.match(activeInterviewQuerySource, /interviews\.meeting_url/);
     assert.match(archivedInterviewQuerySource, /interviews\.meeting_url/);
+});
+
+test('fresh tables enforce the same bounded text and date inputs as the API', async () => {
+    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const usersTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS users \([\s\S]*?\n\s*\)`/)?.[0];
+    const jobApplicationsTable = createTablesSource.match(
+        /CREATE TABLE IF NOT EXISTS job_applications \([\s\S]*?\n\s*\)`/
+    )?.[0];
+    const offerEvaluationsTable = createTablesSource.match(
+        /CREATE TABLE IF NOT EXISTS offer_evaluations \([\s\S]*?\n\s*\)`/
+    )?.[0];
+    const counterofferPlansTable = createTablesSource.match(
+        /CREATE TABLE IF NOT EXISTS offer_counteroffer_plans \([\s\S]*?\n\s*\)`/
+    )?.[0];
+    const interviewsTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS interviews \([\s\S]*?\n\s*\)`/)?.[0];
+
+    assert.ok(usersTable);
+    assert.ok(jobApplicationsTable);
+    assert.ok(offerEvaluationsTable);
+    assert.ok(counterofferPlansTable);
+    assert.ok(interviewsTable);
+
+    assert.match(usersTable, /users_email_check[\s\S]*?LOWER\(BTRIM\(email\)\)/);
+    assert.match(jobApplicationsTable, /job_applications_company_name_check[\s\S]*?FIELD_MAX_LENGTHS\.companyName/);
+    assert.match(jobApplicationsTable, /job_applications_job_title_check[\s\S]*?FIELD_MAX_LENGTHS\.jobTitle/);
+    assert.match(jobApplicationsTable, /job_applications_application_date_range_check/);
+    assert.match(jobApplicationsTable, /job_applications_application_date_not_future_check/);
+    assert.match(jobApplicationsTable, /job_applications_job_location_check[\s\S]*?FIELD_MAX_LENGTHS\.location/);
+    assert.match(jobApplicationsTable, /job_applications_job_posting_url_check[\s\S]*?FIELD_MAX_LENGTHS\.jobURL/);
+    assert.match(jobApplicationsTable, /job_applications_notes_check[\s\S]*?FIELD_MAX_LENGTHS\.notes/);
+    assert.match(offerEvaluationsTable, /offer_evaluations_bonus_check[\s\S]*?BTRIM\(bonus\)/);
+    assert.match(offerEvaluationsTable, /offer_evaluations_decision_deadline_range_check/);
+    assert.match(offerEvaluationsTable, /offer_evaluations_pros_check[\s\S]*?BTRIM\(pros\)/);
+    assert.match(offerEvaluationsTable, /offer_evaluations_concerns_check[\s\S]*?BTRIM\(concerns\)/);
+    assert.match(counterofferPlansTable, /offer_counteroffer_plans_bonus_check[\s\S]*?BTRIM\(bonus\)/);
+    assert.match(interviewsTable, /interviews_date_range_check/);
+    assert.match(interviewsTable, /interviews_location_check[\s\S]*?FIELD_MAX_LENGTHS\.location/);
+    assert.match(interviewsTable, /interviews_type_check[\s\S]*?FIELD_MAX_LENGTHS\.interviewType/);
+    assert.match(interviewsTable, /interviews_notes_check[\s\S]*?FIELD_MAX_LENGTHS\.notes/);
+    assert.match(interviewsTable, /interviews_meeting_url_check[\s\S]*?FIELD_MAX_LENGTHS\.meetingURL/);
 });
 
 test('creates persistent interview pinning and returns pinned interviews first after time filtering', async () => {
@@ -566,6 +627,14 @@ test('saves a supported application sort preference and returns the complete pre
         archived_interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
         offer_decision_filters: ['Offers to Evaluate', 'Evaluated Offers'],
         archived_offer_decision_filters: ['Previous Evaluations'],
+        needs_attention_categories: ['offer-evaluation', 'application-follow-up'],
+        needs_attention_max_items: 10,
+        needs_attention_offer_due_days: 3,
+        needs_attention_offer_overdue_days: 14,
+        needs_attention_post_interview_stale_days: 14,
+        needs_attention_post_interview_follow_up_days: 7,
+        needs_attention_application_stale_days: 14,
+        needs_attention_application_follow_up_days: 7,
     };
     let queryValues;
     pool.query = async (_sql, values) => {
@@ -586,7 +655,7 @@ test('saves a supported application sort preference and returns the complete pre
 
         assert.equal(response.status, 200);
         assert.deepEqual(await response.json(), storedPreferences);
-        assert.equal(queryValues.length, 19);
+        assert.equal(queryValues.length, 27);
         assert.equal(queryValues[0], TEST_USER.id);
         assert.equal(queryValues[12], 'company_name_desc');
     } finally {

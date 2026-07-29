@@ -15,6 +15,7 @@ import {
     ACTIVE_OFFER_DECISION_FILTERS,
     ARCHIVED_OFFER_DECISION_FILTERS,
 } from '../../offerDecision/offerDecisionConfig';
+import { DEFAULT_NEEDS_ATTENTION_SETTINGS } from '../../dashboard/attentionCenter/needsAttentionSettings';
 
 const defaultDemoPreferences = {
     application_job_statuses: [...JOB_STATUSES],
@@ -35,6 +36,14 @@ const defaultDemoPreferences = {
     archived_interview_time_filters: [...INTERVIEW_TIME_FILTERS],
     offer_decision_filters: [...ACTIVE_OFFER_DECISION_FILTERS],
     archived_offer_decision_filters: [...ARCHIVED_OFFER_DECISION_FILTERS],
+    needs_attention_categories: [...DEFAULT_NEEDS_ATTENTION_SETTINGS.enabledCategories],
+    needs_attention_max_items: DEFAULT_NEEDS_ATTENTION_SETTINGS.maxItems,
+    needs_attention_offer_due_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.offerDueDays,
+    needs_attention_offer_overdue_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.offerOverdueDays,
+    needs_attention_post_interview_stale_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.postInterviewStaleDays,
+    needs_attention_post_interview_follow_up_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.postInterviewFollowUpDays,
+    needs_attention_application_stale_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.applicationStaleDays,
+    needs_attention_application_follow_up_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.applicationFollowUpDays,
 } as const;
 
 type ApplicationSeed = {
@@ -620,6 +629,7 @@ export const createDemoInitialState = (now = new Date()): DemoState => ({
         archived_interview_time_filters: [...defaultDemoPreferences.archived_interview_time_filters],
         offer_decision_filters: [...defaultDemoPreferences.offer_decision_filters],
         archived_offer_decision_filters: [...defaultDemoPreferences.archived_offer_decision_filters],
+        needs_attention_categories: [...defaultDemoPreferences.needs_attention_categories],
     },
     nextApplicationId: 122,
     nextInterviewId: 411,

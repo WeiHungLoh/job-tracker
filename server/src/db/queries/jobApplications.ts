@@ -1,4 +1,11 @@
-import type { ApplicationPin, JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../models.js';
+import type {
+    ApplicationPin,
+    DashboardApplicationSummary,
+    JobApplication,
+    JobStatus,
+    JobStatusCount,
+    WeeklyApplicationCount,
+} from '../models.js';
 import { pool } from '../connectDB.js';
 import { hasAffectedRows, JOB_STATUS_SORT_ORDER } from './shared.js';
 
@@ -100,13 +107,50 @@ export const getJobApplications = async (userId: number, jobStatuses: JobStatus[
     return result.rows;
 };
 
-export const getJobStatusCounts = async (userId: number): Promise<JobStatusCount[]> => {
-    const result = await pool.query<JobStatusCount>(
-        `SELECT job_status, COUNT(*) FROM job_applications WHERE user_id = $1 AND is_archived = false
-        GROUP BY job_status ORDER BY job_status ASC`,
+type DashboardApplicationSummaryRow = {
+    status_counts: JobStatusCount[];
+    interviewed_application_count: number;
+};
+
+export const getDashboardApplicationSummary = async (userId: number): Promise<DashboardApplicationSummary> => {
+    const result = await pool.query<DashboardApplicationSummaryRow>(
+        `WITH active_applications AS (
+            SELECT applications.job_id, applications.job_status
+            FROM job_applications AS applications
+            WHERE applications.user_id = $1
+                AND applications.is_archived = false
+        ),
+        status_counts AS (
+            SELECT job_status, COUNT(*)::text AS count
+            FROM active_applications
+            GROUP BY job_status
+        ),
+        interviewed_applications AS (
+            SELECT COUNT(*)::integer AS interviewed_application_count
+            FROM active_applications AS applications
+            WHERE applications.job_status IN ('Interview', 'Offer', 'Accepted', 'Declined')
+                OR EXISTS (
+                    SELECT 1
+                    FROM interviews
+                    WHERE interviews.job_id = applications.job_id
+                        AND interviews.user_id = $1
+                )
+        )
+        SELECT
+            COALESCE(
+                (SELECT json_agg(status_counts ORDER BY job_status) FROM status_counts),
+                '[]'::json
+            ) AS status_counts,
+            interviewed_application_count
+        FROM interviewed_applications`,
         [userId]
     );
-    return result.rows;
+    const row = result.rows[0];
+
+    return {
+        statusCounts: row?.status_counts ?? [],
+        interviewedApplicationCount: row?.interviewed_application_count ?? 0,
+    };
 };
 
 export const getApplicationsForLatestEightWeeks = async (userId: number): Promise<WeeklyApplicationCount[]> => {

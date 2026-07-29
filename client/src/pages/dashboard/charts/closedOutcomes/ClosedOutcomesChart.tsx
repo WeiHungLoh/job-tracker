@@ -16,12 +16,19 @@ import { getStatusCountMap } from '../../dashboardSelectors';
 import styles from './ClosedOutcomesChart.module.css';
 import { useTheme } from '../../../../components/theme/ThemeContext';
 import useStatusChartVisibility from '../shared/useStatusChartVisibility';
+import PrimaryButton from '../../../../components/button/PrimaryButton';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
 const CLOSED_STATUSES: readonly JobStatus[] = ['Rejected', 'Ghosted', 'Withdrawn', 'Declined'];
 
-const ClosedOutcomesChart = ({ statusCounts, isLoading, onStatusSelect }: StatusChartProps) => {
+const ClosedOutcomesChart = ({
+    statusCounts,
+    hasError = false,
+    isLoading,
+    onRetry,
+    onStatusSelect,
+}: StatusChartProps) => {
     const { theme } = useTheme();
     const countByStatus = useMemo(() => getStatusCountMap(statusCounts), [statusCounts]);
     const renderedStatuses = useMemo(
@@ -47,7 +54,18 @@ const ClosedOutcomesChart = ({ statusCounts, isLoading, onStatusSelect }: Status
 
     return (
         <DashboardCard title='Closed Outcomes' description='Applications that are no longer active.'>
-            {isLoading ? (
+            {hasError ? (
+                <div className={styles.centered}>
+                    <div>
+                        <p>Unable to load application statistics.</p>
+                        {onRetry && (
+                            <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
+                                Try Again
+                            </PrimaryButton>
+                        )}
+                    </div>
+                </div>
+            ) : isLoading ? (
                 <div className={styles.centered}>
                     <LoadingSpinner size='sm' />
                 </div>

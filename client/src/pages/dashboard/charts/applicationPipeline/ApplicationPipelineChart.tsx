@@ -16,12 +16,19 @@ import { getStatusCountMap } from '../../dashboardSelectors';
 import styles from './ApplicationPipelineChart.module.css';
 import { useTheme } from '../../../../components/theme/ThemeContext';
 import useStatusChartVisibility from '../shared/useStatusChartVisibility';
+import PrimaryButton from '../../../../components/button/PrimaryButton';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
 const PIPELINE_STATUSES: readonly JobStatus[] = ['Applied', 'Interview', 'Offer', 'Accepted'];
 
-const ApplicationPipelineChart = ({ statusCounts, isLoading, onStatusSelect }: StatusChartProps) => {
+const ApplicationPipelineChart = ({
+    statusCounts,
+    hasError = false,
+    isLoading,
+    onRetry,
+    onStatusSelect,
+}: StatusChartProps) => {
     const { theme } = useTheme();
     const countByStatus = useMemo(() => getStatusCountMap(statusCounts), [statusCounts]);
     const renderedStatuses = useMemo(
@@ -47,7 +54,18 @@ const ApplicationPipelineChart = ({ statusCounts, isLoading, onStatusSelect }: S
 
     return (
         <DashboardCard title='Application Pipeline' description='Current progression from Applied to Accepted.'>
-            {isLoading ? (
+            {hasError ? (
+                <div className={styles.centered}>
+                    <div>
+                        <p>Unable to load application statistics.</p>
+                        {onRetry && (
+                            <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
+                                Try Again
+                            </PrimaryButton>
+                        )}
+                    </div>
+                </div>
+            ) : isLoading ? (
                 <div className={styles.centered}>
                     <LoadingSpinner size='sm' />
                 </div>

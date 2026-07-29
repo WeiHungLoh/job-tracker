@@ -132,28 +132,35 @@ const InterviewCard = (props: InterviewCardProps) => {
             </div>
 
             {isBoardLayout ? (
-                <BoardCardActions
-                    actions={
-                        <>
-                            {showCalendarOptions && <CalendarOptions interview={interview} />}
-                            <PrimaryButton
-                                className={styles.boardDeleteButton}
-                                isLoading={isDeleting}
-                                variant='destructive'
-                                onClick={onDelete}
+                <>
+                    <BoardCardActions
+                        actions={
+                            <>
+                                {showCalendarOptions && <CalendarOptions interview={interview} />}
+                                <PrimaryButton
+                                    className={styles.boardDeleteButton}
+                                    isLoading={isDeleting}
+                                    variant='destructive'
+                                    onClick={onDelete}
+                                >
+                                    Delete
+                                </PrimaryButton>
+                            </>
+                        }
+                        compactActions
+                    >
+                        {interview.meeting_url && (
+                            <a
+                                className={styles.boardMeetingLink}
+                                href={interview.meeting_url}
+                                rel='noreferrer noopener'
+                                target='_blank'
                             >
-                                Delete
-                            </PrimaryButton>
-                        </>
-                    }
-                    compactActions
-                >
-                    {interview.meeting_url && (
-                        <a href={interview.meeting_url} rel='noreferrer noopener' target='_blank'>
-                            Click here to enter meeting
-                        </a>
-                    )}
-                </BoardCardActions>
+                                Click here to view meeting
+                            </a>
+                        )}
+                    </BoardCardActions>
+                </>
             ) : (
                 <div className={styles.buttonGroup}>
                     {showCalendarOptions && <CalendarOptions interview={interview} />}

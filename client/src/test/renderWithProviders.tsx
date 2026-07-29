@@ -8,6 +8,7 @@ import type { UserPreferencesContextValue } from '../components/userPreferences/
 import { render as renderWithTestingLibrary } from '@testing-library/react';
 import { useState } from 'react';
 import { JOB_STATUSES } from '../pages/application/models';
+import { DEFAULT_NEEDS_ATTENTION_SETTINGS } from '../pages/dashboard/attentionCenter/needsAttentionSettings';
 
 export const testPreferences: UserPreferences = {
     application_job_statuses: [...JOB_STATUSES],
@@ -33,6 +34,14 @@ export const testPreferences: UserPreferences = {
         'Previous Evaluations',
     ],
     archived_offer_decision_filters: ['Evaluated Offers', 'Expired Evaluated Offers', 'Previous Evaluations'],
+    needs_attention_categories: [...DEFAULT_NEEDS_ATTENTION_SETTINGS.enabledCategories],
+    needs_attention_max_items: DEFAULT_NEEDS_ATTENTION_SETTINGS.maxItems,
+    needs_attention_offer_due_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.offerDueDays,
+    needs_attention_offer_overdue_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.offerOverdueDays,
+    needs_attention_post_interview_stale_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.postInterviewStaleDays,
+    needs_attention_post_interview_follow_up_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.postInterviewFollowUpDays,
+    needs_attention_application_stale_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.applicationStaleDays,
+    needs_attention_application_follow_up_days: DEFAULT_NEEDS_ATTENTION_SETTINGS.applicationFollowUpDays,
 };
 
 type CustomRenderOptions = Omit<RenderOptions, 'wrapper'> & {
@@ -63,7 +72,6 @@ const createTestProviders = (
             });
             return savedPreferences;
         };
-
         return (
             <ThemeProvider>
                 <ToastProvider>

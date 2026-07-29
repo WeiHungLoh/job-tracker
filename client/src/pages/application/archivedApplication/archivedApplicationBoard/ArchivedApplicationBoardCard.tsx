@@ -57,6 +57,7 @@ const ArchivedApplicationBoardCard = ({
             )}
 
             <BoardCardActions
+                compactActions
                 compactPanelSpacing
                 actions={
                     <>

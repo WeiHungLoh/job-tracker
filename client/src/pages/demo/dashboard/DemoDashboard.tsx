@@ -25,6 +25,15 @@ const DemoDashboard = () => {
     const offerEvaluations = offerDecisionWorkspace.applications.flatMap((application) =>
         application.evaluation ? [application.evaluation] : []
     );
+    const interviewedJobIds = new Set([
+        ...state.interviews.map((interview) => interview.job_id),
+        ...state.archivedInterviews.map((interview) => interview.archived_job_id),
+    ]);
+    const interviewedApplicationCount = state.applications.filter(
+        (application) =>
+            ['Interview', 'Offer', 'Accepted', 'Declined'].includes(application.job_status) ||
+            interviewedJobIds.has(application.job_id)
+    ).length;
     const navigate = useNavigate();
     const { showSuccessToast } = useToast();
 
@@ -83,6 +92,7 @@ const DemoDashboard = () => {
     return (
         <DashboardContent
             applications={applications}
+            interviewedApplicationCount={interviewedApplicationCount}
             offerEvaluations={offerEvaluations}
             statusCounts={statusCounts}
             interviews={state.interviews}

@@ -28,7 +28,13 @@ describe('renders user guide properly', () => {
 
         expect(screen.getByText(/quick visual overview/i)).toBeVisible();
         expect(screen.getByText(/interview rate counts applications currently at/i)).toBeVisible();
-        expect(screen.getByText(/shows up to ten applications/i)).toBeVisible();
+        expect(screen.getByText(/item limit defaults to ten and can be set from 1 to 50/i)).toBeVisible();
+        expect(
+            screen.getByText(/does not make another preferences request or reload dashboard sections/i)
+        ).toBeVisible();
+        expect(
+            screen.getByText(/press Enter anywhere in the dialog to save; a number field does not need focus/i)
+        ).toBeVisible();
         expect(
             screen.getByText(/at least seven full days have passed since the latest interview ended/i)
         ).toBeVisible();
@@ -80,7 +86,10 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/future and ongoing interviews remain in the upcoming interviews card/i)).toBeVisible();
         expect(screen.getByText(/job tracker does not inspect email/i)).toBeVisible();
         expect(screen.getByText(/successful change updates dashboard counts immediately/i)).toBeVisible();
-        expect(screen.getByText(/shows up to ten applications that may require action/i)).toBeVisible();
+        expect(screen.getByText(/changing needs attention timing, categories or the item limit/i)).toBeVisible();
+        expect(screen.getByText(/overdue offer starts showing when its deadline passes/i)).toBeVisible();
+        expect(screen.getByText(/full days has passed since it was marked as sent/i)).toBeVisible();
+        expect(screen.getByText(/sent label uses bold green text/i)).toBeVisible();
         expect(screen.getByText(/first six are visible before scrolling/i)).toBeVisible();
         expect(
             screen.getByText(
@@ -134,6 +143,9 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/starts with the current terms and all four current ratings/i)).toBeVisible();
         expect(screen.getByText(/individual rating differences use rating points/i)).toBeVisible();
         expect(screen.getByText(/fit rating differences use percentage points/i)).toBeVisible();
+        expect(screen.getByText(/empty values that remain visible are shown as/i)).toBeVisible();
+        expect(screen.getByText(/while creating or editing a counteroffer plan, press Enter anywhere/i)).toBeVisible();
+        expect(screen.getByText(/Offer Comparison evaluation forms keep their field-based shortcuts/i)).toBeVisible();
         expect(screen.getByText(/saved plans remain available to review or delete/i)).toBeVisible();
         expect(screen.getByText(/under active evaluated offers and expired evaluated offers/i)).toBeVisible();
         expect(screen.getByText(/active previous evaluations can be edited/i)).toBeVisible();
@@ -147,6 +159,7 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/job posting URLs are limited to 2048 characters/i)).toBeVisible();
         expect(screen.getByText(/standard card list and the board layout/i)).toBeVisible();
         expect(screen.getByText(/active application board groups cards by status/i)).toBeVisible();
+        expect(screen.getByText(/compact archive and delete controls aligned to the right/i)).toBeVisible();
         expect(screen.getByRole('heading', { name: /job status definitions/i })).toBeVisible();
         ['Applied', 'Interview', 'Offer', 'Accepted', 'Declined', 'Withdrawn', 'Ghosted', 'Rejected'].forEach(
             (status) => expect(screen.getByText(`${status}:`, { selector: 'strong' })).toBeVisible()
@@ -178,6 +191,9 @@ describe('renders user guide properly', () => {
 
         expect(screen.getByText(/interview location is separate from job location/i)).toBeVisible();
         expect(screen.getByText(/interview notes are optional and limited to 3000 characters/i)).toBeVisible();
+        expect(screen.getByText(/duration must be a whole number from 1 to 1440 minutes/i)).toBeVisible();
+        expect(screen.getByText(/meeting url is optional, limited to 2048 characters/i)).toBeVisible();
+        expect(screen.getByText(/click here to view meeting/i)).toBeVisible();
         expect(
             screen.getByText(/reaches or passes another active offer application's present or future/i)
         ).toBeVisible();

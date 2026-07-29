@@ -245,15 +245,18 @@ const CounterofferPlanDialog = ({
         void savePlan();
     };
 
-    const handlePlanKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    const handlePlanFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
         const target = event.target;
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' && target instanceof HTMLInputElement) {
             event.preventDefault();
             event.stopPropagation();
             cancelChanges();
-            return;
         }
-        if (event.key !== 'Enter' || !(target instanceof HTMLInputElement) || target.type === 'range') {
+    };
+
+    const handlePlanKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+        const target = event.target;
+        if (event.key !== 'Enter' || mode === 'view' || (target instanceof HTMLTextAreaElement && !event.shiftKey)) {
             return;
         }
         event.preventDefault();
@@ -297,10 +300,11 @@ const CounterofferPlanDialog = ({
             fullWidth
             maxWidth='md'
             onClose={requestClose}
+            onKeyDown={handlePlanKeyDown}
             open
             PaperProps={{ className: styles.dialogPaper }}
         >
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle className={styles.dialogTitle}>{title}</DialogTitle>
             <DialogContent className={styles.dialogContent}>
                 <div className={styles.applicationContext}>
                     <strong>{application.company_name}</strong>
@@ -332,7 +336,7 @@ const CounterofferPlanDialog = ({
                         className={styles.planFlow}
                         id='counteroffer-plan-form'
                         noValidate
-                        onKeyDown={handlePlanKeyDown}
+                        onKeyDown={handlePlanFormKeyDown}
                         onSubmit={submitPlan}
                     >
                         <CounterofferCurrentOffer application={application} />
@@ -352,7 +356,7 @@ const CounterofferPlanDialog = ({
                 ) : null}
             </DialogContent>
             {!isLoading && !loadFailed && plan && (
-                <DialogActions className={styles.actions} data-button-count={mode === 'view' && canEdit ? 3 : 2}>
+                <DialogActions className={styles.actions}>
                     {mode === 'view' ? (
                         <>
                             <PrimaryButton

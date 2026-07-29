@@ -6,6 +6,8 @@ import {
     DEFAULT_APPLICATION_BOARD_SORT_ORDER,
     DEFAULT_APPLICATION_LIST_SORT_ORDER,
     JOB_STATUSES,
+    NEEDS_ATTENTION_CATEGORIES,
+    DEFAULT_NEEDS_ATTENTION_SETTINGS,
     OFFER_DECISION_FILTERS,
     ARCHIVED_OFFER_DECISION_FILTERS,
 } from '../dist/db/models.js';
@@ -18,9 +20,34 @@ import {
     isInterviewTimeFilterArray,
     isArchivedOfferDecisionFilterArray,
     isOfferDecisionFilterArray,
+    isNeedsAttentionCategoryArray,
+    isOptionalIntegerInRange,
     isOptionalApplicationBoardSortOrder,
     isOptionalApplicationListSortOrder,
 } from '../dist/http/validation.js';
+
+test('Needs Attention preference validators enforce categories and timing boundaries', () => {
+    assert.equal(isNeedsAttentionCategoryArray([...NEEDS_ATTENTION_CATEGORIES]), true);
+    assert.equal(isNeedsAttentionCategoryArray([]), true);
+    assert.equal(isNeedsAttentionCategoryArray(['offer-decision-due', 'offer-decision-due']), false);
+    assert.equal(isNeedsAttentionCategoryArray(['unsupported']), false);
+    assert.equal(isNeedsAttentionCategoryArray('offer-decision-due'), false);
+
+    for (const [minimum, maximum] of [
+        [1, 14],
+        [1, 30],
+        [1, 50],
+        [1, 60],
+    ]) {
+        assert.equal(isOptionalIntegerInRange(undefined, minimum, maximum), true);
+        assert.equal(isOptionalIntegerInRange(minimum, minimum, maximum), true);
+        assert.equal(isOptionalIntegerInRange(maximum, minimum, maximum), true);
+        assert.equal(isOptionalIntegerInRange(minimum - 1, minimum, maximum), false);
+        assert.equal(isOptionalIntegerInRange(maximum + 1, minimum, maximum), false);
+        assert.equal(isOptionalIntegerInRange(1.5, minimum, maximum), false);
+        assert.equal(isOptionalIntegerInRange(String(minimum), minimum, maximum), false);
+    }
+});
 
 test('interview time filter validator accepts only supported arrays', () => {
     assert.equal(isInterviewTimeFilterArray(['Upcoming Interviews', 'Past Interviews']), true);
@@ -29,6 +56,15 @@ test('interview time filter validator accepts only supported arrays', () => {
     assert.equal(isInterviewTimeFilterArray(['Upcoming Interviews', 'Upcoming Interviews']), false);
     assert.equal(isInterviewTimeFilterArray(['Unknown']), false);
     assert.equal(isInterviewTimeFilterArray('Upcoming Interviews'), false);
+});
+
+test('application status preference validator rejects duplicates', async () => {
+    const { isJobStatusArray } = await import('../dist/http/validation.js');
+
+    assert.equal(isJobStatusArray(['Applied', 'Interview']), true);
+    assert.equal(isJobStatusArray([]), true);
+    assert.equal(isJobStatusArray(['Applied', 'Applied']), false);
+    assert.equal(isJobStatusArray(['Unsupported']), false);
 });
 
 test('offer comparison filter validators keep active and archived values distinct', () => {
@@ -110,6 +146,57 @@ test('fresh schema declarations support Withdrawn without runtime table alterati
     assert.doesNotMatch(setupSql, /array_append/);
 });
 
+test('fresh schema declares Needs Attention defaults and database timing constraints without alterations', async () => {
+    const originalQuery = pool.query;
+    const queries = [];
+    pool.query = async (sql) => {
+        queries.push(String(sql));
+        return { rows: [] };
+    };
+
+    try {
+        await createTables();
+    } finally {
+        pool.query = originalQuery;
+    }
+
+    const setupSql = queries.join('\n');
+    assert.deepEqual(DEFAULT_NEEDS_ATTENTION_SETTINGS, {
+        needs_attention_categories: [...NEEDS_ATTENTION_CATEGORIES],
+        needs_attention_max_items: 10,
+        needs_attention_offer_due_days: 3,
+        needs_attention_offer_overdue_days: 14,
+        needs_attention_post_interview_stale_days: 14,
+        needs_attention_post_interview_follow_up_days: 7,
+        needs_attention_application_stale_days: 14,
+        needs_attention_application_follow_up_days: 7,
+    });
+    assert.match(setupSql, /needs_attention_categories TEXT\[\] NOT NULL DEFAULT/);
+    assert.match(setupSql, /needs_attention_max_items[\s\S]*?BETWEEN 1\s+AND 50/);
+    assert.match(setupSql, /needs_attention_offer_due_days[\s\S]*?BETWEEN 1\s+AND 14/);
+    assert.match(setupSql, /needs_attention_offer_overdue_days[\s\S]*?BETWEEN 1\s+AND 30/);
+    assert.match(setupSql, /needs_attention_post_interview_stale_days[\s\S]*?BETWEEN 1\s+AND 60/);
+    assert.match(setupSql, /needs_attention_post_interview_follow_up_days[\s\S]*?BETWEEN 1\s+AND 30/);
+    assert.match(setupSql, /needs_attention_application_stale_days[\s\S]*?BETWEEN 1\s+AND 60/);
+    assert.match(setupSql, /needs_attention_application_follow_up_days[\s\S]*?BETWEEN 1\s+AND 30/);
+    assert.match(setupSql, /application_job_statuses <@[\s\S]*?CARDINALITY\(application_job_statuses\) =/);
+    assert.match(
+        setupSql,
+        /archived_application_job_statuses <@[\s\S]*?CARDINALITY\(archived_application_job_statuses\) =/
+    );
+    assert.match(setupSql, /interview_time_filters <@[\s\S]*?CARDINALITY\(interview_time_filters\) =/);
+    assert.match(
+        setupSql,
+        /archived_interview_time_filters <@[\s\S]*?CARDINALITY\(archived_interview_time_filters\) =/
+    );
+    assert.match(setupSql, /offer_decision_filters <@[\s\S]*?CARDINALITY\(offer_decision_filters\) =/);
+    assert.match(
+        setupSql,
+        /archived_offer_decision_filters <@[\s\S]*?CARDINALITY\(archived_offer_decision_filters\) =/
+    );
+    assert.doesNotMatch(setupSql, /ALTER TABLE/);
+});
+
 test('user preference queries read and update every preference field with independent parameters', async () => {
     const originalQuery = pool.query;
     const calls = [];
@@ -132,6 +219,14 @@ test('user preference queries read and update every preference field with indepe
         archived_interview_time_filters: ['Past Interviews'],
         offer_decision_filters: ['Offers to Evaluate', 'Evaluated Offers'],
         archived_offer_decision_filters: ['Previous Evaluations'],
+        needs_attention_categories: ['offer-evaluation', 'application-follow-up'],
+        needs_attention_max_items: 12,
+        needs_attention_offer_due_days: 4,
+        needs_attention_offer_overdue_days: 15,
+        needs_attention_post_interview_stale_days: 16,
+        needs_attention_post_interview_follow_up_days: 8,
+        needs_attention_application_stale_days: 17,
+        needs_attention_application_follow_up_days: 9,
     };
 
     pool.query = async (sql, values) => {
@@ -153,6 +248,14 @@ test('user preference queries read and update every preference field with indepe
         'archived_application_board_sort_order',
         'offer_decision_filters',
         'archived_offer_decision_filters',
+        'needs_attention_categories',
+        'needs_attention_max_items',
+        'needs_attention_offer_due_days',
+        'needs_attention_offer_overdue_days',
+        'needs_attention_post_interview_stale_days',
+        'needs_attention_post_interview_follow_up_days',
+        'needs_attention_application_stale_days',
+        'needs_attention_application_follow_up_days',
     ]) {
         assert.match(calls[0].sql, new RegExp(`\\b${field}\\b`));
         assert.match(calls[1].sql, new RegExp(`\\b${field}\\b`));
@@ -172,6 +275,12 @@ test('user preference queries read and update every preference field with indepe
     assert.match(calls[1].sql, /archived_interview_time_filters = COALESCE\(\$17, archived_interview_time_filters\)/);
     assert.match(calls[1].sql, /offer_decision_filters = COALESCE\(\$18, offer_decision_filters\)/);
     assert.match(calls[1].sql, /archived_offer_decision_filters = COALESCE\(\$19, archived_offer_decision_filters\)/);
+    assert.match(calls[1].sql, /needs_attention_categories = COALESCE\(\$20, needs_attention_categories\)/);
+    assert.match(calls[1].sql, /needs_attention_max_items = COALESCE\(\$21, needs_attention_max_items\)/);
+    assert.match(
+        calls[1].sql,
+        /needs_attention_application_follow_up_days =[\s\S]*?COALESCE\(\$27, needs_attention_application_follow_up_days\)/
+    );
     assert.deepEqual(calls[1].values, [
         42,
         ['Applied'],
@@ -192,6 +301,14 @@ test('user preference queries read and update every preference field with indepe
         ['Past Interviews'],
         ['Offers to Evaluate', 'Evaluated Offers'],
         ['Previous Evaluations'],
+        ['offer-evaluation', 'application-follow-up'],
+        12,
+        4,
+        15,
+        16,
+        8,
+        17,
+        9,
     ]);
 });
 
@@ -209,7 +326,7 @@ test('omitted sort preferences remain undefined for SQL COALESCE preservation', 
         pool.query = originalQuery;
     }
 
-    assert.equal(values.length, 19);
+    assert.equal(values.length, 27);
     assert.equal(values[0], 9);
     assert.equal(values[12], 'company_name_asc');
     assert.equal(
@@ -217,7 +334,11 @@ test('omitted sort preferences remain undefined for SQL COALESCE preservation', 
         true
     );
     assert.equal(
-        values.slice(13).every((value) => value === undefined),
+        values.slice(13, 19).every((value) => value === undefined),
+        true
+    );
+    assert.equal(
+        values.slice(19).every((value) => value === undefined),
         true
     );
 });

@@ -39,21 +39,9 @@
     opacity: 0.36;
 }
 
-.scrollToBottom {
-    bottom: 16px;
-    left: 50%;
-    width: 32px;
-    height: 32px;
-    transform: translateX(-50%);
-}
-
 @media (max-width: 600px) {
     .scrollToTop {
         top: 12px;
-    }
-
-    .scrollToBottom {
-        bottom: 12px;
     }
 }
 

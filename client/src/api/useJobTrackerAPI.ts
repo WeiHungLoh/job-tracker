@@ -27,8 +27,8 @@ import type {
     DeleteApplicationResponse,
     ListApplicationsRequest,
     ListApplicationsResponse,
-    ListJobStatusCountsRequest,
-    ListJobStatusCountsResponse,
+    GetDashboardApplicationSummaryRequest,
+    GetDashboardApplicationSummaryResponse,
     ListWeeklyApplicationsRequest,
     ListWeeklyApplicationsResponse,
     GetApplicationRelationSummaryRequest,
@@ -149,11 +149,11 @@ export const useJobTrackerAPI = () => {
             >(null, endpointConfig.application.listWeeklyApplications);
         };
 
-        const listJobStatusCounts = async () => {
-            return await makeAuthenticatedJobTrackerAPIRequest<ListJobStatusCountsRequest, ListJobStatusCountsResponse>(
-                null,
-                endpointConfig.application.listJobStatusCounts
-            );
+        const getDashboardApplicationSummary = async () => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                GetDashboardApplicationSummaryRequest,
+                GetDashboardApplicationSummaryResponse
+            >(null, endpointConfig.application.getDashboardApplicationSummary);
         };
 
         const getApplicationSummary = async () => {
@@ -455,7 +455,7 @@ export const useJobTrackerAPI = () => {
             application: {
                 listApplications,
                 listWeeklyApplications,
-                listJobStatusCounts,
+                getDashboardApplicationSummary,
                 getSummary: getApplicationSummary,
                 getRelationSummary: getApplicationRelationSummary,
                 createApplication,

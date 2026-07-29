@@ -47,11 +47,11 @@ const ReviewTerms = ({ application, plan }: { application: OfferDecisionApplicat
         </div>
         <div>
             <dt>Bonus</dt>
-            <dd>{plan.bonus || 'Not included'}</dd>
+            <dd>{plan.bonus || '-'}</dd>
         </div>
         <div>
             <dt>Annual leave</dt>
-            <dd>{plan.annual_leave_days === null ? 'Not included' : `${plan.annual_leave_days} days`}</dd>
+            <dd>{plan.annual_leave_days === null ? '-' : `${plan.annual_leave_days} days`}</dd>
         </div>
         <div>
             <dt>Work arrangement</dt>

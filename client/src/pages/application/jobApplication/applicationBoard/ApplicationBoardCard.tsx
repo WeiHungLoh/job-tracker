@@ -139,6 +139,7 @@ const ApplicationBoardCard = ({
             </label>
 
             <BoardCardActions
+                compactActions
                 compactPanelSpacing
                 compactSizing
                 onOpenChange={(isOpen) => onNotesVisibilityChange(application.job_id, isOpen)}

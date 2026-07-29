@@ -14,7 +14,7 @@ export const endpointConfig = {
             retry: true,
         },
         listWeeklyApplications: { url: '/job-applications/weekly-counts', verb: 'GET', retry: true },
-        listJobStatusCounts: { url: '/job-applications/status-counts', verb: 'GET', retry: true },
+        getDashboardApplicationSummary: { url: '/job-applications/status-counts', verb: 'GET', retry: true },
         getSummary: { url: '/job-applications/summary', verb: 'GET', retry: true },
         getRelationSummary: {
             url: '/job-applications/:jobId/relation-summary',

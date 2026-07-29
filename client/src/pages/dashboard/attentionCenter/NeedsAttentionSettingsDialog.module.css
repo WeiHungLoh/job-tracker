@@ -1,0 +1,221 @@
+.dialogPaper {
+    max-height: min(94vh, 920px);
+    overflow-x: hidden;
+}
+
+.content {
+    overflow-x: hidden;
+}
+
+.content > p {
+    margin: 0 0 var(--spaceCard);
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+}
+
+.form {
+    display: grid;
+    gap: var(--spaceSection);
+}
+
+.listSettings,
+.reminderSettings {
+    display: grid;
+    min-width: 0;
+    padding: var(--spaceCard);
+    border: 1px solid var(--colorCardBorder);
+    border-radius: var(--radiusCard);
+}
+
+.listSettings {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+    align-items: end;
+    background-color: var(--colorCardBg);
+    gap: var(--spaceCard);
+}
+
+.reminderSettings {
+    background-color: var(--colorControlSurface);
+    gap: var(--spaceCard);
+}
+
+.option {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(190px, 260px);
+    align-items: center;
+    column-gap: var(--spaceCard);
+    min-width: 0;
+    padding: var(--spaceCard);
+    border: 1px solid var(--colorCardBorder);
+    border-radius: var(--radiusCard);
+    background-color: var(--colorCardBg);
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.optionSelected {
+    border-color: color-mix(in srgb, var(--colorPrimary) 48%, var(--colorCardBorder));
+    background-color: var(--colorStatIconBg);
+}
+
+.sectionHeading h3 {
+    margin: 0;
+    color: var(--colorText);
+    font-size: 1rem;
+}
+
+.sectionHeading p {
+    margin: 4px 0 0;
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+    line-height: 1.45;
+}
+
+.optionList {
+    display: grid;
+    gap: var(--spaceControl);
+}
+
+.priority {
+    display: inline-grid;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--colorPrimary);
+    border-radius: var(--radiusPill);
+    background-color: var(--colorStatIconBg);
+    color: var(--colorPrimary);
+    font-size: var(--fontSizeCompact);
+    font-weight: 800;
+    line-height: 1;
+    place-items: center;
+    box-sizing: border-box;
+}
+
+.optionSummary {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--spaceControl);
+    min-width: 0;
+}
+
+.selectionInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.option:has(.selectionInput:focus-visible) {
+    outline: 2px solid var(--colorControlFocusRing);
+    outline-offset: 2px;
+}
+
+.optionCopy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.optionCopy strong {
+    color: var(--colorText);
+    font-size: var(--fontSizeControl);
+    line-height: 1.35;
+}
+
+.optionCopy > span {
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+    line-height: 1.35;
+}
+
+.optionDetails {
+    min-width: 0;
+}
+
+.optionDetailsDisabled {
+    opacity: 0.58;
+}
+
+.timingLabel {
+    display: grid;
+    max-width: none;
+    gap: 6px;
+    margin: 0;
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+}
+
+.timingLabel input {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: var(--spaceControl);
+    border: 1px solid var(--colorInputBorder);
+    border-radius: var(--radiusControl);
+    background: var(--colorInputBg);
+    color: var(--colorText);
+    cursor: text;
+    font: inherit;
+}
+
+.timingLabel input:disabled {
+    cursor: not-allowed;
+}
+
+.maxItems {
+    max-width: none;
+    margin: 0;
+    color: var(--colorText);
+    font-weight: 600;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spaceControl);
+    padding: var(--spaceCompact) var(--spaceSection) !important;
+}
+
+.reset {
+    margin-right: auto;
+}
+
+.rightActions {
+    display: flex;
+    gap: var(--spaceControl);
+}
+
+@media (max-width: 700px) {
+    .listSettings,
+    .reminderSettings {
+        padding: var(--spaceCompact);
+    }
+
+    .listSettings {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .option {
+        grid-template-columns: minmax(0, 1fr);
+        padding: var(--spaceCompact);
+    }
+
+    .optionDetails {
+        margin-top: var(--spaceCompact);
+        padding-top: var(--spaceCompact);
+        border-top: 1px solid var(--colorControlBorder);
+    }
+
+    .timingLabel {
+        max-width: none;
+    }
+}

@@ -36,21 +36,46 @@ export type DashboardNavigationProps = {
 export type DashboardContentProps = DashboardDataProps &
     DashboardNavigationProps & {
         applications: JobApplication[];
+        applicationsError?: boolean;
+        applicationsIsLoading?: boolean;
+        interviewedApplicationCount?: number;
+        interviewError?: boolean;
+        interviewIsLoading?: boolean;
         offerEvaluations?: OfferEvaluation[];
+        onRetryInterviews?: () => void;
+        onRetryNeedsAttention?: () => void;
+        onRetryStatus?: () => void;
+        onRetryWeeklyApplications?: () => void;
+        statusError?: boolean;
+        statusIsLoading?: boolean;
+        weeklyError?: boolean;
+        weeklyIsLoading?: boolean;
     };
 export type DashboardStatsProps = DashboardDataProps & {
     currentTime?: Date;
+    interviewedApplicationCount?: number;
+    interviewError?: boolean;
+    interviewIsLoading?: boolean;
+    statusError?: boolean;
+    statusIsLoading?: boolean;
+    weeklyError?: boolean;
+    weeklyIsLoading?: boolean;
 };
 
 export type ApplicationsLineChartProps = {
     interviews: JobInterview[];
     weeklyApplications: WeeklyApplicationCount[];
     isLoading: boolean;
+    hasError?: boolean;
+    interviewsAvailable?: boolean;
+    onRetry?: () => void;
 };
 
 export type StatusChartProps = {
     statusCounts: JobStatusCount[];
     isLoading: boolean;
+    hasError?: boolean;
+    onRetry?: () => void;
     onStatusSelect?: DashboardStatusSelectHandler;
 };
 
@@ -58,5 +83,7 @@ export type UpcomingInterviewsProps = {
     currentTime?: Date;
     interviews: JobInterview[];
     isLoading: boolean;
+    hasError?: boolean;
+    onRetry?: () => void;
     onInterviewSelect?: DashboardInterviewSelectHandler;
 };

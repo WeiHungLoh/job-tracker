@@ -19,16 +19,21 @@ const ProtectedLayout = () => {
     const [preferencesError, setPreferencesError] = useState<boolean>(false);
     const preferenceUpdateQueue = useRef<Promise<void>>(Promise.resolve());
 
-    const loadPreferences = useCallback(async () => {
+    const loadPreferences = useCallback(async (): Promise<UserPreferences> => {
+        const loadedPreferences = await api.userPreferences.get();
+        setPreferences(loadedPreferences);
+        return loadedPreferences;
+    }, [api.userPreferences]);
+
+    const loadInitialPreferences = useCallback(async () => {
         setPreferencesError(false);
-        setPreferences(null);
         try {
-            setPreferences(await api.userPreferences.get());
+            await loadPreferences();
         } catch (error) {
             setPreferencesError(true);
             showErrorToast(getErrorToastMessage(error, 'Unable to load user preferences. Please try again.'));
         }
-    }, [api.userPreferences, showErrorToast]);
+    }, [loadPreferences, showErrorToast]);
 
     const updatePreferences = useCallback(
         (updatedPreferences: UpdateUserPreferencesRequest): Promise<UserPreferences> => {
@@ -47,11 +52,11 @@ const ProtectedLayout = () => {
     );
 
     useEffect(() => {
-        void loadPreferences();
-    }, [loadPreferences]);
+        void loadInitialPreferences();
+    }, [loadInitialPreferences]);
 
     if (preferencesError) {
-        return <FallbackScreen variant='authenticationError' onAction={() => void loadPreferences()} />;
+        return <FallbackScreen variant='authenticationError' onAction={() => void loadInitialPreferences()} />;
     }
 
     if (!preferences) {

@@ -15,8 +15,11 @@ import {
     isOptionalApplicationListSortOrder,
     isOptionalCollectionViewMode,
     isOptionalBoolean,
+    isNeedsAttentionCategoryArray,
+    isOptionalIntegerInRange,
 } from '../../http/validation.js';
 import express from 'express';
+import { NEEDS_ATTENTION_LIMITS } from '../../config/validation.js';
 
 const router = express.Router();
 
@@ -65,6 +68,14 @@ router.patch(
             archived_interview_time_filters,
             offer_decision_filters,
             archived_offer_decision_filters,
+            needs_attention_categories,
+            needs_attention_max_items,
+            needs_attention_offer_due_days,
+            needs_attention_offer_overdue_days,
+            needs_attention_post_interview_stale_days,
+            needs_attention_post_interview_follow_up_days,
+            needs_attention_application_stale_days,
+            needs_attention_application_follow_up_days,
         } = req.body;
 
         if (application_job_statuses !== undefined && !isJobStatusArray(application_job_statuses)) {
@@ -99,6 +110,55 @@ router.patch(
             !isArchivedOfferDecisionFilterArray(archived_offer_decision_filters)
         ) {
             sendError(res, 422, 'Archived offer comparison filter preferences must contain only supported values.');
+            return;
+        }
+        if (needs_attention_categories !== undefined && !isNeedsAttentionCategoryArray(needs_attention_categories)) {
+            sendError(res, 422, 'Needs Attention categories must contain only unique supported values.');
+            return;
+        }
+        if (
+            !isOptionalIntegerInRange(
+                needs_attention_max_items,
+                NEEDS_ATTENTION_LIMITS.maxItems.minimum,
+                NEEDS_ATTENTION_LIMITS.maxItems.maximum
+            )
+        ) {
+            sendError(res, 422, 'Needs Attention maximum items must be a whole number from 1 to 50.');
+            return;
+        }
+        if (
+            !isOptionalIntegerInRange(
+                needs_attention_offer_due_days,
+                NEEDS_ATTENTION_LIMITS.offerDueDays.minimum,
+                NEEDS_ATTENTION_LIMITS.offerDueDays.maximum
+            ) ||
+            !isOptionalIntegerInRange(
+                needs_attention_offer_overdue_days,
+                NEEDS_ATTENTION_LIMITS.offerOverdueDays.minimum,
+                NEEDS_ATTENTION_LIMITS.offerOverdueDays.maximum
+            ) ||
+            !isOptionalIntegerInRange(
+                needs_attention_post_interview_stale_days,
+                NEEDS_ATTENTION_LIMITS.postInterviewStaleDays.minimum,
+                NEEDS_ATTENTION_LIMITS.postInterviewStaleDays.maximum
+            ) ||
+            !isOptionalIntegerInRange(
+                needs_attention_post_interview_follow_up_days,
+                NEEDS_ATTENTION_LIMITS.postInterviewFollowUpDays.minimum,
+                NEEDS_ATTENTION_LIMITS.postInterviewFollowUpDays.maximum
+            ) ||
+            !isOptionalIntegerInRange(
+                needs_attention_application_stale_days,
+                NEEDS_ATTENTION_LIMITS.applicationStaleDays.minimum,
+                NEEDS_ATTENTION_LIMITS.applicationStaleDays.maximum
+            ) ||
+            !isOptionalIntegerInRange(
+                needs_attention_application_follow_up_days,
+                NEEDS_ATTENTION_LIMITS.applicationFollowUpDays.minimum,
+                NEEDS_ATTENTION_LIMITS.applicationFollowUpDays.maximum
+            )
+        ) {
+            sendError(res, 422, 'Needs Attention timing preferences must be whole days within the supported ranges.');
             return;
         }
         if (

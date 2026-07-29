@@ -691,6 +691,7 @@ describe('Dashboard V2', () => {
 
         render(
             <DashboardStats
+                interviewedApplicationCount={7}
                 statusCounts={[
                     statusCount('Applied', 4),
                     statusCount('Interview', 2),
@@ -710,13 +711,14 @@ describe('Dashboard V2', () => {
         expect(screen.getByText('Total Active Applications').parentElement).toHaveTextContent('10');
         expect(screen.getByText('Applied This Week').parentElement).toHaveTextContent('4');
         expect(screen.getByText('Upcoming Interviews').parentElement).toHaveTextContent('1');
-        expect(screen.getByText('Interview Rate').parentElement).toHaveTextContent('60%');
+        expect(screen.getByText('Interview Rate').parentElement).toHaveTextContent('70%');
         expect(screen.getByText('Offer Rate').parentElement).toHaveTextContent('40%');
     });
 
     test('reveals and restores only the Interview Rate and Offer Rate calculations', async () => {
         render(
             <DashboardStats
+                interviewedApplicationCount={2}
                 statusCounts={[statusCount('Applied', 2), statusCount('Interview', 1), statusCount('Offer', 1)]}
                 interviews={[]}
                 weeklyApplications={[]}
@@ -726,7 +728,8 @@ describe('Dashboard V2', () => {
 
         const interviewRate = screen.getByRole('button', { name: /Interview Rate/i });
         const offerRate = screen.getByRole('button', { name: /Offer Rate/i });
-        const interviewExplanation = 'Interview, Offer, Accepted or Declined applications ÷ total active applications.';
+        const interviewExplanation =
+            'Applications with a recorded interview or later-stage status ÷ active applications.';
         const offerExplanation = 'Offer, Accepted or Declined applications ÷ total active applications.';
         const interviewFront = within(interviewRate).getByText('50%').closest(`.${dashboardStatsStyles.flipFace}`);
         const interviewBack = within(interviewRate)
@@ -766,7 +769,15 @@ describe('Dashboard V2', () => {
     });
 
     test('shows unavailable rates when there are no applications', () => {
-        render(<DashboardStats statusCounts={[]} interviews={[]} weeklyApplications={[]} isLoading={false} />);
+        render(
+            <DashboardStats
+                interviewedApplicationCount={0}
+                statusCounts={[]}
+                interviews={[]}
+                weeklyApplications={[]}
+                isLoading={false}
+            />
+        );
 
         expect(screen.getAllByText('—')).toHaveLength(2);
     });

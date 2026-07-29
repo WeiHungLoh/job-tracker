@@ -256,7 +256,7 @@ describe('InterviewCard calendar options', () => {
         expect(notes.compareDocumentPosition(timeLeft) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
-    test('shows the meeting URL directly after the follow-up badge in list and board layouts', async () => {
+    test('shows the meeting URL after the follow-up badge in List and below Actions in Board', async () => {
         const interview = {
             ...futureInterview,
             follow_up_sent_at: '2026-07-27T07:42:00.000Z',
@@ -287,11 +287,16 @@ describe('InterviewCard calendar options', () => {
             </MemoryRouter>
         );
 
-        await userEvent.click(screen.getAllByText('Actions')[0]);
         const boardCard = screen.getAllByRole('article', { name: 'Acme interview' })[1];
-        const boardFollowUp = within(boardCard).getByRole('status');
-        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to enter meeting' });
-        expect(boardFollowUp.compareDocumentPosition(boardMeetingURL) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        const boardActions = within(boardCard).getByText('Actions').closest('details');
+        expect(within(boardCard).getByRole('link', { name: 'Click here to view meeting' })).not.toBeVisible();
+        await userEvent.click(within(boardCard).getByText('Actions'));
+        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to view meeting' });
+        expect(boardMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
+        expect(boardMeetingURL).toHaveAttribute('target', '_blank');
+        const actionButtons = within(boardCard).getByRole('button', { name: 'Delete' }).parentElement;
+        expect(boardMeetingURL.compareDocumentPosition(actionButtons!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(boardActions).toHaveAttribute('open');
     });
 
     test('uses shared Board actions and hides List-only interview details', async () => {

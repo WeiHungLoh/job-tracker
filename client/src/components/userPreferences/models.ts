@@ -3,6 +3,16 @@ import type { CollectionViewMode } from '../activityControls/collectionViewToggl
 import type { InterviewTimeFilter } from '../../helper/interviewTiming';
 import type { ArchivedOfferDecisionFilter, OfferDecisionFilter } from '../../pages/offerDecision/models';
 
+export type NeedsAttentionCategory =
+    | 'offer-decision-due'
+    | 'offer-decision-overdue'
+    | 'offer-evaluation'
+    | 'post-interview-follow-up-stale'
+    | 'post-interview'
+    | 'interview-unscheduled'
+    | 'application-follow-up-stale'
+    | 'application-follow-up';
+
 export type UserPreferences = {
     application_job_statuses: JobStatus[];
     application_show_notes: boolean;
@@ -22,6 +32,14 @@ export type UserPreferences = {
     archived_interview_time_filters: InterviewTimeFilter[];
     offer_decision_filters: OfferDecisionFilter[];
     archived_offer_decision_filters: ArchivedOfferDecisionFilter[];
+    needs_attention_categories: NeedsAttentionCategory[];
+    needs_attention_max_items: number;
+    needs_attention_offer_due_days: number;
+    needs_attention_offer_overdue_days: number;
+    needs_attention_post_interview_stale_days: number;
+    needs_attention_post_interview_follow_up_days: number;
+    needs_attention_application_stale_days: number;
+    needs_attention_application_follow_up_days: number;
 };
 
 export type GetUserPreferencesRequest = null;

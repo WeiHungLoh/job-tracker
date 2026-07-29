@@ -15,6 +15,11 @@ export type JobStatusCount = {
     count: string;
 };
 
+export type DashboardApplicationSummary = {
+    statusCounts: JobStatusCount[];
+    interviewedApplicationCount: number;
+};
+
 export type WeeklyApplicationCount = {
     start_of_week: string;
     applications_count: string;
@@ -111,8 +116,8 @@ export type ListApplicationsResponse = JobApplication[];
 export type ListWeeklyApplicationsRequest = null;
 export type ListWeeklyApplicationsResponse = WeeklyApplicationCount[];
 
-export type ListJobStatusCountsRequest = null;
-export type ListJobStatusCountsResponse = JobStatusCount[];
+export type GetDashboardApplicationSummaryRequest = null;
+export type GetDashboardApplicationSummaryResponse = DashboardApplicationSummary;
 
 export type ApplicationCollectionSummary = {
     application_count: number;

@@ -49,11 +49,11 @@ export type CounterofferRequestedChange = {
 };
 
 const formatCurrencyAmount = (currency: string, amount: number | null): string =>
-    amount === null ? 'Not included' : `${currency} ${amount.toLocaleString()}`;
+    amount === null ? '-' : `${currency} ${amount.toLocaleString()}`;
 
 const formatAnnualLeave = (days: number | null): string => {
     if (days === null) {
-        return 'Not included';
+        return '-';
     }
     return `${days} ${days === 1 ? 'day' : 'days'}`;
 };
@@ -80,8 +80,8 @@ export const buildCounterofferRequestedChanges = (
         changes.push({
             key: 'bonus',
             label: 'Bonus',
-            currentValue: currentBonus || 'Not included',
-            idealValue: idealBonus || 'Not included',
+            currentValue: currentBonus || '-',
+            idealValue: idealBonus || '-',
         });
     }
 

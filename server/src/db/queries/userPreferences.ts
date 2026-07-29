@@ -21,7 +21,15 @@ export const getUserPreferences = async (userId: number): Promise<UserPreference
             interview_time_filters,
             archived_interview_time_filters,
             offer_decision_filters,
-            archived_offer_decision_filters
+            archived_offer_decision_filters,
+            needs_attention_categories,
+            needs_attention_max_items,
+            needs_attention_offer_due_days,
+            needs_attention_offer_overdue_days,
+            needs_attention_post_interview_stale_days,
+            needs_attention_post_interview_follow_up_days,
+            needs_attention_application_stale_days,
+            needs_attention_application_follow_up_days
          FROM user_preferences
          WHERE user_id = $1`,
         [userId]
@@ -54,7 +62,17 @@ export const updateUserPreferences = async (
             interview_time_filters = COALESCE($16, interview_time_filters),
             archived_interview_time_filters = COALESCE($17, archived_interview_time_filters),
             offer_decision_filters = COALESCE($18, offer_decision_filters),
-            archived_offer_decision_filters = COALESCE($19, archived_offer_decision_filters)
+            archived_offer_decision_filters = COALESCE($19, archived_offer_decision_filters),
+            needs_attention_categories = COALESCE($20, needs_attention_categories),
+            needs_attention_max_items = COALESCE($21, needs_attention_max_items),
+            needs_attention_offer_due_days = COALESCE($22, needs_attention_offer_due_days),
+            needs_attention_offer_overdue_days = COALESCE($23, needs_attention_offer_overdue_days),
+            needs_attention_post_interview_stale_days = COALESCE($24, needs_attention_post_interview_stale_days),
+            needs_attention_post_interview_follow_up_days =
+                COALESCE($25, needs_attention_post_interview_follow_up_days),
+            needs_attention_application_stale_days = COALESCE($26, needs_attention_application_stale_days),
+            needs_attention_application_follow_up_days =
+                COALESCE($27, needs_attention_application_follow_up_days)
          WHERE user_id = $1
          RETURNING
             application_job_statuses,
@@ -74,7 +92,15 @@ export const updateUserPreferences = async (
             interview_time_filters,
             archived_interview_time_filters,
             offer_decision_filters,
-            archived_offer_decision_filters`,
+            archived_offer_decision_filters,
+            needs_attention_categories,
+            needs_attention_max_items,
+            needs_attention_offer_due_days,
+            needs_attention_offer_overdue_days,
+            needs_attention_post_interview_stale_days,
+            needs_attention_post_interview_follow_up_days,
+            needs_attention_application_stale_days,
+            needs_attention_application_follow_up_days`,
         [
             userId,
             preferences.application_job_statuses,
@@ -95,6 +121,14 @@ export const updateUserPreferences = async (
             preferences.archived_interview_time_filters,
             preferences.offer_decision_filters,
             preferences.archived_offer_decision_filters,
+            preferences.needs_attention_categories,
+            preferences.needs_attention_max_items,
+            preferences.needs_attention_offer_due_days,
+            preferences.needs_attention_offer_overdue_days,
+            preferences.needs_attention_post_interview_stale_days,
+            preferences.needs_attention_post_interview_follow_up_days,
+            preferences.needs_attention_application_stale_days,
+            preferences.needs_attention_application_follow_up_days,
         ]
     );
 

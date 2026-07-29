@@ -38,13 +38,13 @@ const CounterofferCurrentOffer = ({ application }: CounterofferCurrentOfferProps
                         </div>
                         <div>
                             <dt>Bonus</dt>
-                            <dd>{evaluation.details.bonus || 'Not included'}</dd>
+                            <dd>{evaluation.details.bonus || '-'}</dd>
                         </div>
                         <div>
                             <dt>Annual leave</dt>
                             <dd>
                                 {evaluation.details.annual_leave_days === null
-                                    ? 'Not included'
+                                    ? '-'
                                     : `${evaluation.details.annual_leave_days} days`}
                             </dd>
                         </div>

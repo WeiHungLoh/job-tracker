@@ -10,10 +10,15 @@ import useCurrentTime from '../../hooks/useCurrentTime';
 
 const DashboardContent = ({
     applications,
+    applicationsError = false,
+    applicationsIsLoading,
+    interviewedApplicationCount,
     statusCounts,
     interviews,
     weeklyApplications,
     isLoading,
+    interviewError = false,
+    interviewIsLoading,
     onAddInterview,
     offerEvaluations = [],
     onInterviewSelect,
@@ -23,6 +28,14 @@ const DashboardContent = ({
     onMarkApplicationFollowUpSent,
     onMarkApplicationGhosted,
     onMarkInterviewFollowUpSent,
+    onRetryInterviews,
+    onRetryNeedsAttention,
+    onRetryStatus,
+    onRetryWeeklyApplications,
+    statusError = false,
+    statusIsLoading,
+    weeklyError = false,
+    weeklyIsLoading,
 }: DashboardContentProps) => {
     const currentTime = useCurrentTime();
 
@@ -31,10 +44,17 @@ const DashboardContent = ({
             <section className={styles.statsSection} aria-label='Dashboard statistics'>
                 <DashboardStats
                     currentTime={currentTime}
+                    interviewedApplicationCount={interviewedApplicationCount}
                     statusCounts={statusCounts}
                     interviews={interviews}
                     weeklyApplications={weeklyApplications}
                     isLoading={isLoading}
+                    interviewError={interviewError}
+                    interviewIsLoading={interviewIsLoading}
+                    statusError={statusError}
+                    statusIsLoading={statusIsLoading}
+                    weeklyError={weeklyError}
+                    weeklyIsLoading={weeklyIsLoading}
                 />
             </section>
             <section className={styles.attentionSection}>
@@ -42,7 +62,9 @@ const DashboardContent = ({
                     applications={applications}
                     currentTime={currentTime}
                     interviews={interviews}
-                    isLoading={isLoading}
+                    hasError={applicationsError}
+                    isLoading={applicationsIsLoading ?? isLoading}
+                    onRetry={onRetryNeedsAttention}
                     onAddInterview={onAddInterview}
                     offerEvaluations={offerEvaluations}
                     onOpenOfferComparison={onOpenOfferComparison}
@@ -56,28 +78,37 @@ const DashboardContent = ({
                 <ApplicationsLineChart
                     interviews={interviews}
                     weeklyApplications={weeklyApplications}
-                    isLoading={isLoading}
+                    hasError={weeklyError}
+                    interviewsAvailable={!interviewError}
+                    isLoading={weeklyIsLoading ?? isLoading}
+                    onRetry={onRetryWeeklyApplications}
                 />
             </section>
             <section className={styles.interviewsSection}>
                 <UpcomingInterviews
                     currentTime={currentTime}
                     interviews={interviews}
-                    isLoading={isLoading}
+                    hasError={interviewError}
+                    isLoading={interviewIsLoading ?? isLoading}
+                    onRetry={onRetryInterviews}
                     onInterviewSelect={onInterviewSelect}
                 />
             </section>
             <section className={styles.pipelineSection}>
                 <ApplicationPipelineChart
                     statusCounts={statusCounts}
-                    isLoading={isLoading}
+                    hasError={statusError}
+                    isLoading={statusIsLoading ?? isLoading}
+                    onRetry={onRetryStatus}
                     onStatusSelect={onStatusSelect}
                 />
             </section>
             <section className={styles.closedSection}>
                 <ClosedOutcomesChart
                     statusCounts={statusCounts}
-                    isLoading={isLoading}
+                    hasError={statusError}
+                    isLoading={statusIsLoading ?? isLoading}
+                    onRetry={onRetryStatus}
                     onStatusSelect={onStatusSelect}
                 />
             </section>

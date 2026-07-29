@@ -6,7 +6,13 @@ import { routes } from '../../routes';
 import styles from './UserGuide.module.css';
 import { useState } from 'react';
 import { FIELD_MAX_LENGTHS, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../helper/formValidation';
+import { INTERVIEW_DURATION_MINUTES_MAX, INTERVIEW_DURATION_MINUTES_MIN } from '../../helper/interviewTiming';
 import QuickCaptureBookmarklet from '../application/jobApplication/QuickCaptureBookmarklet';
+import {
+    OFFER_ANNUAL_LEAVE_DAYS_MAX,
+    OFFER_DETAILS_MAX_LENGTHS,
+    OFFER_MONTHLY_BASE_SALARY_MAX,
+} from '../offerDecision/offerDecisionConfig';
 
 const guideSections: readonly UserGuideSection[] = [
     {
@@ -47,24 +53,57 @@ const guideSections: readonly UserGuideSection[] = [
                 <h3>Stat cards</h3>
                 <p>
                     Shows total applications, applications added this week, upcoming interviews, interview rate, and
-                    offer rate.
+                    offer rate. Dashboard sections load independently. If one dataset is unavailable, successful cards,
+                    charts and actions remain usable, unavailable values show an em dash, and Try Again reloads only the
+                    affected data.
                 </p>
                 <h3>Needs attention</h3>
                 <p>
-                    Shows up to ten applications that may require action, ordered by category priority, and suggests one
-                    next action for each selected application. The first six are visible before scrolling through the
-                    remaining items. Within a category, the most urgent or longest-waiting items appear first.
+                    Shows applications that may require action, ordered by category priority, and suggests one next
+                    action for each selected application. The item limit defaults to ten and can be set from 1 to 50.
+                    The first six are visible before scrolling through the remaining items. Within a category, the most
+                    urgent or longest-waiting items appear first.
+                </p>
+                <p>
+                    <strong>Customise Dashboard Reminders</strong> lets you enable or disable each of the eight reminder
+                    types by selecting the whole reminder card. Selected cards keep their highlighted background. Timing
+                    labels and other card text toggle the reminder, while the number input itself never toggles it.
+                    Timing fields always remain visible but can only be edited while their card is selected. The
+                    numbered priority is fixed and cannot be reordered. The values below are the product defaults; your
+                    saved settings may make reminders eligible sooner or later. Press Enter anywhere in the dialog to
+                    save; a number field does not need focus. Disabling a reminder changes only what appears and does
+                    not modify applications, interviews, offers, statuses or follow-up timestamps.
+                </p>
+                <p>
+                    Opening Settings uses the preferences already loaded for the signed-in session, so it does not make
+                    another preferences request or reload dashboard sections. Saving fetches application or offer data
+                    only when a newly enabled reminder type requires data that the Dashboard has not loaded yet.
                 </p>
                 <ol>
-                    <li>Evaluated offers due within 72 hours.</li>
-                    <li>Evaluated offers up to 14 days overdue.</li>
+                    <li>Evaluated offers due before their decision deadline — three days before by default.</li>
+                    <li>Evaluated offers that are overdue — kept for 14 days by default.</li>
                     <li>Unevaluated offers.</li>
                     <li>Completed-interview follow-ups still unanswered 14 days after being marked as sent.</li>
-                    <li>Completed-interview follow-ups.</li>
+                    <li>Completed-interview follow-ups eligible seven days after the latest interview ends.</li>
                     <li>Interview-status applications without a scheduled interview.</li>
                     <li>Applied applications unchanged for 14 days after a sent follow-up.</li>
                     <li>Applied applications eligible for an initial follow-up after seven days.</li>
                 </ol>
+                <p>
+                    The maximum reminder count accepts whole numbers from 1 to 50. Timing fields accept 1–14 days for
+                    offers due soon, 1–30 days for overdue offers, 1–60 days for unanswered interview follow-ups, 1–30
+                    days for interview follow-ups due, 1–60 days for unanswered application follow-ups, and 1–30 days
+                    for application follow-ups due. An overdue offer starts showing when its deadline passes and stays
+                    visible until it reaches the chosen number of days overdue. An unanswered follow-up starts showing
+                    when the chosen number of full days has passed since it was marked as sent, provided the application
+                    has not progressed. Out-of-range input is not accepted, and Save remains available unless a save is
+                    already in progress.
+                </p>
+                <p>
+                    <strong>Reset to Default</strong> changes only the draft in the open settings dialog; select Save to
+                    persist it. If every category is disabled, the card says that no reminders are enabled instead of
+                    saying you are all caught up, using the same centred empty-state layout.
+                </p>
                 <h3>Evaluated offers due within 72 hours</h3>
                 <p>
                     The action opens active Offer Comparison, ensures Evaluated Offers is visible, then scrolls to and
@@ -135,11 +174,13 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Active list cards show the full sent time with <strong>Undo</strong>. Board cards show a compact
                     indicator, with the full sent time and Undo in <strong>Actions</strong>. Archived cards keep the
-                    sent time as read-only context. An application follow-up clears when you press <strong>Undo</strong>{' '}
-                    or when the application leaves <code>Applied</code>. An interview follow-up remains until you undo
-                    it or delete the interview (including deletion through its linked application), even when the
-                    application changes status. Only the latest sent time is kept; Job Tracker does not maintain a
-                    follow-up history. Future and ongoing interviews remain in the Upcoming Interviews card.
+                    sent time as read-only context. The sent label uses bold green text. Changing Needs Attention
+                    timing, categories or the item limit does not hide these sent badges. An application follow-up
+                    clears when you press <strong>Undo</strong> or when the application leaves <code>Applied</code>. An
+                    interview follow-up remains until you undo it or delete the interview (including deletion through
+                    its linked application), even when the application changes status. Only the latest sent time is
+                    kept; Job Tracker does not maintain a follow-up history. Future and ongoing interviews remain in the
+                    Upcoming Interviews card.
                 </p>
                 <h3>Application trend</h3>
                 <p>
@@ -154,11 +195,15 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>Shows current Rejected, Ghosted, Withdrawn, and Declined totals.</p>
                 <p>
                     Interview rate counts applications currently at <code>Interview</code>, <code>Offer</code>,{' '}
-                    <code>Accepted</code> or <code>Declined</code>. Offer rate counts <code>Offer</code>,{' '}
-                    <code>Accepted</code> or <code>Declined</code>. A declined application is included because it means
-                    you received an offer and chose not to accept it. Withdrawn counts toward Total Active Applications
-                    and both rate denominators, but not the Interview Rate or Offer Rate numerators. Applied This Week
-                    is based on application date, so a later status change does not remove it.
+                    <code>Accepted</code> or <code>Declined</code>, plus applications in any other current status with
+                    at least one active or archived recorded interview. Each application counts once, even when it has
+                    multiple interviews. An application at <code>Offer</code>, <code>Accepted</code> or{' '}
+                    <code>Declined</code> counts even when it has no interview record because it has reached a later
+                    application stage. Offer rate remains <code>Offer</code>, <code>Accepted</code> or{' '}
+                    <code>Declined</code>. A declined application is included because it means you received an offer and
+                    chose not to accept it. Withdrawn counts toward Total Active Applications and both rate
+                    denominators; it enters the Interview Rate numerator only when a recorded interview exists. Applied
+                    This Week is based on application date, so a later status change does not remove it.
                 </p>
                 <p>
                     Open it by selecting <code>Dashboard</code> from the navigation bar.
@@ -246,6 +291,13 @@ const guideSections: readonly UserGuideSection[] = [
                     with the sliders; the equal-weight fit rating updates immediately.
                 </p>
                 <p>
+                    Currency uses exactly three letters. Monthly base salary accepts whole numbers from 0 to{' '}
+                    {OFFER_MONTHLY_BASE_SALARY_MAX.toLocaleString()}, annual leave accepts whole numbers from 0 to{' '}
+                    {OFFER_ANNUAL_LEAVE_DAYS_MAX}, bonus is limited to {OFFER_DETAILS_MAX_LENGTHS.bonus} characters, and
+                    Pros and Cons are each limited to {OFFER_DETAILS_MAX_LENGTHS.notes} characters. The decision
+                    deadline cannot be earlier than the application date.
+                </p>
+                <p>
                     Select <code>Save evaluation</code> on that offer. A successful first save moves it from Offers to
                     evaluate into Evaluated offers, locks its fields and shows a confirmation. Select{' '}
                     <code>Edit evaluation</code> to unlock it again. Save evaluation stays available and validates the
@@ -289,7 +341,14 @@ const guideSections: readonly UserGuideSection[] = [
                     its card. The dialog shows the read-only Current offer first and one editable Ideal offer directly
                     below it. The Ideal offer starts with the current terms and all four current ratings. Terms and
                     ratings remain separate inputs: changing salary, bonus, leave or work arrangement does not change a
-                    rating automatically.
+                    rating automatically. Ideal salary, bonus, annual leave, work arrangement and ratings use the same
+                    limits as the saved evaluation. Empty values that remain visible are shown as <code>-</code>;
+                    <code>N/A</code> is reserved for CSV exports.
+                </p>
+                <p>
+                    While creating or editing a counteroffer plan, press Enter anywhere in the dialog to save; an input
+                    does not need focus. Offer Comparison evaluation forms keep their field-based shortcuts: Enter from
+                    a normal field, Shift+Enter from Pros or Cons, and Escape from an evaluation field.
                 </p>
                 <p>
                     The Ideal offer shows its equal-weight fit rating, the difference from the current offer and how it
@@ -411,7 +470,8 @@ const guideSections: readonly UserGuideSection[] = [
                     Use the <strong>List</strong> and <strong>Board</strong> switch to choose between the standard card
                     list and the board layout. The active application board groups cards by status, shows the
                     application date, and lets you drag cards between columns or use the <code>Move to</code> menu to
-                    update status.
+                    update status. Opening <strong>Actions</strong> reveals compact Archive and Delete controls aligned
+                    to the right; archived board cards show compact Unarchive and Delete controls in the same place.
                 </p>
                 <h3>Job status definitions</h3>
                 <ul>
@@ -488,7 +548,15 @@ const guideSections: readonly UserGuideSection[] = [
                         Interview location is separate from job location, but both use the same{' '}
                         {FIELD_MAX_LENGTHS.location}-character limit.
                     </li>
+                    <li>
+                        Duration must be a whole number from {INTERVIEW_DURATION_MINUTES_MIN} to{' '}
+                        {INTERVIEW_DURATION_MINUTES_MAX} minutes.
+                    </li>
                     <li>Interview type is optional and limited to {FIELD_MAX_LENGTHS.interviewType} characters.</li>
+                    <li>
+                        Meeting URL is optional, limited to {FIELD_MAX_LENGTHS.meetingURL} characters, and must use{' '}
+                        <code>http://</code> or <code>https://</code> with a valid domain and suffix.
+                    </li>
                     <li>Interview notes are optional and limited to {FIELD_MAX_LENGTHS.notes} characters.</li>
                 </ul>
                 <p>
@@ -512,7 +580,9 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Interview records are linked to their job applications and can be deleted from the interview viewer.
                     Use the <strong>List</strong> and <strong>Board</strong> switch to choose a standard card list or a
-                    responsive multi-column card grid. Both views keep exactly the same interview order.
+                    responsive multi-column card grid. Both views keep exactly the same interview order. In Board view,
+                    open <strong>Actions</strong> to see a saved <code>Click here to view meeting</code> link above the
+                    calendar and Delete controls.
                 </p>
                 <p>
                     Select <code>Click here to review corresponding job application</code> to return to the related
@@ -634,7 +704,8 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Bulk confirmations show the current application, related-interview and saved-evaluation counts
                     before the action. Single and bulk deletions are permanent, so review the selected records before
-                    confirming.
+                    confirming. Single-record delete, save, archive, restore and status-change confirmations focus their
+                    primary action, so Enter confirms it. Bulk confirmations do not auto-focus their primary action.
                 </p>
             </>
         ),
@@ -653,7 +724,8 @@ const guideSections: readonly UserGuideSection[] = [
                     archived-record viewers also provide CSV export actions under <strong>More...</strong> when at least
                     one record is available. Application and interview exports include the date their follow-up was sent
                     in the same format as the record&apos;s main date, or <code>N/A</code> when no follow-up has been
-                    sent.
+                    sent. <code>N/A</code> is used only in CSV output; visible empty values in the app use{' '}
+                    <code>-</code>.
                 </p>
                 <p>
                     Offer Comparison exports follow its selected sections and include separate evaluation and
@@ -721,11 +793,10 @@ const guideSections: readonly UserGuideSection[] = [
                     the preference and never use the highlight animation.
                 </p>
                 <p>
-                    Active, archived and demo Application, Interview and Offer Comparison pages also provide small page
-                    navigation arrows. The down arrow appears while more content remains and moves to the bottom of the
-                    page. After you scroll down, the subdued up arrow appears near the top of the screen and returns to
-                    the navigation bar. These controls are independent of the Auto-scroll preference and are not shown
-                    on Dashboard or Add forms.
+                    After you scroll down, active, archived and demo Application, Interview and Offer Comparison pages
+                    provide a subdued up arrow near the top of the screen that returns to the navigation bar. There is
+                    no down-arrow control. The up-arrow control is independent of the Auto-scroll preference and is not
+                    shown on Dashboard or Add forms.
                 </p>
             </>
         ),

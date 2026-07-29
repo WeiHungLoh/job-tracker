@@ -34,6 +34,49 @@ export const ARCHIVED_OFFER_DECISION_FILTERS: readonly ArchivedOfferDecisionFilt
     'Previous Evaluations',
 ];
 
+export type NeedsAttentionCategory =
+    | 'offer-decision-due'
+    | 'offer-decision-overdue'
+    | 'offer-evaluation'
+    | 'post-interview-follow-up-stale'
+    | 'post-interview'
+    | 'interview-unscheduled'
+    | 'application-follow-up-stale'
+    | 'application-follow-up';
+
+export const NEEDS_ATTENTION_CATEGORIES: readonly NeedsAttentionCategory[] = [
+    'offer-decision-due',
+    'offer-decision-overdue',
+    'offer-evaluation',
+    'post-interview-follow-up-stale',
+    'post-interview',
+    'interview-unscheduled',
+    'application-follow-up-stale',
+    'application-follow-up',
+];
+
+export type NeedsAttentionPreferences = {
+    needs_attention_categories: NeedsAttentionCategory[];
+    needs_attention_max_items: number;
+    needs_attention_offer_due_days: number;
+    needs_attention_offer_overdue_days: number;
+    needs_attention_post_interview_stale_days: number;
+    needs_attention_post_interview_follow_up_days: number;
+    needs_attention_application_stale_days: number;
+    needs_attention_application_follow_up_days: number;
+};
+
+export const DEFAULT_NEEDS_ATTENTION_SETTINGS: Readonly<NeedsAttentionPreferences> = {
+    needs_attention_categories: [...NEEDS_ATTENTION_CATEGORIES],
+    needs_attention_max_items: 10,
+    needs_attention_offer_due_days: 3,
+    needs_attention_offer_overdue_days: 14,
+    needs_attention_post_interview_stale_days: 14,
+    needs_attention_post_interview_follow_up_days: 7,
+    needs_attention_application_stale_days: 14,
+    needs_attention_application_follow_up_days: 7,
+};
+
 export type ApplicationListSortOrder =
     | 'job_status'
     | 'application_date_desc'
@@ -164,6 +207,11 @@ export type JobStatusCount = {
     count: string;
 };
 
+export type DashboardApplicationSummary = {
+    statusCounts: JobStatusCount[];
+    interviewedApplicationCount: number;
+};
+
 export type WeeklyApplicationCount = {
     start_of_week: Date;
     applications_count: string;
@@ -286,4 +334,12 @@ export type UserPreferences = {
     archived_interview_time_filters: InterviewTimeFilter[];
     offer_decision_filters: OfferDecisionFilter[];
     archived_offer_decision_filters: ArchivedOfferDecisionFilter[];
+    needs_attention_categories: NeedsAttentionCategory[];
+    needs_attention_max_items: number;
+    needs_attention_offer_due_days: number;
+    needs_attention_offer_overdue_days: number;
+    needs_attention_post_interview_stale_days: number;
+    needs_attention_post_interview_follow_up_days: number;
+    needs_attention_application_stale_days: number;
+    needs_attention_application_follow_up_days: number;
 };

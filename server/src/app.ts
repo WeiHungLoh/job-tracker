@@ -1,4 +1,4 @@
-import { ALLOWED_ORIGINS } from './config/server.js';
+import { isAllowedOrigin } from './config/server.js';
 import applicationRoute from './routes/application/index.js';
 import archivedApplicationRoute from './routes/archivedApplication/index.js';
 import archivedInterviewRoute from './routes/archivedInterview/index.js';
@@ -23,7 +23,7 @@ export const createApp = (): express.Express => {
     app.use(
         cors({
             origin: (origin, callback) => {
-                if (!origin || ALLOWED_ORIGINS.has(origin)) {
+                if (!origin || isAllowedOrigin(origin)) {
                     callback(null, true);
                     return;
                 }

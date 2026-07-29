@@ -187,6 +187,28 @@
     overflow-wrap: anywhere;
 }
 
+.boardMeetingLink {
+    width: fit-content;
+    margin-top: -4px;
+    margin-bottom: var(--spaceControl);
+    padding: 4px 8px;
+    border-radius: var(--radiusPill);
+    background-color: var(--colorLinkBg);
+    color: var(--colorLinkText);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.boardMeetingLink:hover {
+    background-color: var(--colorLinkHoverBg);
+}
+
+.boardMeetingLink:focus-visible {
+    outline: 2px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
+}
+
 @media (max-width: 803px) {
     .interview {
         overflow-x: auto;
@@ -230,5 +252,9 @@
 
     .boardDeleteButton {
         margin-right: var(--spaceCard);
+    }
+
+    .boardMeetingLink {
+        font-size: 0.7rem;
     }
 }

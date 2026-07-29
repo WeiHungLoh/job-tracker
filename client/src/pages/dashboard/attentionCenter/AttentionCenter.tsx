@@ -12,11 +12,15 @@ import { getAttentionItems, type AttentionItem, type AttentionItemCategory } fro
 import { createApplicationFollowUpDraft, createPostInterviewFollowUpDraft, type FollowUpDraft } from './followUpDrafts';
 import FollowUpDraftDialog from './FollowUpDraftDialog';
 import styles from './AttentionCenter.module.css';
+import NeedsAttentionSettingsDialog from './NeedsAttentionSettingsDialog';
+import { useUserPreferences } from '../../../components/userPreferences/UserPreferencesProvider';
+import { getNeedsAttentionSettings } from './needsAttentionSettings';
 
 type AttentionCenterProps = {
     applications: readonly JobApplication[];
     interviews: readonly JobInterview[];
     isLoading: boolean;
+    hasError?: boolean;
     currentTime?: Date;
     offerEvaluations?: readonly OfferEvaluation[];
     onAddInterview?: (application: JobApplication) => void;
@@ -25,6 +29,7 @@ type AttentionCenterProps = {
     onMarkApplicationGhosted?: (application: JobApplication) => Promise<void>;
     onMarkApplicationFollowUpSent?: (application: JobApplication) => void | Promise<void>;
     onMarkInterviewFollowUpSent?: (interview: JobInterview) => void | Promise<void>;
+    onRetry?: () => void;
 };
 
 type MarkApplicationGhostedActionProps = {
@@ -94,6 +99,7 @@ const MarkApplicationGhostedAction = ({ application, onMarkApplicationGhosted }:
 const AttentionCenter = ({
     applications,
     interviews,
+    hasError = false,
     isLoading,
     currentTime = new Date(),
     offerEvaluations = [],
@@ -103,15 +109,19 @@ const AttentionCenter = ({
     onMarkApplicationGhosted,
     onMarkApplicationFollowUpSent,
     onMarkInterviewFollowUpSent,
+    onRetry,
 }: AttentionCenterProps) => {
+    const { preferences } = useUserPreferences();
+    const settings = getNeedsAttentionSettings(preferences);
     const attentionListRef = useRef<HTMLUListElement>(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [selectedFollowUp, setSelectedFollowUp] = useState<{
         draft: FollowUpDraft;
         item: AttentionItem;
     } | null>(null);
     const items = useMemo(
-        () => getAttentionItems(applications, interviews, currentTime, offerEvaluations),
-        [applications, currentTime, interviews, offerEvaluations]
+        () => getAttentionItems(applications, interviews, currentTime, offerEvaluations, settings),
+        [applications, currentTime, interviews, offerEvaluations, settings]
     );
     const isAttentionListScrollable = items.length > VISIBLE_ATTENTION_ITEMS;
 
@@ -207,8 +217,37 @@ const AttentionCenter = ({
                 className={styles.attentionCard}
                 title='Needs Attention'
                 description='Your highest-priority follow-ups, with suggested next steps.'
+                headerAction={
+                    <PrimaryButton
+                        aria-label='Customise Dashboard Reminders'
+                        className={styles.settingsButton}
+                        onClick={() => setIsSettingsOpen(true)}
+                        type='button'
+                        variant='secondary'
+                    >
+                        Settings
+                    </PrimaryButton>
+                }
             >
-                {isLoading ? (
+                {settings.enabledCategories.length === 0 ? (
+                    <div className={styles.centered}>
+                        <div>
+                            <h3>No Needs Attention reminders are enabled.</h3>
+                            <p>Choose which dashboard reminders you want to see.</p>
+                        </div>
+                    </div>
+                ) : hasError ? (
+                    <div className={styles.centered}>
+                        <div>
+                            <h3>Unable to load Needs Attention.</h3>
+                            {onRetry && (
+                                <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
+                                    Try Again
+                                </PrimaryButton>
+                            )}
+                        </div>
+                    </div>
+                ) : isLoading ? (
                     <div className={styles.centered}>
                         <LoadingSpinner size='sm' />
                     </div>
@@ -278,6 +317,7 @@ const AttentionCenter = ({
                 onClose={() => setSelectedFollowUp(null)}
                 onMarkAsSent={handleMarkAsSent}
             />
+            <NeedsAttentionSettingsDialog open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </>
     );
 };

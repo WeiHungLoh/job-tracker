@@ -28,15 +28,18 @@
     gap: 6px;
 }
 
-.copy {
-    color: var(--colorText);
+.copy,
+.compactLabel,
+.mobileLabel {
+    color: var(--colorToastSuccessText);
     font-weight: 700;
+}
+
+.copy {
     overflow-wrap: anywhere;
 }
 
 .compactLabel {
-    color: var(--colorText);
-    font-weight: 700;
     white-space: nowrap;
 }
 
@@ -89,8 +92,6 @@
 
     .mobileLabel {
         display: block;
-        color: var(--colorText);
-        font-weight: 700;
         white-space: nowrap;
     }
 }

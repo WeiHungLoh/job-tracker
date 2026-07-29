@@ -7,6 +7,7 @@ import {
     MAX_ATTENTION_ITEMS,
     getAttentionItems,
 } from '../../pages/dashboard/attentionCenter/attentionItems';
+import { DEFAULT_NEEDS_ATTENTION_SETTINGS } from '../../pages/dashboard/attentionCenter/needsAttentionSettings';
 
 const now = new Date('2026-07-18T12:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -77,6 +78,96 @@ describe('getAttentionItems', () => {
         expect(ATTENTION_APPLICATION_STATUSES).toEqual(['Applied', 'Interview', 'Offer']);
         expect(FOLLOW_UP_AFTER_DAYS).toBe(7);
         expect(MAX_ATTENTION_ITEMS).toBe(10);
+    });
+
+    test('uses custom timing values independently at their exact boundaries', () => {
+        const settings = {
+            ...DEFAULT_NEEDS_ATTENTION_SETTINGS,
+            offerDueDays: 1,
+            offerOverdueDays: 2,
+            postInterviewStaleDays: 3,
+            postInterviewFollowUpDays: 4,
+            applicationStaleDays: 5,
+            applicationFollowUpDays: 6,
+        };
+        const applications = [
+            {
+                ...createApplication(1, 'Offer', 10),
+                has_offer_evaluation: true,
+            },
+            {
+                ...createApplication(2, 'Offer', 10),
+                has_offer_evaluation: true,
+            },
+            createApplication(3, 'Interview', 20),
+            createApplication(4, 'Interview', 20),
+            {
+                ...createApplication(5, 'Applied', 20),
+                application_follow_up_sent_at: new Date(now.getTime() - 5 * DAY_MS).toISOString(),
+            },
+            createApplication(6, 'Applied', 6),
+        ];
+        const interviews = [
+            {
+                ...createInterviewEndingDaysAgo(3, 3, 10),
+                follow_up_sent_at: new Date(now.getTime() - 3 * DAY_MS).toISOString(),
+            },
+            createInterviewEndingDaysAgo(4, 4, 4),
+        ];
+        const evaluations = [
+            createOfferEvaluation(1, new Date(now.getTime() + DAY_MS).toISOString()),
+            createOfferEvaluation(2, new Date(now.getTime() - 2 * DAY_MS).toISOString()),
+        ];
+
+        expect(
+            getAttentionItems(applications, interviews, now, evaluations, settings).map((item) => item.category)
+        ).toEqual([
+            'offer-decision-due',
+            'offer-decision-overdue',
+            'post-interview-follow-up-stale',
+            'post-interview',
+            'application-follow-up-stale',
+            'application-follow-up',
+        ]);
+    });
+
+    test('uses the configured item cap without changing fixed priority', () => {
+        const applications = [
+            createApplication(1, 'Applied', 30),
+            createApplication(2, 'Applied', 29),
+            createApplication(3, 'Applied', 28),
+            { ...createApplication(4, 'Offer', 10), has_offer_evaluation: false },
+        ];
+
+        expect(
+            getAttentionItems(applications, [], now, [], {
+                ...DEFAULT_NEEDS_ATTENTION_SETTINGS,
+                maxItems: 2,
+            }).map((item) => item.category)
+        ).toEqual(['offer-evaluation', 'application-follow-up']);
+    });
+
+    test('disabled categories produce no items and stored category order cannot change fixed priority', () => {
+        const applications = [
+            createApplication(1, 'Applied', 30),
+            { ...createApplication(2, 'Offer', 10), has_offer_evaluation: false },
+            createApplication(3, 'Interview', 30),
+        ];
+        const settings = {
+            ...DEFAULT_NEEDS_ATTENTION_SETTINGS,
+            enabledCategories: ['application-follow-up', 'offer-evaluation'] as const,
+        };
+
+        expect(getAttentionItems(applications, [], now, [], settings).map((item) => item.category)).toEqual([
+            'offer-evaluation',
+            'application-follow-up',
+        ]);
+        expect(
+            getAttentionItems(applications, [], now, [], {
+                ...settings,
+                enabledCategories: [],
+            })
+        ).toEqual([]);
     });
 
     test('includes Applied applications at seven full days without a separate stale category', () => {

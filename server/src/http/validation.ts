@@ -17,6 +17,8 @@ import {
     type OfferDetails,
     type OfferDecisionValues,
     type SaveOfferEvaluationInput,
+    NEEDS_ATTENTION_CATEGORIES,
+    type NeedsAttentionCategory,
 } from '../db/models.js';
 import {
     OFFER_ANNUAL_LEAVE_DAYS_MAX,
@@ -114,6 +116,9 @@ export const toIntegerInRange = (value: unknown, minimum: number, maximum: numbe
         ? value
         : undefined;
 };
+
+export const isOptionalIntegerInRange = (value: unknown, minimum: number, maximum: number): boolean =>
+    value === undefined || toIntegerInRange(value, minimum, maximum) !== undefined;
 
 const isOfferDecisionValue = (value: unknown): value is number =>
     toIntegerInRange(value, OFFER_DECISION_VALUE_MIN, OFFER_DECISION_VALUE_MAX) !== undefined;
@@ -227,7 +232,7 @@ export const isJobStatus = (value: unknown): value is JobStatus =>
     typeof value === 'string' && JOB_STATUSES.includes(value as JobStatus);
 
 export const isJobStatusArray = (value: unknown): value is JobStatus[] => {
-    return Array.isArray(value) && value.every(isJobStatus);
+    return Array.isArray(value) && value.every(isJobStatus) && new Set(value).size === value.length;
 };
 
 const isInterviewTimeFilter = (value: unknown): value is InterviewTimeFilter =>
@@ -248,6 +253,12 @@ export const isOfferDecisionFilterArray = (value: unknown): value is OfferDecisi
 
 export const isArchivedOfferDecisionFilterArray = (value: unknown): value is ArchivedOfferDecisionFilter[] =>
     Array.isArray(value) && value.every(isArchivedOfferDecisionFilter) && new Set(value).size === value.length;
+
+const isNeedsAttentionCategory = (value: unknown): value is NeedsAttentionCategory =>
+    typeof value === 'string' && NEEDS_ATTENTION_CATEGORIES.includes(value as NeedsAttentionCategory);
+
+export const isNeedsAttentionCategoryArray = (value: unknown): value is NeedsAttentionCategory[] =>
+    Array.isArray(value) && value.every(isNeedsAttentionCategory) && new Set(value).size === value.length;
 
 const toSupportedQueryValues = <Value extends string>(
     value: unknown,

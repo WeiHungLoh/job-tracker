@@ -3,6 +3,10 @@
     overflow: hidden;
 }
 
+.dialogTitle {
+    padding-left: var(--spaceSection) !important;
+}
+
 .dialogContent {
     display: flex;
     min-width: 0;
@@ -495,11 +499,6 @@
 }
 
 @media (max-width: 768px) {
-    .dialogContent {
-        padding-right: var(--spaceCard) !important;
-        padding-left: var(--spaceCard) !important;
-    }
-
     .currentColumns,
     .idealColumns {
         grid-template-columns: minmax(0, 1fr);
@@ -547,37 +546,5 @@
     .requestedChangeColumns {
         grid-template-columns: minmax(0, 1fr);
         grid-auto-rows: minmax(0, 1fr);
-    }
-
-    .actions {
-        display: grid !important;
-        align-items: stretch;
-        gap: var(--spaceControl);
-        padding-right: var(--spaceCard) !important;
-        padding-left: var(--spaceCard) !important;
-    }
-
-    .actions[data-button-count='2'] {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .actions[data-button-count='3'] {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .actions > button {
-        width: 100%;
-        min-width: 0;
-        min-height: 36px;
-        box-sizing: border-box;
-        margin-left: 0 !important;
-        padding-right: var(--spaceControl);
-        padding-left: var(--spaceControl);
-        font-size: var(--fontSizeCompactControl);
-        white-space: nowrap;
-    }
-
-    .actionSpacer {
-        display: none;
     }
 }

@@ -7,7 +7,7 @@ import type {
     JobIdParams,
     ListApplicationsQuery,
     ListApplicationsResponse,
-    ListJobStatusCountsResponse,
+    GetDashboardApplicationSummaryResponse,
     ListWeeklyApplicationsResponse,
     MarkApplicationFollowUpResponse,
     UpdateApplicationPinRequest,
@@ -25,7 +25,7 @@ import {
     findPotentialDuplicateApplication,
     getApplicationsForLatestEightWeeks,
     getJobApplications,
-    getJobStatusCounts,
+    getDashboardApplicationSummary,
     insertJobApplication,
     markApplicationFollowUpSent,
     updateApplicationPin,
@@ -142,11 +142,11 @@ router.get(
 router.get(
     '/status-counts',
     async (
-        req: Request<Record<string, never>, ListJobStatusCountsResponse>,
-        res: Response<ListJobStatusCountsResponse>
+        req: Request<Record<string, never>, GetDashboardApplicationSummaryResponse>,
+        res: Response<GetDashboardApplicationSummaryResponse>
     ): Promise<void> => {
         try {
-            res.status(200).json(await getJobStatusCounts(req.user.id));
+            res.status(200).json(await getDashboardApplicationSummary(req.user.id));
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to load job application status counts.');
         }

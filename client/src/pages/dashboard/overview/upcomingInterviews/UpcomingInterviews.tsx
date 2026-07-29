@@ -7,6 +7,7 @@ import type { JobInterview } from '../../../interview/models';
 import { getUpcomingInterviews } from '../../dashboardSelectors';
 import styles from './UpcomingInterviews.module.css';
 import { getInterviewTiming } from '../../../../helper/interviewTiming';
+import PrimaryButton from '../../../../components/button/PrimaryButton';
 
 const MAX_UPCOMING_INTERVIEWS = 3;
 
@@ -45,7 +46,9 @@ const InterviewPreview = ({
 const UpcomingInterviews = ({
     currentTime = new Date(),
     interviews,
+    hasError = false,
     isLoading,
+    onRetry,
     onInterviewSelect,
 }: UpcomingInterviewsProps) => {
     const upcomingInterviews = useMemo(
@@ -55,7 +58,18 @@ const UpcomingInterviews = ({
 
     return (
         <DashboardCard title='Upcoming Interviews' description='Your next scheduled conversations.'>
-            {isLoading ? (
+            {hasError ? (
+                <div className={styles.centered}>
+                    <div>
+                        <p>Unable to load upcoming interviews.</p>
+                        {onRetry && (
+                            <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
+                                Try Again
+                            </PrimaryButton>
+                        )}
+                    </div>
+                </div>
+            ) : isLoading ? (
                 <div className={styles.centered}>
                     <LoadingSpinner size='sm' />
                 </div>

@@ -5,8 +5,14 @@ import {
     createDeleteAllInterviewsConfirmation,
     createUnarchiveAllConfirmation,
 } from '../../components/confirmation/bulkConfirmations';
+import { defaultConfirmOptions } from '../../components/confirmation/defaultConfirmOptions';
 
 describe('bulk confirmations', () => {
+    test('auto-focuses the primary action by default while bulk actions remain explicit exceptions', () => {
+        expect(defaultConfirmOptions.confirmationButtonProps?.autoFocus).toBe(true);
+        expect(createArchiveAllConfirmation(2, 0).confirmationButtonProps?.autoFocus).toBe(false);
+    });
+
     test('describes all active application archive counts and filter-independent scope', () => {
         const confirmation = createArchiveAllConfirmation(12, 4);
 

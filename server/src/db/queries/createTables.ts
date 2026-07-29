@@ -9,11 +9,15 @@ import {
     OFFER_DECISION_FILTERS,
     ARCHIVED_OFFER_DECISION_FILTERS,
     OFFER_WORK_ARRANGEMENTS,
+    NEEDS_ATTENTION_CATEGORIES,
+    DEFAULT_NEEDS_ATTENTION_SETTINGS,
 } from '../models.js';
 import {
     DEFAULT_INTERVIEW_DURATION_MINUTES,
+    FIELD_MAX_LENGTHS,
     INTERVIEW_DURATION_MINUTES_MAX,
     INTERVIEW_DURATION_MINUTES_MIN,
+    NEEDS_ATTENTION_LIMITS,
     OFFER_ANNUAL_LEAVE_DAYS_MAX,
     OFFER_DECISION_VALUE_MAX,
     OFFER_DECISION_VALUE_MIN,
@@ -22,24 +26,51 @@ import {
 } from '../../config/validation.js';
 
 const toSQLTextValues = (values: readonly string[]): string => values.map((value) => `'${value}'`).join(', ');
+const toSQLUniqueArrayCount = (values: readonly string[], column: string): string =>
+    values.map((value) => `(CASE WHEN '${value}' = ANY(${column}) THEN 1 ELSE 0 END)`).join(' + ');
 
 const JOB_STATUS_SQL_VALUES = toSQLTextValues(JOB_STATUSES);
 const JOB_STATUS_SQL_ARRAY = `ARRAY[${JOB_STATUS_SQL_VALUES}]::TEXT[]`;
+const JOB_STATUS_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(JOB_STATUSES, 'application_job_statuses');
+const ARCHIVED_JOB_STATUS_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(JOB_STATUSES, 'archived_application_job_statuses');
 const COLLECTION_VIEW_MODE_SQL_VALUES = "'list', 'board'";
 const APPLICATION_LIST_SORT_ORDER_SQL_VALUES = toSQLTextValues(APPLICATION_LIST_SORT_ORDERS);
 const APPLICATION_BOARD_SORT_ORDER_SQL_VALUES = toSQLTextValues(APPLICATION_BOARD_SORT_ORDERS);
 const INTERVIEW_TIME_FILTER_SQL_VALUES = toSQLTextValues(INTERVIEW_TIME_FILTERS);
 const INTERVIEW_TIME_FILTER_SQL_ARRAY = `ARRAY[${INTERVIEW_TIME_FILTER_SQL_VALUES}]::TEXT[]`;
+const INTERVIEW_TIME_FILTER_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(INTERVIEW_TIME_FILTERS, 'interview_time_filters');
+const ARCHIVED_INTERVIEW_TIME_FILTER_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(
+    INTERVIEW_TIME_FILTERS,
+    'archived_interview_time_filters'
+);
 const OFFER_DECISION_FILTER_SQL_ARRAY = `ARRAY[${toSQLTextValues(OFFER_DECISION_FILTERS)}]::TEXT[]`;
+const OFFER_DECISION_FILTER_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(OFFER_DECISION_FILTERS, 'offer_decision_filters');
 const ARCHIVED_OFFER_DECISION_FILTER_SQL_ARRAY = `ARRAY[${toSQLTextValues(ARCHIVED_OFFER_DECISION_FILTERS)}]::TEXT[]`;
+const ARCHIVED_OFFER_DECISION_FILTER_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(
+    ARCHIVED_OFFER_DECISION_FILTERS,
+    'archived_offer_decision_filters'
+);
 const OFFER_WORK_ARRANGEMENT_SQL_VALUES = toSQLTextValues(['', ...OFFER_WORK_ARRANGEMENTS]);
+const NEEDS_ATTENTION_CATEGORY_SQL_VALUES = toSQLTextValues(NEEDS_ATTENTION_CATEGORIES);
+const NEEDS_ATTENTION_CATEGORY_SQL_ARRAY = `ARRAY[${NEEDS_ATTENTION_CATEGORY_SQL_VALUES}]::TEXT[]`;
+const NEEDS_ATTENTION_CATEGORY_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(
+    NEEDS_ATTENTION_CATEGORIES,
+    'needs_attention_categories'
+);
 
 const createTables = async (): Promise<void> => {
     const createUsersTable = `
         CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
-            email TEXT UNIQUE NOT NULL,
-            hashed_password TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL
+                CONSTRAINT users_email_check
+                CHECK (
+                    email = LOWER(BTRIM(email))
+                    AND email ~ '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$'
+                ),
+            hashed_password TEXT NOT NULL
+                CONSTRAINT users_hashed_password_check
+                CHECK (CHAR_LENGTH(hashed_password) > 0),
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
         )`;
 
@@ -57,16 +88,45 @@ const createTables = async (): Promise<void> => {
     const createJobAppTable = `CREATE TABLE IF NOT EXISTS job_applications (
             job_id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-            company_name TEXT NOT NULL,
-            job_title TEXT NOT NULL,
-            application_date TIMESTAMPTZ NOT NULL,
+            company_name TEXT NOT NULL
+                CONSTRAINT job_applications_company_name_check
+                CHECK (
+                    company_name = BTRIM(company_name)
+                    AND CHAR_LENGTH(company_name) BETWEEN 1 AND ${FIELD_MAX_LENGTHS.companyName}
+                ),
+            job_title TEXT NOT NULL
+                CONSTRAINT job_applications_job_title_check
+                CHECK (
+                    job_title = BTRIM(job_title)
+                    AND CHAR_LENGTH(job_title) BETWEEN 1 AND ${FIELD_MAX_LENGTHS.jobTitle}
+                ),
+            application_date TIMESTAMPTZ NOT NULL
+                CONSTRAINT job_applications_application_date_range_check
+                CHECK (
+                    application_date >= TIMESTAMPTZ '0001-01-01 00:00:00+00'
+                    AND application_date <= TIMESTAMPTZ '9999-12-31 23:59:59.999999+00'
+                ),
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT job_applications_application_date_not_future_check
+                CHECK (application_date <= created_at),
             job_status TEXT NOT NULL
                 CONSTRAINT job_applications_job_status_check
                 CHECK (job_status IN (${JOB_STATUS_SQL_VALUES})),
-            job_location TEXT NOT NULL DEFAULT '',
-            job_posting_url TEXT NOT NULL DEFAULT '',
-            notes TEXT NOT NULL DEFAULT '',
+            job_location TEXT NOT NULL DEFAULT ''
+                CONSTRAINT job_applications_job_location_check
+                CHECK (
+                    job_location = BTRIM(job_location)
+                    AND CHAR_LENGTH(job_location) <= ${FIELD_MAX_LENGTHS.location}
+                ),
+            job_posting_url TEXT NOT NULL DEFAULT ''
+                CONSTRAINT job_applications_job_posting_url_check
+                CHECK (
+                    job_posting_url = BTRIM(job_posting_url)
+                    AND CHAR_LENGTH(job_posting_url) <= ${FIELD_MAX_LENGTHS.jobURL}
+                ),
+            notes TEXT NOT NULL DEFAULT ''
+                CONSTRAINT job_applications_notes_check
+                CHECK (CHAR_LENGTH(notes) <= ${FIELD_MAX_LENGTHS.notes}),
             application_follow_up_sent_at TIMESTAMPTZ,
             is_pinned BOOLEAN NOT NULL DEFAULT false,
             is_archived BOOLEAN NOT NULL DEFAULT false,
@@ -90,16 +150,24 @@ const createTables = async (): Promise<void> => {
         monthly_base_salary INTEGER NOT NULL
             CHECK (monthly_base_salary BETWEEN 0 AND ${OFFER_MONTHLY_BASE_SALARY_MAX}),
         bonus TEXT NOT NULL DEFAULT ''
-            CHECK (CHAR_LENGTH(bonus) <= ${OFFER_DETAILS_MAX_LENGTHS.bonus}),
+            CONSTRAINT offer_evaluations_bonus_check
+            CHECK (bonus = BTRIM(bonus) AND CHAR_LENGTH(bonus) <= ${OFFER_DETAILS_MAX_LENGTHS.bonus}),
         annual_leave_days INTEGER
             CHECK (annual_leave_days BETWEEN 0 AND ${OFFER_ANNUAL_LEAVE_DAYS_MAX}),
         work_arrangement TEXT NOT NULL DEFAULT ''
             CHECK (work_arrangement IN (${OFFER_WORK_ARRANGEMENT_SQL_VALUES})),
-        decision_deadline TIMESTAMPTZ NOT NULL,
+        decision_deadline TIMESTAMPTZ NOT NULL
+            CONSTRAINT offer_evaluations_decision_deadline_range_check
+            CHECK (
+                decision_deadline >= TIMESTAMPTZ '0001-01-01 00:00:00+00'
+                AND decision_deadline <= TIMESTAMPTZ '9999-12-31 23:59:59.999999+00'
+            ),
         pros TEXT NOT NULL DEFAULT ''
-            CHECK (CHAR_LENGTH(pros) <= ${OFFER_DETAILS_MAX_LENGTHS.notes}),
+            CONSTRAINT offer_evaluations_pros_check
+            CHECK (pros = BTRIM(pros) AND CHAR_LENGTH(pros) <= ${OFFER_DETAILS_MAX_LENGTHS.notes}),
         concerns TEXT NOT NULL DEFAULT ''
-            CHECK (CHAR_LENGTH(concerns) <= ${OFFER_DETAILS_MAX_LENGTHS.notes}),
+            CONSTRAINT offer_evaluations_concerns_check
+            CHECK (concerns = BTRIM(concerns) AND CHAR_LENGTH(concerns) <= ${OFFER_DETAILS_MAX_LENGTHS.notes}),
         PRIMARY KEY (job_id, user_id),
         CONSTRAINT offer_evaluations_job_user_fk
             FOREIGN KEY (job_id, user_id)
@@ -113,7 +181,8 @@ const createTables = async (): Promise<void> => {
         monthly_base_salary INTEGER NOT NULL
             CHECK (monthly_base_salary BETWEEN 0 AND ${OFFER_MONTHLY_BASE_SALARY_MAX}),
         bonus TEXT NOT NULL DEFAULT ''
-            CHECK (CHAR_LENGTH(bonus) <= ${OFFER_DETAILS_MAX_LENGTHS.bonus}),
+            CONSTRAINT offer_counteroffer_plans_bonus_check
+            CHECK (bonus = BTRIM(bonus) AND CHAR_LENGTH(bonus) <= ${OFFER_DETAILS_MAX_LENGTHS.bonus}),
         annual_leave_days INTEGER
             CHECK (annual_leave_days BETWEEN 0 AND ${OFFER_ANNUAL_LEAVE_DAYS_MAX}),
         work_arrangement TEXT NOT NULL DEFAULT ''
@@ -139,14 +208,39 @@ const createTables = async (): Promise<void> => {
             interview_id SERIAL PRIMARY KEY,
             job_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-            interview_date TIMESTAMPTZ NOT NULL,
+            interview_date TIMESTAMPTZ NOT NULL
+                CONSTRAINT interviews_date_range_check
+                CHECK (
+                    interview_date >= TIMESTAMPTZ '0001-01-01 00:00:00+00'
+                    AND interview_date <= TIMESTAMPTZ '9999-12-31 23:59:59.999999+00'
+                ),
             interview_duration_minutes INTEGER NOT NULL DEFAULT ${DEFAULT_INTERVIEW_DURATION_MINUTES}
                 CONSTRAINT interviews_duration_minutes_check
                 CHECK (interview_duration_minutes BETWEEN ${INTERVIEW_DURATION_MINUTES_MIN} AND ${INTERVIEW_DURATION_MINUTES_MAX}),
-            interview_location TEXT NOT NULL,
-            interview_type TEXT NOT NULL DEFAULT '',
-            interview_notes TEXT NOT NULL DEFAULT '',
-            meeting_url TEXT NOT NULL DEFAULT '',
+            interview_location TEXT NOT NULL
+                CONSTRAINT interviews_location_check
+                CHECK (
+                    interview_location = BTRIM(interview_location)
+                    AND CHAR_LENGTH(interview_location) BETWEEN 1 AND ${FIELD_MAX_LENGTHS.location}
+                ),
+            interview_type TEXT NOT NULL DEFAULT ''
+                CONSTRAINT interviews_type_check
+                CHECK (
+                    interview_type = BTRIM(interview_type)
+                    AND CHAR_LENGTH(interview_type) <= ${FIELD_MAX_LENGTHS.interviewType}
+                ),
+            interview_notes TEXT NOT NULL DEFAULT ''
+                CONSTRAINT interviews_notes_check
+                CHECK (
+                    interview_notes = BTRIM(interview_notes)
+                    AND CHAR_LENGTH(interview_notes) <= ${FIELD_MAX_LENGTHS.notes}
+                ),
+            meeting_url TEXT NOT NULL DEFAULT ''
+                CONSTRAINT interviews_meeting_url_check
+                CHECK (
+                    meeting_url = BTRIM(meeting_url)
+                    AND CHAR_LENGTH(meeting_url) <= ${FIELD_MAX_LENGTHS.meetingURL}
+                ),
             created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
             follow_up_sent_at TIMESTAMPTZ,
             is_archived BOOLEAN NOT NULL DEFAULT false,
@@ -161,7 +255,10 @@ const createTables = async (): Promise<void> => {
             user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
             application_job_statuses TEXT[] NOT NULL DEFAULT ${JOB_STATUS_SQL_ARRAY}
                 CONSTRAINT user_preferences_application_job_statuses_check
-                CHECK (application_job_statuses <@ ${JOB_STATUS_SQL_ARRAY}),
+                CHECK (
+                    application_job_statuses <@ ${JOB_STATUS_SQL_ARRAY}
+                    AND CARDINALITY(application_job_statuses) = (${JOB_STATUS_UNIQUE_COUNT_SQL})
+                ),
             application_show_notes BOOLEAN NOT NULL DEFAULT true,
             application_show_archive BOOLEAN NOT NULL DEFAULT true,
             application_enable_scroll BOOLEAN NOT NULL DEFAULT true,
@@ -176,7 +273,10 @@ const createTables = async (): Promise<void> => {
                 CHECK (application_board_sort_order IN (${APPLICATION_BOARD_SORT_ORDER_SQL_VALUES})),
             archived_application_job_statuses TEXT[] NOT NULL DEFAULT ${JOB_STATUS_SQL_ARRAY}
                 CONSTRAINT user_preferences_archived_application_job_statuses_check
-                CHECK (archived_application_job_statuses <@ ${JOB_STATUS_SQL_ARRAY}),
+                CHECK (
+                    archived_application_job_statuses <@ ${JOB_STATUS_SQL_ARRAY}
+                    AND CARDINALITY(archived_application_job_statuses) = (${ARCHIVED_JOB_STATUS_UNIQUE_COUNT_SQL})
+                ),
             archived_application_show_notes BOOLEAN NOT NULL DEFAULT true,
             archived_application_view_mode TEXT NOT NULL DEFAULT 'list'
                 CONSTRAINT user_preferences_archived_application_view_mode_check
@@ -195,16 +295,87 @@ const createTables = async (): Promise<void> => {
                 CHECK (archived_interview_view_mode IN (${COLLECTION_VIEW_MODE_SQL_VALUES})),
             interview_time_filters TEXT[] NOT NULL DEFAULT ${INTERVIEW_TIME_FILTER_SQL_ARRAY}
                 CONSTRAINT user_preferences_interview_time_filters_check
-                CHECK (interview_time_filters <@ ${INTERVIEW_TIME_FILTER_SQL_ARRAY}),
+                CHECK (
+                    interview_time_filters <@ ${INTERVIEW_TIME_FILTER_SQL_ARRAY}
+                    AND CARDINALITY(interview_time_filters) = (${INTERVIEW_TIME_FILTER_UNIQUE_COUNT_SQL})
+                ),
             archived_interview_time_filters TEXT[] NOT NULL DEFAULT ${INTERVIEW_TIME_FILTER_SQL_ARRAY}
                 CONSTRAINT user_preferences_archived_interview_time_filters_check
-                CHECK (archived_interview_time_filters <@ ${INTERVIEW_TIME_FILTER_SQL_ARRAY}),
+                CHECK (
+                    archived_interview_time_filters <@ ${INTERVIEW_TIME_FILTER_SQL_ARRAY}
+                    AND CARDINALITY(archived_interview_time_filters) = (${ARCHIVED_INTERVIEW_TIME_FILTER_UNIQUE_COUNT_SQL})
+                ),
             offer_decision_filters TEXT[] NOT NULL DEFAULT ${OFFER_DECISION_FILTER_SQL_ARRAY}
                 CONSTRAINT user_preferences_offer_decision_filters_check
-                CHECK (offer_decision_filters <@ ${OFFER_DECISION_FILTER_SQL_ARRAY}),
+                CHECK (
+                    offer_decision_filters <@ ${OFFER_DECISION_FILTER_SQL_ARRAY}
+                    AND CARDINALITY(offer_decision_filters) = (${OFFER_DECISION_FILTER_UNIQUE_COUNT_SQL})
+                ),
             archived_offer_decision_filters TEXT[] NOT NULL DEFAULT ${ARCHIVED_OFFER_DECISION_FILTER_SQL_ARRAY}
                 CONSTRAINT user_preferences_archived_offer_decision_filters_check
-                CHECK (archived_offer_decision_filters <@ ${ARCHIVED_OFFER_DECISION_FILTER_SQL_ARRAY})
+                CHECK (
+                    archived_offer_decision_filters <@ ${ARCHIVED_OFFER_DECISION_FILTER_SQL_ARRAY}
+                    AND CARDINALITY(archived_offer_decision_filters) = (${ARCHIVED_OFFER_DECISION_FILTER_UNIQUE_COUNT_SQL})
+                ),
+            needs_attention_categories TEXT[] NOT NULL DEFAULT ${NEEDS_ATTENTION_CATEGORY_SQL_ARRAY}
+                CONSTRAINT user_preferences_needs_attention_categories_check
+                CHECK (
+                    needs_attention_categories <@ ${NEEDS_ATTENTION_CATEGORY_SQL_ARRAY}
+                    AND CARDINALITY(needs_attention_categories) = (${NEEDS_ATTENTION_CATEGORY_UNIQUE_COUNT_SQL})
+                ),
+            needs_attention_max_items INTEGER NOT NULL
+                DEFAULT ${DEFAULT_NEEDS_ATTENTION_SETTINGS.needs_attention_max_items}
+                CONSTRAINT user_preferences_needs_attention_max_items_check
+                CHECK (
+                    needs_attention_max_items
+                    BETWEEN ${NEEDS_ATTENTION_LIMITS.maxItems.minimum} AND ${NEEDS_ATTENTION_LIMITS.maxItems.maximum}
+                ),
+            needs_attention_offer_due_days INTEGER NOT NULL
+                DEFAULT ${DEFAULT_NEEDS_ATTENTION_SETTINGS.needs_attention_offer_due_days}
+                CONSTRAINT user_preferences_needs_attention_offer_due_days_check
+                CHECK (
+                    needs_attention_offer_due_days
+                    BETWEEN ${NEEDS_ATTENTION_LIMITS.offerDueDays.minimum} AND ${NEEDS_ATTENTION_LIMITS.offerDueDays.maximum}
+                ),
+            needs_attention_offer_overdue_days INTEGER NOT NULL
+                DEFAULT ${DEFAULT_NEEDS_ATTENTION_SETTINGS.needs_attention_offer_overdue_days}
+                CONSTRAINT user_preferences_needs_attention_offer_overdue_days_check
+                CHECK (
+                    needs_attention_offer_overdue_days
+                    BETWEEN ${NEEDS_ATTENTION_LIMITS.offerOverdueDays.minimum} AND ${NEEDS_ATTENTION_LIMITS.offerOverdueDays.maximum}
+                ),
+            needs_attention_post_interview_stale_days INTEGER NOT NULL
+                DEFAULT ${DEFAULT_NEEDS_ATTENTION_SETTINGS.needs_attention_post_interview_stale_days}
+                CONSTRAINT user_preferences_needs_attention_post_interview_stale_days_check
+                CHECK (
+                    needs_attention_post_interview_stale_days
+                    BETWEEN ${NEEDS_ATTENTION_LIMITS.postInterviewStaleDays.minimum}
+                        AND ${NEEDS_ATTENTION_LIMITS.postInterviewStaleDays.maximum}
+                ),
+            needs_attention_post_interview_follow_up_days INTEGER NOT NULL
+                DEFAULT ${DEFAULT_NEEDS_ATTENTION_SETTINGS.needs_attention_post_interview_follow_up_days}
+                CONSTRAINT user_preferences_needs_attention_post_interview_follow_up_days_check
+                CHECK (
+                    needs_attention_post_interview_follow_up_days
+                    BETWEEN ${NEEDS_ATTENTION_LIMITS.postInterviewFollowUpDays.minimum}
+                        AND ${NEEDS_ATTENTION_LIMITS.postInterviewFollowUpDays.maximum}
+                ),
+            needs_attention_application_stale_days INTEGER NOT NULL
+                DEFAULT ${DEFAULT_NEEDS_ATTENTION_SETTINGS.needs_attention_application_stale_days}
+                CONSTRAINT user_preferences_needs_attention_application_stale_days_check
+                CHECK (
+                    needs_attention_application_stale_days
+                    BETWEEN ${NEEDS_ATTENTION_LIMITS.applicationStaleDays.minimum}
+                        AND ${NEEDS_ATTENTION_LIMITS.applicationStaleDays.maximum}
+                ),
+            needs_attention_application_follow_up_days INTEGER NOT NULL
+                DEFAULT ${DEFAULT_NEEDS_ATTENTION_SETTINGS.needs_attention_application_follow_up_days}
+                CONSTRAINT user_preferences_needs_attention_application_follow_up_days_check
+                CHECK (
+                    needs_attention_application_follow_up_days
+                    BETWEEN ${NEEDS_ATTENTION_LIMITS.applicationFollowUpDays.minimum}
+                        AND ${NEEDS_ATTENTION_LIMITS.applicationFollowUpDays.maximum}
+                )
         )`;
 
     const createJobApplicationArchiveIndex = `CREATE INDEX IF NOT EXISTS job_applications_user_archived_idx

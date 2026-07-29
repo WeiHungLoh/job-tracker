@@ -57,10 +57,10 @@ describe('PageScrollControls', () => {
         routes.demoArchivedInterviews,
         routes.demoOfferDecisions,
         routes.demoArchivedOfferDecisions,
-    ])('shows a jump-to-bottom control on %s when more page content remains', (path) => {
+    ])('does not show a down-caret control on %s', (path) => {
         renderControls(path);
 
-        expect(screen.getByRole('button', { name: 'Scroll to bottom' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Scroll to top' })).not.toBeInTheDocument();
     });
 
@@ -78,17 +78,15 @@ describe('PageScrollControls', () => {
         expect(screen.queryByRole('button', { name: 'Scroll to top' })).not.toBeInTheDocument();
     });
 
-    it('reveals the scroll-to-top control after meaningful scrolling and performs both scroll actions', () => {
+    it('reveals only the scroll-to-top control after meaningful scrolling', () => {
         renderControls(routes.viewApplications);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Scroll to bottom' }));
-        expect(window.scrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 2400 });
 
         act(() => {
             setPageScroll({ scrollHeight: 2400, scrollY: 400 });
             window.dispatchEvent(new Event('scroll'));
         });
 
+        expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Scroll to top' }));
         expect(window.scrollTo).toHaveBeenLastCalledWith({ behavior: 'smooth', top: 0 });
     });
