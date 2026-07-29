@@ -197,6 +197,14 @@ export const validateCounterofferPlan = (
             `Current offer: ${currentFitRating}%. Ideal offer: ${idealFitRating}%.`;
     }
 
+    const normalizedCurrentOffer = {
+        ...createCounterofferPlanFromEvaluation(currentEvaluation),
+        bonus: currentEvaluation.details.bonus.trim(),
+    };
+    if (Object.keys(errors).length === 0 && counterofferPlanValuesAreEqual(normalizedPlan, normalizedCurrentOffer)) {
+        errors.unchanged = 'Change at least one term or rating for the Ideal offer.';
+    }
+
     if (Object.keys(errors).length > 0) {
         return { isValid: false, errors };
     }

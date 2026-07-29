@@ -143,6 +143,10 @@ router.post(
                 sendError(res, 404, 'Job application not found.');
                 return;
             }
+            if (insertResult === 'application-ineligible') {
+                sendError(res, 409, 'Interviews can only be added to applications with Interview status.');
+                return;
+            }
             if (insertResult === 'invalid-date') {
                 sendError(res, 422, 'Interview date must be after the application date.');
                 return;
@@ -242,12 +246,16 @@ router.put(
         }
 
         try {
-            const sentAt = await markInterviewFollowUpSent(interviewId, req.user.id);
-            if (!sentAt) {
+            const result = await markInterviewFollowUpSent(interviewId, req.user.id);
+            if (result === 'not-found') {
                 sendError(res, 404, 'Active interview not found.');
                 return;
             }
-            res.status(200).json({ follow_up_sent_at: sentAt });
+            if (result === 'not-completed') {
+                sendError(res, 409, 'Interview follow-up can only be marked as sent after the interview has finished.');
+                return;
+            }
+            res.status(200).json({ follow_up_sent_at: result });
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to mark the interview follow-up as sent.');
         }

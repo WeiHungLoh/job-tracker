@@ -314,7 +314,7 @@ describe('counteroffer plan calculations and validation', () => {
         ).toEqual([]);
     });
 
-    test('allows an unchanged or equal-fit Ideal offer while blocking a lower fit', () => {
+    test('blocks an unchanged Ideal offer and a lower fit while allowing an equal-fit trade-off', () => {
         const unchanged = createCounterofferPlanFromEvaluation(currentEvaluation);
         const lowerFit = createPlan({
             ratings: {
@@ -326,8 +326,10 @@ describe('counteroffer plan calculations and validation', () => {
         });
 
         expect(validateCounterofferPlan(unchanged, currentEvaluation)).toEqual({
-            isValid: true,
-            request: unchanged,
+            isValid: false,
+            errors: {
+                unchanged: 'Change at least one term or rating for the Ideal offer.',
+            },
         });
         expect(validateCounterofferPlan(lowerFit, currentEvaluation)).toMatchObject({
             isValid: false,

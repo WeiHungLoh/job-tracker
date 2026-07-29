@@ -443,7 +443,7 @@ test('no conflict preserves the existing successful creation response', async ()
             const query = compactSQL(sql);
             calls.push(query);
             if (query.includes('inserted_interview')) {
-                return { rows: [{ application_exists: true, interview_created: true }] };
+                return { rows: [{ application_eligible: true, application_exists: true, interview_created: true }] };
             }
             return { rows: [] };
         },
@@ -462,7 +462,7 @@ test('a past proposed interview is created normally when the database returns no
             const query = compactSQL(sql);
             calls.push(query);
             if (query.includes('inserted_interview')) {
-                return { rows: [{ application_exists: true, interview_created: true }] };
+                return { rows: [{ application_eligible: true, application_exists: true, interview_created: true }] };
             }
             return { rows: [] };
         },
@@ -478,7 +478,7 @@ test('a past proposed interview still fails the existing application-date valida
     const response = await withMockedPoolQuery(
         async (sql) => {
             if (compactSQL(sql).includes('inserted_interview')) {
-                return { rows: [{ application_exists: true, interview_created: false }] };
+                return { rows: [{ application_eligible: true, application_exists: true, interview_created: false }] };
             }
             return { rows: [] };
         },
@@ -498,7 +498,7 @@ test('allowSchedulingConflict true skips only the conflict lookup and still chec
             if (query.includes('offer_evaluations')) {
                 return { rows: [] };
             }
-            return { rows: [{ application_exists: true, interview_created: true }] };
+            return { rows: [{ application_eligible: true, application_exists: true, interview_created: true }] };
         },
         () => invokeCreateInterview({ ...VALID_INTERVIEW, allowSchedulingConflict: true })
     );
@@ -540,7 +540,7 @@ test('a rejected conflict attempt can be retried with the override without dupli
             if (query.includes('offer_evaluations')) {
                 return { rows: [] };
             }
-            return { rows: [{ application_exists: true, interview_created: true }] };
+            return { rows: [{ application_eligible: true, application_exists: true, interview_created: true }] };
         },
         async () => [
             await invokeCreateInterview(VALID_INTERVIEW),
@@ -589,6 +589,7 @@ for (const [name, body] of [
 
 for (const [insertResult, expectedStatus, expectedMessage] of [
     ['not-found', 404, 'Job application not found.'],
+    ['application-ineligible', 409, 'Interviews can only be added to applications with Interview status.'],
     ['invalid-date', 422, 'Interview date must be after the application date.'],
 ]) {
     test(`the override preserves the existing ${insertResult} application validation`, async () => {
@@ -597,6 +598,7 @@ for (const [insertResult, expectedStatus, expectedMessage] of [
                 rows: [
                     {
                         application_exists: insertResult !== 'not-found',
+                        application_eligible: insertResult !== 'application-ineligible',
                         interview_created: false,
                     },
                 ],
@@ -636,6 +638,7 @@ for (const [name, insertResult, expectedStatus, expectedMessage] of [
                     rows: [
                         {
                             application_exists: insertResult !== 'not-found',
+                            application_eligible: true,
                             interview_created: false,
                         },
                     ],

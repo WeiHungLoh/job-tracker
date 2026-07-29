@@ -532,7 +532,7 @@ test('rolls back the whole counteroffer save when the Ideal fit is below the cur
     );
 });
 
-test('saves an unchanged counteroffer plan when its fit matches the current offer', async () => {
+test('rolls back when the Ideal offer exactly matches the current offer', async () => {
     const calls = [];
     await withMockedPoolClient(
         async (sql) => {
@@ -560,14 +560,17 @@ test('saves an unchanged counteroffer plan when its fit matches the current offe
             return { rows: [], rowCount: 1 };
         },
         async () => {
-            assert.equal(await offerDecisionQueries.saveCounterofferPlan(7, 11, validCounterofferRequest), 'saved');
+            assert.equal(
+                await offerDecisionQueries.saveCounterofferPlan(7, 11, validCounterofferRequest),
+                'unchanged_from_current'
+            );
         }
     );
 
-    assert.equal(calls.at(-1), 'COMMIT');
+    assert.equal(calls.at(-1), 'ROLLBACK');
     assert.equal(
         calls.some((sql) => sql.includes('INSERT INTO offer_counteroffer_plans')),
-        true
+        false
     );
 });
 
@@ -1058,6 +1061,41 @@ test('routes counteroffer plan reads, saves and deletion with stable error codes
             assert.deepEqual(response.body, {
                 code: 'COUNTEROFFER_FIT_BELOW_CURRENT',
                 message: 'The Ideal offer must have a fit rating at least as high as the current offer.',
+            });
+        }
+    );
+
+    await withMockedPoolClient(
+        async (sql) => {
+            if (String(sql).includes('FOR UPDATE OF applications, evaluations')) {
+                return {
+                    rows: [
+                        {
+                            job_id: 11,
+                            job_status: 'Offer',
+                            is_archived: false,
+                            decision_deadline: '2099-08-15T10:00:00.000Z',
+                            career_growth_rating: 4,
+                            company_culture_fit_rating: 4,
+                            work_life_balance_rating: 4,
+                            compensation_rating: 4,
+                            monthly_base_salary: 11000,
+                            bonus: '15% target',
+                            annual_leave_days: 21,
+                            work_arrangement: 'Hybrid',
+                        },
+                    ],
+                };
+            }
+            return { rows: [], rowCount: 1 };
+        },
+        async () => {
+            const response = createResponse();
+            await putHandler({ body: validCounterofferRequest, params: { jobId: '11' }, user: { id: 7 } }, response);
+            assert.equal(response.statusCode, 422);
+            assert.deepEqual(response.body, {
+                code: 'COUNTEROFFER_PLAN_UNCHANGED',
+                message: 'Change at least one term or rating for the Ideal offer.',
             });
         }
     );

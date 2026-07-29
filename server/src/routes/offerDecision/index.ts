@@ -169,6 +169,15 @@ router.put(
                 );
                 return;
             }
+            if (result === 'unchanged_from_current') {
+                sendCodedError(
+                    res,
+                    422,
+                    'COUNTEROFFER_PLAN_UNCHANGED',
+                    'Change at least one term or rating for the Ideal offer.'
+                );
+                return;
+            }
 
             res.sendStatus(204);
         } catch (error: unknown) {

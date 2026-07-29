@@ -67,6 +67,7 @@
         var(--colorPageBg);
     --colorControlSurface: #fffafb;
     --colorControlMutedSurface: #f4eae9;
+    --colorQuickCaptureSurface: var(--colorControlSurface);
     --colorControlBorder: #ead7de;
     --colorInteractiveBorder: #987f84;
     --colorControlShadow: rgb(74 40 54 / 10%);
@@ -226,6 +227,7 @@
         var(--colorPageBg);
     --colorControlSurface: #191920;
     --colorControlMutedSurface: #2a252a;
+    --colorQuickCaptureSurface: var(--colorControlMutedSurface);
     --colorControlBorder: #3a3a48;
     --colorInteractiveBorder: #7a6c74;
     --colorControlShadow: rgb(0 0 0 / 30%);

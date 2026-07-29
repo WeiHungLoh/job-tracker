@@ -169,7 +169,8 @@ const guideSections: readonly UserGuideSection[] = [
                     Follow-up templates are generated locally and are never sent by Job Tracker. Replace bracketed
                     placeholders before using a template. Copying a message does not mark it as sent. Use{' '}
                     <strong>Mark as sent</strong> only after you send it yourself; Job Tracker stores the current time
-                    and removes that exact follow-up from Needs Attention.
+                    and removes that exact follow-up from Needs Attention. The server only accepts this action after the
+                    interview has finished.
                 </p>
                 <p>
                     Active list cards show the full sent time with <strong>Undo</strong>. Board cards show a compact
@@ -355,7 +356,13 @@ const guideSections: readonly UserGuideSection[] = [
                     compares with your other active evaluated offers. Its rating comparison clearly separates Current,
                     Ideal and Change values. Individual rating differences use rating points; Fit rating differences use
                     percentage points. The Ideal offer must differ from the current offer and cannot have a lower
-                    overall Fit rating. It never alters the saved evaluation or application status.
+                    overall Fit rating. Saving an unchanged Ideal offer shows an error and does not create or update the
+                    plan. It never alters the saved evaluation or application status.
+                </p>
+                <p>
+                    If an edited evaluation would have a lower Fit rating than its saved counteroffer plan, the server
+                    rejects the first evaluation save and asks whether to delete the counteroffer plan. Confirming
+                    deletes that plan and retries the evaluation save; cancelling keeps the evaluation form open.
                 </p>
                 <p>
                     Saved plans remain available to review or delete after a deadline passes or the application moves to
@@ -540,8 +547,9 @@ const guideSections: readonly UserGuideSection[] = [
             <>
                 <h3>Add an interview</h3>
                 <p>
-                    Interview date and interview location are required. The interview date must be after the related
-                    application date.
+                    The related active application must have Interview status. Interview date and interview location are
+                    required, and the interview date must be after the application date. The server checks these rules
+                    as well as the form.
                 </p>
                 <ul>
                     <li>

@@ -138,7 +138,7 @@ test('interview follow-up mutations affect only the exact active user-scoped int
     pool.query = async (sql, values) => {
         calls.push({ sql: String(sql), values });
         return calls.length === 1
-            ? { rows: [{ follow_up_sent_at: sentAt }], rowCount: 1 }
+            ? { rows: [{ interview_exists: true, follow_up_sent_at: sentAt }], rowCount: 1 }
             : { rows: [{ interview_id: 23 }], rowCount: 1 };
     };
 
@@ -158,6 +158,24 @@ test('interview follow-up mutations affect only the exact active user-scoped int
     );
     for (const call of calls) {
         assert.match(call.sql, /interview_id = \$1 AND user_id = \$2 AND is_archived = false/);
+    }
+    assert.match(
+        calls[0].sql,
+        /interviews\.interview_date\s+\+ interviews\.interview_duration_minutes \* INTERVAL '1 minute' <= CURRENT_TIMESTAMP/
+    );
+});
+
+test('rejects marking an interview follow-up before the interview has finished', async () => {
+    const originalQuery = pool.query;
+    pool.query = async () => ({
+        rows: [{ interview_exists: true, follow_up_sent_at: null }],
+        rowCount: 1,
+    });
+
+    try {
+        assert.equal(await markInterviewFollowUpSent(23, 42), 'not-completed');
+    } finally {
+        pool.query = originalQuery;
     }
 });
 
@@ -186,6 +204,17 @@ test('follow-up routes validate IDs, return server timestamps, and hide inaccess
         await interviewMark({ params: { interviewId: '23' }, user: { id: 42 } }, inaccessibleInterview.response);
         assert.equal(inaccessibleInterview.result.statusCode, 404);
         assert.deepEqual(inaccessibleInterview.result.body, { message: 'Active interview not found.' });
+
+        pool.query = async () => ({
+            rows: [{ interview_exists: true, follow_up_sent_at: null }],
+            rowCount: 1,
+        });
+        const unfinishedInterview = createResponse();
+        await interviewMark({ params: { interviewId: '23' }, user: { id: 42 } }, unfinishedInterview.response);
+        assert.equal(unfinishedInterview.result.statusCode, 409);
+        assert.deepEqual(unfinishedInterview.result.body, {
+            message: 'Interview follow-up can only be marked as sent after the interview has finished.',
+        });
 
         const invalidApplication = createResponse();
         await applicationMark({ params: { jobId: '0' }, user: { id: 42 } }, invalidApplication.response);

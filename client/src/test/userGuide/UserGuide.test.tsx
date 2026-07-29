@@ -76,6 +76,7 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/templates are generated locally and are never sent by job tracker/i)).toBeVisible();
         expect(screen.getByText(/replace bracketed placeholders/i)).toBeVisible();
         expect(screen.getByText(/copying a message does not mark it as sent/i)).toBeVisible();
+        expect(screen.getByText(/server only accepts this action after the interview has finished/i)).toBeVisible();
         expect(screen.getByTestId('ug')).toHaveTextContent(/use mark as sent only after you send it yourself/i);
         expect(screen.getByText(/board cards show a compact indicator/i)).toBeVisible();
         expect(screen.getByText(/archived cards keep the sent time as read-only context/i)).toBeVisible();
@@ -143,6 +144,11 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/starts with the current terms and all four current ratings/i)).toBeVisible();
         expect(screen.getByText(/individual rating differences use rating points/i)).toBeVisible();
         expect(screen.getByText(/fit rating differences use percentage points/i)).toBeVisible();
+        expect(
+            screen.getByText(
+                /server rejects the first evaluation save and asks whether to delete the counteroffer plan/i
+            )
+        ).toBeVisible();
         expect(screen.getByText(/empty values that remain visible are shown as/i)).toBeVisible();
         expect(screen.getByText(/while creating or editing a counteroffer plan, press Enter anywhere/i)).toBeVisible();
         expect(screen.getByText(/Offer Comparison evaluation forms keep their field-based shortcuts/i)).toBeVisible();
@@ -189,6 +195,8 @@ describe('renders user guide properly', () => {
 
         await userEvent.click(screen.getByRole('button', { name: /^interviews$/i }));
 
+        expect(screen.getByText(/related active application must have interview status/i)).toBeVisible();
+        expect(screen.getByText(/server checks these rules as well as the form/i)).toBeVisible();
         expect(screen.getByText(/interview location is separate from job location/i)).toBeVisible();
         expect(screen.getByText(/interview notes are optional and limited to 3000 characters/i)).toBeVisible();
         expect(screen.getByText(/duration must be a whole number from 1 to 1440 minutes/i)).toBeVisible();

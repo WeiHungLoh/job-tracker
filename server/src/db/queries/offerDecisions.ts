@@ -77,7 +77,8 @@ export type SaveCounterofferPlanResult =
     | 'evaluation_not_found'
     | 'application_ineligible'
     | 'decision_window_expired'
-    | 'fit_below_current';
+    | 'fit_below_current'
+    | 'unchanged_from_current';
 
 const toISOString = (value: Date | string): string => (value instanceof Date ? value.toISOString() : value);
 
@@ -263,6 +264,16 @@ const calculateOfferDecisionScore = (ratings: OfferDecisionInputRatings): number
     return Math.round((total / (4 * OFFER_DECISION_VALUE_MAX)) * 100);
 };
 
+const counterofferPlanMatchesEvaluation = (plan: CounterofferPlanInput, evaluation: CounterofferPlanRow): boolean =>
+    plan.monthly_base_salary === Number(evaluation.monthly_base_salary) &&
+    plan.bonus === evaluation.bonus &&
+    plan.annual_leave_days === evaluation.annual_leave_days &&
+    plan.work_arrangement === evaluation.work_arrangement &&
+    plan.ratings.career_growth === Number(evaluation.career_growth_rating) &&
+    plan.ratings.company_culture_fit === Number(evaluation.company_culture_fit_rating) &&
+    plan.ratings.work_life_balance === Number(evaluation.work_life_balance_rating) &&
+    plan.ratings.compensation === Number(evaluation.compensation_rating);
+
 type OfferDecisionInputRatings = CounterofferPlanInput['ratings'];
 
 const upsertCounterofferPlan = async (
@@ -366,6 +377,10 @@ export const saveCounterofferPlan = async (
         if (calculateOfferDecisionScore(request.ratings) < currentFitRating) {
             await client.query('ROLLBACK');
             return 'fit_below_current';
+        }
+        if (counterofferPlanMatchesEvaluation(request, currentOffer)) {
+            await client.query('ROLLBACK');
+            return 'unchanged_from_current';
         }
 
         await upsertCounterofferPlan(client.query.bind(client), userId, jobId, request);

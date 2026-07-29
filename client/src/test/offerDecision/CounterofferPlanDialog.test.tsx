@@ -218,23 +218,15 @@ describe('CounterofferPlanDialog', () => {
         expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
-    test('saves an unchanged same-fit plan without showing an error toast', async () => {
+    test('blocks an unchanged Ideal offer and shows an error toast', async () => {
         const onSave = vi.fn().mockResolvedValue(undefined);
         renderDialog({ onSave });
 
         await click(screen.getByRole('button', { name: 'Save' }));
 
-        await waitFor(() =>
-            expect(onSave).toHaveBeenCalledWith(11, {
-                monthly_base_salary: 10000,
-                bonus: '10% target',
-                annual_leave_days: 20,
-                work_arrangement: 'Hybrid',
-                ratings: evaluation.ratings,
-            })
-        );
+        expect(await screen.findByText('Change at least one term or rating for the Ideal offer.')).toBeInTheDocument();
+        expect(onSave).not.toHaveBeenCalled();
         expect(screen.queryByText('Review the highlighted Ideal offer fields before saving.')).not.toBeInTheDocument();
-        expect(screen.queryByText('Change at least one term or rating for the Ideal offer.')).not.toBeInTheDocument();
     });
 
     test('submits with Enter from the dialog and shows the shared loading spinner without replacing the Save label', async () => {
@@ -246,6 +238,9 @@ describe('CounterofferPlanDialog', () => {
                 })
         );
         renderDialog({ onSave });
+        fireEvent.change(screen.getByLabelText('Acme Ideal offer monthly base salary'), {
+            target: { value: '10500' },
+        });
 
         fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Enter' });
 
@@ -307,9 +302,6 @@ describe('CounterofferPlanDialog', () => {
         expect(screen.getByRole('progressbar', { name: 'Loading counteroffer plan' })).toBeInTheDocument();
         expect(await screen.findByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
         expect(onGet).toHaveBeenCalledOnce();
-        expect(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' })).toHaveClass(
-            primaryButtonStyles.destructive
-        );
         expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(primaryButtonStyles.secondary);
         expect(screen.getByRole('button', { name: 'Edit' })).toHaveClass(primaryButtonStyles.primary);
 

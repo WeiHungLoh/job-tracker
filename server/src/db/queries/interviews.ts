@@ -8,7 +8,9 @@ import type {
 import { pool } from '../connectDB.js';
 import { hasAffectedRows } from './shared.js';
 
-export type InsertInterviewResult = 'created' | 'invalid-date' | 'not-found';
+export type InsertInterviewResult = 'application-ineligible' | 'created' | 'invalid-date' | 'not-found';
+
+export type MarkInterviewFollowUpResult = Date | 'not-completed' | 'not-found';
 
 export const getInterviewSchedulingConflicts = async (
     jobId: number,
@@ -23,6 +25,7 @@ export const getInterviewSchedulingConflicts = async (
             WHERE job_id = $1
                 AND user_id = $2
                 AND is_archived = false
+                AND job_status = 'Interview'
                 AND application_date IS NOT NULL
                 AND $3::timestamptz > application_date
         )
@@ -69,6 +72,7 @@ export const getInterviewOfferDeadlineWarnings = async (
             WHERE job_id = $1
                 AND user_id = $2
                 AND is_archived = false
+                AND job_status = 'Interview'
                 AND application_date IS NOT NULL
                 AND $3::timestamptz > application_date
         )
@@ -107,11 +111,16 @@ export const insertInterview = async (
     meetingURL: string,
     notes: string
 ): Promise<InsertInterviewResult> => {
-    const result = await pool.query<{ application_exists: boolean; interview_created: boolean }>(
+    const result = await pool.query<{
+        application_eligible: boolean;
+        application_exists: boolean;
+        interview_created: boolean;
+    }>(
         `WITH application AS (
-            SELECT application_date
+            SELECT application_date, job_status = 'Interview' AS is_eligible
             FROM job_applications
             WHERE job_id = $1 AND user_id = $2 AND is_archived = false
+            FOR UPDATE
         ),
         inserted_interview AS (
             INSERT INTO interviews (
@@ -126,11 +135,14 @@ export const insertInterview = async (
             )
             SELECT $1, $2, $3, $4, $5, $6, $7, $8
             FROM application
-            WHERE application_date IS NOT NULL AND $3::timestamptz > application_date
+            WHERE is_eligible
+                AND application_date IS NOT NULL
+                AND $3::timestamptz > application_date
             RETURNING 1
         )
         SELECT
             EXISTS(SELECT 1 FROM application) AS application_exists,
+            COALESCE((SELECT is_eligible FROM application), false) AS application_eligible,
             EXISTS(SELECT 1 FROM inserted_interview) AS interview_created`,
         [jobId, userId, interviewDate, interviewDurationMinutes, location, interviewType, meetingURL, notes]
     );
@@ -138,7 +150,10 @@ export const insertInterview = async (
     if (result.rows[0]?.interview_created) {
         return 'created';
     }
-    return result.rows[0]?.application_exists ? 'invalid-date' : 'not-found';
+    if (!result.rows[0]?.application_exists) {
+        return 'not-found';
+    }
+    return result.rows[0].application_eligible ? 'invalid-date' : 'application-ineligible';
 };
 
 export const getInterviews = async (userId: number, timeFilters: InterviewTimeFilter[]): Promise<JobInterview[]> => {
@@ -207,16 +222,36 @@ export const deleteJobInterview = async (interviewId: number, userId: number): P
     return hasAffectedRows(result);
 };
 
-export const markInterviewFollowUpSent = async (interviewId: number, userId: number): Promise<Date | undefined> => {
-    const result = await pool.query<{ follow_up_sent_at: Date }>(
-        `UPDATE interviews
-         SET follow_up_sent_at = COALESCE(follow_up_sent_at, CURRENT_TIMESTAMP)
-         WHERE interview_id = $1 AND user_id = $2 AND is_archived = false
-         RETURNING follow_up_sent_at`,
+export const markInterviewFollowUpSent = async (
+    interviewId: number,
+    userId: number
+): Promise<MarkInterviewFollowUpResult> => {
+    const result = await pool.query<{ interview_exists: boolean; follow_up_sent_at: Date | null }>(
+        `WITH target_interview AS (
+            SELECT interview_id
+            FROM interviews
+            WHERE interview_id = $1 AND user_id = $2 AND is_archived = false
+        ),
+        updated_interview AS (
+            UPDATE interviews
+            SET follow_up_sent_at = COALESCE(follow_up_sent_at, CURRENT_TIMESTAMP)
+            FROM target_interview
+            WHERE interviews.interview_id = target_interview.interview_id
+                AND interviews.interview_date
+                    + interviews.interview_duration_minutes * INTERVAL '1 minute' <= CURRENT_TIMESTAMP
+            RETURNING interviews.follow_up_sent_at
+        )
+        SELECT
+            EXISTS(SELECT 1 FROM target_interview) AS interview_exists,
+            (SELECT follow_up_sent_at FROM updated_interview) AS follow_up_sent_at`,
         [interviewId, userId]
     );
 
-    return result.rows[0]?.follow_up_sent_at;
+    const followUpResult = result.rows[0];
+    if (!followUpResult?.interview_exists) {
+        return 'not-found';
+    }
+    return followUpResult.follow_up_sent_at ?? 'not-completed';
 };
 
 export const clearInterviewFollowUpSent = async (interviewId: number, userId: number): Promise<boolean> => {

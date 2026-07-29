@@ -32,7 +32,7 @@ describe('NeedsAttentionSettingsDialog', () => {
         ).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
         expect(
             within(dialog).getByText(
-                'Reminders are checked from 1 to 8. If several are due, lower numbers appear first. You can switch types off, but the order stays the same.'
+                'Reminders are checked from 1 to 8. If several are due, lower numbers appear first. Select the reminder types you want to include. Their order stays the same.'
             )
         ).toBeVisible();
         expect(within(dialog).getByText(/The card shows six before it scrolls\./)).toBeVisible();

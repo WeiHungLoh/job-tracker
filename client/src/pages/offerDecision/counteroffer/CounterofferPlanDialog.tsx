@@ -211,6 +211,10 @@ const CounterofferPlanDialog = ({
         }
         const validation = validateCounterofferPlan(plan, application.evaluation!);
         if (!validation.isValid) {
+            if (validation.errors.unchanged) {
+                showErrorToast(validation.errors.unchanged);
+                return;
+            }
             setSubmittedErrors(validation.errors);
             focusFirstError(validation.errors);
             if (validation.errors.fit_rating) {

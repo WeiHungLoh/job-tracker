@@ -227,6 +227,7 @@ describe('Rose Ledger visual contract', () => {
         const addApplicationCss = readSource(
             'src/pages/application/jobApplication/addApplication/AddApplication.module.css'
         );
+        const indexCss = readSource('src/index.css');
 
         expect(addApplicationCss).not.toContain('linear-gradient');
         expect(addApplicationCss).not.toContain('box-shadow');
@@ -239,7 +240,14 @@ describe('Rose Ledger visual contract', () => {
         expect(addApplicationCss).toMatch(/\.quickCaptureChevronOpen\s*\{[^}]*transform:\s*rotate\(180deg\);/s);
         expect(addApplicationCss).toContain('@media (prefers-reduced-motion: reduce)');
         expect(addApplicationCss).toMatch(
-            /\.quickCaptureSetupContent\s*\{[^}]*background-color:\s*var\(--colorControlMutedSurface\);/s
+            /\.quickCaptureSetupContent\s*\{[^}]*background-color:\s*var\(--colorQuickCaptureSurface\);/s
+        );
+        expect(addApplicationCss).not.toContain("[data-theme='dark']");
+        expect(indexCss).toMatch(
+            /\[data-theme='light'\]\s*\{[^}]*--colorQuickCaptureSurface:\s*var\(--colorControlSurface\);/s
+        );
+        expect(indexCss).toMatch(
+            /\[data-theme='dark'\]\s*\{[^}]*--colorQuickCaptureSurface:\s*var\(--colorControlMutedSurface\);/s
         );
         expect(addApplicationCss).toMatch(
             /\.capturedPageTitle\s*\{[^}]*line-height:\s*1\.45;[^}]*overflow-wrap:\s*anywhere;/s

@@ -150,6 +150,7 @@ export type CounterofferPlanErrors = {
     fit_rating?: string;
     monthly_base_salary?: string;
     ratings?: string;
+    unchanged?: string;
     work_arrangement?: string;
 };
 

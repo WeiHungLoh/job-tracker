@@ -277,6 +277,7 @@ export const updateApplicationStatus = async (
                 ) AS has_active_interview
             FROM job_applications
             WHERE job_id = $2 AND user_id = $3 AND is_archived = false
+            FOR UPDATE
         ),
         updated_application AS (
             UPDATE job_applications

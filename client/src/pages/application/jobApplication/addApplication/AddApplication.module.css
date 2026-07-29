@@ -82,7 +82,7 @@
     margin-top: var(--spaceControl);
     border: 1px solid var(--colorCardBorder);
     border-radius: var(--radiusControl);
-    background-color: var(--colorControlMutedSurface);
+    background-color: var(--colorQuickCaptureSurface);
     overflow-wrap: anywhere;
 }
 

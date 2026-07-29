@@ -225,7 +225,7 @@ const NeedsAttentionSettingsDialog = ({ onClose, open }: NeedsAttentionSettingsD
                                 <h3 id='reminder-order-heading'>Reminder order</h3>
                                 <p>
                                     Reminders are checked from 1 to 8. If several are due, lower numbers appear first.
-                                    You can switch types off, but the order stays the same.
+                                    Select the reminder types you want to include. Their order stays the same.
                                 </p>
                             </div>
 
