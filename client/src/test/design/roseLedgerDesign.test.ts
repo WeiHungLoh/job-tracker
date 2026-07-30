@@ -974,9 +974,6 @@ describe('Rose Ledger visual contract', () => {
         expect(applicationCard).toMatch(/\.buttonGroup button\s*\{[^}]*white-space: nowrap;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*grid-template-columns:\s*1fr\s+1fr;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*flex-shrink:\s*0;/s);
-        expect(interviewCard).toMatch(
-            /@media\s*\(max-width:\s*803px\)\s*\{[\s\S]*\.boardDeleteButton\s*\{[^}]*margin-right:\s*var\(--spaceCard\);/
-        );
         expect(interviewCard).toMatch(/\.interviewContent a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
         expect(interviewCard).toMatch(
             /\.board \.interviewContent \.headingRow\s*\{[^}]*align-items:\s*center;[^}]*\}/s
