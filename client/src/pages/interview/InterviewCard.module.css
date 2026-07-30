@@ -314,7 +314,7 @@
     }
 
     .interviewContent {
-        min-width: 260px;
+        min-width: 0;
         font-size: 0.9rem;
     }
 

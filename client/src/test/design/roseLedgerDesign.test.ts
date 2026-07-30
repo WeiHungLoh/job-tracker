@@ -809,6 +809,8 @@ describe('Rose Ledger visual contract', () => {
         expect(mediumRules).toMatch(/\.listNotes\s*\{[^}]*position:\s*static;[^}]*flex:\s*1 0 100%;/s);
         expect(mediumRules).toMatch(/\.listNotes textarea\s*\{[^}]*width:\s*100%;[^}]*height:\s*160px;/s);
         expect(narrowRules).toMatch(/\.interview\s*\{[^}]*overflow-x:\s*auto;/s);
+        expect(narrowRules).toMatch(/\.interviewContent\s*\{[^}]*min-width:\s*0;/s);
+        expect(narrowRules).not.toMatch(/\.interviewContent\s*\{[^}]*min-width:\s*260px;/s);
         expect(narrowRules).toMatch(/\.listNotes\s*\{[^}]*right:\s*-316px;[^}]*top:\s*0;[^}]*height:\s*100%;/s);
         expect(narrowRules).toMatch(
             /\.listNotes textarea\s*\{[^}]*border:\s*none;[^}]*box-shadow:\s*none;[^}]*border-top-left-radius:\s*0;[^}]*border-bottom-left-radius:\s*0;/s
