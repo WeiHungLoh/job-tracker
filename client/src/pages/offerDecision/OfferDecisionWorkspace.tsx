@@ -523,11 +523,10 @@ const OfferDecisionWorkspace = ({
             counterofferPlanAvailability[application.job_id] ?? Boolean(application.has_counteroffer_plan);
         const canCreateCounterofferPlan = isCounterofferPlanningEligible(application, readOnly);
         const canOpenCounterofferPlan =
-            !readOnly &&
             Boolean(onGetCounterofferPlan) &&
             Boolean(onDeleteCounterofferPlan) &&
             Boolean(onSaveCounterofferPlan) &&
-            (hasCounterofferPlan || canCreateCounterofferPlan);
+            (readOnly ? hasCounterofferPlan : hasCounterofferPlan || canCreateCounterofferPlan);
 
         return (
             <OfferEvaluationCard
@@ -541,6 +540,7 @@ const OfferDecisionWorkspace = ({
                         ? {
                               hasPlan: hasCounterofferPlan,
                               onOpen: () => setCounterofferApplication(application),
+                              placement: readOnly ? 'card' : 'menu',
                           }
                         : undefined
                 }

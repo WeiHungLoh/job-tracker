@@ -242,7 +242,7 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.queryByRole('button', { name: 'Accept offer from Beta Labs' })).not.toBeInTheDocument();
     });
 
-    test('keeps edit, status and counteroffer actions out of archived Offer Comparison', () => {
+    test('keeps edit and status actions out of archived Offer Comparison while exposing saved counteroffer plans', () => {
         render(
             <OfferDecisionWorkspace
                 data={{
@@ -264,7 +264,7 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.queryByRole('button', { name: 'Accept offer from Acme' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Decline offer from Acme' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Edit evaluation for Acme' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'View counteroffer plan for Acme' })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'View counteroffer plan for Acme' })).toBeVisible();
         expect(
             screen.queryByRole('button', { name: 'Add Acme offer deadline to Google Calendar' })
         ).not.toBeInTheDocument();

@@ -30,6 +30,7 @@ type OfferEvaluationCardProps = {
     counterofferAction?: {
         hasPlan: boolean;
         onOpen: () => void;
+        placement?: 'card' | 'menu';
     };
     draft: OfferEvaluation | undefined;
     errors: OfferEvaluationFormErrors;
@@ -359,6 +360,7 @@ const OfferEvaluationCard = ({
             scrollToCard('start');
         }
     };
+    const counterofferActionIsDirect = counterofferAction?.placement === 'card';
 
     return (
         <article
@@ -427,12 +429,25 @@ const OfferEvaluationCard = ({
                                 >
                                     {expanded ? 'Hide details' : 'Show details'}
                                 </PrimaryButton>
+                                {savedEvaluation && counterofferActionIsDirect && (
+                                    <PrimaryButton
+                                        aria-label={`View counteroffer plan for ${application.company_name}`}
+                                        disabled={isStatusUpdating}
+                                        onClick={counterofferAction.onOpen}
+                                        type='button'
+                                        variant='secondary'
+                                    >
+                                        View counteroffer plan
+                                    </PrimaryButton>
+                                )}
                                 <OfferEvaluationActionsMenu
                                     allowCalendarExport={allowCalendarExport}
                                     allowEdit={allowEdit}
                                     application={application}
                                     areStatusActionsDisabled={areStatusActionsDisabled}
-                                    counterofferAction={savedEvaluation ? counterofferAction : undefined}
+                                    counterofferAction={
+                                        savedEvaluation && !counterofferActionIsDirect ? counterofferAction : undefined
+                                    }
                                     isStatusUpdating={isStatusUpdating}
                                     onEdit={handleEditClick}
                                     onUpdateOfferStatus={onUpdateOfferStatus}

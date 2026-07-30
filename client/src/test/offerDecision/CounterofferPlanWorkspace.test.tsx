@@ -154,6 +154,33 @@ describe('Counteroffer plan card entry point', () => {
         ).toBeVisible();
     });
 
+    test('shows archived saved plans between details and evaluation deletion with read-only dialog actions', async () => {
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [data.applications[3]] }}
+                onDelete={vi.fn()}
+                onDeleteCounterofferPlan={vi.fn()}
+                onGetCounterofferPlan={vi.fn().mockResolvedValue(savedPlan)}
+                onSaveCounterofferPlan={vi.fn()}
+                readOnly
+            />
+        );
+
+        const card = screen.getByRole('article', { name: 'Saved Previous Engineer' });
+        expect(
+            within(card)
+                .getAllByRole('button')
+                .map((button) => button.textContent)
+        ).toEqual(['Show details', 'View counteroffer plan', 'Delete']);
+
+        await click(within(card).getByRole('button', { name: 'View counteroffer plan for Saved Previous' }));
+        await screen.findByRole('heading', { name: 'Counteroffer plan' });
+        expect(screen.getByRole('button', { name: 'Close' })).toBeVisible();
+        expect(screen.getByRole('button', { name: 'Delete counteroffer plan' })).toBeVisible();
+        expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    });
+
     test('changes the card action label after saving and back after deleting', async () => {
         const onSaveCounterofferPlan = vi.fn().mockResolvedValue(undefined);
         const onDeleteCounterofferPlan = vi.fn().mockResolvedValue(undefined);
