@@ -32,6 +32,8 @@ import {
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
 import type { ApplicationListNavigationState } from '../../../application/applicationNavigation';
+import DisplayOptions from '../../../../components/activityControls/displayOptions/DisplayOptions';
+import ToggleButton from '../../../../components/toggleButton/ToggleButton';
 
 const ViewArchivedInterview = () => {
     const api = useJobTrackerAPI();
@@ -52,6 +54,7 @@ const ViewArchivedInterview = () => {
     const { showErrorToast, showSuccessToast } = useToast();
     const filterRequest = useFilterRequest<ArchivedJobInterview[]>();
     const viewMode = preferences.archived_interview_view_mode;
+    const showNotes = preferences.archived_interview_show_notes;
     const selectedTimeFilters = preferences.archived_interview_time_filters;
     const isBoardView = viewMode === 'board';
     const csvData = useMemo(() => createInterviewCsvData(archivedInterviews), [archivedInterviews]);
@@ -59,6 +62,14 @@ const ViewArchivedInterview = () => {
     const handleViewModeChange = async (nextViewMode: CollectionViewMode) => {
         try {
             await updatePreferences({ archived_interview_view_mode: nextViewMode });
+        } catch (error) {
+            showErrorToast(getErrorToastMessage(error, 'Unable to save display preferences. Please try again.'));
+        }
+    };
+
+    const handleShowNotesToggle = async () => {
+        try {
+            await updatePreferences({ archived_interview_show_notes: !showNotes });
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to save display preferences. Please try again.'));
         }
@@ -242,7 +253,7 @@ const ViewArchivedInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Archived interview view and management controls'
-                    mobileLayout='inlineWhenPossible'
+                    mobileLayout={!isBoardView && hasInterviews ? 'interviewResponsive' : 'inlineWhenPossible'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Archived interview view'
@@ -257,6 +268,15 @@ const ViewArchivedInterview = () => {
                         options={INTERVIEW_TIME_FILTERS}
                         selectedOptions={selectedTimeFilters}
                     />
+                    {hasInterviews && !isBoardView && (
+                        <DisplayOptions id='archived-interview-display-options'>
+                            <ToggleButton
+                                toggled={showNotes}
+                                onToggle={() => void handleShowNotesToggle()}
+                                label='Show notes'
+                            />
+                        </DisplayOptions>
+                    )}
                 </ActivityControls>
             </div>
 
@@ -285,6 +305,7 @@ const ViewArchivedInterview = () => {
                             layout={viewMode}
                             onDelete={() => handleDelete(interview.archived_interview_id)}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
+                            showNotes={showNotes}
                             variant='archived'
                         />
                     ))}

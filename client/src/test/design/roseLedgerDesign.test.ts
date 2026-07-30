@@ -126,6 +126,10 @@ const expectedBoxShadowDeclarations = {
         'box-shadow: 0 12px 26px var(--colorAuthCardShadow);',
         'box-shadow: 0 18px 36px var(--colorAuthCardShadow);',
     ],
+    'src/pages/interview/InterviewCard.module.css': [
+        'box-shadow: 2px 2px 10px var(--colorNotesShadow);',
+        'box-shadow: none;',
+    ],
     'src/pages/authentication/Authentication.module.css': [
         'box-shadow: 0 20px 48px var(--colorAuthCardShadow);',
         'box-shadow: 0 0 0 3px var(--colorPrimaryFocusShadow);',
@@ -788,6 +792,48 @@ describe('Rose Ledger visual contract', () => {
         expect(notesIndex).toBeGreaterThan(actionsIndex);
     });
 
+    it('keeps interview notes in wide side, medium stacked, and narrow scrollable layouts', () => {
+        const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
+        const mediumStart = interviewCard.indexOf('@media (min-width: 804px) and (max-width: 1422px)');
+        const narrowStart = interviewCard.indexOf('@media (max-width: 803px)');
+        const wideRules = interviewCard.slice(0, mediumStart);
+        const mediumRules = interviewCard.slice(mediumStart, narrowStart);
+        const narrowRules = interviewCard.slice(narrowStart);
+
+        expect(mediumStart).toBeGreaterThan(0);
+        expect(narrowStart).toBeGreaterThan(mediumStart);
+        expect(wideRules).toMatch(/\.listNotes\s*\{[^}]*position:\s*absolute;[^}]*right:\s*-330px;/s);
+        expect(wideRules).toMatch(/\.listNotes\s*\{[^}]*width:\s*300px;/s);
+        expect(mediumRules).toMatch(/\.interview\.notesVisible\s*\{[^}]*flex-wrap:\s*wrap;[^}]*row-gap:\s*0;/s);
+        expect(mediumRules).toMatch(/\.interview\.notesVisible \.interviewContent\s*\{[^}]*flex:\s*1 1 0;/s);
+        expect(mediumRules).toMatch(/\.listNotes\s*\{[^}]*position:\s*static;[^}]*flex:\s*1 0 100%;/s);
+        expect(mediumRules).toMatch(/\.listNotes textarea\s*\{[^}]*width:\s*100%;[^}]*height:\s*160px;/s);
+        expect(narrowRules).toMatch(/\.interview\s*\{[^}]*overflow-x:\s*auto;/s);
+        expect(narrowRules).toMatch(/\.listNotes\s*\{[^}]*right:\s*-316px;[^}]*top:\s*0;[^}]*height:\s*100%;/s);
+        expect(narrowRules).toMatch(
+            /\.listNotes textarea\s*\{[^}]*border:\s*none;[^}]*box-shadow:\s*none;[^}]*border-top-left-radius:\s*0;[^}]*border-bottom-left-radius:\s*0;/s
+        );
+        expect(narrowRules).toMatch(/\.board\s*\{[^}]*overflow:\s*visible;[^}]*padding-right:\s*var\(--spaceCard\);/s);
+        expect(narrowRules).toMatch(/\.boardDeleteButton\s*\{[^}]*margin-right:\s*0;/s);
+        expect(wideRules).not.toContain('.listNotes textarea:focus-visible');
+
+        const boardMeetingLinkRules = interviewCard.match(/\.boardMeetingLink\s*\{([^}]*)\}/)?.[1] ?? '';
+        expect(boardMeetingLinkRules).not.toContain('margin-top');
+        expect(boardMeetingLinkRules).not.toContain('margin-bottom');
+
+        const interviewBoardNotesRules = interviewCard.match(/\.boardNotesField textarea\s*\{([^}]*)\}/)?.[1] ?? '';
+        expect(interviewBoardNotesRules).toContain('outline: none;');
+        expect(interviewCard).not.toContain('.boardNotesField textarea:focus');
+    });
+
+    it('keeps application and interview Board notes free of focus highlighting', () => {
+        const applicationBoard = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');
+        const applicationBoardNotesRules = applicationBoard.match(/\.notesField textarea\s*\{([^}]*)\}/)?.[1] ?? '';
+
+        expect(applicationBoardNotesRules).toContain('outline: none;');
+        expect(applicationBoard).not.toContain('.notesField textarea:focus');
+    });
+
     it('freezes the other responsive layout boundaries', () => {
         const activityControls = readSource('src/components/activityControls/ActivityControls.module.css');
         const applicationsLineChart = readSource(
@@ -804,6 +850,7 @@ describe('Rose Ledger visual contract', () => {
             '@media (max-width: 350px)',
             '@media (max-width: 290px)',
             '@container (max-width: 610px)',
+            '@container (max-width: 500px)',
             '@container (max-width: 435px)',
             '@container (max-width: 425px)',
             '@container (max-width: 350px)',
@@ -812,6 +859,16 @@ describe('Rose Ledger visual contract', () => {
             'grid-row: 2;',
             'grid-column: 1 / 3;',
         ].forEach((declaration) => expect(activityControls).toContain(declaration));
+
+        expect(activityControls).toMatch(
+            /\.interviewResponsive\s*\{[^}]*grid-template-columns:\s*repeat\(2, max-content\);[^}]*justify-content:\s*center;[^}]*justify-items:\s*center;/s
+        );
+        expect(activityControls).toMatch(
+            /\.interviewResponsive\.hasActions \.actions\s*\{[^}]*grid-row:\s*1;[^}]*grid-column:\s*2;/s
+        );
+        expect(activityControls).toMatch(
+            /\.interviewResponsive \.interviewSecondaryControls\s*\{[^}]*grid-row:\s*2;[^}]*grid-column:\s*1 \/ -1;[^}]*justify-self:\s*center;/s
+        );
 
         ['@media (max-width: 1150px)', '@media (max-width: 600px)', '@media (max-width: 430px)'].forEach(
             (declaration) => expect(navbar).toContain(declaration)

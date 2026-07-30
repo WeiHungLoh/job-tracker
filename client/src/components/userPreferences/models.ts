@@ -27,7 +27,9 @@ export type UserPreferences = {
     archived_application_list_sort_order: ApplicationListSortOrder;
     archived_application_board_sort_order: ApplicationBoardSortOrder;
     interview_view_mode: CollectionViewMode;
+    interview_show_notes: boolean;
     archived_interview_view_mode: CollectionViewMode;
+    archived_interview_show_notes: boolean;
     interview_time_filters: InterviewTimeFilter[];
     archived_interview_time_filters: InterviewTimeFilter[];
     offer_decision_filters: OfferDecisionFilter[];

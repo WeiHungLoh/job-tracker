@@ -290,9 +290,11 @@ const createTables = async (): Promise<void> => {
             interview_view_mode TEXT NOT NULL DEFAULT 'list'
                 CONSTRAINT user_preferences_interview_view_mode_check
                 CHECK (interview_view_mode IN (${COLLECTION_VIEW_MODE_SQL_VALUES})),
+            interview_show_notes BOOLEAN NOT NULL DEFAULT true,
             archived_interview_view_mode TEXT NOT NULL DEFAULT 'list'
                 CONSTRAINT user_preferences_archived_interview_view_mode_check
                 CHECK (archived_interview_view_mode IN (${COLLECTION_VIEW_MODE_SQL_VALUES})),
+            archived_interview_show_notes BOOLEAN NOT NULL DEFAULT true,
             interview_time_filters TEXT[] NOT NULL DEFAULT ${INTERVIEW_TIME_FILTER_SQL_ARRAY}
                 CONSTRAINT user_preferences_interview_time_filters_check
                 CHECK (

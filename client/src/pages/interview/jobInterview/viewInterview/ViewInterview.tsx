@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createInterviewCsvData } from '../../../../helper/csvExport';
 import { createDeleteConfirmation } from '../../../../components/confirmation/deleteConfirmation';
 import { createDeleteAllInterviewsConfirmation } from '../../../../components/confirmation/bulkConfirmations';
@@ -35,6 +35,10 @@ import { useBulkInterviewCalendarExport } from '../../calendarOptions/useBulkInt
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
 import type { ApplicationListNavigationState } from '../../../application/applicationNavigation';
+import useAutosaveNotes from '../../../../hooks/useAutosaveNotes';
+import { FIELD_MAX_LENGTHS } from '../../../../helper/formValidation';
+import DisplayOptions from '../../../../components/activityControls/displayOptions/DisplayOptions';
+import ToggleButton from '../../../../components/toggleButton/ToggleButton';
 
 type InterviewFilterResult = {
     interviews: JobInterview[];
@@ -77,7 +81,27 @@ const ViewInterview = () => {
     const navigate = useNavigate();
     const { showErrorToast, showSuccessToast } = useToast();
     const filterRequest = useFilterRequest<InterviewFilterResult>();
+    const saveInterviewNotes = useCallback(
+        async (interviewId: number, editedNotes: string) => {
+            await api.interview.updateNotes({ interviewId, notes: editedNotes });
+            const updateNotes = (interview: JobInterview): JobInterview =>
+                interview.interview_id === interviewId
+                    ? { ...interview, interview_notes: editedNotes.trim() }
+                    : interview;
+            setInterviews((current) => current.map(updateNotes));
+            setUpcomingInterviews((current) => current.map(updateNotes));
+        },
+        [api.interview]
+    );
+    const handleNoteSaveError = useCallback(
+        (_interviewId: number, error: unknown) => {
+            showErrorToast(getErrorToastMessage(error, 'Unable to save interview notes. Please try again.'));
+        },
+        [showErrorToast]
+    );
+    const notesAutosave = useAutosaveNotes({ onSaveError: handleNoteSaveError, saveNotes: saveInterviewNotes });
     const viewMode = preferences.interview_view_mode;
+    const showNotes = preferences.interview_show_notes;
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
     const isAutoScrollEnabled = preferences.application_enable_scroll;
@@ -90,11 +114,29 @@ const ViewInterview = () => {
     );
 
     const handleViewModeChange = async (nextViewMode: CollectionViewMode) => {
+        notesAutosave.setAllNotesVisibility(nextViewMode === 'list' && showNotes);
         try {
             await updatePreferences({ interview_view_mode: nextViewMode });
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to save display preferences. Please try again.'));
         }
+    };
+
+    const handleShowNotesToggle = () => {
+        const nextShowNotes = !showNotes;
+        notesAutosave.setAllNotesVisibility(nextShowNotes);
+        void updatePreferences({ interview_show_notes: nextShowNotes }).catch((error: unknown) => {
+            showErrorToast(getErrorToastMessage(error, 'Unable to save display preferences. Please try again.'));
+        });
+    };
+
+    const handleEditNotes = (interviewId: number, editedNotes: string) => {
+        if (editedNotes.length > FIELD_MAX_LENGTHS.notes) {
+            showErrorToast(`Notes must be ${FIELD_MAX_LENGTHS.notes} characters or fewer.`);
+            return;
+        }
+
+        notesAutosave.editNotes(interviewId, editedNotes);
     };
 
     const handleTimeFilterChange = async (timeFilters: InterviewTimeFilter[]) => {
@@ -482,7 +524,7 @@ const ViewInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Interview view and management controls'
-                    mobileLayout='inlineWhenPossible'
+                    mobileLayout={!isBoardView && hasInterviews ? 'interviewResponsive' : 'inlineWhenPossible'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Interview view'
@@ -497,6 +539,11 @@ const ViewInterview = () => {
                         options={INTERVIEW_TIME_FILTERS}
                         selectedOptions={selectedTimeFilters}
                     />
+                    {hasInterviews && !isBoardView && (
+                        <DisplayOptions id='interview-display-options'>
+                            <ToggleButton toggled={showNotes} onToggle={handleShowNotesToggle} label='Show notes' />
+                        </DisplayOptions>
+                    )}
                 </ActivityControls>
             </div>
 
@@ -525,10 +572,17 @@ const ViewInterview = () => {
                             isUndoingFollowUp={undoingFollowUpInterviewIds.has(interview.interview_id)}
                             key={interview.interview_id}
                             layout={viewMode}
+                            note={notesAutosave.draftNotes[interview.interview_id] ?? interview.interview_notes}
+                            noteSaveStatus={notesAutosave.noteSaveStatuses[interview.interview_id] ?? 'idle'}
                             onDelete={() => handleDelete(interview.interview_id)}
+                            onEditNotes={handleEditNotes}
+                            onNotesBlur={notesAutosave.flushNote}
+                            onNotesVisibilityChange={notesAutosave.setNoteVisibility}
                             onPinToggle={handlePinToggle}
+                            onRetryNotes={notesAutosave.retryNotes}
                             onUndoFollowUp={handleUndoFollowUp}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
+                            showNotes={showNotes}
                             variant='job'
                         />
                     ))}

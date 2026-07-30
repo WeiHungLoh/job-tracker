@@ -24,7 +24,9 @@ export const testPreferences: UserPreferences = {
     archived_application_list_sort_order: 'job_status',
     archived_application_board_sort_order: 'application_date_desc',
     interview_view_mode: 'list',
+    interview_show_notes: false,
     archived_interview_view_mode: 'list',
+    archived_interview_show_notes: false,
     interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
     archived_interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
     offer_decision_filters: [

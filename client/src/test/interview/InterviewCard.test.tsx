@@ -33,6 +33,7 @@ const renderJobCard = (interview: JobInterview = futureInterview, onDelete = vi.
                 onDelete={onDelete}
                 onPinToggle={vi.fn()}
                 onViewApplicationClick={vi.fn()}
+                showNotes
                 variant='job'
             />
         </MemoryRouter>
@@ -245,15 +246,38 @@ describe('InterviewCard calendar options', () => {
         expect(onDelete).toHaveBeenCalledOnce();
     });
 
-    test('places List notes between the interview date and timing status', () => {
+    test('renders the enabled editable List notes panel after the interview controls', () => {
         renderJobCard();
 
-        const date = screen.getByText(/Interview Date:/);
+        const card = screen.getByRole('article', { name: 'Acme interview' });
         const timeLeft = screen.getByText(/Time left:/);
-        const notes = screen.getByText('Notes: Bring examples');
+        const notes = screen.getByRole('textbox', { name: 'Notes for Acme' });
+        const deleteButton = screen.getByRole('button', { name: 'Delete' });
 
-        expect(date.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-        expect(notes.compareDocumentPosition(timeLeft) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(card).toHaveClass(interviewStyles.notesVisible);
+        expect(timeLeft.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(deleteButton.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(notes).toHaveValue('Bring examples');
+    });
+
+    test('does not opt an interview card into notes layout when notes are hidden', () => {
+        render(
+            <MemoryRouter>
+                <InterviewCard
+                    applicationRoute='/application/view'
+                    index={0}
+                    interview={futureInterview}
+                    isDeleting={false}
+                    isUpdatingPin={false}
+                    onDelete={vi.fn()}
+                    onPinToggle={vi.fn()}
+                    onViewApplicationClick={vi.fn()}
+                    variant='job'
+                />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByRole('article', { name: 'Acme interview' })).not.toHaveClass(interviewStyles.notesVisible);
     });
 
     test('shows the meeting URL after the follow-up badge in List and below Actions in Board', async () => {
@@ -289,12 +313,17 @@ describe('InterviewCard calendar options', () => {
 
         const boardCard = screen.getAllByRole('article', { name: 'Acme interview' })[1];
         const boardActions = within(boardCard).getByText('Actions').closest('details');
-        expect(within(boardCard).getByRole('link', { name: 'Click here to view meeting' })).not.toBeVisible();
+        expect(within(boardCard).getByRole('link', { name: 'Click here to enter meeting' })).not.toBeVisible();
         await userEvent.click(within(boardCard).getByText('Actions'));
-        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to view meeting' });
+        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to enter meeting' });
         expect(boardMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
         expect(boardMeetingURL).toHaveAttribute('target', '_blank');
+        const editNotes = within(boardCard).getByText('Edit notes');
+        const boardNotes = within(boardCard).getByRole('textbox', { name: 'Notes for Acme' });
         const actionButtons = within(boardCard).getByRole('button', { name: 'Delete' }).parentElement;
+        expect(boardMeetingURL.compareDocumentPosition(editNotes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(editNotes.compareDocumentPosition(boardNotes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(boardNotes.compareDocumentPosition(actionButtons!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(boardMeetingURL.compareDocumentPosition(actionButtons!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(boardActions).toHaveAttribute('open');
     });

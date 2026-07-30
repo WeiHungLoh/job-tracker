@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import ViewArchivedInterview from '../../../pages/interview/archivedInterview/viewArchivedInterview/ViewArchivedInterview';
-import type { UpdateUserPreferencesRequest } from '../../../components/userPreferences/models';
+import type { UpdateUserPreferencesRequest, UserPreferences } from '../../../components/userPreferences/models';
 import { render, testPreferences } from '../../renderWithProviders';
 import userEvent from '@testing-library/user-event';
 
@@ -71,7 +71,8 @@ describe('Archived job interview viewer flow', () => {
         render(
             <MemoryRouter>
                 <ViewArchivedInterview />
-            </MemoryRouter>
+            </MemoryRouter>,
+            { initialPreferences: { archived_interview_show_notes: true } }
         );
 
         expect(await screen.findByText(/abc pte ltd/i)).toBeInTheDocument();
@@ -79,11 +80,49 @@ describe('Archived job interview viewer flow', () => {
         expect(screen.getByText(/software engineer/i)).toBeInTheDocument();
         expect(screen.getByText(/changi business park/i)).toBeInTheDocument();
         expect(screen.getByText(/hr/i)).toBeInTheDocument();
-        expect(screen.getByText(/bring resume/i)).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Notes for ABC Pte Ltd' })).toHaveValue('Bring resume');
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all archived interviews/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+    });
+
+    test('uses an independent archived Interview Show notes preference and keeps List notes read-only', async () => {
+        render(
+            <MemoryRouter>
+                <ViewArchivedInterview />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    archived_interview_show_notes: true,
+                } as unknown as Partial<UserPreferences>,
+            }
+        );
+
+        const notes = await screen.findByRole('textbox', { name: 'Notes for ABC Pte Ltd' });
+        expect(notes).toHaveValue('Bring resume');
+        expect(notes).toBeDisabled();
+        expect(notes).toHaveAttribute('readonly');
+        await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
+        expect(screen.getByRole('switch', { name: 'Show notes' })).toBeChecked();
+    });
+
+    test('keeps archived notes read-only inside Board Actions and never shows Calendar', async () => {
+        render(
+            <MemoryRouter>
+                <ViewArchivedInterview />
+            </MemoryRouter>,
+            { initialPreferences: { archived_interview_view_mode: 'board' } }
+        );
+
+        const interviews = await screen.findByRole('region', { name: 'Archived interviews' });
+        await userEvent.click(within(interviews).getByText('Actions'));
+
+        const notes = within(interviews).getByRole('textbox', { name: 'Notes for ABC Pte Ltd' });
+        expect(within(interviews).getByText('Notes')).toBeInTheDocument();
+        expect(notes).toBeDisabled();
+        expect(notes).toHaveAttribute('readonly');
+        expect(within(interviews).queryByRole('button', { name: 'Add to calendar' })).not.toBeInTheDocument();
     });
 
     test('shows pinned archived interviews as read-only in list and board views', async () => {

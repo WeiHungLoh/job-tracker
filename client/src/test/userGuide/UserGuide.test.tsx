@@ -115,6 +115,32 @@ describe('renders user guide properly', () => {
             screen.getByText(/post-interview follow-up marking and undo also stay entirely in demo state/i)
         ).toBeVisible();
         expect(screen.getByText(/demo mode supports withdrawn, overdue offer attention/i)).toBeVisible();
+        expect(
+            screen.getByText(/interview notes can be edited and autosaved in active demo list and board views/i)
+        ).toBeVisible();
+        expect(screen.getByText(/archived demo interview notes remain read-only/i)).toBeVisible();
+
+        await userEvent.click(screen.getByRole('button', { name: /^interviews$/i }));
+
+        const interviewsPanel = document.getElementById('interviews-panel');
+        expect(interviewsPanel).toBeVisible();
+        expect(interviewsPanel).toHaveTextContent(/show notes.*all visible interviews/i);
+        expect(interviewsPanel).toHaveTextContent(/wide screens.*right.*medium widths.*below/i);
+        expect(interviewsPanel).toHaveTextContent(/narrow widths.*horizontally scrollable interview card/i);
+        expect(interviewsPanel).toHaveTextContent(/board mode.*inside actions/i);
+        expect(interviewsPanel).toHaveTextContent(/meeting link appears above edit notes/i);
+        expect(interviewsPanel).toHaveTextContent(/archived interview notes.*cannot be edited/i);
+
+        await userEvent.click(screen.getByRole('button', { name: /notes and visibility/i }));
+
+        const notesPanel = document.getElementById('notes-panel');
+        expect(notesPanel).toBeVisible();
+        expect(notesPanel).toHaveTextContent(/application and interview list pages.*show notes/i);
+        expect(notesPanel).toHaveTextContent(/every visible record/i);
+        expect(notesPanel).toHaveTextContent(/stored independently/i);
+        expect(notesPanel).toHaveTextContent(/saving….*saved.*couldn’t save.*retry/i);
+        expect(notesPanel).toHaveTextContent(/for one second/i);
+        expect(screen.queryByText(/after half a second/i)).not.toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: /^offer comparison$/i }));
 
@@ -201,7 +227,7 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/interview notes are optional and limited to 3000 characters/i)).toBeVisible();
         expect(screen.getByText(/duration must be a whole number from 1 to 1440 minutes/i)).toBeVisible();
         expect(screen.getByText(/meeting url is optional, limited to 2048 characters/i)).toBeVisible();
-        expect(screen.getByText(/click here to view meeting/i)).toBeVisible();
+        expect(screen.getByTestId('ug')).toHaveTextContent(/meeting link appears above edit notes/i);
         expect(
             screen.getByText(/reaches or passes another active offer application's present or future/i)
         ).toBeVisible();

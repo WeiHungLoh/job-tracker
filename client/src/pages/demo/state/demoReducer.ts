@@ -57,6 +57,7 @@ export type DemoAction =
     | { type: 'DELETE_ALL_ARCHIVED_APPLICATIONS' }
     | { type: 'CREATE_INTERVIEW'; payload: CreateInterviewPayload }
     | { type: 'UPDATE_INTERVIEW_PIN'; payload: { interviewId: number; isPinned: boolean } }
+    | { type: 'UPDATE_INTERVIEW_NOTES'; payload: { interviewId: number; notes: string } }
     | { type: 'DELETE_INTERVIEW'; payload: { interviewId: number } }
     | { type: 'MARK_INTERVIEW_FOLLOW_UP_SENT'; payload: { interviewId: number; sentAt: string } }
     | { type: 'UNDO_INTERVIEW_FOLLOW_UP'; payload: { interviewId: number } }
@@ -421,6 +422,16 @@ export const demoReducer = (state: DemoState, action: DemoAction): DemoState => 
                 interviews: state.interviews.map((interview) =>
                     interview.interview_id === action.payload.interviewId
                         ? { ...interview, is_pinned: action.payload.isPinned }
+                        : interview
+                ),
+            };
+
+        case 'UPDATE_INTERVIEW_NOTES':
+            return {
+                ...state,
+                interviews: state.interviews.map((interview) =>
+                    interview.interview_id === action.payload.interviewId
+                        ? { ...interview, interview_notes: action.payload.notes }
                         : interview
                 ),
             };

@@ -214,6 +214,18 @@ export const updateInterviewPin = async (
     return result.rows[0];
 };
 
+export const updateInterviewNotes = async (notes: string, interviewId: number, userId: number): Promise<boolean> => {
+    const result = await pool.query(
+        `UPDATE interviews
+         SET interview_notes = $1
+         WHERE interview_id = $2 AND user_id = $3 AND is_archived = false
+         RETURNING interview_id`,
+        [notes, interviewId, userId]
+    );
+
+    return hasAffectedRows(result);
+};
+
 export const deleteJobInterview = async (interviewId: number, userId: number): Promise<boolean> => {
     const result = await pool.query(
         `DELETE FROM interviews WHERE interview_id = $1 AND user_id = $2 AND is_archived = false`,

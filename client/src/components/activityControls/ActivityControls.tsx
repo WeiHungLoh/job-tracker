@@ -1,16 +1,30 @@
+import { Children } from 'react';
 import type { ActivityControlsProps } from './models';
 import styles from './ActivityControls.module.css';
 
-const ActivityControls = ({ actions, ariaLabel, children, mobileLayout }: ActivityControlsProps) => (
-    <section
-        aria-label={ariaLabel}
-        className={[styles.controls, mobileLayout ? styles[mobileLayout] : '', actions ? styles.hasActions : '']
-            .filter(Boolean)
-            .join(' ')}
-    >
-        <div className={styles.primaryControls}>{children}</div>
-        {actions && <div className={styles.actions}>{actions}</div>}
-    </section>
-);
+const ActivityControls = ({ actions, ariaLabel, children, mobileLayout }: ActivityControlsProps) => {
+    const childItems = Children.toArray(children);
+    const primaryControls =
+        mobileLayout === 'interviewResponsive' ? (
+            <>
+                <div className={styles.interviewViewControl}>{childItems[0]}</div>
+                <div className={styles.interviewSecondaryControls}>{childItems.slice(1)}</div>
+            </>
+        ) : (
+            children
+        );
+
+    return (
+        <section
+            aria-label={ariaLabel}
+            className={[styles.controls, mobileLayout ? styles[mobileLayout] : '', actions ? styles.hasActions : '']
+                .filter(Boolean)
+                .join(' ')}
+        >
+            <div className={styles.primaryControls}>{primaryControls}</div>
+            {actions && <div className={styles.actions}>{actions}</div>}
+        </section>
+    );
+};
 
 export default ActivityControls;

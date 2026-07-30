@@ -1,4 +1,4 @@
-import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createInterviewCsvData } from '../../../../../helper/csvExport';
 import { createDeleteConfirmation } from '../../../../../components/confirmation/deleteConfirmation';
 import { createDeleteAllInterviewsConfirmation } from '../../../../../components/confirmation/bulkConfirmations';
@@ -28,6 +28,10 @@ import {
 import { useBulkInterviewCalendarExport } from '../../../../interview/calendarOptions/useBulkInterviewCalendarExport';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
 import type { ApplicationListNavigationState } from '../../../../application/applicationNavigation';
+import useAutosaveNotes from '../../../../../hooks/useAutosaveNotes';
+import { FIELD_MAX_LENGTHS } from '../../../../../helper/formValidation';
+import DisplayOptions from '../../../../../components/activityControls/displayOptions/DisplayOptions';
+import ToggleButton from '../../../../../components/toggleButton/ToggleButton';
 
 const DemoViewInterview = () => {
     const { dispatch, state, updatePreferences } = useDemo();
@@ -42,6 +46,14 @@ const DemoViewInterview = () => {
     const [isDeletingAll, setIsDeletingAll] = useState(false);
     const deleteAllPendingRef = useRef(false);
     const selectedTimeFilters = preferences.interview_time_filters;
+    const showNotes = preferences.interview_show_notes;
+    const saveInterviewNotes = useCallback(
+        async (interviewId: number, notes: string) => {
+            dispatch({ type: 'UPDATE_INTERVIEW_NOTES', payload: { interviewId, notes } });
+        },
+        [dispatch]
+    );
+    const notesAutosave = useAutosaveNotes({ saveNotes: saveInterviewNotes });
     const displayedInterviews = useMemo(
         () => filterAndSortInterviews(state.interviews, selectedTimeFilters, currentTime),
         [currentTime, selectedTimeFilters, state.interviews]
@@ -65,6 +77,23 @@ const DemoViewInterview = () => {
     viewModeRef.current = viewMode;
     const isAutoScrollEnabled = preferences.application_enable_scroll;
     const isBoardView = viewMode === 'board';
+
+    const handleViewModeChange = (nextViewMode: 'list' | 'board') => {
+        notesAutosave.setAllNotesVisibility(nextViewMode === 'list' && showNotes);
+        void updatePreferences({ interview_view_mode: nextViewMode });
+    };
+
+    const handleShowNotesToggle = () => {
+        const nextShowNotes = !showNotes;
+        notesAutosave.setAllNotesVisibility(nextShowNotes);
+        void updatePreferences({ interview_show_notes: nextShowNotes });
+    };
+
+    const handleEditNotes = (interviewId: number, notes: string) => {
+        if (notes.length <= FIELD_MAX_LENGTHS.notes) {
+            notesAutosave.editNotes(interviewId, notes);
+        }
+    };
 
     useEffect(() => {
         const hidesUpcomingInterviews =
@@ -205,12 +234,12 @@ const DemoViewInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Demo interview view and management controls'
-                    mobileLayout='inlineWhenPossible'
+                    mobileLayout={!isBoardView && hasInterviews ? 'interviewResponsive' : 'inlineWhenPossible'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Interview view'
                         currentView={viewMode}
-                        onViewChange={(nextViewMode) => void updatePreferences({ interview_view_mode: nextViewMode })}
+                        onViewChange={handleViewModeChange}
                     />
                     <CheckboxFilter
                         buttonLabel='Filter by'
@@ -219,6 +248,11 @@ const DemoViewInterview = () => {
                         options={INTERVIEW_TIME_FILTERS}
                         selectedOptions={selectedTimeFilters}
                     />
+                    {hasInterviews && !isBoardView && (
+                        <DisplayOptions id='demo-interview-display-options'>
+                            <ToggleButton toggled={showNotes} onToggle={handleShowNotesToggle} label='Show notes' />
+                        </DisplayOptions>
+                    )}
                 </ActivityControls>
             </div>
             {!hasDisplayedInterviews && <EmptyState {...emptyState} />}
@@ -236,10 +270,17 @@ const DemoViewInterview = () => {
                             isUndoingFollowUp={false}
                             key={interview.interview_id}
                             layout={viewMode}
+                            note={notesAutosave.draftNotes[interview.interview_id] ?? interview.interview_notes}
+                            noteSaveStatus={notesAutosave.noteSaveStatuses[interview.interview_id] ?? 'idle'}
                             onDelete={() => handleDelete(interview.interview_id)}
+                            onEditNotes={handleEditNotes}
+                            onNotesBlur={notesAutosave.flushNote}
+                            onNotesVisibilityChange={notesAutosave.setNoteVisibility}
                             onPinToggle={handlePinToggle}
+                            onRetryNotes={notesAutosave.retryNotes}
                             onUndoFollowUp={handleUndoFollowUp}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
+                            showNotes={showNotes}
                             variant='job'
                         />
                     ))}

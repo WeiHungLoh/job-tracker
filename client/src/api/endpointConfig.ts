@@ -74,6 +74,12 @@ export const endpointConfig = {
             fieldMap: { interviewId: 'path' },
         },
         deleteAllInterviews: { url: '/job-interviews', verb: 'DELETE' },
+        updateNotes: {
+            url: '/job-interviews/:interviewId/notes',
+            verb: 'PATCH',
+            fieldMap: { interviewId: 'path' },
+            retry: true,
+        },
         updatePin: {
             url: '/job-interviews/:interviewId/pin',
             verb: 'PATCH',

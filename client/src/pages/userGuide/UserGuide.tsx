@@ -258,6 +258,10 @@ const guideSections: readonly UserGuideSection[] = [
                     date must be after the linked application date, and notes use the shared {FIELD_MAX_LENGTHS.notes}
                     -character limit.
                 </p>
+                <p>
+                    Interview notes can be edited and autosaved in active demo list and board views. Archived demo
+                    interview notes remain read-only.
+                </p>
                 <h3>Navigation and reset</h3>
                 <p>
                     Use <code>Show Archived</code> to open archived applications and switch the demo navigation to
@@ -588,9 +592,24 @@ const guideSections: readonly UserGuideSection[] = [
                 <p>
                     Interview records are linked to their job applications and can be deleted from the interview viewer.
                     Use the <strong>List</strong> and <strong>Board</strong> switch to choose a standard card list or a
-                    responsive multi-column card grid. Both views keep exactly the same interview order. In Board view,
-                    open <strong>Actions</strong> to see a saved <code>Click here to view meeting</code> link above the
-                    calendar and Delete controls.
+                    responsive multi-column card grid. Both views keep exactly the same interview order.
+                </p>
+                <p>
+                    Active interview notes can be edited after the interview has been created. In List mode, use{' '}
+                    <code>Show notes</code> under Activity Controls to display notes for all visible interviews at once.
+                    On wide screens, the notes panel appears to the right; at medium widths it moves below the interview
+                    details. At narrow widths it remains inside the horizontally scrollable interview card.
+                </p>
+                <p>
+                    In Board mode, edit notes inside <strong>Actions</strong>; the list <code>Show notes</code> control
+                    is not displayed there. When a meeting URL exists, the meeting link appears above{' '}
+                    <strong>Edit notes</strong>. Upcoming calendar-eligible interviews show Calendar and Delete, while
+                    past or otherwise calendar-ineligible interviews show Delete only.
+                </p>
+                <p>
+                    Archived interview notes appear when <code>Show notes</code> is enabled in archived Interview List
+                    Activity Controls, but they cannot be edited. Archived Board cards keep the read-only Notes field
+                    inside <strong>Actions</strong> and never show Calendar options.
                 </p>
                 <p>
                     Select <code>Click here to review corresponding job application</code> to return to the related
@@ -626,22 +645,30 @@ const guideSections: readonly UserGuideSection[] = [
         content: (
             <>
                 <p>
-                    The notes toggle at the top of an application viewer shows or hides notes for every visible
-                    application.
+                    Application and Interview List pages each provide their own <code>Show notes</code> toggle under
+                    Activity Controls. Turning it on immediately displays notes for every visible record in that list;
+                    turning it off hides those notes. Application and interview visibility preferences are stored
+                    independently.
                 </p>
-                <h3>Active applications</h3>
+                <h3>Active notes</h3>
                 <p>
-                    Application notes are editable, limited to {FIELD_MAX_LENGTHS.notes} characters, and automatically
-                    saved after you stop typing for half a second.
+                    Active application and interview notes are editable. Application notes and interview notes are
+                    separate fields, but both use the same {FIELD_MAX_LENGTHS.notes}-character limit.
                 </p>
                 <p>
-                    Application notes and interview notes are separate fields, but both use the same{' '}
-                    {FIELD_MAX_LENGTHS.notes}-character limit.
+                    Notes save automatically after you stop typing for one second. <code>Saving…</code>,{' '}
+                    <code>Saved</code>, and <code>Couldn’t save — Retry</code> communicate save progress. Leaving the
+                    field, hiding notes, closing a Board <strong>Actions</strong> panel, or switching views flushes
+                    pending changes. A failed save retains the current draft so you can select <code>Retry</code>.
                 </p>
-                <h3>Archived applications</h3>
                 <p>
-                    Archived notes are read-only in both list and board views. Unarchive the application before making
-                    further changes.
+                    Active Application and Interview Board cards keep notes inside <strong>Actions</strong> even though
+                    the List <code>Show notes</code> control is not displayed in Board mode.
+                </p>
+                <h3>Archived notes</h3>
+                <p>
+                    Archived application and interview notes are read-only in both list and board views. Restore the
+                    related application before making further changes.
                 </p>
             </>
         ),

@@ -142,6 +142,8 @@ test('fresh schema declarations support Withdrawn without runtime table alterati
     assert.match(setupSql, /user_preferences_archived_application_job_statuses_check[\s\S]*?'Withdrawn'/);
     assert.match(setupSql, /application_job_statuses TEXT\[\] NOT NULL DEFAULT[\s\S]*?'Withdrawn'/);
     assert.match(setupSql, /archived_application_job_statuses TEXT\[\] NOT NULL DEFAULT[\s\S]*?'Withdrawn'/);
+    assert.match(setupSql, /interview_show_notes BOOLEAN NOT NULL DEFAULT true/);
+    assert.match(setupSql, /archived_interview_show_notes BOOLEAN NOT NULL DEFAULT true/);
     assert.doesNotMatch(setupSql, /ALTER TABLE/);
     assert.doesNotMatch(setupSql, /array_append/);
 });
@@ -214,7 +216,9 @@ test('user preference queries read and update every preference field with indepe
         archived_application_list_sort_order: 'application_date_desc',
         archived_application_board_sort_order: 'company_name_desc',
         interview_view_mode: 'list',
+        interview_show_notes: true,
         archived_interview_view_mode: 'board',
+        archived_interview_show_notes: false,
         interview_time_filters: ['Upcoming Interviews'],
         archived_interview_time_filters: ['Past Interviews'],
         offer_decision_filters: ['Offers to Evaluate', 'Evaluated Offers'],
@@ -246,6 +250,8 @@ test('user preference queries read and update every preference field with indepe
         'application_board_sort_order',
         'archived_application_list_sort_order',
         'archived_application_board_sort_order',
+        'interview_show_notes',
+        'archived_interview_show_notes',
         'offer_decision_filters',
         'archived_offer_decision_filters',
         'needs_attention_categories',
@@ -271,15 +277,17 @@ test('user preference queries read and update every preference field with indepe
         calls[1].sql,
         /archived_application_board_sort_order = COALESCE\(\$13, archived_application_board_sort_order\)/
     );
-    assert.match(calls[1].sql, /interview_time_filters = COALESCE\(\$16, interview_time_filters\)/);
-    assert.match(calls[1].sql, /archived_interview_time_filters = COALESCE\(\$17, archived_interview_time_filters\)/);
-    assert.match(calls[1].sql, /offer_decision_filters = COALESCE\(\$18, offer_decision_filters\)/);
-    assert.match(calls[1].sql, /archived_offer_decision_filters = COALESCE\(\$19, archived_offer_decision_filters\)/);
-    assert.match(calls[1].sql, /needs_attention_categories = COALESCE\(\$20, needs_attention_categories\)/);
-    assert.match(calls[1].sql, /needs_attention_max_items = COALESCE\(\$21, needs_attention_max_items\)/);
+    assert.match(calls[1].sql, /interview_show_notes = COALESCE\(\$15, interview_show_notes\)/);
+    assert.match(calls[1].sql, /archived_interview_show_notes = COALESCE\(\$17, archived_interview_show_notes\)/);
+    assert.match(calls[1].sql, /interview_time_filters = COALESCE\(\$18, interview_time_filters\)/);
+    assert.match(calls[1].sql, /archived_interview_time_filters = COALESCE\(\$19, archived_interview_time_filters\)/);
+    assert.match(calls[1].sql, /offer_decision_filters = COALESCE\(\$20, offer_decision_filters\)/);
+    assert.match(calls[1].sql, /archived_offer_decision_filters = COALESCE\(\$21, archived_offer_decision_filters\)/);
+    assert.match(calls[1].sql, /needs_attention_categories = COALESCE\(\$22, needs_attention_categories\)/);
+    assert.match(calls[1].sql, /needs_attention_max_items = COALESCE\(\$23, needs_attention_max_items\)/);
     assert.match(
         calls[1].sql,
-        /needs_attention_application_follow_up_days =[\s\S]*?COALESCE\(\$27, needs_attention_application_follow_up_days\)/
+        /needs_attention_application_follow_up_days =[\s\S]*?COALESCE\(\$29, needs_attention_application_follow_up_days\)/
     );
     assert.deepEqual(calls[1].values, [
         42,
@@ -296,7 +304,9 @@ test('user preference queries read and update every preference field with indepe
         'application_date_desc',
         'company_name_desc',
         'list',
+        true,
         'board',
+        false,
         ['Upcoming Interviews'],
         ['Past Interviews'],
         ['Offers to Evaluate', 'Evaluated Offers'],
@@ -326,7 +336,7 @@ test('omitted sort preferences remain undefined for SQL COALESCE preservation', 
         pool.query = originalQuery;
     }
 
-    assert.equal(values.length, 27);
+    assert.equal(values.length, 29);
     assert.equal(values[0], 9);
     assert.equal(values[12], 'company_name_asc');
     assert.equal(
@@ -334,11 +344,11 @@ test('omitted sort preferences remain undefined for SQL COALESCE preservation', 
         true
     );
     assert.equal(
-        values.slice(13, 19).every((value) => value === undefined),
+        values.slice(13, 21).every((value) => value === undefined),
         true
     );
     assert.equal(
-        values.slice(19).every((value) => value === undefined),
+        values.slice(21).every((value) => value === undefined),
         true
     );
 });

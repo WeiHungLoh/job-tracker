@@ -66,6 +66,9 @@ export type UpdateInterviewPinRequest = {
     isPinned: boolean;
 };
 export type UpdateInterviewPinResponse = InterviewPin | ErrorResponse;
+export type UpdateInterviewNotesRequest = {
+    notes: string;
+};
 export type MarkInterviewFollowUpResponse =
     | {
           follow_up_sent_at: Date;

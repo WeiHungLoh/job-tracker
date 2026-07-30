@@ -8,6 +8,10 @@ import BoardCardActions from '../../components/boardCardActions/BoardCardActions
 import { formatInterviewCountdown, getInterviewTiming } from '../../helper/interviewTiming';
 import FollowUpSentBadge from '../../components/followUpSentBadge/FollowUpSentBadge';
 import PinControl from '../../components/pinControl/PinControl';
+import NoteSaveStatus from '../../components/noteSaveStatus/NoteSaveStatus';
+import { FIELD_MAX_LENGTHS } from '../../helper/formValidation';
+
+const EMPTY_NOTES_MESSAGE = 'You do not have any notes here';
 
 const InterviewCard = (props: InterviewCardProps) => {
     const {
@@ -26,6 +30,37 @@ const InterviewCard = (props: InterviewCardProps) => {
     const showCalendarOptions = variant === 'job' && timing.isValid && !timing.hasStarted;
     const isOverdue = timing.hasEnded;
     const isBoardLayout = layout === 'board';
+    const interviewId = variant === 'job' ? interview.interview_id : interview.archived_interview_id;
+    const note = variant === 'job' ? props.note ?? interview.interview_notes : interview.interview_notes;
+    const renderActiveNotesEditor = (className: string) =>
+        variant === 'job' ? (
+            <div className={className}>
+                <textarea
+                    aria-label={`Notes for ${interview.company_name}`}
+                    id={`interview-notes-${interviewId}`}
+                    maxLength={FIELD_MAX_LENGTHS.notes}
+                    onBlur={() => props.onNotesBlur?.(interview.interview_id)}
+                    onChange={(event) => props.onEditNotes?.(interview.interview_id, event.target.value)}
+                    placeholder='Add your notes here'
+                    value={note}
+                />
+                <NoteSaveStatus
+                    applicationName={interview.company_name}
+                    onRetry={() => props.onRetryNotes?.(interview.interview_id)}
+                    status={props.noteSaveStatus ?? 'idle'}
+                />
+            </div>
+        ) : null;
+    const renderReadOnlyNotes = (className: string) =>
+        variant === 'archived' ? (
+            <textarea
+                aria-label={`Notes for ${interview.company_name}`}
+                className={className}
+                disabled
+                readOnly
+                value={interview.interview_notes.trim() === '' ? EMPTY_NOTES_MESSAGE : interview.interview_notes}
+            />
+        ) : null;
     const timingStatus = !timing.isValid
         ? { className: styles.timeLeft, label: 'Status unavailable' }
         : timing.hasEnded
@@ -38,6 +73,7 @@ const InterviewCard = (props: InterviewCardProps) => {
         styles.interview,
         variant === 'archived' ? styles.archived : '',
         isBoardLayout ? styles.board : '',
+        !isBoardLayout && props.showNotes ? styles.notesVisible : '',
         isOverdue ? styles.overdue : '',
     ]
         .filter(Boolean)
@@ -103,9 +139,6 @@ const InterviewCard = (props: InterviewCardProps) => {
                 )}
                 {!isBoardLayout && (
                     <>
-                        {interview.interview_notes !== '' && (
-                            <p className={styles.notes}>Notes: {interview.interview_notes}</p>
-                        )}
                         <p className={`${timingStatus.className} ${styles.timingBadge}`}>{timingStatus.label}</p>
                         {interview.follow_up_sent_at && (
                             <FollowUpSentBadge
@@ -134,6 +167,13 @@ const InterviewCard = (props: InterviewCardProps) => {
             {isBoardLayout ? (
                 <>
                     <BoardCardActions
+                        compactPanelSpacing
+                        compactSizing
+                        onOpenChange={
+                            variant === 'job'
+                                ? (isOpen) => props.onNotesVisibilityChange?.(interview.interview_id, isOpen)
+                                : undefined
+                        }
                         actions={
                             <>
                                 {showCalendarOptions && <CalendarOptions interview={interview} />}
@@ -156,8 +196,19 @@ const InterviewCard = (props: InterviewCardProps) => {
                                 rel='noreferrer noopener'
                                 target='_blank'
                             >
-                                Click here to view meeting
+                                Click here to enter meeting
                             </a>
+                        )}
+                        {variant === 'job' ? (
+                            <div className={styles.boardNotesField}>
+                                <label htmlFor={`interview-notes-${interviewId}`}>Edit notes</label>
+                                {renderActiveNotesEditor(styles.notesEditor)}
+                            </div>
+                        ) : (
+                            <label className={`${styles.boardNotesField} ${styles.readOnlyNotes}`}>
+                                Notes
+                                {renderReadOnlyNotes(styles.readOnlyTextarea)}
+                            </label>
                         )}
                     </BoardCardActions>
                 </>
@@ -167,6 +218,14 @@ const InterviewCard = (props: InterviewCardProps) => {
                     <PrimaryButton isLoading={isDeleting} variant='destructive' onClick={onDelete}>
                         Delete
                     </PrimaryButton>
+                </div>
+            )}
+
+            {!isBoardLayout && props.showNotes && (
+                <div className={styles.listNotes}>
+                    {variant === 'job'
+                        ? renderActiveNotesEditor(styles.notesEditor)
+                        : renderReadOnlyNotes(styles.readOnlyTextarea)}
                 </div>
             )}
         </article>

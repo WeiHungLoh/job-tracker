@@ -15,7 +15,7 @@ export type ActivityControlsProps = {
     actions?: ReactNode;
     ariaLabel: string;
     children: ReactNode;
-    mobileLayout?: 'applicationCompact' | 'applicationWithDisplay' | 'inlineWhenPossible';
+    mobileLayout?: 'applicationCompact' | 'applicationWithDisplay' | 'inlineWhenPossible' | 'interviewResponsive';
 };
 
 export type ControlDropdownProps = {

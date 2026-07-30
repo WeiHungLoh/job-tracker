@@ -63,6 +63,8 @@ import type {
     GetInterviewCollectionSummaryResponse,
     MarkInterviewFollowUpRequest,
     MarkInterviewFollowUpResponse,
+    UpdateInterviewNotesRequest,
+    UpdateInterviewNotesResponse,
     UpdateInterviewPinRequest,
     UpdateInterviewPinResponse,
     UndoInterviewFollowUpRequest,
@@ -266,6 +268,13 @@ export const useJobTrackerAPI = () => {
                 req,
                 endpointConfig.interview.updatePin
             );
+        };
+
+        const updateInterviewNotes = async (req: UpdateInterviewNotesRequest) => {
+            return await makeAuthenticatedJobTrackerAPIRequest<
+                UpdateInterviewNotesRequest,
+                UpdateInterviewNotesResponse
+            >(req, endpointConfig.interview.updateNotes);
         };
 
         const markInterviewFollowUpSent = async (req: MarkInterviewFollowUpRequest) => {
@@ -473,6 +482,7 @@ export const useJobTrackerAPI = () => {
                 createInterview,
                 deleteInterview,
                 deleteAllInterviews,
+                updateNotes: updateInterviewNotes,
                 updatePin: updateInterviewPin,
                 markFollowUpSent: markInterviewFollowUpSent,
                 undoFollowUp: undoInterviewFollowUp,

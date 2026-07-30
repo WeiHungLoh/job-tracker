@@ -98,6 +98,12 @@ export type DeleteInterviewResponse = null;
 export type DeleteAllInterviewsRequest = null;
 export type DeleteAllInterviewsResponse = null;
 
+export type UpdateInterviewNotesRequest = {
+    interviewId: number;
+    notes: string;
+};
+export type UpdateInterviewNotesResponse = null;
+
 export type UpdateInterviewPinRequest = {
     interviewId: number;
     isPinned: boolean;

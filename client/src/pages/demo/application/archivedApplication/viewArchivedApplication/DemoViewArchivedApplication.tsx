@@ -122,10 +122,11 @@ const DemoViewArchivedApplication = () => {
             return;
         }
 
-        if (visibleApplicationIds.includes(String(targetApplicationId))) {
-            scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+        if (!visibleApplicationIds.includes(String(targetApplicationId))) {
+            return;
         }
 
+        scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
         navigationApplicationIdRef.current = null;
         navigate(location.pathname, { replace: true, state: null });
     }, [isBoardView, location.pathname, navigate, visibleApplicationIds]);

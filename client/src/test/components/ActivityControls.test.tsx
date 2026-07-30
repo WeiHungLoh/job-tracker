@@ -4,6 +4,7 @@ import ActivityControls from '../../components/activityControls/ActivityControls
 import CheckboxFilter from '../../components/activityControls/checkboxFilter/CheckboxFilter';
 import CollectionViewToggle from '../../components/activityControls/collectionViewToggle/CollectionViewToggle';
 import ControlDropdown from '../../components/activityControls/ControlDropdown';
+import styles from '../../components/activityControls/ActivityControls.module.css';
 
 const createRect = ({
     height = 40,
@@ -60,6 +61,25 @@ describe('ActivityControls', () => {
 
         expect(screen.getByRole('region', { name: 'Interview controls' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'More' })).not.toBeInTheDocument();
+    });
+
+    test('exposes the interview responsive layout only when requested by its caller', () => {
+        render(
+            <ActivityControls
+                actions={<button type='button'>More</button>}
+                ariaLabel='Interview responsive controls'
+                mobileLayout='interviewResponsive'
+            >
+                <button type='button'>List and Board</button>
+                <button type='button'>Filter</button>
+                <button type='button'>Display</button>
+            </ActivityControls>
+        );
+
+        expect(screen.getByRole('region', { name: 'Interview responsive controls' })).toHaveClass(
+            styles.interviewResponsive,
+            styles.hasActions
+        );
     });
 
     test('uses a caller-owned accessible label for the shared collection view toggle', async () => {

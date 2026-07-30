@@ -26,10 +26,24 @@
     border-left: 1px solid var(--colorInteractiveBorder);
 }
 
+.interviewViewControl,
+.interviewSecondaryControls {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+}
+
+.interviewSecondaryControls {
+    gap: var(--spaceControl);
+}
+
 .applicationWithDisplay .primaryControls > *,
 .applicationCompact .primaryControls > *,
+.interviewViewControl > *,
+.interviewSecondaryControls > *,
 .applicationWithDisplay .actions > *,
-.applicationCompact .actions > * {
+.applicationCompact .actions > *,
+.interviewResponsive .actions > * {
     flex-shrink: 0;
 }
 
@@ -104,6 +118,40 @@
         justify-self: start;
         padding-left: 9px;
         border-left: 1px solid var(--colorInteractiveBorder);
+    }
+}
+
+@container (max-width: 500px) {
+    .interviewResponsive {
+        display: grid;
+        grid-template-columns: repeat(2, max-content);
+        justify-content: center;
+        justify-items: center;
+    }
+
+    .interviewResponsive .primaryControls {
+        display: contents;
+    }
+
+    .interviewResponsive .interviewViewControl {
+        grid-row: 1;
+        grid-column: 1;
+    }
+
+    .interviewResponsive.hasActions .actions {
+        grid-row: 1;
+        grid-column: 2;
+    }
+
+    .interviewResponsive .interviewSecondaryControls {
+        grid-row: 2;
+        grid-column: 1 / -1;
+        justify-self: center;
+    }
+
+    .interviewResponsive:not(.hasActions) .interviewViewControl {
+        grid-column: 1 / -1;
+        justify-self: center;
     }
 }
 

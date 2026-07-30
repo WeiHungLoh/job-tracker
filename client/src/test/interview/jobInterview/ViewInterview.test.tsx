@@ -36,7 +36,9 @@ const mockPreferences: UserPreferences = {
     archived_application_list_sort_order: 'job_status',
     archived_application_board_sort_order: 'application_date_desc',
     interview_view_mode: 'list',
+    interview_show_notes: true,
     archived_interview_view_mode: 'list',
+    archived_interview_show_notes: true,
     interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
     archived_interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
     offer_decision_filters: [
@@ -103,7 +105,8 @@ describe('Job interview viewer flow', () => {
         render(
             <MemoryRouter>
                 <ViewInterview />
-            </MemoryRouter>
+            </MemoryRouter>,
+            { initialPreferences: { interview_show_notes: true } }
         );
 
         expect(await screen.findByText(/abc pte ltd/i)).toBeInTheDocument();
@@ -111,13 +114,62 @@ describe('Job interview viewer flow', () => {
         expect(screen.getByText(/software engineer/i)).toBeInTheDocument();
         expect(screen.getByText(/changi business park/i)).toBeInTheDocument();
         expect(screen.getByText(/hr/i)).toBeInTheDocument();
-        expect(screen.getByText(/bring resume/i)).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Notes for ABC Pte Ltd' })).toHaveValue('Bring resume');
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Interview view' })).toBeInTheDocument();
         expect(screen.queryByRole('region', { name: 'Application board' })).not.toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all interviews/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+    });
+
+    test('shows every active List note from the persisted Interview preference and autosaves edits on blur', async () => {
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    interview_show_notes: true,
+                } as unknown as Partial<UserPreferences>,
+            }
+        );
+
+        const notes = await screen.findByRole('textbox', { name: 'Notes for ABC Pte Ltd' });
+        expect(notes).toHaveValue('Bring resume');
+
+        await userEvent.clear(notes);
+        await userEvent.type(notes, 'Prepare system design examples');
+        expect(screen.getByText('Saving…')).toBeInTheDocument();
+        await userEvent.tab();
+
+        await waitFor(() =>
+            expect(fetch).toHaveBeenCalledWith(
+                `${import.meta.env.VITE_API_URL}/job-interviews/1/notes`,
+                expect.objectContaining({
+                    body: JSON.stringify({ notes: 'Prepare system design examples' }),
+                    method: 'PATCH',
+                })
+            )
+        );
+        expect(await screen.findByText('Saved')).toBeInTheDocument();
+    });
+
+    test('keeps editable notes inside active Board Actions without a Show notes control', async () => {
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>,
+            { initialPreferences: { interview_view_mode: 'board' } }
+        );
+
+        const interviews = await screen.findByRole('region', { name: 'Active interviews' });
+        expect(screen.queryByRole('switch', { name: 'Show notes' })).not.toBeInTheDocument();
+
+        await userEvent.click(within(interviews).getByText('Actions'));
+
+        expect(within(interviews).getByText('Edit notes')).toBeInTheDocument();
+        expect(within(interviews).getByRole('textbox', { name: 'Notes for ABC Pte Ltd' })).toHaveValue('Bring resume');
     });
 
     test('pins and unpins an interview without refetching while preserving the time-filtered order', async () => {

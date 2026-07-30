@@ -63,7 +63,9 @@ router.patch(
             archived_application_list_sort_order,
             archived_application_board_sort_order,
             interview_view_mode,
+            interview_show_notes,
             archived_interview_view_mode,
+            archived_interview_show_notes,
             interview_time_filters,
             archived_interview_time_filters,
             offer_decision_filters,
@@ -190,7 +192,9 @@ router.patch(
             !isOptionalBoolean(application_show_notes) ||
             !isOptionalBoolean(application_show_archive) ||
             !isOptionalBoolean(application_enable_scroll) ||
-            !isOptionalBoolean(archived_application_show_notes)
+            !isOptionalBoolean(archived_application_show_notes) ||
+            !isOptionalBoolean(interview_show_notes) ||
+            !isOptionalBoolean(archived_interview_show_notes)
         ) {
             sendError(res, 422, 'Show notes and show archive preferences must be boolean values.');
             return;

@@ -112,7 +112,9 @@ test('creates new user preference rows with enabled display defaults', async () 
     assert.match(userPreferencesTable, /application_enable_scroll BOOLEAN NOT NULL DEFAULT true/);
     assert.match(userPreferencesTable, /archived_application_show_notes BOOLEAN NOT NULL DEFAULT true/);
     assert.match(userPreferencesTable, /interview_view_mode TEXT NOT NULL DEFAULT 'list'/);
+    assert.match(userPreferencesTable, /interview_show_notes BOOLEAN NOT NULL DEFAULT true/);
     assert.match(userPreferencesTable, /archived_interview_view_mode TEXT NOT NULL DEFAULT 'list'/);
+    assert.match(userPreferencesTable, /archived_interview_show_notes BOOLEAN NOT NULL DEFAULT true/);
     assert.match(userPreferencesTable, /user_preferences_interview_view_mode_check/);
     assert.match(userPreferencesTable, /user_preferences_archived_interview_view_mode_check/);
     assert.match(
@@ -622,7 +624,9 @@ test('saves a supported application sort preference and returns the complete pre
         archived_application_list_sort_order: 'job_status',
         archived_application_board_sort_order: 'company_name_desc',
         interview_view_mode: 'list',
+        interview_show_notes: true,
         archived_interview_view_mode: 'board',
+        archived_interview_show_notes: false,
         interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
         archived_interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
         offer_decision_filters: ['Offers to Evaluate', 'Evaluated Offers'],
@@ -655,7 +659,7 @@ test('saves a supported application sort preference and returns the complete pre
 
         assert.equal(response.status, 200);
         assert.deepEqual(await response.json(), storedPreferences);
-        assert.equal(queryValues.length, 27);
+        assert.equal(queryValues.length, 29);
         assert.equal(queryValues[0], TEST_USER.id);
         assert.equal(queryValues[12], 'company_name_desc');
     } finally {
@@ -1421,6 +1425,52 @@ test('rejects interview fields over their maximum length before accessing the da
 test('rejects application notes over their maximum length before accessing the database', async () => {
     const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
     const response = await fetch(`${baseUrl}/job-applications/1/notes`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            Cookie: `access_token=${token}`,
+        },
+        body: JSON.stringify({
+            notes: 'x'.repeat(FIELD_MAX_LENGTHS.notes + 1),
+        }),
+    });
+
+    assert.equal(response.status, 422);
+    assert.deepEqual(await response.json(), {
+        message: `Notes must be ${FIELD_MAX_LENGTHS.notes} characters or fewer.`,
+    });
+});
+
+test('updates trimmed active interview notes for the authenticated owner', async () => {
+    const originalQuery = pool.query;
+    let updateValues;
+    pool.query = async (sql, values) => {
+        assert.match(String(sql), /UPDATE interviews[\s\S]*interview_notes/);
+        updateValues = values;
+        return { rowCount: 1, rows: [{ interview_id: 1 }] };
+    };
+
+    try {
+        const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+        const response = await fetch(`${baseUrl}/job-interviews/1/notes`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify({ notes: '  Prepare examples  ' }),
+        });
+
+        assert.equal(response.status, 204);
+        assert.deepEqual(updateValues, ['Prepare examples', 1, TEST_USER.id]);
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
+test('rejects active interview notes over their maximum length before accessing the database', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+    const response = await fetch(`${baseUrl}/job-interviews/1/notes`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',

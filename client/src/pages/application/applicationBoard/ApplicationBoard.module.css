@@ -374,6 +374,7 @@
     border-radius: 10px;
     background: var(--colorNotesBg);
     color: var(--colorNotesText);
+    outline: none;
     resize: vertical;
 }
 

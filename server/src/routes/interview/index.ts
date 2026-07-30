@@ -7,6 +7,7 @@ import type {
     ListInterviewsQuery,
     ListInterviewsResponse,
     MarkInterviewFollowUpResponse,
+    UpdateInterviewNotesRequest,
     UpdateInterviewPinRequest,
     UpdateInterviewPinResponse,
 } from './models.js';
@@ -25,6 +26,7 @@ import {
     getInterviews,
     insertInterview,
     markInterviewFollowUpSent,
+    updateInterviewNotes,
     updateInterviewPin,
 } from '../../db/queries/interviews.js';
 import { handleRouteError, sendError } from '../../http/responses.js';
@@ -200,6 +202,35 @@ router.delete(
             res.sendStatus(204);
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to delete interviews.');
+        }
+    }
+);
+
+router.patch(
+    '/:interviewId/notes',
+    async (
+        req: Request<InterviewIdParams, EmptyResponse, UpdateInterviewNotesRequest>,
+        res: Response<EmptyResponse>
+    ): Promise<void> => {
+        const interviewId = toPositiveInteger(req.params.interviewId);
+        if (interviewId === undefined) {
+            sendError(res, 422, 'Interview ID must be a positive integer.');
+            return;
+        }
+        const notes = toTrimmedString(req.body.notes, FIELD_MAX_LENGTHS.notes, true);
+        if (notes === undefined) {
+            sendError(res, 422, `Notes must be ${FIELD_MAX_LENGTHS.notes} characters or fewer.`);
+            return;
+        }
+
+        try {
+            if (!(await updateInterviewNotes(notes, interviewId, req.user.id))) {
+                sendError(res, 404, 'Active interview not found.');
+                return;
+            }
+            res.sendStatus(204);
+        } catch (error: unknown) {
+            handleRouteError(res, error, 'Unable to update interview notes.');
         }
     }
 );

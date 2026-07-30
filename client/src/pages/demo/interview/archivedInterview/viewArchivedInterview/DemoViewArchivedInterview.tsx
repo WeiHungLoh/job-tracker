@@ -25,6 +25,8 @@ import {
 } from '../../../../../helper/interviewTiming';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
 import type { ApplicationListNavigationState } from '../../../../application/applicationNavigation';
+import DisplayOptions from '../../../../../components/activityControls/displayOptions/DisplayOptions';
+import ToggleButton from '../../../../../components/toggleButton/ToggleButton';
 
 const DemoViewArchivedInterview = () => {
     const { dispatch, state, updatePreferences } = useDemo();
@@ -36,6 +38,7 @@ const DemoViewArchivedInterview = () => {
     const [isDeletingAll, setIsDeletingAll] = useState(false);
     const deleteAllPendingRef = useRef(false);
     const selectedTimeFilters = preferences.archived_interview_time_filters;
+    const showNotes = preferences.archived_interview_show_notes;
     const displayedInterviews = useMemo(
         () => filterAndSortInterviews(state.archivedInterviews, selectedTimeFilters, currentTime),
         [currentTime, selectedTimeFilters, state.archivedInterviews]
@@ -126,7 +129,7 @@ const DemoViewArchivedInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Demo archived interview view and management controls'
-                    mobileLayout='inlineWhenPossible'
+                    mobileLayout={!isBoardView && hasInterviews ? 'interviewResponsive' : 'inlineWhenPossible'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Archived interview view'
@@ -142,6 +145,15 @@ const DemoViewArchivedInterview = () => {
                         options={INTERVIEW_TIME_FILTERS}
                         selectedOptions={selectedTimeFilters}
                     />
+                    {hasInterviews && !isBoardView && (
+                        <DisplayOptions id='demo-archived-interview-display-options'>
+                            <ToggleButton
+                                toggled={showNotes}
+                                onToggle={() => void updatePreferences({ archived_interview_show_notes: !showNotes })}
+                                label='Show notes'
+                            />
+                        </DisplayOptions>
+                    )}
                 </ActivityControls>
             </div>
             {!hasDisplayedInterviews && <EmptyState {...emptyState} />}
@@ -159,6 +171,7 @@ const DemoViewArchivedInterview = () => {
                             layout={viewMode}
                             onDelete={() => handleDelete(interview.archived_interview_id)}
                             onViewApplicationClick={(event) => handleViewApplicationClick(event, interview)}
+                            showNotes={showNotes}
                             variant='archived'
                         />
                     ))}
