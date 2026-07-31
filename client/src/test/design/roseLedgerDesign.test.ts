@@ -445,6 +445,9 @@ describe('Rose Ledger visual contract', () => {
         expect(offerDecisionWorkspaceCss).toContain('white-space: nowrap;');
         expect(offerDecisionWorkspaceCss).toContain('align-items: flex-end;');
         expect(offerEvaluationCss).not.toContain('.cardActions button {\n        width: 100%;');
+        expect(offerEvaluationCss.slice(0, offerEvaluationCss.indexOf('@media (max-width: 768px)'))).toMatch(
+            /\.cardActions \.mobileActionButton,\s*\.cardActions \.cardActionTrigger\s*\{[^}]*height:\s*35px;[^}]*box-sizing:\s*border-box;[^}]*-webkit-appearance:\s*none;[^}]*appearance:\s*none;/s
+        );
         expect(offerEvaluationCss).toMatch(/\.ratingFields legend\s*\{[^}]*padding-right:/s);
         expect(offerEvaluationCss).toMatch(
             /\.detailsReview dt,\s*\.reviewValue dt\s*\{[^}]*color:\s*var\(--colorLabel\);[^}]*font-size:\s*var\(--fontSizeBody\);[^}]*font-weight:\s*500;/s
@@ -843,6 +846,10 @@ describe('Rose Ledger visual contract', () => {
         );
         const navbar = readSource('src/components/navbar/Navbar.module.css');
         const dashboard = readSource('src/pages/dashboard/Dashboard.module.css');
+        const upcomingInterviews = readSource('src/pages/dashboard/overview/upcomingInterviews/UpcomingInterviews.tsx');
+        const upcomingInterviewsCss = readSource(
+            'src/pages/dashboard/overview/upcomingInterviews/UpcomingInterviews.module.css'
+        );
         const formPage = readSource('src/components/formPage/FormPage.module.css');
         const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
 
@@ -881,11 +888,20 @@ describe('Rose Ledger visual contract', () => {
             'grid-column: span 8;',
             'grid-column: span 4;',
         ].forEach((declaration) => expect(dashboard).toContain(declaration));
+        expect(upcomingInterviews).toContain('className={styles.upcomingCard}');
+        expect(upcomingInterviewsCss).toMatch(/\.upcomingCard\s*\{[^}]*height:\s*auto;/s);
+        expect(dashboard).toMatch(/\.interviewsSection\s*\{[^}]*display:\s*grid;/s);
         expect(formPage).toContain('@media (max-width: 1150px) and (orientation: portrait), (max-width: 600px)');
         expect(formPage).toContain('    .fieldError {\n        font-size: 0.75rem;\n    }');
         expect(formPage).toContain('flex-wrap: nowrap;');
         expect(formPage).toContain('flex: 1 1 0;');
         expect(applicationsLineChart).toMatch(/\.summary span\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
+        expect(applicationsLineChart).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?\.chartArea\s*\{[^}]*min-height:\s*280px;[^}]*flex:\s*0 0 280px;/s
+        );
+        expect(applicationsLineChart).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?\.total\s*\{[^}]*margin:\s*16px 0 10px;/s
+        );
         [
             'grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);',
             'left: calc(200px - 50cqw);',

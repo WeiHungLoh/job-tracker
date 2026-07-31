@@ -135,9 +135,7 @@ describe('Dashboard V2', () => {
         expect(screen.getByRole('heading', { name: 'Needs Attention' })).toBeInTheDocument();
         expect(screen.getByText('Application Company 1')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Job Search Activity' })).toBeInTheDocument();
-        expect(
-            screen.getByText('Applications submitted and interviews scheduled over the past eight weeks.')
-        ).toBeInTheDocument();
+        expect(screen.getByText('Applications submitted over the past eight weeks.')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Upcoming Interviews' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Application Pipeline' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
@@ -145,7 +143,7 @@ describe('Dashboard V2', () => {
         expect(screen.getAllByTestId('bar-chart')).toHaveLength(2);
     });
 
-    test('shows this week, comparison, and best-week trend values', () => {
+    test('shows application-only trend details when the eight-week interview total is zero', () => {
         const weeklyApplications: WeeklyApplicationCount[] = [
             { start_of_week: '2026-06-29', applications_count: '2' },
             { start_of_week: '2026-07-06', applications_count: '5' },
@@ -157,7 +155,17 @@ describe('Dashboard V2', () => {
         expect(within(summary).getByText('Applications this week').parentElement).toHaveTextContent('5');
         expect(within(summary).getByText('Application change').parentElement).toHaveTextContent('+3 vs last week');
         expect(within(summary).getByText('Best application week').parentElement).toHaveTextContent('5');
-        expect(screen.getByText('8-week totals: 7 applications · 0 interviews')).toBeInTheDocument();
+        expect(chartMocks.lineData?.datasets).toHaveLength(1);
+        expect(chartMocks.lineData?.datasets[0]).toMatchObject({ label: 'Applications', data: [2, 5] });
+        expect(chartMocks.lineOptions?.plugins?.legend).toEqual(
+            expect.objectContaining({ display: true, onClick: expect.any(Function) })
+        );
+        expect(chartMocks.lineOptions?.plugins?.title).toEqual(
+            expect.objectContaining({ text: 'Weekly Applications' })
+        );
+        expect(screen.getByText('Applications submitted over the past eight weeks.')).toBeInTheDocument();
+        expect(screen.getByText('8-week totals: 7 applications')).toBeInTheDocument();
+        expect(screen.queryByText(/0 interviews?/)).not.toBeInTheDocument();
     });
 
     test('uses the safe trend fallback when there is no previous week', () => {

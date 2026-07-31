@@ -308,9 +308,12 @@ const NeedsAttentionSettingsDialog = ({ onClose, open }: NeedsAttentionSettingsD
                 <PrimaryButton
                     className={styles.reset}
                     disabled={!draft || isSaving}
-                    onClick={() => setDraft(createDraft(DEFAULT_NEEDS_ATTENTION_SETTINGS))}
+                    onClick={() => {
+                        setDraft(createDraft(DEFAULT_NEEDS_ATTENTION_SETTINGS));
+                        showSuccessToast('Reminder settings reset to default. Click Save to apply these changes.');
+                    }}
                     type='button'
-                    variant='secondary'
+                    variant='destructive'
                 >
                     Reset to Default
                 </PrimaryButton>

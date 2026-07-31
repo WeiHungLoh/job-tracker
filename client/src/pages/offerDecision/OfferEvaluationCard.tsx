@@ -422,6 +422,7 @@ const OfferEvaluationCard = ({
                             <div className={styles.cardActions}>
                                 <PrimaryButton
                                     aria-label={`${expanded ? 'Hide' : 'Show'} details for ${application.company_name}`}
+                                    className={styles.mobileActionButton}
                                     disabled={isStatusUpdating}
                                     onClick={handleToggleExpanded}
                                     type='button'
@@ -455,6 +456,7 @@ const OfferEvaluationCard = ({
                                 {savedEvaluation && allowDelete && onDelete && (
                                     <PrimaryButton
                                         aria-label={`Delete evaluation for ${application.company_name}`}
+                                        className={styles.mobileActionButton}
                                         disabled={isStatusUpdating}
                                         isLoading={isDeleting}
                                         onClick={onDelete}

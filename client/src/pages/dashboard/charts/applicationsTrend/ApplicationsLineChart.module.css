@@ -88,3 +88,14 @@
     text-align: center;
     line-height: 1.5;
 }
+
+@media (max-width: 768px) {
+    .chartArea {
+        min-height: 280px;
+        flex: 0 0 280px;
+    }
+
+    .total {
+        margin: 16px 0 10px;
+    }
+}

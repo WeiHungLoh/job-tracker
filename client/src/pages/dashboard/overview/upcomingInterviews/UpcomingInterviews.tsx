@@ -57,7 +57,11 @@ const UpcomingInterviews = ({
     );
 
     return (
-        <DashboardCard title='Upcoming Interviews' description='Your next scheduled conversations.'>
+        <DashboardCard
+            className={styles.upcomingCard}
+            title='Upcoming Interviews'
+            description='Your next scheduled conversations.'
+        >
             {hasError ? (
                 <div className={styles.centered}>
                     <div>

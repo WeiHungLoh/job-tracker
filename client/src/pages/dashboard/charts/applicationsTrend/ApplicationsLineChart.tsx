@@ -64,6 +64,7 @@ const ApplicationsLineChart = ({
         [interviews, interviewsAvailable, weeks]
     );
     const interviewTotal = useMemo(() => interviewCounts.reduce((sum, count) => sum + count, 0), [interviewCounts]);
+    const showInterviewSeries = interviewsAvailable && interviewTotal > 0;
     const thisWeekCount = counts.at(-1) ?? 0;
     const lastWeekCount = counts.at(-2);
     const difference = lastWeekCount === undefined ? undefined : thisWeekCount - lastWeekCount;
@@ -92,7 +93,7 @@ const ApplicationsLineChart = ({
                     borderColor: STATUS_COLORS.Applied[theme],
                     hidden: !applicationsVisible,
                 },
-                ...(interviewsAvailable
+                ...(showInterviewSeries
                     ? [
                           {
                               label: 'Interviews',
@@ -105,14 +106,18 @@ const ApplicationsLineChart = ({
                     : []),
             ],
         };
-    }, [applicationsVisible, counts, interviewCounts, interviewsVisible, theme, weeks]);
+    }, [applicationsVisible, counts, interviewCounts, interviewsVisible, showInterviewSeries, theme, weeks]);
 
     const chartColors = CHART_COLORS[theme];
 
     return (
         <DashboardCard
             title='Job Search Activity'
-            description='Applications submitted and interviews scheduled over the past eight weeks.'
+            description={
+                showInterviewSeries
+                    ? 'Applications submitted and interviews scheduled over the past eight weeks.'
+                    : 'Applications submitted over the past eight weeks.'
+            }
         >
             {!isLoading && !hasError && (
                 <div className={styles.summary} aria-label='Weekly application summary'>
@@ -169,7 +174,9 @@ const ApplicationsLineChart = ({
                                 plugins: {
                                     title: {
                                         display: true,
-                                        text: 'Weekly Applications and Interviews',
+                                        text: showInterviewSeries
+                                            ? 'Weekly Applications and Interviews'
+                                            : 'Weekly Applications',
                                         font: TITLE_FONT,
                                         padding: TITLE_PADDING,
                                         color: chartColors.title,
@@ -194,7 +201,7 @@ const ApplicationsLineChart = ({
                     </div>
                     <p className={styles.total}>
                         8-week totals: {formatTotal(total, 'application')}
-                        {interviewsAvailable ? ` · ${formatTotal(interviewTotal, 'interview')}` : ''}
+                        {showInterviewSeries ? ` · ${formatTotal(interviewTotal, 'interview')}` : ''}
                     </p>
                 </>
             )}

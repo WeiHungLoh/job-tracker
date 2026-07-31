@@ -355,6 +355,14 @@
     width: min(250px, calc(100vw - 48px));
 }
 
+.cardActions .mobileActionButton,
+.cardActions .cardActionTrigger {
+    height: 35px;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
 .cardActions .cardActionTrigger {
     border: 1.5px solid var(--colorPrimary);
     background: transparent;

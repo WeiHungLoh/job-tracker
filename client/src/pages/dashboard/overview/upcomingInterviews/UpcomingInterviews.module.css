@@ -1,3 +1,7 @@
+.upcomingCard {
+    height: auto;
+}
+
 .interviewList {
     display: flex;
     min-width: 0;

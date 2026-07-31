@@ -1,5 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import primaryButtonStyles from '../../components/button/PrimaryButton.module.css';
 import NeedsAttentionSettingsDialog from '../../pages/dashboard/attentionCenter/NeedsAttentionSettingsDialog';
 import { render, testPreferences } from '../renderWithProviders';
 
@@ -63,7 +64,13 @@ describe('NeedsAttentionSettingsDialog', () => {
         expect(screen.getByLabelText('Start showing this many days before the deadline (1–14)')).toBeEnabled();
         expect(screen.getByLabelText('Start showing this many days before the deadline (1–14)')).toHaveValue(9);
 
-        await userEvent.click(screen.getByRole('button', { name: 'Reset to Default' }));
+        const resetButton = screen.getByRole('button', { name: 'Reset to Default' });
+        expect(resetButton).toHaveClass(primaryButtonStyles.destructive);
+        expect(resetButton).not.toHaveClass(primaryButtonStyles.secondary);
+        await userEvent.click(resetButton);
+        expect(
+            await screen.findByText('Reminder settings reset to default. Click Save to apply these changes.')
+        ).toBeInTheDocument();
         expect(screen.getByLabelText('Start showing this many days before the deadline (1–14)')).toHaveValue(3);
         expect(screen.getByLabelText('Maximum reminders shown (1–50)')).toHaveValue(10);
         expect(screen.getAllByRole('checkbox').every((checkbox) => checkbox.hasAttribute('checked'))).toBe(true);
