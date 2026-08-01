@@ -3,11 +3,14 @@ import PrimaryButton from '../../components/button/PrimaryButton';
 import ControlDropdown from '../../components/activityControls/ControlDropdown';
 import { useToast } from '../../components/toast/ToastProvider';
 import formatDate from '../../helper/dateFormatter';
-import { buildGoogleCalendarUrl, CALENDAR_ERROR_MESSAGE, downloadIcsEvent } from '../../helper/calendarEvent';
 import ApplicationStatusBadge from '../application/ApplicationStatusBadge';
 import { OFFER_DECISION_CATEGORIES } from './offerDecisionConfig';
 import { calculateOfferDecisionScore } from './offerEvaluation';
-import { buildOfferDeadlineCalendarEvent, buildOfferDeadlineIcsFilename } from './offerDeadlineCalendar';
+import {
+    downloadOfferDeadlineIcs,
+    getOfferStatusActions,
+    openOfferDeadlineInGoogleCalendar,
+} from './offerEvaluationActions';
 import OfferEvaluationForm, { type OfferFieldRefs } from './OfferEvaluationForm';
 import type {
     OfferDecisionApplication,
@@ -183,37 +186,12 @@ const OfferEvaluationActionsMenu = ({
         </PrimaryButton>
     ) : null;
     const handleGoogleCalendar = () => {
-        try {
-            const event = buildOfferDeadlineCalendarEvent(application);
-            window.open(buildGoogleCalendarUrl(event), '_blank', 'noopener,noreferrer');
-        } catch {
-            showErrorToast(CALENDAR_ERROR_MESSAGE);
-        }
+        openOfferDeadlineInGoogleCalendar(application, showErrorToast);
     };
     const handleIcsDownload = () => {
-        try {
-            downloadIcsEvent(buildOfferDeadlineCalendarEvent(application), buildOfferDeadlineIcsFilename(application));
-        } catch {
-            showErrorToast(CALENDAR_ERROR_MESSAGE);
-        }
+        downloadOfferDeadlineIcs(application, showErrorToast);
     };
-    const statusActions: Array<{ label: string; status: OfferDecisionStatus }> =
-        application.job_status === 'Offer'
-            ? [
-                  { label: 'Accept offer', status: 'Accepted' },
-                  { label: 'Decline offer', status: 'Declined' },
-              ]
-            : application.job_status === 'Accepted'
-            ? [
-                  { label: 'Change to Offer', status: 'Offer' },
-                  { label: 'Change to Declined', status: 'Declined' },
-              ]
-            : application.job_status === 'Declined'
-            ? [
-                  { label: 'Change to Offer', status: 'Offer' },
-                  { label: 'Change to Accepted', status: 'Accepted' },
-              ]
-            : [];
+    const statusActions = getOfferStatusActions(application.job_status);
 
     if (!allowCalendarExport && !onUpdateOfferStatus && !allowEdit) {
         return counterofferButton;

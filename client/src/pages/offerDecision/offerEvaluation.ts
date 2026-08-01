@@ -61,7 +61,8 @@ export const normalizeOfferDetails = (details: OfferDetails): OfferDetails => ({
 export const validateOfferEvaluation = (
     request: SaveOfferEvaluationRequest,
     applicationDate: string,
-    decisionDeadlineHasBadInput = false
+    decisionDeadlineHasBadInput = false,
+    monthlyBaseSalaryHasBadInput = false
 ): OfferEvaluationValidationResult => {
     const deadlineInput = request.details.decision_deadline.trim();
     const deadlineIsValid =
@@ -78,7 +79,9 @@ export const validateOfferEvaluation = (
     } else if (!/^[A-Z]{3}$/.test(details.currency)) {
         errors.currency = 'Currency must be a three-letter code such as SGD or USD.';
     }
-    if (details.monthly_base_salary === null) {
+    if (monthlyBaseSalaryHasBadInput) {
+        errors.monthly_base_salary = 'Please enter a valid monthly base salary.';
+    } else if (details.monthly_base_salary === null) {
         errors.monthly_base_salary = 'Monthly base salary is required.';
     } else if (!isWholeNumberInRange(details.monthly_base_salary, OFFER_MONTHLY_BASE_SALARY_MAX)) {
         errors.monthly_base_salary = `Monthly base salary must be a whole number from 0 to ${OFFER_MONTHLY_BASE_SALARY_MAX}.`;

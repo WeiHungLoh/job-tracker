@@ -2,7 +2,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { useConfirm } from 'material-ui-confirm';
 import { JobTrackerAPIError } from '../../../api/models';
@@ -14,6 +14,7 @@ import CounterofferCurrentOffer from './CounterofferCurrentOffer';
 import CounterofferIdealOffer from './CounterofferIdealOffer';
 import {
     buildCounterofferConclusion,
+    counterofferPlanValuesAreEqual,
     createCounterofferPlanFromEvaluation,
     isCounterofferPlanningEligible,
     validateCounterofferPlan,
@@ -48,9 +49,9 @@ const clonePlan = (plan: CounterofferPlan): CounterofferPlan => ({
 
 const getDialogTitle = (mode: DialogMode): string => {
     if (mode === 'create') {
-        return 'Plan counteroffer';
+        return 'Plan Counteroffer';
     }
-    return mode === 'edit' ? 'Edit counteroffer plan' : 'Counteroffer plan';
+    return mode === 'edit' ? 'Edit Counteroffer Plan' : 'Counteroffer Plan';
 };
 
 const CounterofferPlanDialog = ({
@@ -79,14 +80,6 @@ const CounterofferPlanDialog = ({
     const requestIdRef = useRef(0);
 
     const canEdit = application ? isCounterofferPlanningEligible(application, readOnly) : false;
-    const liveErrors = useMemo<CounterofferPlanErrors>(() => {
-        if (!application?.evaluation || !plan || mode === 'view') {
-            return {};
-        }
-        const validation = validateCounterofferPlan(plan, application.evaluation);
-        return !validation.isValid && validation.errors.fit_rating ? { fit_rating: validation.errors.fit_rating } : {};
-    }, [application, mode, plan]);
-    const errors = { ...submittedErrors, ...liveErrors };
 
     const initializeNewPlan = (selectedApplication: OfferDecisionApplication) => {
         const nextPlan = createCounterofferPlanFromEvaluation(selectedApplication.evaluation!);
@@ -185,21 +178,19 @@ const CounterofferPlanDialog = ({
 
     const focusFirstError = (validationErrors: CounterofferPlanErrors) => {
         window.setTimeout(() => {
-            const target =
-                document.getElementById('counteroffer-error-focus') ??
-                document.getElementById(
-                    `counteroffer-${application.job_id}-ideal-${
-                        validationErrors.monthly_base_salary
-                            ? 'monthly-base-salary'
-                            : validationErrors.bonus
-                            ? 'bonus'
-                            : validationErrors.annual_leave_days
-                            ? 'annual-leave'
-                            : validationErrors.work_arrangement
-                            ? 'work-arrangement'
-                            : 'career_growth'
-                    }`
-                );
+            const target = document.getElementById(
+                `counteroffer-${application.job_id}-ideal-${
+                    validationErrors.monthly_base_salary
+                        ? 'monthly-base-salary'
+                        : validationErrors.bonus
+                        ? 'bonus'
+                        : validationErrors.annual_leave_days
+                        ? 'annual-leave'
+                        : validationErrors.work_arrangement
+                        ? 'work-arrangement'
+                        : 'career_growth'
+                }`
+            );
             target?.focus();
             target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
         }, 0);
@@ -218,10 +209,12 @@ const CounterofferPlanDialog = ({
             setSubmittedErrors(validation.errors);
             focusFirstError(validation.errors);
             if (validation.errors.fit_rating) {
-                showErrorToast(
-                    'The Ideal offer has a lower fit rating than the current offer. Review the highlighted ratings before saving.'
-                );
+                showErrorToast('The Ideal offer cannot have a lower fit rating than the current offer.');
             }
+            return;
+        }
+        if (mode === 'edit' && baselinePlan && counterofferPlanValuesAreEqual(validation.request, baselinePlan)) {
+            showErrorToast('Change at least one term or rating for the Ideal offer.');
             return;
         }
 
@@ -352,7 +345,7 @@ const CounterofferPlanDialog = ({
                                 applications
                             )}
                             editable={editable}
-                            errors={errors}
+                            errors={submittedErrors}
                             onChange={updatePlan}
                             plan={plan}
                         />

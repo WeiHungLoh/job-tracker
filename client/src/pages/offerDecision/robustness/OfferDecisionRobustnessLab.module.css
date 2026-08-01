@@ -18,7 +18,6 @@
 .header p,
 .results h4,
 .temporaryNote,
-.disabledMessage,
 .explanation p {
     margin: 0;
 }
@@ -29,7 +28,6 @@
 
 .header p,
 .temporaryNote,
-.disabledMessage,
 .explanation p {
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeControl);
@@ -38,10 +36,6 @@
 
 .header p {
     margin-top: 4px;
-}
-
-.disabledMessage {
-    margin-top: var(--spaceCompact);
 }
 
 .content {

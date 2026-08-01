@@ -1,5 +1,6 @@
 import Icon from '../icon/Icon';
 import PrimaryButton from '../button/PrimaryButton';
+import { createPortal } from 'react-dom';
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
 import type { ControlDropdownProps } from './models';
 import styles from './ControlDropdown.module.css';
@@ -15,6 +16,7 @@ const ControlDropdown = ({
     dropdownRole,
     id,
     label,
+    renderDropdownInPortal = false,
     triggerAriaLabel,
     triggerClassName = '',
     triggerStyle,
@@ -25,12 +27,13 @@ const ControlDropdown = ({
         containerRef,
         dropdownMaxHeight,
         dropdownOffset,
+        dropdownPosition,
         dropdownRef,
         isOpen,
         openAbove,
         toggleDropdown,
         triggerRef,
-    } = useControlDropdown();
+    } = useControlDropdown(renderDropdownInPortal);
     const hasActivityStyle = triggerStyle === 'activity';
     const dropdownId = `${id}-options`;
     const containerClasses = [
@@ -49,6 +52,15 @@ const ControlDropdown = ({
     const dropdownStyle = {
         '--dropdown-max-height': dropdownMaxHeight === null ? undefined : `${dropdownMaxHeight}px`,
         '--dropdown-offset': `${dropdownOffset}px`,
+        ...(renderDropdownInPortal
+            ? {
+                  bottom: 'auto',
+                  left: `${dropdownPosition?.left ?? 0}px`,
+                  position: 'fixed',
+                  top: `${dropdownPosition?.top ?? 0}px`,
+                  visibility: dropdownPosition ? 'visible' : 'hidden',
+              }
+            : {}),
     } as CSSProperties;
     const handleSelect = (event: ReactMouseEvent<HTMLDivElement>) => {
         const target = event.target;
@@ -59,6 +71,20 @@ const ControlDropdown = ({
         closeDropdown();
         triggerRef.current?.focus();
     };
+    const dropdown = (
+        <div
+            aria-label={dropdownAriaLabel}
+            className={dropdownClasses}
+            data-placement={openAbove ? 'top' : 'bottom'}
+            id={dropdownId}
+            onClick={closeOnSelect ? handleSelect : undefined}
+            ref={dropdownRef}
+            role={dropdownRole}
+            style={dropdownStyle}
+        >
+            {children}
+        </div>
+    );
 
     return (
         <div className={containerClasses} ref={containerRef}>
@@ -82,20 +108,7 @@ const ControlDropdown = ({
                 />
             </PrimaryButton>
 
-            {isOpen && (
-                <div
-                    aria-label={dropdownAriaLabel}
-                    className={dropdownClasses}
-                    data-placement={openAbove ? 'top' : 'bottom'}
-                    id={dropdownId}
-                    onClick={closeOnSelect ? handleSelect : undefined}
-                    ref={dropdownRef}
-                    role={dropdownRole}
-                    style={dropdownStyle}
-                >
-                    {children}
-                </div>
-            )}
+            {isOpen && (renderDropdownInPortal ? createPortal(dropdown, document.body) : dropdown)}
         </div>
     );
 };

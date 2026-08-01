@@ -24,6 +24,9 @@ import {
     isOptionalIntegerInRange,
     isOptionalApplicationBoardSortOrder,
     isOptionalApplicationListSortOrder,
+    isOfferDecisionViewMode,
+    isOptionalOfferDecisionViewMode,
+    isOptionalOfferDecisionTableOrientation,
 } from '../dist/http/validation.js';
 
 test('Needs Attention preference validators enforce categories and timing boundaries', () => {
@@ -86,6 +89,25 @@ test('offer comparison filter validators keep active and archived values distinc
     assert.equal(isArchivedOfferDecisionFilterArray(['Evaluated Offers', 'Previous Evaluations']), true);
     assert.equal(isArchivedOfferDecisionFilterArray(['Offers to Evaluate']), false);
     assert.equal(isArchivedOfferDecisionFilterArray('Evaluated Offers'), false);
+});
+
+test('offer comparison table orientation validator accepts only horizontal or vertical', () => {
+    assert.equal(isOptionalOfferDecisionTableOrientation(undefined), true);
+    assert.equal(isOptionalOfferDecisionTableOrientation('horizontal'), true);
+    assert.equal(isOptionalOfferDecisionTableOrientation('vertical'), true);
+    assert.equal(isOptionalOfferDecisionTableOrientation('diagonal'), false);
+});
+
+test('offer comparison view mode validators accept exactly cards and table', () => {
+    assert.equal(isOfferDecisionViewMode('cards'), true);
+    assert.equal(isOfferDecisionViewMode('table'), true);
+    assert.equal(isOfferDecisionViewMode('list'), false);
+    assert.equal(isOfferDecisionViewMode('board'), false);
+    assert.equal(isOfferDecisionViewMode('Cards'), false);
+    assert.equal(isOfferDecisionViewMode(undefined), false);
+    assert.equal(isOptionalOfferDecisionViewMode(undefined), true);
+    assert.equal(isOptionalOfferDecisionViewMode('table'), true);
+    assert.equal(isOptionalOfferDecisionViewMode('list'), false);
 });
 
 test('application sort order constants, defaults, and validators agree', () => {
@@ -196,6 +218,22 @@ test('fresh schema declares Needs Attention defaults and database timing constra
         setupSql,
         /archived_offer_decision_filters <@[\s\S]*?CARDINALITY\(archived_offer_decision_filters\) =/
     );
+    assert.match(
+        setupSql,
+        /offer_decision_view_mode TEXT NOT NULL DEFAULT 'cards'[\s\S]*?CHECK \(offer_decision_view_mode IN \('cards', 'table'\)\)/
+    );
+    assert.match(
+        setupSql,
+        /archived_offer_decision_view_mode TEXT NOT NULL DEFAULT 'cards'[\s\S]*?CHECK \(archived_offer_decision_view_mode IN \('cards', 'table'\)\)/
+    );
+    assert.match(
+        setupSql,
+        /offer_decision_table_orientation TEXT NOT NULL DEFAULT 'horizontal'[\s\S]*?CHECK \(offer_decision_table_orientation IN \('horizontal', 'vertical'\)\)/
+    );
+    assert.match(
+        setupSql,
+        /archived_offer_decision_table_orientation TEXT NOT NULL DEFAULT 'horizontal'[\s\S]*?CHECK \(archived_offer_decision_table_orientation IN \('horizontal', 'vertical'\)\)/
+    );
     assert.doesNotMatch(setupSql, /ALTER TABLE/);
 });
 
@@ -223,6 +261,10 @@ test('user preference queries read and update every preference field with indepe
         archived_interview_time_filters: ['Past Interviews'],
         offer_decision_filters: ['Offers to Evaluate', 'Evaluated Offers'],
         archived_offer_decision_filters: ['Previous Evaluations'],
+        offer_decision_view_mode: 'table',
+        archived_offer_decision_view_mode: 'cards',
+        offer_decision_table_orientation: 'vertical',
+        archived_offer_decision_table_orientation: 'horizontal',
         needs_attention_categories: ['offer-evaluation', 'application-follow-up'],
         needs_attention_max_items: 12,
         needs_attention_offer_due_days: 4,
@@ -254,6 +296,10 @@ test('user preference queries read and update every preference field with indepe
         'archived_interview_show_notes',
         'offer_decision_filters',
         'archived_offer_decision_filters',
+        'offer_decision_view_mode',
+        'archived_offer_decision_view_mode',
+        'offer_decision_table_orientation',
+        'archived_offer_decision_table_orientation',
         'needs_attention_categories',
         'needs_attention_max_items',
         'needs_attention_offer_due_days',
@@ -283,11 +329,21 @@ test('user preference queries read and update every preference field with indepe
     assert.match(calls[1].sql, /archived_interview_time_filters = COALESCE\(\$19, archived_interview_time_filters\)/);
     assert.match(calls[1].sql, /offer_decision_filters = COALESCE\(\$20, offer_decision_filters\)/);
     assert.match(calls[1].sql, /archived_offer_decision_filters = COALESCE\(\$21, archived_offer_decision_filters\)/);
-    assert.match(calls[1].sql, /needs_attention_categories = COALESCE\(\$22, needs_attention_categories\)/);
-    assert.match(calls[1].sql, /needs_attention_max_items = COALESCE\(\$23, needs_attention_max_items\)/);
+    assert.match(calls[1].sql, /offer_decision_view_mode = COALESCE\(\$22, offer_decision_view_mode\)/);
     assert.match(
         calls[1].sql,
-        /needs_attention_application_follow_up_days =[\s\S]*?COALESCE\(\$29, needs_attention_application_follow_up_days\)/
+        /archived_offer_decision_view_mode = COALESCE\(\$23, archived_offer_decision_view_mode\)/
+    );
+    assert.match(calls[1].sql, /offer_decision_table_orientation = COALESCE\(\$24, offer_decision_table_orientation\)/);
+    assert.match(
+        calls[1].sql,
+        /archived_offer_decision_table_orientation = COALESCE\(\$25, archived_offer_decision_table_orientation\)/
+    );
+    assert.match(calls[1].sql, /needs_attention_categories = COALESCE\(\$26, needs_attention_categories\)/);
+    assert.match(calls[1].sql, /needs_attention_max_items = COALESCE\(\$27, needs_attention_max_items\)/);
+    assert.match(
+        calls[1].sql,
+        /needs_attention_application_follow_up_days =[\s\S]*?COALESCE\(\$33, needs_attention_application_follow_up_days\)/
     );
     assert.deepEqual(calls[1].values, [
         42,
@@ -311,6 +367,10 @@ test('user preference queries read and update every preference field with indepe
         ['Past Interviews'],
         ['Offers to Evaluate', 'Evaluated Offers'],
         ['Previous Evaluations'],
+        'table',
+        'cards',
+        'vertical',
+        'horizontal',
         ['offer-evaluation', 'application-follow-up'],
         12,
         4,
@@ -336,7 +396,7 @@ test('omitted sort preferences remain undefined for SQL COALESCE preservation', 
         pool.query = originalQuery;
     }
 
-    assert.equal(values.length, 29);
+    assert.equal(values.length, 33);
     assert.equal(values[0], 9);
     assert.equal(values[12], 'company_name_asc');
     assert.equal(
@@ -344,11 +404,11 @@ test('omitted sort preferences remain undefined for SQL COALESCE preservation', 
         true
     );
     assert.equal(
-        values.slice(13, 21).every((value) => value === undefined),
+        values.slice(13, 23).every((value) => value === undefined),
         true
     );
     assert.equal(
-        values.slice(21).every((value) => value === undefined),
+        values.slice(23).every((value) => value === undefined),
         true
     );
 });

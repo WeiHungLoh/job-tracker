@@ -21,7 +21,7 @@ export const isCounterofferPlanDeletionRequiredError = (error: unknown): boolean
     typeof error.data === 'object' &&
     error.data !== null &&
     'code' in error.data &&
-    error.data.code === 'OFFER_EVALUATION_BELOW_COUNTEROFFER';
+    error.data.code === 'OFFER_EVALUATION_ABOVE_COUNTEROFFER';
 
 export const isCounterofferPlanningEligible = (
     application: OfferDecisionApplication,

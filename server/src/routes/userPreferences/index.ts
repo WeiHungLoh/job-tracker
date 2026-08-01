@@ -17,6 +17,8 @@ import {
     isOptionalBoolean,
     isNeedsAttentionCategoryArray,
     isOptionalIntegerInRange,
+    isOptionalOfferDecisionViewMode,
+    isOptionalOfferDecisionTableOrientation,
 } from '../../http/validation.js';
 import express from 'express';
 import { NEEDS_ATTENTION_LIMITS } from '../../config/validation.js';
@@ -70,6 +72,10 @@ router.patch(
             archived_interview_time_filters,
             offer_decision_filters,
             archived_offer_decision_filters,
+            offer_decision_view_mode,
+            archived_offer_decision_view_mode,
+            offer_decision_table_orientation,
+            archived_offer_decision_table_orientation,
             needs_attention_categories,
             needs_attention_max_items,
             needs_attention_offer_due_days,
@@ -112,6 +118,20 @@ router.patch(
             !isArchivedOfferDecisionFilterArray(archived_offer_decision_filters)
         ) {
             sendError(res, 422, 'Archived offer comparison filter preferences must contain only supported values.');
+            return;
+        }
+        if (
+            !isOptionalOfferDecisionViewMode(offer_decision_view_mode) ||
+            !isOptionalOfferDecisionViewMode(archived_offer_decision_view_mode)
+        ) {
+            sendError(res, 422, 'Offer comparison view mode preferences must be cards or table.');
+            return;
+        }
+        if (
+            !isOptionalOfferDecisionTableOrientation(offer_decision_table_orientation) ||
+            !isOptionalOfferDecisionTableOrientation(archived_offer_decision_table_orientation)
+        ) {
+            sendError(res, 422, 'Offer comparison table orientation preferences must be horizontal or vertical.');
             return;
         }
         if (needs_attention_categories !== undefined && !isNeedsAttentionCategoryArray(needs_attention_categories)) {

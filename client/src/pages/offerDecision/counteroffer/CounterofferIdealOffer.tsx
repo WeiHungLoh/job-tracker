@@ -76,6 +76,9 @@ const CounterofferIdealOffer = ({
     const idPrefix = `counteroffer-${application.job_id}-ideal`;
     const result = calculateCounterofferPlanResult(evaluation, plan);
     const requestedChanges = buildCounterofferRequestedChanges(evaluation, plan);
+    const ratingsChanged = OFFER_DECISION_CATEGORIES.some(
+        (category) => evaluation.ratings[category.key] !== plan.ratings[category.key]
+    );
     const updatePlan = (changes: Partial<CounterofferPlan>) => onChange({ ...plan, ...changes });
     const updateRating = (category: OfferDecisionCategory, rating: OfferDecisionRating) =>
         updatePlan({ ratings: { ...plan.ratings, [category]: rating } });
@@ -298,23 +301,7 @@ const CounterofferIdealOffer = ({
                     </div>
                 </dl>
                 <p>{conclusion}</p>
-                <CounterofferRequestedChanges changes={requestedChanges} />
-                <OfferDecisionFieldError
-                    className={styles.fieldError}
-                    id='counteroffer-fit-error'
-                    message={errors.fit_rating}
-                />
-                {errors.fit_rating && (
-                    <span
-                        aria-describedby='counteroffer-fit-error'
-                        aria-label='Ideal offer fit rating error'
-                        className={styles.focusTarget}
-                        id='counteroffer-error-focus'
-                        tabIndex={-1}
-                    >
-                        Review the Ideal offer
-                    </span>
-                )}
+                <CounterofferRequestedChanges changes={requestedChanges} ratingsChanged={ratingsChanged} />
             </section>
         </section>
     );

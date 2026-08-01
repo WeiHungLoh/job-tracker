@@ -5,10 +5,10 @@ import styles from './ActivityControls.module.css';
 const ActivityControls = ({ actions, ariaLabel, children, mobileLayout }: ActivityControlsProps) => {
     const childItems = Children.toArray(children);
     const primaryControls =
-        mobileLayout === 'interviewResponsive' ? (
+        mobileLayout === 'collectionResponsive' ? (
             <>
-                <div className={styles.interviewViewControl}>{childItems[0]}</div>
-                <div className={styles.interviewSecondaryControls}>{childItems.slice(1)}</div>
+                <div className={styles.viewControl}>{childItems[0]}</div>
+                <div className={styles.secondaryControls}>{childItems.slice(1)}</div>
             </>
         ) : (
             children

@@ -60,7 +60,7 @@ const applications: EvaluatedOfferDecisionApplication[] = [
 
 describe('OfferDecisionRobustnessLab', () => {
     test('opens with balanced importance and explains the result in plain language', () => {
-        render(<OfferDecisionRobustnessLab applications={applications} disabled={false} />);
+        render(<OfferDecisionRobustnessLab applications={applications} />);
 
         const openButton = screen.getByRole('button', { name: 'Try priorities' });
         expect(openButton).toHaveAttribute('aria-expanded', 'false');
@@ -94,7 +94,7 @@ describe('OfferDecisionRobustnessLab', () => {
     });
 
     test('updates the ranking, resets to balanced and discards state on close', () => {
-        render(<OfferDecisionRobustnessLab applications={applications} disabled={false} />);
+        render(<OfferDecisionRobustnessLab applications={applications} />);
         fireEvent.click(screen.getByRole('button', { name: 'Try priorities' }));
 
         const growthInput = screen.getByLabelText('Career Growth importance');
@@ -122,18 +122,18 @@ describe('OfferDecisionRobustnessLab', () => {
         expect(screen.getByLabelText('Career Growth importance')).toHaveValue('3');
     });
 
-    test('explains and disables temporary controls while an evaluation draft is open', () => {
-        render(<OfferDecisionRobustnessLab applications={applications} disabled />);
+    test('keeps temporary priority controls available', () => {
+        render(<OfferDecisionRobustnessLab applications={applications} />);
         const openButton = screen.getByRole('button', { name: 'Try priorities' });
 
-        expect(openButton).toBeDisabled();
-        expect(
-            screen.getByText('Save or cancel the open evaluation before trying different priorities.')
-        ).toBeInTheDocument();
+        expect(openButton).toBeEnabled();
+        fireEvent.click(openButton);
+        expect(screen.getByLabelText('Career Growth importance')).toBeEnabled();
+        expect(screen.getByRole('button', { name: 'Reset importance to balanced' })).toBeEnabled();
     });
 
     test('renders nothing with fewer than two evaluated offers', () => {
-        render(<OfferDecisionRobustnessLab applications={[applications[0]]} disabled={false} />);
+        render(<OfferDecisionRobustnessLab applications={[applications[0]]} />);
 
         expect(screen.queryByText('Try different priorities')).not.toBeInTheDocument();
     });

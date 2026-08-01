@@ -1,0 +1,55 @@
+.dialogPaper {
+    max-height: 90dvh;
+    overflow: hidden;
+    background-color: var(--colorCardBg);
+}
+
+.dialogTitle {
+    padding: var(--spaceCard) var(--spaceSection) !important;
+    color: var(--colorText);
+}
+
+.dialogContent {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0 var(--spaceSection) var(--spaceSection) !important;
+}
+
+.editor {
+    color: var(--colorText);
+}
+
+.editor h2 {
+    margin: 0;
+    color: var(--colorText);
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+}
+
+.editor header p {
+    overflow-wrap: anywhere;
+}
+
+.dialogActions {
+    flex-wrap: wrap;
+    padding: var(--spaceCompact) var(--spaceSection) !important;
+    background-color: var(--colorCardBg);
+}
+
+@media (max-width: 768px) {
+    .dialogTitle {
+        padding: var(--spaceCard) !important;
+    }
+
+    .dialogContent {
+        padding: 0 var(--spaceCard) var(--spaceCard) !important;
+    }
+
+    .dialogActions {
+        padding: var(--spaceCompact) var(--spaceCard) !important;
+    }
+
+    .editor h2 {
+        font-size: 1.2rem;
+    }
+}

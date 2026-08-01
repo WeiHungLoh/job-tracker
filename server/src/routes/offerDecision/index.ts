@@ -165,11 +165,11 @@ router.put(
                     res,
                     422,
                     'COUNTEROFFER_FIT_BELOW_CURRENT',
-                    'The Ideal offer must have a fit rating at least as high as the current offer.'
+                    'The Ideal offer cannot have a lower fit rating than the current offer.'
                 );
                 return;
             }
-            if (result === 'unchanged_from_current') {
+            if (result === 'unchanged_from_current' || result === 'unchanged_from_saved') {
                 sendCodedError(
                     res,
                     422,
@@ -230,19 +230,28 @@ router.put(
         try {
             const result = await saveOfferEvaluation(req.user.id, jobId, req.body);
             if (result === 'application_unavailable') {
-                sendError(res, 409, 'Only active applications with Offer status can be saved.');
+                sendError(res, 409, 'Only active applications can be saved.');
                 return;
             }
             if (result === 'deadline_before_application') {
                 sendError(res, 422, 'Decision deadline cannot be earlier than the application date.');
                 return;
             }
-            if (result === 'counteroffer_above_evaluation') {
+            if (result === 'evaluation_above_counteroffer') {
                 sendCodedError(
                     res,
                     409,
-                    'OFFER_EVALUATION_BELOW_COUNTEROFFER',
-                    'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.'
+                    'OFFER_EVALUATION_ABOVE_COUNTEROFFER',
+                    'This evaluation fit rating is higher than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.'
+                );
+                return;
+            }
+            if (result === 'unchanged') {
+                sendCodedError(
+                    res,
+                    422,
+                    'OFFER_EVALUATION_UNCHANGED',
+                    'Change at least one evaluation field before saving.'
                 );
                 return;
             }

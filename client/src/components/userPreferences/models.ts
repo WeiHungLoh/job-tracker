@@ -1,7 +1,12 @@
 import type { ApplicationBoardSortOrder, ApplicationListSortOrder, JobStatus } from '../../pages/application/models';
 import type { CollectionViewMode } from '../activityControls/collectionViewToggle/models';
 import type { InterviewTimeFilter } from '../../helper/interviewTiming';
-import type { ArchivedOfferDecisionFilter, OfferDecisionFilter } from '../../pages/offerDecision/models';
+import type {
+    ArchivedOfferDecisionFilter,
+    OfferDecisionFilter,
+    OfferDecisionTableOrientation,
+    OfferDecisionViewMode,
+} from '../../pages/offerDecision/models';
 
 export type NeedsAttentionCategory =
     | 'offer-decision-due'
@@ -34,6 +39,10 @@ export type UserPreferences = {
     archived_interview_time_filters: InterviewTimeFilter[];
     offer_decision_filters: OfferDecisionFilter[];
     archived_offer_decision_filters: ArchivedOfferDecisionFilter[];
+    offer_decision_view_mode: OfferDecisionViewMode;
+    archived_offer_decision_view_mode: OfferDecisionViewMode;
+    offer_decision_table_orientation: OfferDecisionTableOrientation;
+    archived_offer_decision_table_orientation: OfferDecisionTableOrientation;
     needs_attention_categories: NeedsAttentionCategory[];
     needs_attention_max_items: number;
     needs_attention_offer_due_days: number;

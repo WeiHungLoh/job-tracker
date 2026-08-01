@@ -41,12 +41,15 @@ type OfferEvaluationFormProps = {
     application: OfferDecisionApplication;
     errors: OfferEvaluationFormErrors;
     evaluation: OfferEvaluation;
+    formRef?: RefObject<HTMLFormElement | null>;
+    formId?: string;
     isSaving: boolean;
     onCancel: () => void;
     onDecisionDeadlineValidityChange: (hasBadInput: boolean) => void;
     onDetailsChange: (details: OfferDetails, field: keyof OfferEvaluationFormErrors) => void;
     onRatingChange: (category: OfferDecisionCategory, value: OfferDecisionRating) => void;
     onSave: (decisionDeadlineHasBadInput: boolean, refs: OfferFieldRefs) => void;
+    showActions?: boolean;
 };
 
 const RatingFields = ({
@@ -271,12 +274,15 @@ const OfferEvaluationForm = ({
     application,
     errors,
     evaluation,
+    formRef,
+    formId,
     isSaving,
     onCancel,
     onDecisionDeadlineValidityChange,
     onDetailsChange,
     onRatingChange,
     onSave,
+    showActions = true,
 }: OfferEvaluationFormProps) => {
     const decisionDeadlineInputRef = useRef<HTMLInputElement>(null);
     const currencyInputRef = useRef<HTMLInputElement>(null);
@@ -326,7 +332,7 @@ const OfferEvaluationForm = ({
     };
 
     return (
-        <form noValidate onKeyDown={handleFormKeyDown} onSubmit={submitEvaluation}>
+        <form id={formId} ref={formRef} noValidate onKeyDown={handleFormKeyDown} onSubmit={submitEvaluation}>
             <fieldset className={styles.detailsFields}>
                 <legend>Decision timing</legend>
                 <label className={styles.textField} htmlFor={`decision-deadline-${application.job_id}`}>
@@ -374,24 +380,26 @@ const OfferEvaluationForm = ({
                 evaluation={evaluation}
                 onChange={onRatingChange}
             />
-            <div className={styles.cardActions}>
-                <PrimaryButton
-                    aria-label={`Cancel evaluation for ${application.company_name}`}
-                    disabled={isSaving}
-                    onClick={cancelEvaluation}
-                    type='button'
-                    variant='secondary'
-                >
-                    Cancel
-                </PrimaryButton>
-                <PrimaryButton
-                    aria-label={`Save evaluation for ${application.company_name}`}
-                    isLoading={isSaving}
-                    type='submit'
-                >
-                    Save evaluation
-                </PrimaryButton>
-            </div>
+            {showActions && (
+                <div className={styles.cardActions}>
+                    <PrimaryButton
+                        aria-label={`Cancel evaluation for ${application.company_name}`}
+                        disabled={isSaving}
+                        onClick={cancelEvaluation}
+                        type='button'
+                        variant='secondary'
+                    >
+                        Cancel
+                    </PrimaryButton>
+                    <PrimaryButton
+                        aria-label={`Save evaluation for ${application.company_name}`}
+                        isLoading={isSaving}
+                        type='submit'
+                    >
+                        Save evaluation
+                    </PrimaryButton>
+                </div>
+            )}
         </form>
     );
 };

@@ -264,6 +264,19 @@ describe('offer evaluation', () => {
         });
     });
 
+    test('rejects malformed monthly salary input reported by native input validity', () => {
+        const request = {
+            ...validRequest,
+            details: { ...validRequest.details, monthly_base_salary: null },
+        };
+        const validation = validateOfferEvaluation(request, '2026-07-18T08:00:00.000Z', false, true);
+
+        expect(validation).toEqual({
+            isValid: false,
+            errors: { monthly_base_salary: 'Please enter a valid monthly base salary.' },
+        });
+    });
+
     test('compares every rating and detail field without using object identity', () => {
         const first = createEvaluation(11, validRequest.ratings, validDeadlineTimestamp);
         const clone = { ...first, ratings: { ...first.ratings }, details: { ...first.details } };

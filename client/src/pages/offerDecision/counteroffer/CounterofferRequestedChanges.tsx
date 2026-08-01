@@ -3,13 +3,16 @@ import styles from './CounterofferPlanDialog.module.css';
 
 type CounterofferRequestedChangesProps = {
     changes: CounterofferRequestedChange[];
+    ratingsChanged: boolean;
 };
 
-const CounterofferRequestedChanges = ({ changes }: CounterofferRequestedChangesProps) => (
+const CounterofferRequestedChanges = ({ changes, ratingsChanged }: CounterofferRequestedChangesProps) => (
     <section aria-labelledby='counteroffer-requested-changes-heading' className={styles.requestedChanges}>
         <h5 id='counteroffer-requested-changes-heading'>Requested Changes</h5>
         {changes.length === 0 ? (
-            <p className={styles.noRequestedChanges}>No changes in offer fields (only ratings changed).</p>
+            <p className={styles.noRequestedChanges}>
+                {ratingsChanged ? 'No changes in offer fields (only ratings changed).' : 'No requested changes yet.'}
+            </p>
         ) : (
             <ul className={styles.requestedChangeList}>
                 {changes.map((change) => {

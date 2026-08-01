@@ -1,7 +1,13 @@
 export type CollectionViewMode = 'list' | 'board';
 
-export type CollectionViewToggleProps = {
+export type CollectionViewToggleOption<ViewMode extends string> = {
+    label: string;
+    value: ViewMode;
+};
+
+export type CollectionViewToggleProps<ViewMode extends string = CollectionViewMode> = {
     ariaLabel: string;
-    currentView: CollectionViewMode;
-    onViewChange: (viewMode: CollectionViewMode) => void;
+    currentView: ViewMode;
+    onViewChange: (viewMode: ViewMode) => void;
+    options?: readonly CollectionViewToggleOption<ViewMode>[];
 };

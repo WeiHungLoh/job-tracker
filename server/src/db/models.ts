@@ -8,6 +8,8 @@ export type JobStatus =
     | 'Ghosted'
     | 'Rejected';
 export type CollectionViewMode = 'list' | 'board';
+export type OfferDecisionViewMode = 'cards' | 'table';
+export type OfferDecisionTableOrientation = 'horizontal' | 'vertical';
 
 export type InterviewTimeFilter = 'Upcoming Interviews' | 'Past Interviews';
 
@@ -336,6 +338,10 @@ export type UserPreferences = {
     archived_interview_time_filters: InterviewTimeFilter[];
     offer_decision_filters: OfferDecisionFilter[];
     archived_offer_decision_filters: ArchivedOfferDecisionFilter[];
+    offer_decision_view_mode: OfferDecisionViewMode;
+    archived_offer_decision_view_mode: OfferDecisionViewMode;
+    offer_decision_table_orientation: OfferDecisionTableOrientation;
+    archived_offer_decision_table_orientation: OfferDecisionTableOrientation;
     needs_attention_categories: NeedsAttentionCategory[];
     needs_attention_max_items: number;
     needs_attention_offer_due_days: number;

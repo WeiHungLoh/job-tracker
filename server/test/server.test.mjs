@@ -137,6 +137,30 @@ test('creates new user preference rows with enabled display defaults', async () 
     );
     assert.match(userPreferencesTable, /user_preferences_offer_decision_filters_check/);
     assert.match(userPreferencesTable, /user_preferences_archived_offer_decision_filters_check/);
+    assert.match(userPreferencesTable, /offer_decision_view_mode TEXT NOT NULL DEFAULT 'cards'/);
+    assert.match(userPreferencesTable, /archived_offer_decision_view_mode TEXT NOT NULL DEFAULT 'cards'/);
+    assert.match(userPreferencesTable, /user_preferences_offer_decision_view_mode_check/);
+    assert.match(userPreferencesTable, /user_preferences_archived_offer_decision_view_mode_check/);
+    assert.match(userPreferencesTable, /user_preferences_offer_decision_table_orientation_check/);
+    assert.match(userPreferencesTable, /user_preferences_archived_offer_decision_table_orientation_check/);
+});
+
+test('keeps live Offer Comparison view preference migration separate from fresh-schema creation', async () => {
+    const migrationSource = await readFile(
+        new URL('../sql/add_offer_decision_view_preferences.sql', import.meta.url),
+        'utf8'
+    );
+    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+
+    assert.match(migrationSource, /ADD COLUMN IF NOT EXISTS offer_decision_view_mode/);
+    assert.match(migrationSource, /ADD COLUMN IF NOT EXISTS archived_offer_decision_view_mode/);
+    assert.match(migrationSource, /ADD COLUMN IF NOT EXISTS offer_decision_table_orientation/);
+    assert.match(migrationSource, /ADD COLUMN IF NOT EXISTS archived_offer_decision_table_orientation/);
+    assert.match(migrationSource, /user_preferences_offer_decision_view_mode_check/);
+    assert.match(migrationSource, /user_preferences_archived_offer_decision_view_mode_check/);
+    assert.match(migrationSource, /user_preferences_offer_decision_table_orientation_check/);
+    assert.match(migrationSource, /user_preferences_archived_offer_decision_table_orientation_check/);
+    assert.doesNotMatch(createTablesSource, /ALTER TABLE user_preferences/);
 });
 
 test('creates job applications with a persistent false pin default without startup migration SQL', async () => {
@@ -508,6 +532,46 @@ test('returns 422 for unsupported interview view modes', async () => {
     assert.deepEqual(await response.json(), { message: 'View mode preferences must be list or board.' });
 });
 
+test('returns 422 for unsupported active and archived offer comparison view modes', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+
+    for (const field of ['offer_decision_view_mode', 'archived_offer_decision_view_mode']) {
+        const response = await fetch(`${baseUrl}/user-preferences`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify({ [field]: 'list' }),
+        });
+
+        assert.equal(response.status, 422);
+        assert.deepEqual(await response.json(), {
+            message: 'Offer comparison view mode preferences must be cards or table.',
+        });
+    }
+});
+
+test('returns 422 for unsupported active and archived offer comparison table orientations', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+
+    for (const field of ['offer_decision_table_orientation', 'archived_offer_decision_table_orientation']) {
+        const response = await fetch(`${baseUrl}/user-preferences`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Cookie: `access_token=${token}`,
+            },
+            body: JSON.stringify({ [field]: 'diagonal' }),
+        });
+
+        assert.equal(response.status, 422);
+        assert.deepEqual(await response.json(), {
+            message: 'Offer comparison table orientation preferences must be horizontal or vertical.',
+        });
+    }
+});
+
 test('returns 422 for unsupported active and archived interview time filters', async () => {
     const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
 
@@ -631,6 +695,10 @@ test('saves a supported application sort preference and returns the complete pre
         archived_interview_time_filters: ['Upcoming Interviews', 'Past Interviews'],
         offer_decision_filters: ['Offers to Evaluate', 'Evaluated Offers'],
         archived_offer_decision_filters: ['Previous Evaluations'],
+        offer_decision_view_mode: 'table',
+        archived_offer_decision_view_mode: 'cards',
+        offer_decision_table_orientation: 'horizontal',
+        archived_offer_decision_table_orientation: 'vertical',
         needs_attention_categories: ['offer-evaluation', 'application-follow-up'],
         needs_attention_max_items: 10,
         needs_attention_offer_due_days: 3,
@@ -659,7 +727,7 @@ test('saves a supported application sort preference and returns the complete pre
 
         assert.equal(response.status, 200);
         assert.deepEqual(await response.json(), storedPreferences);
-        assert.equal(queryValues.length, 29);
+        assert.equal(queryValues.length, 33);
         assert.equal(queryValues[0], TEST_USER.id);
         assert.equal(queryValues[12], 'company_name_desc');
     } finally {

@@ -34,6 +34,7 @@ const JOB_STATUS_SQL_ARRAY = `ARRAY[${JOB_STATUS_SQL_VALUES}]::TEXT[]`;
 const JOB_STATUS_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(JOB_STATUSES, 'application_job_statuses');
 const ARCHIVED_JOB_STATUS_UNIQUE_COUNT_SQL = toSQLUniqueArrayCount(JOB_STATUSES, 'archived_application_job_statuses');
 const COLLECTION_VIEW_MODE_SQL_VALUES = "'list', 'board'";
+const OFFER_DECISION_VIEW_MODE_SQL_VALUES = "'cards', 'table'";
 const APPLICATION_LIST_SORT_ORDER_SQL_VALUES = toSQLTextValues(APPLICATION_LIST_SORT_ORDERS);
 const APPLICATION_BOARD_SORT_ORDER_SQL_VALUES = toSQLTextValues(APPLICATION_BOARD_SORT_ORDERS);
 const INTERVIEW_TIME_FILTER_SQL_VALUES = toSQLTextValues(INTERVIEW_TIME_FILTERS);
@@ -319,6 +320,18 @@ const createTables = async (): Promise<void> => {
                     archived_offer_decision_filters <@ ${ARCHIVED_OFFER_DECISION_FILTER_SQL_ARRAY}
                     AND CARDINALITY(archived_offer_decision_filters) = (${ARCHIVED_OFFER_DECISION_FILTER_UNIQUE_COUNT_SQL})
                 ),
+            offer_decision_view_mode TEXT NOT NULL DEFAULT 'cards'
+                CONSTRAINT user_preferences_offer_decision_view_mode_check
+                CHECK (offer_decision_view_mode IN (${OFFER_DECISION_VIEW_MODE_SQL_VALUES})),
+            archived_offer_decision_view_mode TEXT NOT NULL DEFAULT 'cards'
+                CONSTRAINT user_preferences_archived_offer_decision_view_mode_check
+                CHECK (archived_offer_decision_view_mode IN (${OFFER_DECISION_VIEW_MODE_SQL_VALUES})),
+            offer_decision_table_orientation TEXT NOT NULL DEFAULT 'horizontal'
+                CONSTRAINT user_preferences_offer_decision_table_orientation_check
+                CHECK (offer_decision_table_orientation IN ('horizontal', 'vertical')),
+            archived_offer_decision_table_orientation TEXT NOT NULL DEFAULT 'horizontal'
+                CONSTRAINT user_preferences_archived_offer_decision_table_orientation_check
+                CHECK (archived_offer_decision_table_orientation IN ('horizontal', 'vertical')),
             needs_attention_categories TEXT[] NOT NULL DEFAULT ${NEEDS_ATTENTION_CATEGORY_SQL_ARRAY}
                 CONSTRAINT user_preferences_needs_attention_categories_check
                 CHECK (

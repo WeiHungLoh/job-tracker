@@ -178,6 +178,11 @@
     line-height: 1.45;
 }
 
+.textField select {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
 .textField input:focus,
 .textField select:focus,
 .textField textarea:focus {

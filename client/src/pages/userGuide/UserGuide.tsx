@@ -364,7 +364,7 @@ const guideSections: readonly UserGuideSection[] = [
                     plan. It never alters the saved evaluation or application status.
                 </p>
                 <p>
-                    If an edited evaluation would have a lower Fit rating than its saved counteroffer plan, the server
+                    If an edited evaluation would have a higher Fit rating than its saved counteroffer plan, the server
                     rejects the first evaluation save and asks whether to delete the counteroffer plan. Confirming
                     deletes that plan and retries the evaluation save; cancelling keeps the evaluation form open.
                 </p>

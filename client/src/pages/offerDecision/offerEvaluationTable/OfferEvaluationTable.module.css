@@ -1,0 +1,196 @@
+.tableScroll {
+    max-width: 100%;
+    max-height: min(70vh, 720px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--colorCardBorder);
+    border-radius: var(--radiusControl);
+    background-color: var(--colorCardBg);
+    box-sizing: border-box;
+    isolation: isolate;
+}
+
+.tableScroll:focus-visible {
+    outline: 2px solid var(--colorControlFocusRing);
+    outline-offset: 2px;
+}
+
+.table {
+    width: 100%;
+    min-width: 2295px;
+    border-spacing: 0;
+    border-collapse: separate;
+    color: var(--colorText);
+    font-size: var(--fontSizeBody);
+    table-layout: fixed;
+}
+
+.table.offersToEvaluate {
+    min-width: 850px;
+}
+
+.table.previous {
+    min-width: 2410px;
+}
+
+.verticalScroll {
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.table.vertical {
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+}
+
+.verticalFieldColumn {
+    width: 220px;
+}
+
+.verticalRecordColumn {
+    width: 280px;
+    min-width: 280px;
+}
+
+.rowNumberColumn {
+    width: 75px;
+}
+
+.companyColumn {
+    width: 145px;
+}
+
+.positionColumn {
+    width: 155px;
+}
+
+.statusColumn {
+    width: 115px;
+}
+
+.deadlineColumn {
+    width: 220px;
+}
+
+.fitRatingColumn,
+.annualLeaveColumn {
+    width: 95px;
+}
+
+.ratingColumn {
+    width: 105px;
+}
+
+.cultureRatingColumn,
+.workArrangementColumn {
+    width: 135px;
+}
+
+.workLifeRatingColumn,
+.bonusColumn {
+    width: 125px;
+}
+
+.compensationRatingColumn,
+.salaryColumn {
+    width: 145px;
+}
+
+.notesColumn {
+    width: 215px;
+}
+
+.actionsColumn {
+    width: 165px;
+}
+
+.unevaluatedCompanyColumn,
+.unevaluatedPositionColumn {
+    width: 305px;
+}
+
+.table th,
+.table td {
+    padding: 12px 16px;
+    border-right: 1px solid var(--colorCardBorder);
+    border-bottom: 1px solid var(--colorCardBorder);
+    line-height: 1.45;
+    text-align: left;
+    vertical-align: top;
+}
+
+.table th:last-child,
+.table td:last-child {
+    border-right: 0;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background-color: var(--colorControlMutedSurface);
+    color: var(--colorText);
+    font-weight: 700;
+}
+
+.table.vertical tbody th {
+    position: sticky;
+    left: 0;
+    z-index: 40;
+    background-color: var(--colorControlMutedSurface);
+    font-weight: 700;
+}
+
+.wrappingCell {
+    white-space: normal;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.nowrapCell {
+    white-space: nowrap;
+}
+
+.actionTrigger,
+.directAction {
+    height: 35px;
+    box-sizing: border-box;
+}
+
+.actionTrigger {
+    width: auto;
+    min-width: 104px;
+    padding-inline: 12px;
+    gap: 8px;
+    border: 1.5px solid var(--colorPrimary);
+    background: transparent;
+    color: var(--colorPrimary);
+}
+
+.directAction {
+    width: auto;
+    min-width: 104px;
+    white-space: nowrap;
+}
+
+.actionTrigger:not(:disabled):hover {
+    border-color: var(--colorPrimary);
+    background: var(--colorBtnSecondaryHoverBg);
+    color: var(--colorPrimary);
+}
+
+.actionDropdown {
+    width: max-content;
+    min-width: min(360px, calc(100vw - 48px));
+    max-width: min(520px, calc(100vw - 48px));
+}
+
+.actionOption {
+    white-space: nowrap;
+}

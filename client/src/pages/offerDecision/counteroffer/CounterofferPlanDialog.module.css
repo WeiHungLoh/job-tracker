@@ -192,6 +192,11 @@
     color: var(--colorTextSecondary);
 }
 
+.field select {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
 .field input:focus,
 .field select:focus {
     border-color: var(--colorPrimary);
@@ -453,20 +458,6 @@
     border-left-color: var(--colorToastSuccessAccent);
     background-color: var(--colorToastSuccessBg);
     color: var(--colorToastSuccessText);
-}
-
-.focusTarget {
-    display: inline-block;
-    margin-top: var(--spaceControl);
-    color: var(--colorToastErrorText);
-    font-size: var(--fontSizeCompactControl);
-    font-weight: 700;
-}
-
-.focusTarget:focus {
-    border-radius: 4px;
-    outline: 3px solid var(--colorPrimaryFocusShadow);
-    outline-offset: 2px;
 }
 
 .loadingState,

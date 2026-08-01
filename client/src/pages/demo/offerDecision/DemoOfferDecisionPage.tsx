@@ -48,11 +48,11 @@ const DemoOfferDecisionPage = ({ archived }: DemoOfferDecisionPageProps) => {
         const counterofferPlan = state.counterofferPlans[jobId];
         if (
             counterofferPlan &&
-            calculateOfferDecisionScore(request.ratings) < calculateOfferDecisionScore(counterofferPlan.ratings) &&
+            calculateOfferDecisionScore(request.ratings) > calculateOfferDecisionScore(counterofferPlan.ratings) &&
             !request.deleteCounterofferPlan
         ) {
-            throw new JobTrackerAPIError('The offer evaluation is below the counteroffer plan.', 409, {
-                code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+            throw new JobTrackerAPIError('The offer evaluation is above the counteroffer plan.', 409, {
+                code: 'OFFER_EVALUATION_ABOVE_COUNTEROFFER',
             });
         }
         dispatch({

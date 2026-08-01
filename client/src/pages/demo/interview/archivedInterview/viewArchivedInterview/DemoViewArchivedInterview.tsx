@@ -129,7 +129,7 @@ const DemoViewArchivedInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Demo archived interview view and management controls'
-                    mobileLayout={!isBoardView && hasInterviews ? 'interviewResponsive' : 'inlineWhenPossible'}
+                    mobileLayout={!isBoardView && hasInterviews ? 'collectionResponsive' : 'inlineWhenPossible'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Archived interview view'

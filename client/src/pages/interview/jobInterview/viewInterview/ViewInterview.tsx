@@ -524,7 +524,7 @@ const ViewInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Interview view and management controls'
-                    mobileLayout={!isBoardView && hasInterviews ? 'interviewResponsive' : 'inlineWhenPossible'}
+                    mobileLayout={!isBoardView && hasInterviews ? 'collectionResponsive' : 'inlineWhenPossible'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Interview view'

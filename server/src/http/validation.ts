@@ -12,6 +12,8 @@ import {
     type InterviewTimeFilter,
     type OfferDecisionFilter,
     type ArchivedOfferDecisionFilter,
+    type OfferDecisionViewMode,
+    type OfferDecisionTableOrientation,
     OFFER_WORK_ARRANGEMENTS,
     type CounterofferPlanInput,
     type OfferDetails,
@@ -306,6 +308,19 @@ export const isCollectionViewMode = (value: unknown): value is CollectionViewMod
 
 export const isOptionalCollectionViewMode = (value: unknown): value is CollectionViewMode | undefined =>
     value === undefined || isCollectionViewMode(value);
+
+export const isOfferDecisionViewMode = (value: unknown): value is OfferDecisionViewMode =>
+    value === 'cards' || value === 'table';
+
+export const isOptionalOfferDecisionViewMode = (value: unknown): value is OfferDecisionViewMode | undefined =>
+    value === undefined || isOfferDecisionViewMode(value);
+
+export const isOfferDecisionTableOrientation = (value: unknown): value is OfferDecisionTableOrientation =>
+    value === 'horizontal' || value === 'vertical';
+
+export const isOptionalOfferDecisionTableOrientation = (
+    value: unknown
+): value is OfferDecisionTableOrientation | undefined => value === undefined || isOfferDecisionTableOrientation(value);
 
 export const isApplicationListSortOrder = (value: unknown): value is ApplicationListSortOrder =>
     typeof value === 'string' && APPLICATION_LIST_SORT_ORDERS.some((sortOrder) => sortOrder === value);

@@ -174,7 +174,7 @@ describe('Counteroffer plan card entry point', () => {
         ).toEqual(['Show details', 'View counteroffer plan', 'Delete']);
 
         await click(within(card).getByRole('button', { name: 'View counteroffer plan for Saved Previous' }));
-        await screen.findByRole('heading', { name: 'Counteroffer plan' });
+        await screen.findByRole('heading', { name: 'Counteroffer Plan' });
         expect(screen.getByRole('button', { name: 'Close' })).toBeVisible();
         expect(screen.getByRole('button', { name: 'Delete counteroffer plan' })).toBeVisible();
         expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
@@ -210,7 +210,7 @@ describe('Counteroffer plan card entry point', () => {
         await click(
             within(await openCardMore('Acme')).getByRole('menuitem', { name: 'View counteroffer plan for Acme' })
         );
-        await screen.findByRole('heading', { name: 'Counteroffer plan' });
+        await screen.findByRole('heading', { name: 'Counteroffer Plan' });
         await click(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' }));
         expect(screen.getByText('Counteroffer plan deleted.')).toBeInTheDocument();
         expect(

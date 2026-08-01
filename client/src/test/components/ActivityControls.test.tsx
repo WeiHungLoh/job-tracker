@@ -63,12 +63,12 @@ describe('ActivityControls', () => {
         expect(screen.queryByRole('button', { name: 'More' })).not.toBeInTheDocument();
     });
 
-    test('exposes the interview responsive layout only when requested by its caller', () => {
+    test('exposes the shared collection responsive layout only when requested by its caller', () => {
         render(
             <ActivityControls
                 actions={<button type='button'>More</button>}
-                ariaLabel='Interview responsive controls'
-                mobileLayout='interviewResponsive'
+                ariaLabel='Collection responsive controls'
+                mobileLayout='collectionResponsive'
             >
                 <button type='button'>List and Board</button>
                 <button type='button'>Filter</button>
@@ -76,8 +76,8 @@ describe('ActivityControls', () => {
             </ActivityControls>
         );
 
-        expect(screen.getByRole('region', { name: 'Interview responsive controls' })).toHaveClass(
-            styles.interviewResponsive,
+        expect(screen.getByRole('region', { name: 'Collection responsive controls' })).toHaveClass(
+            styles.collectionResponsive,
             styles.hasActions
         );
     });
@@ -187,6 +187,125 @@ describe('ActivityControls', () => {
 
         await waitFor(() => expect(dropdown).toHaveAttribute('data-placement', 'top'));
         expect(Number.parseFloat(dropdown.style.getPropertyValue('--dropdown-max-height'))).toBeLessThanOrEqual(204);
+    });
+
+    test('keeps dropdown actions visible within their nearest scrolling boundary', async () => {
+        vi.stubGlobal('innerHeight', 900);
+        vi.stubGlobal('innerWidth', 1200);
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+            if (this.id === 'scrolling-options') {
+                return createRect({ height: 250, left: 0, width: 220 });
+            }
+            if (this.dataset.testid === 'scroll-boundary') {
+                return createRect({ height: 300, left: 100, top: 100, width: 400 });
+            }
+            if (this.querySelector('[aria-controls="scrolling-options"]')) {
+                return createRect({ height: 42, left: 360, top: 300, width: 100 });
+            }
+            return createRect({ left: 0, width: 0 });
+        });
+
+        render(
+            <div data-testid='scroll-boundary' style={{ overflow: 'auto' }}>
+                <ControlDropdown
+                    dropdownAriaLabel='Scrolling options'
+                    dropdownRole='menu'
+                    id='scrolling'
+                    label='More...'
+                    triggerStyle='activity'
+                >
+                    <button role='menuitem' type='button'>
+                        Edit evaluation
+                    </button>
+                </ControlDropdown>
+            </div>
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        const dropdown = screen.getByRole('menu', { name: 'Scrolling options' });
+
+        await waitFor(() => expect(dropdown).toHaveAttribute('data-placement', 'top'));
+        expect(dropdown.style.getPropertyValue('--dropdown-offset')).toBe('-120px');
+        expect(dropdown.style.getPropertyValue('--dropdown-max-height')).toBe('192px');
+    });
+
+    test('can render a dropdown outside an overflow boundary', async () => {
+        render(
+            <div style={{ overflow: 'auto' }}>
+                <ControlDropdown
+                    dropdownAriaLabel='Overflow-safe options'
+                    dropdownRole='menu'
+                    id='overflow-safe'
+                    label='More...'
+                    renderDropdownInPortal
+                    triggerStyle='activity'
+                >
+                    <button role='menuitem' type='button'>
+                        Long action
+                    </button>
+                </ControlDropdown>
+            </div>
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        expect(screen.getByRole('menu', { name: 'Overflow-safe options' }).parentElement).toBe(document.body);
+    });
+
+    test('keeps a portal dropdown open while its own contents scroll', async () => {
+        render(
+            <ControlDropdown
+                dropdownAriaLabel='Scrollable portal options'
+                dropdownRole='menu'
+                id='scrollable-portal'
+                label='More...'
+                renderDropdownInPortal
+                triggerStyle='activity'
+            >
+                <button role='menuitem' type='button'>
+                    Edit evaluation
+                </button>
+            </ControlDropdown>
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        const dropdown = screen.getByRole('menu', { name: 'Scrollable portal options' });
+
+        fireEvent.scroll(dropdown);
+
+        expect(dropdown).toBeInTheDocument();
+    });
+
+    test('closes a portal dropdown directly when its scrolling ancestor scrolls', async () => {
+        const addWindowEventListener = window.addEventListener.bind(window);
+        vi.spyOn(window, 'addEventListener').mockImplementation((type, listener, options) => {
+            if (type !== 'scroll') {
+                addWindowEventListener(type, listener, options);
+            }
+        });
+
+        render(
+            <div data-testid='portal-scroll-boundary' style={{ overflow: 'auto' }}>
+                <ControlDropdown
+                    dropdownAriaLabel='Portal scroll options'
+                    dropdownRole='menu'
+                    id='portal-scroll'
+                    label='More...'
+                    renderDropdownInPortal
+                    triggerStyle='activity'
+                >
+                    <button role='menuitem' type='button'>
+                        Edit evaluation
+                    </button>
+                </ControlDropdown>
+            </div>
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        expect(screen.getByRole('menu', { name: 'Portal scroll options' })).toBeInTheDocument();
+
+        fireEvent.scroll(screen.getByTestId('portal-scroll-boundary'));
+
+        expect(screen.queryByRole('menu', { name: 'Portal scroll options' })).not.toBeInTheDocument();
     });
 
     test('marks Show All as partially checked when only some filters are selected', async () => {

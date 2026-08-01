@@ -265,6 +265,27 @@ describe('demo page interactions', () => {
         vi.restoreAllMocks();
     });
 
+    test('switches active and archived demo offer comparisons between Cards and Table without fetching', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        const activeRender = renderDemo(<DemoOfferDecisionPage archived={false} />, [routes.demoOfferDecisions]);
+
+        expect(screen.getByRole('button', { name: 'Cards' })).toHaveAttribute('aria-pressed', 'true');
+        await userEvent.click(screen.getByRole('button', { name: 'Table' }));
+        expect(screen.getByRole('button', { name: 'Table' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getAllByRole('table').length).toBeGreaterThan(0);
+        await userEvent.click(screen.getByRole('button', { name: 'Cards' }));
+        expect(screen.getAllByRole('article').length).toBeGreaterThan(0);
+        expect(fetchSpy).not.toHaveBeenCalled();
+
+        activeRender.unmount();
+        renderDemo(<DemoOfferDecisionPage archived />, [routes.demoArchivedOfferDecisions]);
+        await userEvent.click(screen.getByRole('button', { name: 'Table' }));
+        expect(screen.getByRole('button', { name: 'Table' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getAllByRole('table').length).toBeGreaterThan(0);
+        expect(screen.queryByRole('table', { name: 'Archived Offers to Evaluate' })).not.toBeInTheDocument();
+        expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
     test('edits and saves one offer evaluation in demo state without fetching', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
         mockConfirm.mockResolvedValue({ confirmed: true });

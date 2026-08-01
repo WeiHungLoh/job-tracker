@@ -1,4 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { JobTrackerAPIError } from '../../api/models';
 import RoutedOfferDecisionPage from '../../pages/offerDecision/OfferDecisionPage';
@@ -182,6 +183,32 @@ describe('OfferDecisionPage', () => {
 
         expect(await screen.findByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
         expect(mocks.getActive).toHaveBeenCalledWith({ filters: ['Previous Evaluations'] });
+    });
+
+    test('persists active and archived Table modes without refetching either workspace', async () => {
+        const updatePreferences = vi.fn(async (updates: UpdateUserPreferencesRequest) => ({
+            ...testPreferences,
+            ...updates,
+        }));
+        const activeRender = render(<OfferDecisionPage archived={false} />, { updatePreferences });
+        await waitForActiveWorkspace();
+
+        await act(async () => {
+            await userEvent.click(screen.getByRole('button', { name: 'Table' }));
+        });
+        expect(updatePreferences).toHaveBeenCalledWith({ offer_decision_view_mode: 'table' });
+        expect(screen.getByRole('table', { name: 'Evaluated Offers' })).toBeInTheDocument();
+        expect(mocks.getActive).toHaveBeenCalledOnce();
+
+        activeRender.unmount();
+        render(<OfferDecisionPage archived />, { updatePreferences });
+        await screen.findByRole('heading', { name: 'Archived Evaluated Offers' });
+        await act(async () => {
+            await userEvent.click(screen.getByRole('button', { name: 'Table' }));
+        });
+        expect(updatePreferences).toHaveBeenCalledWith({ archived_offer_decision_view_mode: 'table' });
+        expect(screen.getByRole('table', { name: 'Archived Evaluated Offers' })).toBeInTheDocument();
+        expect(mocks.getArchived).toHaveBeenCalledOnce();
     });
 
     test('reuses the complete loaded Evaluated Offers group for bulk deadline export', async () => {
@@ -767,16 +794,16 @@ describe('OfferDecisionPage', () => {
         expect(mocks.showSuccessToast).not.toHaveBeenCalledWith('Offer marked as Declined.');
     });
 
-    test('confirms counteroffer deletion before saving a lower edited evaluation without an error toast', async () => {
+    test('confirms counteroffer deletion before saving a higher edited evaluation without an error toast', async () => {
         mocks.getActive.mockResolvedValue({
             applications: [{ ...workspaceData.applications[0], has_counteroffer_plan: true }],
         });
         mocks.saveEvaluation
             .mockRejectedValueOnce(
                 new JobTrackerAPIError('Conflict', 409, {
-                    code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+                    code: 'OFFER_EVALUATION_ABOVE_COUNTEROFFER',
                     message:
-                        'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
+                        'This evaluation fit rating is higher than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
                 })
             )
             .mockResolvedValueOnce(null);
@@ -785,7 +812,8 @@ describe('OfferDecisionPage', () => {
         await waitForActiveWorkspace();
 
         editOfferEvaluation('Acme');
-        fireEvent.change(screen.getByLabelText('Acme Career Growth rating'), { target: { value: '1' } });
+        fireEvent.change(screen.getByLabelText('Acme Career Growth rating'), { target: { value: '5' } });
+        fireEvent.change(screen.getByLabelText('Acme Company/Culture Fit rating'), { target: { value: '5' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
 
         await waitFor(() =>

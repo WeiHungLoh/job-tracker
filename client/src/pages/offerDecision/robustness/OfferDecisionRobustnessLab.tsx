@@ -13,7 +13,6 @@ import styles from './OfferDecisionRobustnessLab.module.css';
 
 type OfferDecisionRobustnessLabProps = {
     applications: readonly EvaluatedOfferDecisionApplication[];
-    disabled: boolean;
 };
 
 const PANEL_ID = 'offer-decision-robustness-panel';
@@ -37,7 +36,7 @@ const getFitChangeLabel = (difference: number, savedFitRating: number): string =
     return `${prefix}${difference} ${pointLabel} from ${savedFitRating}%`;
 };
 
-const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRobustnessLabProps) => {
+const OfferDecisionRobustnessLab = ({ applications }: OfferDecisionRobustnessLabProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [importance, setImportance] = useState<OfferDecisionImportance>(createBalancedImportance);
 
@@ -69,7 +68,6 @@ const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRob
                 <PrimaryButton
                     aria-controls={PANEL_ID}
                     aria-expanded={isOpen}
-                    disabled={disabled && !isOpen}
                     onClick={isOpen ? closeLab : () => setIsOpen(true)}
                     type='button'
                     variant='secondary'
@@ -78,19 +76,13 @@ const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRob
                 </PrimaryButton>
             </div>
 
-            {disabled && (
-                <p className={styles.disabledMessage}>
-                    Save or cancel the open evaluation before trying different priorities.
-                </p>
-            )}
-
             {isOpen && (
                 <div className={styles.content} id={PANEL_ID}>
                     <div className={styles.controls}>
                         <p className={styles.temporaryNote}>
                             Move the sliders to preview how prioritising each category changes every offer&apos;s fit.
                         </p>
-                        <fieldset className={styles.importanceFields} disabled={disabled}>
+                        <fieldset className={styles.importanceFields}>
                             <legend>How important is each category?</legend>
                             {OFFER_DECISION_CATEGORIES.map((category) => {
                                 const inputId = `robustness-importance-${category.key}`;
@@ -122,7 +114,6 @@ const OfferDecisionRobustnessLab = ({ applications, disabled }: OfferDecisionRob
                         </fieldset>
                         <PrimaryButton
                             aria-label='Reset importance to balanced'
-                            disabled={disabled}
                             onClick={() => setImportance(createBalancedImportance())}
                             type='button'
                             variant='secondary'

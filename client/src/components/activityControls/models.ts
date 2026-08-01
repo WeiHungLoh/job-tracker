@@ -15,7 +15,7 @@ export type ActivityControlsProps = {
     actions?: ReactNode;
     ariaLabel: string;
     children: ReactNode;
-    mobileLayout?: 'applicationCompact' | 'applicationWithDisplay' | 'inlineWhenPossible' | 'interviewResponsive';
+    mobileLayout?: 'applicationCompact' | 'applicationWithDisplay' | 'collectionResponsive' | 'inlineWhenPossible';
 };
 
 export type ControlDropdownProps = {
@@ -28,6 +28,7 @@ export type ControlDropdownProps = {
     dropdownRole?: AriaRole;
     id: string;
     label: ReactNode;
+    renderDropdownInPortal?: boolean;
     triggerAriaLabel?: string;
     triggerClassName?: string;
     triggerStyle?: 'activity';

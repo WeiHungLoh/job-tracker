@@ -2,7 +2,10 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useConfirm, type ConfirmOptions } from 'material-ui-confirm';
 import ActivityControls from '../../components/activityControls/ActivityControls';
 import CheckboxFilter from '../../components/activityControls/checkboxFilter/CheckboxFilter';
+import CollectionViewToggle from '../../components/activityControls/collectionViewToggle/CollectionViewToggle';
+import ControlDropdown from '../../components/activityControls/ControlDropdown';
 import MoreOptions from '../../components/activityControls/moreOptions/MoreOptions';
+import PrimaryButton from '../../components/button/PrimaryButton';
 import EmptyState from '../../components/emptyState/EmptyState';
 import { focusFirstInvalidField } from '../../components/formPage/focusFirstInvalidField';
 import { createDeleteAllOfferEvaluationsConfirmation } from '../../components/confirmation/bulkConfirmations';
@@ -28,11 +31,18 @@ import type {
     OfferEvaluation,
     OfferEvaluationFormErrors,
     OfferDecisionStatus,
+    OfferDecisionTableOrientation,
+    OfferDecisionViewMode,
 } from './models';
 import { createOfferEvaluationCsvData } from './offerDecisionCsv';
 import { createOfferDecisionEmptyState } from './offerDecisionEmptyState';
 import OfferDecisionSkeleton from './OfferDecisionSkeleton';
 import OfferEvaluationCard from './OfferEvaluationCard';
+import OfferEvaluationDialog, { type OfferEvaluationDialogMode } from './offerEvaluationTable/OfferEvaluationDialog';
+import OfferEvaluationTable, {
+    type OfferEvaluationTableActions,
+    type OfferEvaluationTableLayout,
+} from './offerEvaluationTable/OfferEvaluationTable';
 import { type OfferFieldRefs } from './OfferEvaluationForm';
 import OfferDecisionRobustnessLab from './robustness/OfferDecisionRobustnessLab';
 import { isEvaluatedOfferDecisionApplication } from './robustness/offerDecisionRobustnessCalculations';
@@ -49,9 +59,33 @@ import {
     isCounterofferPlanningEligible,
 } from './counteroffer/counterofferPlan';
 import { useBulkOfferDeadlineCalendarExport } from './useBulkOfferDeadlineCalendarExport';
+import {
+    downloadOfferDeadlineIcs,
+    getOfferStatusActions,
+    openOfferDeadlineInGoogleCalendar,
+} from './offerEvaluationActions';
 
 type DraftEvaluations = Record<number, OfferEvaluation>;
 type EvaluationErrors = Record<number, OfferEvaluationFormErrors>;
+type EvaluationDialogState = {
+    application: OfferDecisionApplication;
+    expired: boolean;
+    mode: OfferEvaluationDialogMode;
+};
+type EvaluationHighlight = {
+    jobId: number;
+    viewMode: OfferDecisionViewMode;
+};
+
+const OFFER_DECISION_VIEW_OPTIONS = [
+    { label: 'Cards', value: 'cards' },
+    { label: 'Table', value: 'table' },
+] as const;
+
+const TABLE_ORIENTATION_OPTIONS: Array<{ label: string; value: OfferDecisionTableOrientation }> = [
+    { label: 'Horizontal', value: 'horizontal' },
+    { label: 'Vertical', value: 'vertical' },
+];
 
 type ComparisonSectionProps = {
     applications: OfferDecisionApplication[];
@@ -60,6 +94,13 @@ type ComparisonSectionProps = {
     heading: string;
     id: string;
     renderCard: (application: OfferDecisionApplication) => ReactNode;
+};
+
+type TableComparisonSectionProps = Omit<ComparisonSectionProps, 'renderCard'> & {
+    getActions: (application: OfferDecisionApplication) => OfferEvaluationTableActions;
+    highlightedJobId?: number;
+    layout: OfferEvaluationTableLayout;
+    orientation: OfferDecisionTableOrientation;
 };
 
 const cloneEvaluation = (evaluation: OfferEvaluation): OfferEvaluation => ({
@@ -81,7 +122,7 @@ const getEvaluationCardId = (jobId: number): string => `offer-evaluation-${jobId
 
 const createCounterofferDeletionConfirmation = (companyName: string): ConfirmOptions => ({
     title: 'Delete counteroffer plan?',
-    description: `The edited evaluation for ${companyName} has a lower fit rating than your saved counteroffer plan. Delete the counteroffer plan and save this evaluation?`,
+    description: `The edited evaluation for ${companyName} has a higher fit rating than your saved counteroffer plan. Delete the counteroffer plan and save this evaluation?`,
     confirmationText: 'Delete and Save',
     cancellationText: 'Cancel',
     confirmationButtonProps: { autoFocus: true },
@@ -145,6 +186,35 @@ const ComparisonSection = ({
         </section>
     ) : null;
 
+const TableComparisonSection = ({
+    applications,
+    contentBeforeGrid,
+    description,
+    heading,
+    id,
+    getActions,
+    highlightedJobId,
+    layout,
+    orientation,
+}: TableComparisonSectionProps) =>
+    applications.length > 0 ? (
+        <section aria-labelledby={id} className={styles.comparisonSection}>
+            <div className={styles.sectionHeading}>
+                <h2 id={id}>{heading}</h2>
+                <p>{description}</p>
+            </div>
+            {contentBeforeGrid}
+            <OfferEvaluationTable
+                applications={applications}
+                getActions={getActions}
+                headingId={id}
+                highlightedJobId={highlightedJobId}
+                layout={layout}
+                orientation={orientation}
+            />
+        </section>
+    ) : null;
+
 const OfferDecisionWorkspace = ({
     data,
     getDeleteAllEvaluationSummary,
@@ -171,6 +241,8 @@ const OfferDecisionWorkspace = ({
     const selectedFilters =
         selectedFiltersOverride ??
         (readOnly ? preferences.archived_offer_decision_filters : preferences.offer_decision_filters);
+    const viewMode =
+        (readOnly ? preferences.archived_offer_decision_view_mode : preferences.offer_decision_view_mode) ?? 'cards';
     const [drafts, setDrafts] = useState<DraftEvaluations>({});
     const [errors, setErrors] = useState<EvaluationErrors>({});
     const [expandedJobIds, setExpandedJobIds] = useState<number[]>([]);
@@ -182,10 +254,20 @@ const OfferDecisionWorkspace = ({
     const [counterofferPlanAvailability, setCounterofferPlanAvailability] = useState<Record<number, boolean>>({});
     const [counterofferApplication, setCounterofferApplication] = useState<OfferDecisionApplication | null>(null);
     const [statusUpdatingJobId, setStatusUpdatingJobId] = useState<number>();
-    const [highlightedJobId, setHighlightedJobId] = useState<number>();
+    const [evaluationHighlight, setEvaluationHighlight] = useState<EvaluationHighlight>();
+    const highlightedJobId =
+        evaluationHighlight?.viewMode === 'table' && viewMode === 'table' ? evaluationHighlight.jobId : undefined;
+    const persistedTableOrientation =
+        (readOnly
+            ? preferences.archived_offer_decision_table_orientation
+            : preferences.offer_decision_table_orientation) ?? 'horizontal';
+    const [tableOrientation, setTableOrientation] = useState<OfferDecisionTableOrientation>(persistedTableOrientation);
+    const [evaluationDialog, setEvaluationDialog] = useState<EvaluationDialogState | null>(null);
     const deleteAllPendingRef = useRef(false);
     const statusUpdatePendingRef = useRef(false);
     const highlightTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const highlightFrameRef = useRef<number | undefined>(undefined);
+    const processedTargetOfferJobIdRef = useRef<number | undefined>(undefined);
 
     const groups = groupOfferDecisionApplications(data.applications);
     const offersToEvaluate = groups['Offers to Evaluate'];
@@ -203,7 +285,6 @@ const OfferDecisionWorkspace = ({
         hasCompleteEvaluatedOffers,
         loadAllEvaluatedOffers,
     });
-    const hasOpenEvaluationDraft = Object.keys(drafts).length > 0;
     const filtersAreActive = selectedFilters.length !== filterOptions.length;
     const displayedApplicationCount = selectedFilters.reduce((count, filter) => count + groups[filter].length, 0);
     const displayedEvaluationCount = selectedFilters.reduce(
@@ -225,50 +306,104 @@ const OfferDecisionWorkspace = ({
     useEffect(
         () => () => {
             Object.values(highlightTimeoutsRef.current).forEach(clearTimeout);
+            if (highlightFrameRef.current !== undefined) {
+                cancelAnimationFrame(highlightFrameRef.current);
+            }
         },
         []
     );
 
     useEffect(() => {
+        setTableOrientation(persistedTableOrientation);
+    }, [persistedTableOrientation]);
+
+    useEffect(() => {
         if (savedEvaluationJobId === undefined) {
             return;
         }
-        document
-            .getElementById(getEvaluationCardId(savedEvaluationJobId))
-            ?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
+        if (viewMode === 'cards') {
+            document
+                .getElementById(getEvaluationCardId(savedEvaluationJobId))
+                ?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
+        }
         setSavedEvaluationJobId(undefined);
-    }, [savedEvaluationJobId]);
+    }, [savedEvaluationJobId, viewMode]);
 
     useEffect(() => {
-        if (targetOfferJobId === undefined || isLoading || isFiltering) {
+        if (targetOfferJobId === undefined) {
+            processedTargetOfferJobIdRef.current = undefined;
+            return;
+        }
+        if (isLoading || isFiltering || processedTargetOfferJobIdRef.current === targetOfferJobId) {
             return;
         }
 
-        scrollAndHighlight(
-            getEvaluationCardId(targetOfferJobId),
-            evaluationStyles.highlighted,
-            highlightTimeoutsRef.current,
-            'start'
-        );
+        processedTargetOfferJobIdRef.current = targetOfferJobId;
+        if (viewMode === 'table') {
+            setEvaluationHighlight({ jobId: targetOfferJobId, viewMode });
+        } else {
+            scrollAndHighlight(
+                getEvaluationCardId(targetOfferJobId),
+                evaluationStyles.highlighted,
+                highlightTimeoutsRef.current,
+                'start'
+            );
+        }
         onTargetOfferProcessed?.();
-    }, [isFiltering, isLoading, onTargetOfferProcessed, targetOfferJobId]);
+    }, [isFiltering, isLoading, onTargetOfferProcessed, targetOfferJobId, viewMode]);
 
     useEffect(() => {
-        if (highlightedJobId === undefined) {
+        if (!evaluationHighlight) {
             return;
         }
 
+        const highlightedElementId = getEvaluationCardId(evaluationHighlight.jobId);
+        if (evaluationHighlight.viewMode !== viewMode) {
+            const existingTimeout = highlightTimeoutsRef.current[highlightedElementId];
+            if (existingTimeout) {
+                clearTimeout(existingTimeout);
+                delete highlightTimeoutsRef.current[highlightedElementId];
+            }
+            setEvaluationHighlight(undefined);
+            return;
+        }
+
+        const { jobId } = evaluationHighlight;
+
         scrollAndHighlight(
-            getEvaluationCardId(highlightedJobId),
-            evaluationStyles.highlighted,
+            getEvaluationCardId(jobId),
+            viewMode === 'table' ? undefined : evaluationStyles.highlighted,
             highlightTimeoutsRef.current,
             'start'
         );
-        setHighlightedJobId(undefined);
-    }, [highlightedJobId]);
+        if (viewMode !== 'table') {
+            setEvaluationHighlight(undefined);
+            return;
+        }
+
+        const existingTimeout = highlightTimeoutsRef.current[highlightedElementId];
+        if (existingTimeout) {
+            clearTimeout(existingTimeout);
+        }
+        highlightTimeoutsRef.current[highlightedElementId] = setTimeout(() => {
+            setEvaluationHighlight((current) => (current?.jobId === jobId ? undefined : current));
+            delete highlightTimeoutsRef.current[highlightedElementId];
+        }, 4000);
+    }, [evaluationHighlight, viewMode]);
 
     const clearInvalidDeadline = (jobId: number) => {
         setInvalidDeadlineJobIds((current) => current.filter((currentJobId) => currentJobId !== jobId));
+    };
+
+    const requestEvaluationHighlight = (jobId: number) => {
+        setEvaluationHighlight(undefined);
+        if (highlightFrameRef.current !== undefined) {
+            cancelAnimationFrame(highlightFrameRef.current);
+        }
+        highlightFrameRef.current = requestAnimationFrame(() => {
+            setEvaluationHighlight({ jobId, viewMode });
+            highlightFrameRef.current = undefined;
+        });
     };
 
     const setInvalidDeadline = (jobId: number, hasBadInput: boolean) => {
@@ -301,6 +436,28 @@ const OfferDecisionWorkspace = ({
         }
     };
 
+    const handleViewModeChange = (nextViewMode: OfferDecisionViewMode) => {
+        void updatePreferences(
+            readOnly ? { archived_offer_decision_view_mode: nextViewMode } : { offer_decision_view_mode: nextViewMode }
+        ).catch((error) =>
+            showErrorToast(getErrorToastMessage(error, 'Unable to save offer comparison view. Please try again.'))
+        );
+    };
+
+    const handleTableOrientationChange = (nextOrientation: OfferDecisionTableOrientation) => {
+        setTableOrientation(nextOrientation);
+        void updatePreferences(
+            readOnly
+                ? { archived_offer_decision_table_orientation: nextOrientation }
+                : { offer_decision_table_orientation: nextOrientation }
+        ).catch((error) => {
+            setTableOrientation(persistedTableOrientation);
+            showErrorToast(
+                getErrorToastMessage(error, 'Unable to save the offer comparison table layout. Please try again.')
+            );
+        });
+    };
+
     const clearFieldError = (jobId: number, field: keyof OfferEvaluationFormErrors) => {
         setErrors((current) => {
             const jobErrors = current[jobId];
@@ -317,6 +474,11 @@ const OfferDecisionWorkspace = ({
         clearInvalidDeadline(application.job_id);
     };
 
+    const startTableEvaluation = (application: OfferDecisionApplication) => {
+        startEvaluation(application);
+        setEvaluationDialog({ application, expired: false, mode: 'add' });
+    };
+
     const editEvaluation = (application: OfferDecisionApplication) => {
         const evaluation = application.evaluation;
         if (readOnly || !evaluation) {
@@ -328,6 +490,11 @@ const OfferDecisionWorkspace = ({
         clearInvalidDeadline(application.job_id);
     };
 
+    const editTableEvaluation = (application: OfferDecisionApplication, expired: boolean) => {
+        editEvaluation(application);
+        setEvaluationDialog({ application, expired, mode: 'edit' });
+    };
+
     const cancelEvaluation = (jobId: number) => {
         setDrafts((current) => removeRecordValue(current, jobId));
         setErrors((current) => removeRecordValue(current, jobId));
@@ -336,6 +503,7 @@ const OfferDecisionWorkspace = ({
 
     const cancelEvaluationEdit = (application: OfferDecisionApplication) => {
         cancelEvaluation(application.job_id);
+        setEvaluationDialog(null);
         if (application.evaluation) {
             setExpandedJobIds((current) =>
                 current.includes(application.job_id) ? current : [...current, application.job_id]
@@ -362,7 +530,8 @@ const OfferDecisionWorkspace = ({
         const validation = validateOfferEvaluation(
             { ratings: draft.ratings, details: draft.details },
             application.application_date,
-            decisionDeadlineHasBadInput
+            decisionDeadlineHasBadInput,
+            Boolean(fieldRefs.monthly_base_salary.current?.validity.badInput)
         );
         if (!validation.isValid) {
             setErrors((current) => ({ ...current, [application.job_id]: validation.errors }));
@@ -378,15 +547,12 @@ const OfferDecisionWorkspace = ({
             ]);
             return;
         }
-        const isNewEvaluation = application.evaluation === null;
         if (application.evaluation && offerEvaluationsAreEqual(draft, application.evaluation)) {
-            cancelEvaluation(application.job_id);
-            setExpandedJobIds((current) =>
-                current.includes(application.job_id) ? current : [...current, application.job_id]
-            );
-            setSavedEvaluationJobId(application.job_id);
+            showErrorToast('Change at least one evaluation field before saving.');
             return;
         }
+        const isNewEvaluation = application.evaluation === null;
+        let deletedCounterofferPlan = false;
 
         setSavingJobId(application.job_id);
         try {
@@ -408,14 +574,25 @@ const OfferDecisionWorkspace = ({
                     ...current,
                     [application.job_id]: false,
                 }));
+                deletedCounterofferPlan = true;
             }
             cancelEvaluation(application.job_id);
+            setEvaluationDialog(null);
             setExpandedJobIds((current) =>
                 current.includes(application.job_id) ? current : [...current, application.job_id]
             );
+            if (deletedCounterofferPlan) {
+                return;
+            }
+            if (viewMode === 'table') {
+                if (preferences.application_enable_scroll) {
+                    requestEvaluationHighlight(application.job_id);
+                }
+                return;
+            }
             if (isNewEvaluation) {
                 if (preferences.application_enable_scroll) {
-                    setHighlightedJobId(application.job_id);
+                    requestEvaluationHighlight(application.job_id);
                 }
             } else {
                 setSavedEvaluationJobId(application.job_id);
@@ -501,7 +678,7 @@ const OfferDecisionWorkspace = ({
             await onUpdateOfferStatus(application, status);
             setExpandedJobIds((current) => current.filter((jobId) => jobId !== application.job_id));
             if (preferences.application_enable_scroll) {
-                setHighlightedJobId(application.job_id);
+                requestEvaluationHighlight(application.job_id);
             }
         } catch {
             // The page-level adapter owns user-facing API error handling.
@@ -513,7 +690,6 @@ const OfferDecisionWorkspace = ({
 
     const renderCard = (
         application: OfferDecisionApplication,
-        allowEdit: boolean,
         expired: boolean,
         showExpiredBadge: boolean,
         allowOfferStatusUpdate = false,
@@ -532,7 +708,7 @@ const OfferDecisionWorkspace = ({
             <OfferEvaluationCard
                 allowCalendarExport={allowCalendarExport}
                 allowDelete={Boolean(onDelete) && !isDeletingAll}
-                allowEdit={allowEdit}
+                allowEdit={!readOnly}
                 application={application}
                 areStatusActionsDisabled={statusUpdatingJobId !== undefined}
                 counterofferAction={
@@ -588,6 +764,118 @@ const OfferDecisionWorkspace = ({
         );
     };
 
+    const getTableActions = (
+        application: OfferDecisionApplication,
+        allowOfferStatusUpdate = false,
+        allowCalendarExport = false,
+        expired = false
+    ): OfferEvaluationTableActions => {
+        const hasCounterofferPlan =
+            counterofferPlanAvailability[application.job_id] ?? Boolean(application.has_counteroffer_plan);
+        const canCreateCounterofferPlan = isCounterofferPlanningEligible(application, readOnly);
+        const canOpenCounterofferPlan =
+            Boolean(onGetCounterofferPlan) &&
+            Boolean(onDeleteCounterofferPlan) &&
+            Boolean(onSaveCounterofferPlan) &&
+            (readOnly ? hasCounterofferPlan : hasCounterofferPlan || canCreateCounterofferPlan);
+        const deleteAction = {
+            ariaLabel: `Delete evaluation for ${application.company_name}`,
+            disabled: statusUpdatingJobId !== undefined,
+            label: readOnly ? 'Delete' : 'Delete evaluation',
+            onClick: () => void handleDelete(application, hasCounterofferPlan),
+            variant: 'destructive' as const,
+        };
+
+        if (!application.evaluation) {
+            return {
+                actions: [
+                    {
+                        ariaLabel: `Add evaluation for ${application.company_name}`,
+                        label: 'Add evaluation',
+                        onClick: () => startTableEvaluation(application),
+                        variant: 'compact',
+                    },
+                ],
+                presentation: 'direct',
+            };
+        }
+
+        if (readOnly) {
+            if (hasCounterofferPlan && canOpenCounterofferPlan) {
+                const actions: OfferEvaluationTableActions['actions'] = [
+                    {
+                        ariaLabel: `View counteroffer plan for ${application.company_name}`,
+                        label: 'View counteroffer plan',
+                        onClick: () => setCounterofferApplication(application),
+                    },
+                ];
+                if (onDelete) {
+                    actions.push({ ...deleteAction, label: 'Delete evaluation' });
+                }
+                return {
+                    actions,
+                    isPending: deletingJobId === application.job_id,
+                    presentation: 'menu',
+                };
+            }
+
+            return {
+                actions: onDelete ? [deleteAction] : [],
+                isPending: deletingJobId === application.job_id,
+                presentation: 'direct',
+            };
+        }
+
+        const actions: OfferEvaluationTableActions['actions'] = [];
+        actions.push({
+            ariaLabel: `Edit evaluation for ${application.company_name}`,
+            label: 'Edit evaluation',
+            onClick: () => editTableEvaluation(application, expired),
+        });
+        if (canOpenCounterofferPlan) {
+            const counterofferLabel = hasCounterofferPlan ? 'View counteroffer plan' : 'Plan counteroffer';
+            actions.push({
+                ariaLabel: `${counterofferLabel} for ${application.company_name}`,
+                label: counterofferLabel,
+                onClick: () => setCounterofferApplication(application),
+            });
+        }
+        if (allowCalendarExport) {
+            actions.push(
+                {
+                    ariaLabel: `Add ${application.company_name} offer deadline to Google Calendar`,
+                    label: 'Add to Google Calendar',
+                    onClick: () => openOfferDeadlineInGoogleCalendar(application, showErrorToast),
+                },
+                {
+                    ariaLabel: `Add ${application.company_name} offer deadline to Apple Calendar or Outlook`,
+                    label: 'Add to Apple Calendar / Outlook (.ics)',
+                    onClick: () => downloadOfferDeadlineIcs(application, showErrorToast),
+                }
+            );
+        }
+        if (allowOfferStatusUpdate && onUpdateOfferStatus) {
+            actions.push(
+                ...getOfferStatusActions(application.job_status).map(({ label, status }) => ({
+                    ariaLabel: `${label} ${application.job_status === 'Offer' ? 'from' : 'for'} ${
+                        application.company_name
+                    }`,
+                    disabled: statusUpdatingJobId !== undefined,
+                    label,
+                    onClick: () => void handleOfferStatusUpdate(application, status),
+                }))
+            );
+        }
+        if (onDelete && !isDeletingAll) {
+            actions.push(deleteAction);
+        }
+        return {
+            actions,
+            isPending: deletingJobId === application.job_id || statusUpdatingJobId === application.job_id,
+            presentation: 'menu',
+        };
+    };
+
     const emptyState = createOfferDecisionEmptyState({
         filtersAreActive,
         onClearFilters: () => void handleFilterSelection([...filterOptions]),
@@ -626,8 +914,41 @@ const OfferDecisionWorkspace = ({
                         ) : undefined
                     }
                     ariaLabel={readOnly ? 'Archived offer comparison controls' : 'Offer comparison controls'}
-                    mobileLayout='inlineWhenPossible'
+                    mobileLayout={viewMode === 'table' ? 'collectionResponsive' : 'inlineWhenPossible'}
                 >
+                    <CollectionViewToggle
+                        ariaLabel={readOnly ? 'Archived offer comparison view' : 'Offer comparison view'}
+                        currentView={viewMode}
+                        onViewChange={handleViewModeChange}
+                        options={OFFER_DECISION_VIEW_OPTIONS}
+                    />
+                    {viewMode === 'table' && (
+                        <ControlDropdown
+                            closeOnSelect
+                            dropdownAriaLabel='Table layout options'
+                            dropdownRole='menu'
+                            id='offer-comparison-table-layout'
+                            label={tableOrientation === 'horizontal' ? 'Horizontal' : 'Vertical'}
+                            triggerAriaLabel='Table layout'
+                            triggerStyle='activity'
+                        >
+                            <div className={evaluationStyles.cardActionOptions}>
+                                {TABLE_ORIENTATION_OPTIONS.map((option) => (
+                                    <PrimaryButton
+                                        aria-checked={tableOrientation === option.value}
+                                        className={evaluationStyles.cardActionOption}
+                                        key={option.value}
+                                        onClick={() => handleTableOrientationChange(option.value)}
+                                        role='menuitemradio'
+                                        type='button'
+                                        variant='secondary'
+                                    >
+                                        {option.label}
+                                    </PrimaryButton>
+                                ))}
+                            </div>
+                        </ControlDropdown>
+                    )}
                     <CheckboxFilter
                         buttonLabel='Filter by'
                         disabled={isLoading}
@@ -647,6 +968,100 @@ const OfferDecisionWorkspace = ({
                 </EvaluationGrid>
             ) : displayedApplicationCount === 0 ? (
                 <EmptyState {...emptyState} />
+            ) : viewMode === 'table' ? (
+                readOnly ? (
+                    <>
+                        {selectedFilters.includes('Evaluated Offers') && (
+                            <TableComparisonSection
+                                applications={evaluatedOffers}
+                                description='Saved evaluations for archived applications with an active decision window.'
+                                heading='Archived Evaluated Offers'
+                                id='archived-evaluated-offers-heading'
+                                getActions={(application) => getTableActions(application)}
+                                layout='saved'
+                                orientation={tableOrientation}
+                            />
+                        )}
+                        {selectedFilters.includes('Expired Evaluated Offers') && (
+                            <TableComparisonSection
+                                applications={expiredEvaluatedOffers}
+                                description='Archived offers whose decision deadlines have passed.'
+                                heading='Archived Expired Evaluated Offers'
+                                id='archived-expired-evaluated-offers-heading'
+                                getActions={(application) => getTableActions(application, false, false, true)}
+                                layout='saved'
+                                orientation={tableOrientation}
+                            />
+                        )}
+                        {selectedFilters.includes('Previous Evaluations') && (
+                            <TableComparisonSection
+                                applications={previousEvaluations}
+                                description='Archived evaluations for applications that left Offer status.'
+                                heading='Archived Previous Evaluations'
+                                id='archived-previous-evaluations-heading'
+                                getActions={(application) => getTableActions(application)}
+                                layout='previous'
+                                orientation={tableOrientation}
+                            />
+                        )}
+                    </>
+                ) : (
+                    <>
+                        {selectedFilters.includes('Offers to Evaluate') && (
+                            <TableComparisonSection
+                                applications={offersToEvaluate}
+                                description='Start an evaluation when you are ready. It moves after the first successful save.'
+                                heading='Offers to Evaluate'
+                                id='offers-to-evaluate-heading'
+                                getActions={(application) => getTableActions(application)}
+                                highlightedJobId={highlightedJobId}
+                                layout='offersToEvaluate'
+                                orientation={tableOrientation}
+                            />
+                        )}
+                        {selectedFilters.includes('Evaluated Offers') && (
+                            <TableComparisonSection
+                                applications={evaluatedOffers}
+                                contentBeforeGrid={
+                                    robustnessOffers.length >= 2 ? (
+                                        <OfferDecisionRobustnessLab applications={robustnessOffers} />
+                                    ) : undefined
+                                }
+                                description='Sorted by the nearest decision deadline, then fit rating.'
+                                heading='Evaluated Offers'
+                                id='evaluated-offers-heading'
+                                getActions={(application) => getTableActions(application, true, true)}
+                                highlightedJobId={highlightedJobId}
+                                layout='saved'
+                                orientation={tableOrientation}
+                            />
+                        )}
+                        {selectedFilters.includes('Expired Evaluated Offers') && (
+                            <TableComparisonSection
+                                applications={expiredEvaluatedOffers}
+                                description='The decision deadline has passed. Update the evaluation if the offer is still open.'
+                                heading='Expired Evaluated Offers'
+                                id='expired-evaluated-offers-heading'
+                                getActions={(application) => getTableActions(application, true, false, true)}
+                                highlightedJobId={highlightedJobId}
+                                layout='saved'
+                                orientation={tableOrientation}
+                            />
+                        )}
+                        {selectedFilters.includes('Previous Evaluations') && (
+                            <TableComparisonSection
+                                applications={previousEvaluations}
+                                description='Review or update evaluations after an offer is accepted or declined.'
+                                heading='Previous Evaluations'
+                                id='previous-evaluations-heading'
+                                getActions={(application) => getTableActions(application, true)}
+                                highlightedJobId={highlightedJobId}
+                                layout='previous'
+                                orientation={tableOrientation}
+                            />
+                        )}
+                    </>
+                )
             ) : readOnly ? (
                 <>
                     {selectedFilters.includes('Evaluated Offers') && (
@@ -655,7 +1070,7 @@ const OfferDecisionWorkspace = ({
                             description='Saved evaluations for archived applications with an active decision window.'
                             heading='Archived Evaluated Offers'
                             id='archived-evaluated-offers-heading'
-                            renderCard={(application) => renderCard(application, false, false, false)}
+                            renderCard={(application) => renderCard(application, false, false)}
                         />
                     )}
                     {selectedFilters.includes('Expired Evaluated Offers') && (
@@ -664,7 +1079,7 @@ const OfferDecisionWorkspace = ({
                             description='Archived offers whose decision deadlines have passed.'
                             heading='Archived Expired Evaluated Offers'
                             id='archived-expired-evaluated-offers-heading'
-                            renderCard={(application) => renderCard(application, false, true, true)}
+                            renderCard={(application) => renderCard(application, true, true)}
                         />
                     )}
                     {selectedFilters.includes('Previous Evaluations') && (
@@ -673,7 +1088,7 @@ const OfferDecisionWorkspace = ({
                             description='Archived evaluations for applications that left Offer status.'
                             heading='Archived Previous Evaluations'
                             id='archived-previous-evaluations-heading'
-                            renderCard={(application) => renderCard(application, false, false, false)}
+                            renderCard={(application) => renderCard(application, false, false)}
                         />
                     )}
                 </>
@@ -685,7 +1100,7 @@ const OfferDecisionWorkspace = ({
                             description='Start an evaluation when you are ready. It moves after the first successful save.'
                             heading='Offers to Evaluate'
                             id='offers-to-evaluate-heading'
-                            renderCard={(application) => renderCard(application, true, false, false)}
+                            renderCard={(application) => renderCard(application, false, false)}
                         />
                     )}
                     {selectedFilters.includes('Evaluated Offers') && (
@@ -693,16 +1108,13 @@ const OfferDecisionWorkspace = ({
                             applications={evaluatedOffers}
                             contentBeforeGrid={
                                 robustnessOffers.length >= 2 ? (
-                                    <OfferDecisionRobustnessLab
-                                        applications={robustnessOffers}
-                                        disabled={hasOpenEvaluationDraft}
-                                    />
+                                    <OfferDecisionRobustnessLab applications={robustnessOffers} />
                                 ) : undefined
                             }
                             description='Sorted by the nearest decision deadline, then fit rating.'
                             heading='Evaluated Offers'
                             id='evaluated-offers-heading'
-                            renderCard={(application) => renderCard(application, true, false, false, true, true)}
+                            renderCard={(application) => renderCard(application, false, false, true, true)}
                         />
                     )}
                     {selectedFilters.includes('Expired Evaluated Offers') && (
@@ -711,7 +1123,7 @@ const OfferDecisionWorkspace = ({
                             description='The decision deadline has passed. Update the evaluation if the offer is still open.'
                             heading='Expired Evaluated Offers'
                             id='expired-evaluated-offers-heading'
-                            renderCard={(application) => renderCard(application, true, true, true, true)}
+                            renderCard={(application) => renderCard(application, true, true, true)}
                         />
                     )}
                     {selectedFilters.includes('Previous Evaluations') && (
@@ -720,7 +1132,7 @@ const OfferDecisionWorkspace = ({
                             description='Review or update evaluations after an offer is accepted or declined.'
                             heading='Previous Evaluations'
                             id='previous-evaluations-heading'
-                            renderCard={(application) => renderCard(application, true, false, false, true)}
+                            renderCard={(application) => renderCard(application, false, false, true)}
                         />
                     )}
                 </>
@@ -744,6 +1156,36 @@ const OfferDecisionWorkspace = ({
                     }
                     onSave={onSaveCounterofferPlan}
                     readOnly={readOnly}
+                />
+            )}
+            {evaluationDialog && drafts[evaluationDialog.application.job_id] && (
+                <OfferEvaluationDialog
+                    application={evaluationDialog.application}
+                    errors={errors[evaluationDialog.application.job_id] ?? {}}
+                    evaluation={drafts[evaluationDialog.application.job_id]}
+                    expired={evaluationDialog.expired}
+                    isSaving={savingJobId === evaluationDialog.application.job_id}
+                    mode={evaluationDialog.mode}
+                    submitOnEnterWhenUnfocused={viewMode === 'table'}
+                    onCancel={() => cancelEvaluationEdit(evaluationDialog.application)}
+                    onDecisionDeadlineValidityChange={(hasBadInput) =>
+                        setInvalidDeadline(evaluationDialog.application.job_id, hasBadInput)
+                    }
+                    onDetailsChange={(details, field) => {
+                        updateEvaluation(evaluationDialog.application.job_id, (evaluation) => ({
+                            ...evaluation,
+                            details,
+                        }));
+                        clearFieldError(evaluationDialog.application.job_id, field);
+                    }}
+                    onRatingChange={(category, value) => {
+                        updateEvaluation(evaluationDialog.application.job_id, (evaluation) => ({
+                            ...evaluation,
+                            ratings: updateOfferDecisionValue(evaluation.ratings, category, value),
+                        }));
+                        clearFieldError(evaluationDialog.application.job_id, 'ratings');
+                    }}
+                    onSave={(badInput, refs) => void handleSave(evaluationDialog.application, badInput, refs)}
                 />
             )}
         </main>

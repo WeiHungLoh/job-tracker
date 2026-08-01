@@ -58,6 +58,9 @@ export type OfferDecisionFilter =
 
 export type OfferDecisionStatus = 'Accepted' | 'Declined' | 'Offer';
 
+export type OfferDecisionViewMode = 'cards' | 'table';
+export type OfferDecisionTableOrientation = 'horizontal' | 'vertical';
+
 export type ArchivedOfferDecisionFilter = Exclude<OfferDecisionFilter, 'Offers to Evaluate'>;
 
 export type OfferDecisionGroups = Record<OfferDecisionFilter, OfferDecisionApplication[]>;

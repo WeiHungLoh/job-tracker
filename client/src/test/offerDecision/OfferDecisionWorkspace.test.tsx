@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -190,7 +192,7 @@ describe('OfferDecisionWorkspace', () => {
             ...activeData.applications[0],
             job_id: 14,
             company_name: 'Expired Co',
-            evaluation: createEvaluation(14, undefined, '2000-07-01T10:00:00.000Z'),
+            evaluation: createEvaluation(14, undefined, '2026-07-10T10:00:00.000Z'),
         };
         const declinedOffer = {
             ...activeData.applications[2],
@@ -240,6 +242,46 @@ describe('OfferDecisionWorkspace', () => {
                 .map((item) => item.textContent)
         ).toEqual(['Edit evaluation', 'Change to Offer', 'Change to Accepted']);
         expect(screen.queryByRole('button', { name: 'Accept offer from Beta Labs' })).not.toBeInTheDocument();
+    });
+
+    test('edits and saves active evaluated, expired and previous evaluations in Cards mode', async () => {
+        const expiredOffer = {
+            ...activeData.applications[0],
+            job_id: 14,
+            company_name: 'Expired Co',
+            evaluation: createEvaluation(14, undefined, '2026-07-10T10:00:00.000Z'),
+        };
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        render(
+            <WorkspaceHarness
+                initialData={{ applications: [...activeData.applications, expiredOffer] }}
+                onSave={onSave}
+            />
+        );
+
+        for (const [companyName, jobId, salary] of [
+            ['Acme', 11, '11001'],
+            ['Expired Co', 14, '11002'],
+            ['Continuum', 13, '11003'],
+        ] as const) {
+            const directEdit = screen.queryByRole('button', { name: `Edit evaluation for ${companyName}` });
+            if (directEdit) {
+                fireEvent.click(directEdit);
+            } else {
+                editOfferEvaluation(companyName);
+            }
+            fireEvent.change(screen.getByLabelText(`${companyName} monthly base salary`), {
+                target: { value: salary },
+            });
+            fireEvent.click(screen.getByRole('button', { name: `Save evaluation for ${companyName}` }));
+
+            await waitFor(() => expect(onSave).toHaveBeenCalledWith(jobId, expect.any(Object)));
+            await waitFor(() =>
+                expect(screen.queryByLabelText(`${companyName} monthly base salary`)).not.toBeInTheDocument()
+            );
+        }
+
+        expect(onSave).toHaveBeenCalledTimes(3);
     });
 
     test('keeps edit and status actions out of archived Offer Comparison while exposing saved counteroffer plans', () => {
@@ -353,7 +395,7 @@ describe('OfferDecisionWorkspace', () => {
             ...activeData.applications[0],
             job_id: 14,
             company_name: 'Expired Co',
-            evaluation: createEvaluation(14, undefined, '2000-07-01T10:00:00.000Z'),
+            evaluation: createEvaluation(14, undefined, '2026-07-10T10:00:00.000Z'),
         };
         render(
             <OfferDecisionWorkspace
@@ -477,6 +519,79 @@ describe('OfferDecisionWorkspace', () => {
         expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     });
 
+    test('restarts Table scroll and highlight when the same evaluation changes status repeatedly', async () => {
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+        const StatusHarness = () => {
+            const [application, setApplication] = useState(activeData.applications[0]);
+            return (
+                <OfferDecisionWorkspace
+                    data={{ applications: [application] }}
+                    onUpdateOfferStatus={async (_, status) =>
+                        setApplication((current) => ({ ...current, job_status: status }))
+                    }
+                    readOnly={false}
+                />
+            );
+        };
+
+        render(<StatusHarness />, {
+            initialPreferences: {
+                application_enable_scroll: true,
+                offer_decision_view_mode: 'table',
+            },
+        });
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Decline offer from Acme' }));
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Change to Offer for Acme' }));
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(2));
+        expect(document.getElementById('offer-evaluation-11')?.className).toContain('highlight');
+
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    test('does not carry a Table status highlight or auto-scroll into Cards after changing view mode', async () => {
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+        const StatusHarness = () => {
+            const [application, setApplication] = useState(activeData.applications[0]);
+            return (
+                <OfferDecisionWorkspace
+                    data={{ applications: [application] }}
+                    onUpdateOfferStatus={async (_, status) =>
+                        setApplication((current) => ({ ...current, job_status: status }))
+                    }
+                    readOnly={false}
+                />
+            );
+        };
+
+        render(<StatusHarness />, {
+            initialPreferences: {
+                application_enable_scroll: true,
+                offer_decision_view_mode: 'table',
+            },
+        });
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Decline offer from Acme' }));
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+        expect(document.getElementById('offer-evaluation-11')?.className).toContain('highlight');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+        const card = await screen.findByRole('article', { name: 'Acme Software Engineer' });
+        expect(screen.getByRole('button', { name: 'Cards' })).toHaveAttribute('aria-pressed', 'true');
+        expect(scrollIntoView).toHaveBeenCalledTimes(1);
+        expect(card.className).not.toContain('highlight');
+
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
     test('always scrolls and highlights a dashboard target once', async () => {
         const onTargetOfferProcessed = vi.fn();
         const scrollIntoView = vi.fn();
@@ -512,6 +627,71 @@ describe('OfferDecisionWorkspace', () => {
             />
         );
         expect(scrollIntoView).toHaveBeenCalledOnce();
+
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    test.each(['horizontal', 'vertical'] as const)(
+        'scrolls to and highlights the complete dashboard target in %s Table mode',
+        async (orientation) => {
+            const onTargetOfferProcessed = vi.fn();
+            const scrollIntoView = vi.fn();
+            const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+            HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+            render(
+                <OfferDecisionWorkspace
+                    data={activeData}
+                    onTargetOfferProcessed={onTargetOfferProcessed}
+                    readOnly={false}
+                    selectedFilters={['Evaluated Offers']}
+                    targetOfferJobId={11}
+                />,
+                {
+                    initialPreferences: {
+                        application_enable_scroll: false,
+                        offer_decision_table_orientation: orientation,
+                        offer_decision_view_mode: 'table',
+                    },
+                }
+            );
+
+            await waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
+            expect(onTargetOfferProcessed).toHaveBeenCalledOnce();
+            if (orientation === 'horizontal') {
+                expect(screen.getByRole('row', { name: /1 Acme Software Engineer/ }).className).toContain('highlight');
+            } else {
+                const highlightedCells = document.querySelectorAll('[data-offer-evaluation-job-id="11"]');
+                expect(highlightedCells).toHaveLength(16);
+                highlightedCells.forEach((cell) => expect(cell.className).toContain('highlight'));
+            }
+
+            HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+        }
+    );
+
+    test('does not repeat a pending dashboard target highlight when the view mode changes', async () => {
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+        render(
+            <OfferDecisionWorkspace
+                data={activeData}
+                onTargetOfferProcessed={vi.fn()}
+                readOnly={false}
+                selectedFilters={['Evaluated Offers']}
+                targetOfferJobId={11}
+            />,
+            { initialPreferences: { offer_decision_view_mode: 'table' } }
+        );
+
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
+        await userEvent.click(screen.getByRole('button', { name: 'Cards' }));
+
+        await screen.findByRole('article', { name: 'Acme Software Engineer' });
+        expect(scrollIntoView).toHaveBeenCalledOnce();
+        expect(screen.getByRole('article', { name: 'Acme Software Engineer' }).className).not.toContain('highlight');
 
         HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     });
@@ -563,17 +743,15 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.queryByRole('button', { name: 'Try priorities' })).not.toBeInTheDocument();
     });
 
-    test('disables decision priorities while an evaluation draft is open and restores them on cancel', () => {
+    test('keeps decision priorities enabled while an evaluation draft is open', () => {
         render(<OfferDecisionWorkspace data={robustnessData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Try priorities' }));
         expect(screen.getByLabelText('Career Growth importance')).toBeEnabled();
 
         editOfferEvaluation('Acme');
-        expect(screen.getByLabelText('Career Growth importance')).toBeDisabled();
-        expect(
-            screen.getByText('Save or cancel the open evaluation before trying different priorities.')
-        ).toBeInTheDocument();
+        expect(screen.getByLabelText('Career Growth importance')).toBeEnabled();
+        expect(screen.getByRole('button', { name: 'Reset importance to balanced' })).toBeEnabled();
 
         fireEvent.click(screen.getByRole('button', { name: 'Cancel evaluation for Acme' }));
         expect(screen.getByLabelText('Career Growth importance')).toBeEnabled();
@@ -706,6 +884,7 @@ describe('OfferDecisionWorkspace', () => {
         render(<WorkspaceHarness onSave={onSave} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         const card = screen.getByRole('article', { name: 'Beta Labs Platform Developer' });
         const groups = within(card).getAllByRole('group');
         expect(groups.map((group) => group.querySelector('legend')?.textContent)).toEqual([
@@ -781,11 +960,40 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getByText('SGD 11,000')).toBeInTheDocument();
     });
 
-    test('confirms and retries when a lower evaluation requires deleting its counteroffer plan', async () => {
+    test('keeps an unchanged edited evaluation open and shows an error toast', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        render(<WorkspaceHarness onSave={onSave} />);
+
+        editOfferEvaluation('Acme');
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        expect(await screen.findByText('Change at least one evaluation field before saving.')).toBeInTheDocument();
+        expect(screen.getByLabelText('Acme monthly base salary')).toBeInTheDocument();
+        expect(onSave).not.toHaveBeenCalled();
+    });
+
+    test('keeps an untouched new evaluation open and shows inline validation errors without an unchanged toast', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        render(<WorkspaceHarness onSave={onSave} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Beta Labs' }));
+
+        expect(await screen.findByText('Decision deadline is required.')).toBeInTheDocument();
+        expect(screen.getByText('Monthly base salary is required.')).toBeInTheDocument();
+        expect(screen.queryByText('Change at least one evaluation field before saving.')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Beta Labs decision deadline')).toBeInTheDocument();
+        expect(onSave).not.toHaveBeenCalled();
+    });
+
+    test('confirms and retries when a higher evaluation requires deleting its counteroffer plan', async () => {
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
         const conflict = new JobTrackerAPIError('Conflict', 409, {
-            code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+            code: 'OFFER_EVALUATION_ABOVE_COUNTEROFFER',
             message:
-                'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
+                'This evaluation fit rating is higher than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
         });
         const onSave = vi.fn().mockRejectedValueOnce(conflict).mockResolvedValueOnce(undefined);
         const application = { ...activeData.applications[0], has_counteroffer_plan: true };
@@ -797,11 +1005,12 @@ describe('OfferDecisionWorkspace', () => {
                 onSave={onSave}
                 onSaveCounterofferPlan={vi.fn()}
                 readOnly={false}
-            />
+            />,
+            { initialPreferences: { application_enable_scroll: true } }
         );
 
         editOfferEvaluation('Acme');
-        fireEvent.change(screen.getByLabelText('Acme Career Growth rating'), { target: { value: '1' } });
+        fireEvent.change(screen.getByLabelText('Acme Work-Life Balance rating'), { target: { value: '5' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
 
         await waitFor(() =>
@@ -809,7 +1018,7 @@ describe('OfferDecisionWorkspace', () => {
                 expect.objectContaining({
                     title: 'Delete counteroffer plan?',
                     confirmationText: 'Delete and Save',
-                    description: expect.stringContaining('lower fit rating than your saved counteroffer plan'),
+                    description: expect.stringContaining('higher fit rating than your saved counteroffer plan'),
                     confirmationButtonProps: { autoFocus: true },
                 })
             )
@@ -822,15 +1031,18 @@ describe('OfferDecisionWorkspace', () => {
                 name: 'Plan counteroffer for Acme',
             })
         ).toBeInTheDocument();
+        expect(scrollIntoView).not.toHaveBeenCalled();
+        expect(screen.getByRole('article', { name: 'Acme Software Engineer' }).className).not.toContain('highlight');
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     });
 
-    test('keeps a lower edited evaluation open when counteroffer deletion is cancelled', async () => {
+    test('keeps a higher edited evaluation open when counteroffer deletion is cancelled', async () => {
         mockConfirm.mockResolvedValueOnce({ confirmed: false });
         const onSave = vi.fn().mockRejectedValueOnce(
             new JobTrackerAPIError('Conflict', 409, {
-                code: 'OFFER_EVALUATION_BELOW_COUNTEROFFER',
+                code: 'OFFER_EVALUATION_ABOVE_COUNTEROFFER',
                 message:
-                    'This evaluation fit rating is lower than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
+                    'This evaluation fit rating is higher than the saved counteroffer plan. Confirm deletion of the counteroffer plan before saving.',
             })
         );
         render(
@@ -845,12 +1057,12 @@ describe('OfferDecisionWorkspace', () => {
         );
 
         editOfferEvaluation('Acme');
-        fireEvent.change(screen.getByLabelText('Acme Career Growth rating'), { target: { value: '1' } });
+        fireEvent.change(screen.getByLabelText('Acme Work-Life Balance rating'), { target: { value: '5' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
 
         await waitFor(() => expect(mockConfirm).toHaveBeenCalledOnce());
         expect(onSave).toHaveBeenCalledOnce();
-        expect(screen.getByLabelText('Acme Career Growth rating')).toHaveValue('1');
+        expect(screen.getByLabelText('Acme Work-Life Balance rating')).toHaveValue('5');
     });
 
     test('uses the shared date-time input format and formatted locked deadline', () => {
@@ -900,6 +1112,7 @@ describe('OfferDecisionWorkspace', () => {
 
         acmeScrollIntoView.mockClear();
         editOfferEvaluation('Acme');
+        fireEvent.change(screen.getByLabelText('Acme bonus'), { target: { value: 'Updated target' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
         await waitFor(() => expect(screen.getByRole('button', { name: 'More actions for Acme' })).toBeVisible());
         await waitFor(() => expect(acmeScrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' }));
@@ -971,6 +1184,25 @@ describe('OfferDecisionWorkspace', () => {
 
         expect(await screen.findByText('Please enter a valid decision deadline.')).toBeInTheDocument();
         expect(deadlineInput).toHaveFocus();
+        expect(onSave).not.toHaveBeenCalled();
+    });
+
+    test('shows a valid-salary inline error for malformed monthly salary input', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        render(<WorkspaceHarness onSave={onSave} />);
+
+        editOfferEvaluation('Acme');
+        const salaryInput = screen.getByLabelText('Acme monthly base salary');
+        fireEvent.change(salaryInput, { target: { value: '' } });
+        Object.defineProperty(salaryInput, 'validity', {
+            configurable: true,
+            value: { badInput: true },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        expect(await screen.findByText('Please enter a valid monthly base salary.')).toBeInTheDocument();
+        expect(screen.queryByText('Monthly base salary is required.')).not.toBeInTheDocument();
+        expect(salaryInput).toHaveFocus();
         expect(onSave).not.toHaveBeenCalled();
     });
 
@@ -1057,13 +1289,13 @@ describe('OfferDecisionWorkspace', () => {
                 ...activeData.applications[0],
                 job_id: 2,
                 company_name: 'Second',
-                evaluation: createEvaluation(2, tied, '2026-08-01T10:00:00.000Z'),
+                evaluation: createEvaluation(2, tied, '2099-08-01T10:00:00.000Z'),
             },
             {
                 ...activeData.applications[0],
                 job_id: 1,
                 company_name: 'First',
-                evaluation: createEvaluation(1, tied, '2026-08-01T10:00:00.000Z'),
+                evaluation: createEvaluation(1, tied, '2099-08-01T10:00:00.000Z'),
             },
         ];
 
@@ -1667,5 +1899,647 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getAllByTestId('offer-decision-skeleton')).toHaveLength(3);
         expect(screen.getByRole('status', { name: 'Loading offer comparisons' })).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'No offers to compare' })).not.toBeInTheDocument();
+    });
+
+    test('defaults to Cards and places the Cards/Table selector before Filter by', () => {
+        render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />);
+
+        const cardsButton = screen.getByRole('button', { name: 'Cards' });
+        const tableButton = screen.getByRole('button', { name: 'Table' });
+        const filterButton = screen.getByRole('button', { name: 'Filter by' });
+
+        expect(cardsButton).toHaveAttribute('aria-pressed', 'true');
+        expect(tableButton).toHaveAttribute('aria-pressed', 'false');
+        expect(tableButton.compareDocumentPosition(filterButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(screen.getAllByRole('article')).toHaveLength(3);
+        expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+
+    test('switches Table mode between horizontal and vertical layouts', async () => {
+        const initialPreferences = { ...testPreferences, offer_decision_view_mode: 'table' as const };
+        const updatePreferences = vi.fn(async (updates: Partial<UserPreferences>) => ({
+            ...initialPreferences,
+            ...updates,
+        }));
+        render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />, {
+            initialPreferences,
+            updatePreferences,
+        });
+
+        const layoutButton = screen.getByRole('button', { name: 'Table layout' });
+        expect(layoutButton).toHaveTextContent('Horizontal');
+        await userEvent.click(layoutButton);
+        await userEvent.click(screen.getByRole('menuitemradio', { name: 'Vertical' }));
+
+        expect(screen.getByRole('button', { name: 'Table layout' })).toHaveTextContent('Vertical');
+        expect(updatePreferences).toHaveBeenCalledWith({ offer_decision_table_orientation: 'vertical' });
+        const evaluatedTable = screen.getByRole('table', { name: 'Evaluated Offers' });
+        expect(within(evaluatedTable).queryAllByRole('columnheader')).toHaveLength(0);
+        expect(
+            within(evaluatedTable)
+                .getAllByRole('rowheader')
+                .map((header) => header.textContent)
+        ).toEqual([
+            'No.',
+            'Company Name',
+            'Position',
+            'Decision Deadline',
+            'Fit Rating',
+            'Monthly Base Salary',
+            'Bonus',
+            'Annual Leave',
+            'Work Arrangement',
+            'Pros',
+            'Cons',
+            'Career Growth',
+            'Company / Culture Fit',
+            'Work-Life Balance',
+            'Compensation Rating',
+            'Actions',
+        ]);
+        expect(within(evaluatedTable).queryByText('Field')).not.toBeInTheDocument();
+
+        openOfferActions('Acme');
+        fireEvent.scroll(evaluatedTable.parentElement as HTMLElement);
+        expect(screen.queryByRole('menu', { name: 'More actions for Acme' })).not.toBeInTheDocument();
+    });
+
+    test('restores the persisted Table layout when saving the new layout fails', async () => {
+        const updatePreferences = vi.fn().mockRejectedValue(new Error('offline'));
+        render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />, {
+            initialPreferences: { ...testPreferences, offer_decision_view_mode: 'table' },
+            updatePreferences,
+        });
+
+        await userEvent.click(screen.getByRole('button', { name: 'Table layout' }));
+        await userEvent.click(screen.getByRole('menuitemradio', { name: 'Vertical' }));
+
+        expect(
+            await screen.findByText('Unable to save the offer comparison table layout. Please try again.')
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Table layout' })).toHaveTextContent('Horizontal');
+        expect(
+            within(screen.getByRole('table', { name: 'Evaluated Offers' })).getAllByRole('columnheader')
+        ).not.toHaveLength(0);
+    });
+
+    test('persists Table mode and renders each selected active group as an independent semantic table', async () => {
+        const updatePreferences = vi.fn(async (updates: Partial<UserPreferences>) => ({
+            ...testPreferences,
+            ...updates,
+        }));
+        render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />, {
+            updatePreferences,
+        });
+
+        await act(async () => {
+            await userEvent.click(screen.getByRole('button', { name: 'Table' }));
+        });
+
+        expect(updatePreferences).toHaveBeenCalledWith({ offer_decision_view_mode: 'table' });
+        await waitFor(() => expect(screen.getAllByRole('table')).toHaveLength(3));
+        expect(screen.queryByRole('article')).not.toBeInTheDocument();
+
+        const unevaluatedSection = screen.getByRole('heading', { name: 'Offers to Evaluate' }).closest('section');
+        const evaluatedSection = screen.getByRole('heading', { name: 'Evaluated Offers' }).closest('section');
+        const previousSection = screen.getByRole('heading', { name: 'Previous Evaluations' }).closest('section');
+
+        expect(
+            within(unevaluatedSection as HTMLElement)
+                .getAllByRole('columnheader')
+                .map((header) => header.textContent)
+        ).toEqual(['No.', 'Company Name', 'Position', 'Actions']);
+        expect(
+            within(evaluatedSection as HTMLElement)
+                .getAllByRole('columnheader')
+                .map((header) => header.textContent)
+        ).toEqual([
+            'No.',
+            'Company Name',
+            'Position',
+            'Decision Deadline',
+            'Fit Rating',
+            'Monthly Base Salary',
+            'Bonus',
+            'Annual Leave',
+            'Work Arrangement',
+            'Pros',
+            'Cons',
+            'Career Growth',
+            'Company / Culture Fit',
+            'Work-Life Balance',
+            'Compensation Rating',
+            'Actions',
+        ]);
+        expect(
+            within(previousSection as HTMLElement)
+                .getAllByRole('columnheader')
+                .map((header) => header.textContent)
+        ).toEqual([
+            'No.',
+            'Company Name',
+            'Position',
+            'Status',
+            'Decision Deadline',
+            'Fit Rating',
+            'Monthly Base Salary',
+            'Bonus',
+            'Annual Leave',
+            'Work Arrangement',
+            'Pros',
+            'Cons',
+            'Career Growth',
+            'Company / Culture Fit',
+            'Work-Life Balance',
+            'Compensation Rating',
+            'Actions',
+        ]);
+        expect(within(evaluatedSection as HTMLElement).getByText('1')).toBeInTheDocument();
+        expect(within(previousSection as HTMLElement).getByText('1')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /show details/i })).not.toBeInTheDocument();
+
+        await act(async () => {
+            await userEvent.click(screen.getByRole('button', { name: 'Cards' }));
+        });
+        expect(updatePreferences).toHaveBeenLastCalledWith({ offer_decision_view_mode: 'cards' });
+        await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(3));
+        expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+
+    test('renders saved Table values directly and uses a dash for every missing optional value', () => {
+        const application = {
+            ...activeData.applications[0],
+            evaluation: {
+                ...createEvaluation(11),
+                details: {
+                    ...details,
+                    bonus: '',
+                    annual_leave_days: null,
+                    work_arrangement: '' as const,
+                    pros: '',
+                    concerns: '',
+                },
+            },
+        };
+        render(
+            <OfferDecisionWorkspace
+                data={{ applications: [application] }}
+                onDelete={vi.fn()}
+                onSave={vi.fn()}
+                readOnly={false}
+            />,
+            { initialPreferences: { offer_decision_view_mode: 'table' } }
+        );
+
+        const row = screen.getByRole('row', { name: /1 Acme Software Engineer/ });
+        expect(within(row).getByText('80%')).toBeInTheDocument();
+        expect(within(row).getByText('SGD 10,000')).toBeInTheDocument();
+        expect(within(row).getAllByText('-')).toHaveLength(5);
+        expect(within(row).getByText('5/5')).toBeInTheDocument();
+        expect(within(row).getAllByText('4/5')).toHaveLength(2);
+        expect(within(row).getByText('3/5')).toBeInTheDocument();
+    });
+
+    test('renders no more than four active and three archived Table sections while omitting empty groups', () => {
+        const expiredOffer = {
+            ...activeData.applications[0],
+            job_id: 14,
+            company_name: 'Expired Co',
+            evaluation: createEvaluation(14, undefined, '2026-07-10T10:00:00.000Z'),
+        };
+        const tableData = { applications: [...activeData.applications, expiredOffer] };
+        const activeRender = render(
+            <OfferDecisionWorkspace data={tableData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />,
+            { initialPreferences: { offer_decision_view_mode: 'table' } }
+        );
+
+        expect(screen.getAllByRole('table')).toHaveLength(4);
+        expect(screen.getAllByRole('table').map((table) => table.getAttribute('aria-labelledby'))).toEqual([
+            'offers-to-evaluate-heading',
+            'evaluated-offers-heading',
+            'expired-evaluated-offers-heading',
+            'previous-evaluations-heading',
+        ]);
+
+        activeRender.unmount();
+        render(<OfferDecisionWorkspace data={tableData} onDelete={vi.fn()} readOnly />, {
+            initialPreferences: { archived_offer_decision_view_mode: 'table' },
+        });
+        expect(screen.getAllByRole('table')).toHaveLength(3);
+        expect(screen.queryByRole('heading', { name: 'Archived Offers to Evaluate' })).not.toBeInTheDocument();
+    });
+
+    test('keeps each native table in its own keyboard-accessible two-axis scroll region with sticky opaque headers', () => {
+        render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />, {
+            initialPreferences: { offer_decision_view_mode: 'table' },
+        });
+
+        for (const table of screen.getAllByRole('table')) {
+            expect(table.tagName).toBe('TABLE');
+            expect(table.parentElement).toHaveAttribute('role', 'region');
+            expect(table.parentElement).toHaveAttribute('tabindex', '0');
+            for (const header of within(table).getAllByRole('columnheader')) {
+                expect(header).toHaveAttribute('scope', 'col');
+            }
+        }
+
+        const tableCss = readFileSync(
+            resolve(process.cwd(), 'src/pages/offerDecision/offerEvaluationTable/OfferEvaluationTable.module.css'),
+            'utf8'
+        );
+        expect(tableCss).toMatch(/\.tableScroll\s*\{[^}]*max-height:[^}]*overflow:\s*auto;/s);
+        expect(tableCss).toMatch(/\.table thead th\s*\{[^}]*position:\s*sticky;[^}]*background-color:/s);
+        expect(tableCss).toMatch(/\.table thead th\s*\{[^}]*z-index:\s*40;/s);
+        expect(tableCss).toMatch(/\.table\.vertical tbody th\s*\{[^}]*z-index:\s*40;/s);
+        expect(tableCss).toMatch(/\.table th,\s*\.table td\s*\{[^}]*text-align:\s*left;/s);
+        expect(tableCss).toMatch(/\.actionDropdown\s*\{[^}]*width:\s*max-content;[^}]*\}/s);
+        expect(tableCss).toMatch(/\.actionOption\s*\{[^}]*white-space:\s*nowrap;[^}]*\}/s);
+        expect(tableCss).toMatch(/\.directAction\s*\{[^}]*width:\s*auto;[^}]*min-width:\s*104px;/s);
+        expect(tableCss).not.toMatch(/@media/);
+    });
+
+    test('contains vertical wheel input when a table can scroll and forwards it when the table cannot scroll', () => {
+        const scrollPage = vi.spyOn(window, 'scrollBy').mockImplementation(() => undefined);
+        render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />, {
+            initialPreferences: { offer_decision_view_mode: 'table' },
+        });
+
+        const tableRegion = screen.getByRole('table', { name: 'Evaluated Offers' }).parentElement as HTMLDivElement;
+        const outerContainer = tableRegion.parentElement as HTMLElement;
+        const handleOuterWheel = vi.fn();
+        outerContainer.addEventListener('wheel', handleOuterWheel);
+        Object.defineProperties(tableRegion, {
+            clientHeight: { configurable: true, value: 300 },
+            scrollHeight: { configurable: true, value: 900 },
+            scrollTop: { configurable: true, value: 0, writable: true },
+        });
+
+        const upwardBoundaryWheel = new WheelEvent('wheel', {
+            bubbles: true,
+            cancelable: true,
+            deltaY: -100,
+        });
+        tableRegion.dispatchEvent(upwardBoundaryWheel);
+        expect(upwardBoundaryWheel.defaultPrevented).toBe(true);
+        expect(handleOuterWheel).not.toHaveBeenCalled();
+
+        const downwardTableWheel = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 100 });
+        tableRegion.dispatchEvent(downwardTableWheel);
+        expect(downwardTableWheel.defaultPrevented).toBe(false);
+        expect(handleOuterWheel).not.toHaveBeenCalled();
+
+        Object.defineProperty(tableRegion, 'scrollHeight', { configurable: true, value: 300 });
+        const outerWheel = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 100 });
+        tableRegion.dispatchEvent(outerWheel);
+        expect(outerWheel.defaultPrevented).toBe(true);
+        expect(handleOuterWheel).not.toHaveBeenCalled();
+        expect(scrollPage).toHaveBeenCalledWith(0, 100);
+    });
+
+    test('lets Vertical table up-and-down wheel input scroll the outer container', () => {
+        const scrollPage = vi.spyOn(window, 'scrollBy').mockImplementation(() => undefined);
+        render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />, {
+            initialPreferences: {
+                offer_decision_table_orientation: 'vertical',
+                offer_decision_view_mode: 'table',
+            },
+        });
+
+        const tableRegion = screen.getByRole('table', { name: 'Evaluated Offers' }).parentElement as HTMLDivElement;
+        const outerContainer = tableRegion.parentElement as HTMLElement;
+        const handleOuterWheel = vi.fn();
+        outerContainer.addEventListener('wheel', handleOuterWheel);
+        Object.defineProperties(tableRegion, {
+            clientHeight: { configurable: true, value: 300 },
+            scrollHeight: { configurable: true, value: 900 },
+        });
+
+        const wheel = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 100 });
+        tableRegion.dispatchEvent(wheel);
+
+        expect(wheel.defaultPrevented).toBe(true);
+        expect(handleOuterWheel).not.toHaveBeenCalled();
+        expect(scrollPage).toHaveBeenCalledWith(0, 100);
+    });
+
+    test('uses Table More menus for multi-action rows and a direct Add evaluation button for unevaluated rows', async () => {
+        render(
+            <OfferDecisionWorkspace
+                data={activeData}
+                onDelete={vi.fn()}
+                onDeleteCounterofferPlan={vi.fn()}
+                onGetCounterofferPlan={vi.fn()}
+                onSave={vi.fn()}
+                onSaveCounterofferPlan={vi.fn()}
+                onUpdateOfferStatus={vi.fn()}
+                readOnly={false}
+            />,
+            { initialPreferences: { offer_decision_view_mode: 'table' } }
+        );
+
+        expect(
+            within(openOfferActions('Acme'))
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent)
+        ).toEqual([
+            'Edit evaluation',
+            'Plan counteroffer',
+            'Add to Google Calendar',
+            'Add to Apple Calendar / Outlook (.ics)',
+            'Accept offer',
+            'Decline offer',
+            'Delete evaluation',
+        ]);
+        expect(screen.getByRole('menu', { name: 'More actions for Acme' }).parentElement).toBe(document.body);
+        fireEvent.scroll(screen.getByRole('table', { name: 'Evaluated Offers' }).parentElement as HTMLElement);
+        expect(screen.queryByRole('menu', { name: 'More actions for Acme' })).not.toBeInTheDocument();
+
+        expect(screen.queryByRole('button', { name: 'More actions for Beta Labs' })).not.toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+
+        const dialog = screen.getByRole('dialog', { name: 'Add Evaluation' });
+        expect(within(dialog).getByRole('heading', { name: 'Add Evaluation' })).toBeInTheDocument();
+        expect(within(dialog).getByRole('heading', { name: 'Beta Labs' })).toBeInTheDocument();
+        expect(within(dialog).getByText('Platform Developer')).toBeInTheDocument();
+        expect(within(dialog).getByText('Offer')).toBeInTheDocument();
+        expect(within(dialog).getByText('Fit rating')).toBeInTheDocument();
+        expect(within(dialog).getByRole('progressbar', { name: 'Beta Labs offer fit rating' })).toBeInTheDocument();
+        expect(within(dialog).getByLabelText('Beta Labs decision deadline')).toBeInTheDocument();
+        expect(within(dialog).getByLabelText('Beta Labs monthly base salary')).toBeInTheDocument();
+        expect(within(dialog).getByLabelText('Beta Labs Career Growth rating')).toBeInTheDocument();
+
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel evaluation for Beta Labs' }));
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(screen.getByRole('table', { name: 'Offers to Evaluate' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' })).toHaveFocus();
+    });
+
+    test('edits and saves active evaluated, expired and previous evaluations in Table mode', async () => {
+        const expiredOffer = {
+            ...activeData.applications[0],
+            job_id: 14,
+            company_name: 'Expired Co',
+            evaluation: createEvaluation(14, undefined, '2026-07-10T10:00:00.000Z'),
+        };
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        render(
+            <WorkspaceHarness
+                initialData={{ applications: [...activeData.applications, expiredOffer] }}
+                onSave={onSave}
+            />,
+            {
+                initialPreferences: { offer_decision_view_mode: 'table' },
+            }
+        );
+
+        for (const [companyName, jobId, salary] of [
+            ['Acme', 11, '11001'],
+            ['Expired Co', 14, '11002'],
+            ['Continuum', 13, '11003'],
+        ] as const) {
+            editOfferEvaluation(companyName);
+            fireEvent.change(screen.getByLabelText(`${companyName} monthly base salary`), {
+                target: { value: salary },
+            });
+            fireEvent.click(screen.getByRole('button', { name: `Save evaluation for ${companyName}` }));
+
+            await waitFor(() => expect(onSave).toHaveBeenCalledWith(jobId, expect.any(Object)));
+            await waitFor(() =>
+                expect(screen.queryByRole('dialog', { name: 'Edit Evaluation' })).not.toBeInTheDocument()
+            );
+        }
+
+        expect(onSave).toHaveBeenCalledTimes(3);
+    });
+
+    test.each(['horizontal', 'vertical'] as const)(
+        'scrolls to and highlights an edited evaluation in %s Table mode when auto-scroll is enabled',
+        async (orientation) => {
+            const scrollIntoView = vi.fn();
+            const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+            HTMLElement.prototype.scrollIntoView = scrollIntoView;
+            render(<WorkspaceHarness />, {
+                initialPreferences: {
+                    application_enable_scroll: true,
+                    offer_decision_table_orientation: orientation,
+                    offer_decision_view_mode: 'table',
+                },
+            });
+
+            editOfferEvaluation('Acme');
+            fireEvent.change(screen.getByLabelText('Acme monthly base salary'), { target: { value: '11000' } });
+            fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+
+            await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+            const savedEvaluation = await waitFor(() => {
+                const element = document.getElementById('offer-evaluation-11');
+                expect(element?.className).toContain('highlight');
+                return element as HTMLElement;
+            });
+            expect(savedEvaluation).toBeInTheDocument();
+            if (orientation === 'horizontal') {
+                expect(savedEvaluation.tagName).toBe('TR');
+            } else {
+                const highlightedColumn = document.querySelectorAll('[data-offer-evaluation-job-id="11"]');
+                expect(highlightedColumn).toHaveLength(16);
+                highlightedColumn.forEach((cell) => expect(cell.className).toContain('highlight'));
+            }
+            await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' }));
+            HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+        }
+    );
+
+    test('does not scroll or highlight an edited evaluation in Table mode when auto-scroll is disabled', async () => {
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+        render(<WorkspaceHarness />, {
+            initialPreferences: {
+                application_enable_scroll: false,
+                offer_decision_view_mode: 'table',
+            },
+        });
+
+        editOfferEvaluation('Acme');
+        fireEvent.change(screen.getByLabelText('Acme monthly base salary'), { target: { value: '11000' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(document.getElementById('offer-evaluation-11')?.className).not.toContain('highlight');
+        expect(scrollIntoView).not.toHaveBeenCalled();
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    test.each(['horizontal', 'vertical'] as const)(
+        'scrolls to and highlights a newly added evaluation in %s Table mode when auto-scroll is enabled',
+        async (orientation) => {
+            const scrollIntoView = vi.fn();
+            const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+            HTMLElement.prototype.scrollIntoView = scrollIntoView;
+            render(<WorkspaceHarness />, {
+                initialPreferences: {
+                    application_enable_scroll: true,
+                    offer_decision_table_orientation: orientation,
+                    offer_decision_view_mode: 'table',
+                },
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
+            fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
+                target: { value: '2026-08-20T10:00' },
+            });
+            fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
+            fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Beta Labs' }));
+
+            const savedEvaluation = await waitFor(() => {
+                const element = document.getElementById('offer-evaluation-12');
+                expect(element?.className).toContain('highlight');
+                return element as HTMLElement;
+            });
+            expect(savedEvaluation).toBeInTheDocument();
+            if (orientation === 'horizontal') {
+                expect(savedEvaluation.tagName).toBe('TR');
+            } else {
+                const highlightedColumn = document.querySelectorAll('[data-offer-evaluation-job-id="12"]');
+                expect(highlightedColumn).toHaveLength(16);
+                highlightedColumn.forEach((cell) => expect(cell.className).toContain('highlight'));
+            }
+            await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' }));
+            HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+        }
+    );
+
+    test('keeps Table dialog validation and failed-save drafts open, then closes after a successful retry', async () => {
+        const onSave = vi
+            .fn<(jobId: number, request: SaveOfferEvaluationRequest) => Promise<void>>()
+            .mockRejectedValueOnce(new Error('save failed'))
+            .mockResolvedValueOnce(undefined);
+        render(<WorkspaceHarness onSave={onSave} />, {
+            initialPreferences: { offer_decision_view_mode: 'table' },
+        });
+
+        editOfferEvaluation('Acme');
+        const dialog = screen.getByRole('dialog', { name: 'Edit Evaluation' });
+        const deadlineInput = within(dialog).getByLabelText('Acme decision deadline');
+        fireEvent.change(deadlineInput, { target: { value: '' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        expect(await within(dialog).findByText('Decision deadline is required.')).toBeInTheDocument();
+        expect(deadlineInput).toHaveFocus();
+        expect(onSave).not.toHaveBeenCalled();
+
+        fireEvent.change(deadlineInput, { target: { value: '2099-08-20T10:00' } });
+        fireEvent.change(within(dialog).getByLabelText('Acme monthly base salary'), { target: { value: '11000' } });
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Save evaluation for Acme' }));
+
+        await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+        expect(screen.getByRole('dialog', { name: 'Edit Evaluation' })).toBeInTheDocument();
+        expect(screen.getByLabelText('Acme monthly base salary')).toHaveValue(11000);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
+        await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(screen.getByRole('button', { name: 'Table' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByText('SGD 11,000')).toBeInTheDocument();
+    });
+
+    test('submits a Table evaluation dialog when Enter is pressed outside a form control', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined);
+        render(<WorkspaceHarness onSave={onSave} />, {
+            initialPreferences: { offer_decision_view_mode: 'table' },
+        });
+
+        editOfferEvaluation('Acme');
+        const dialog = screen.getByRole('dialog', { name: 'Edit Evaluation' });
+        fireEvent.change(within(dialog).getByLabelText('Acme monthly base salary'), { target: { value: '11000' } });
+        fireEvent.keyDown(within(dialog).getByRole('heading', { name: 'Acme' }), { key: 'Enter' });
+
+        await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+    });
+
+    test('uses archived Table More only for saved plans and a direct Delete when no plan exists', async () => {
+        const onDelete = vi.fn().mockResolvedValue(undefined);
+        const archivedData: OfferDecisionWorkspaceData = {
+            applications: [
+                {
+                    ...activeData.applications[2],
+                    company_name: 'Plan Co',
+                    has_counteroffer_plan: true,
+                },
+                {
+                    ...activeData.applications[2],
+                    company_name: 'Delete Co',
+                    job_id: 14,
+                    evaluation: createEvaluation(14),
+                    has_counteroffer_plan: false,
+                },
+            ],
+        };
+        render(
+            <OfferDecisionWorkspace
+                data={archivedData}
+                onDelete={onDelete}
+                onDeleteCounterofferPlan={vi.fn()}
+                onGetCounterofferPlan={vi.fn().mockResolvedValue({
+                    monthly_base_salary: 11000,
+                    bonus: '',
+                    annual_leave_days: 22,
+                    work_arrangement: 'Hybrid',
+                    ratings: {
+                        career_growth: 5,
+                        company_culture_fit: 4,
+                        work_life_balance: 4,
+                        compensation: 5,
+                    },
+                })}
+                onSaveCounterofferPlan={vi.fn()}
+                readOnly
+            />,
+            { initialPreferences: { archived_offer_decision_view_mode: 'table' } }
+        );
+
+        const planMenu = openOfferActions('Plan Co');
+        expect(
+            within(planMenu)
+                .getAllByRole('menuitem')
+                .map((item) => item.textContent)
+        ).toEqual(['View counteroffer plan', 'Delete evaluation']);
+        expect(screen.queryByRole('button', { name: 'Delete evaluation for Plan Co' })).not.toBeInTheDocument();
+        await act(async () => {
+            await userEvent.click(
+                within(planMenu).getByRole('menuitem', { name: 'View counteroffer plan for Plan Co' })
+            );
+        });
+        const counterofferDialog = await screen.findByRole('dialog', { name: 'Counteroffer Plan' });
+        expect(within(counterofferDialog).getByText('Delete', { selector: 'button' })).toBeInTheDocument();
+        expect(within(counterofferDialog).getByRole('button', { name: 'Close' })).toBeInTheDocument();
+        expect(within(counterofferDialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+        expect(within(counterofferDialog).queryByRole('slider')).not.toBeInTheDocument();
+        await act(async () => {
+            await userEvent.click(within(counterofferDialog).getByRole('button', { name: 'Close' }));
+        });
+
+        expect(screen.queryByRole('button', { name: 'More actions for Delete Co' })).not.toBeInTheDocument();
+        const directDelete = screen.getByRole('button', { name: 'Delete evaluation for Delete Co' });
+        expect(directDelete).toHaveTextContent('Delete');
+        await act(async () => {
+            await userEvent.click(directDelete);
+        });
+        await waitFor(() => expect(onDelete).toHaveBeenCalledWith(14));
+
+        expect(screen.queryByRole('menuitem', { name: /edit evaluation/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('menuitem', { name: /calendar/i })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('menuitem', { name: /change to|accept offer|decline offer/i })
+        ).not.toBeInTheDocument();
+    });
+
+    test('does not render archived Table actions when no action callbacks are available', () => {
+        render(<OfferDecisionWorkspace data={{ applications: [activeData.applications[2]] }} readOnly />, {
+            initialPreferences: { archived_offer_decision_view_mode: 'table' },
+        });
+
+        expect(screen.queryByRole('button', { name: 'More actions for Continuum' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Delete evaluation for Continuum' })).not.toBeInTheDocument();
     });
 });

@@ -718,9 +718,11 @@ describe('Rose Ledger visual contract', () => {
         const checkboxCss = readSource('src/components/activityControls/checkboxFilter/CheckboxFilter.module.css');
         const toggleCss = readSource('src/components/toggleButton/ToggleButton.module.css');
 
-        expect(viewToggle).toContain('aria-pressed={currentView === viewMode}');
+        expect(viewToggle).toContain("{ label: 'List', value: 'list' }");
+        expect(viewToggle).toContain("{ label: 'Board', value: 'board' }");
+        expect(viewToggle).toContain('aria-pressed={currentView === value}');
         expect(viewToggle.match(/<button/g)).toHaveLength(1);
-        expect(viewToggle).toContain('{VIEW_MODES.map((viewMode) => (');
+        expect(viewToggle).toContain('{options.map(({ label, value }) => (');
         expect(dropdown).toContain('styles.chevronOpen');
         expect(dropdown).toContain('aria-expanded={isOpen}');
         expect(checkbox).toContain("type='checkbox'");
@@ -852,6 +854,7 @@ describe('Rose Ledger visual contract', () => {
         );
         const formPage = readSource('src/components/formPage/FormPage.module.css');
         const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+        const offerDecisionWorkspace = readSource('src/pages/offerDecision/OfferDecisionWorkspace.module.css');
 
         [
             '@media (max-width: 803px)',
@@ -870,13 +873,16 @@ describe('Rose Ledger visual contract', () => {
         ].forEach((declaration) => expect(activityControls).toContain(declaration));
 
         expect(activityControls).toMatch(
-            /\.interviewResponsive\s*\{[^}]*grid-template-columns:\s*repeat\(2, max-content\);[^}]*justify-content:\s*center;[^}]*justify-items:\s*center;/s
+            /\.collectionResponsive\s*\{[^}]*grid-template-columns:\s*repeat\(2, max-content\);[^}]*justify-content:\s*center;[^}]*justify-items:\s*center;/s
         );
         expect(activityControls).toMatch(
-            /\.interviewResponsive\.hasActions \.actions\s*\{[^}]*grid-row:\s*1;[^}]*grid-column:\s*2;/s
+            /\.collectionResponsive\.hasActions \.actions\s*\{[^}]*grid-row:\s*1;[^}]*grid-column:\s*2;/s
         );
         expect(activityControls).toMatch(
-            /\.interviewResponsive \.interviewSecondaryControls\s*\{[^}]*grid-row:\s*2;[^}]*grid-column:\s*1 \/ -1;[^}]*justify-self:\s*center;/s
+            /\.collectionResponsive \.secondaryControls\s*\{[^}]*grid-row:\s*2;[^}]*grid-column:\s*1 \/ -1;[^}]*justify-self:\s*center;/s
+        );
+        expect(offerDecisionWorkspace).toMatch(
+            /@media \(max-width:\s*768px\)[\s\S]*?\.controlsRow\s*\{[^}]*width:\s*100%;[^}]*container-type:\s*inline-size;/s
         );
 
         ['@media (max-width: 1150px)', '@media (max-width: 600px)', '@media (max-width: 430px)'].forEach(
