@@ -5,6 +5,11 @@ export type BoardColumnApplication = {
     job_status: JobStatus;
 };
 
+export type ApplicationBoardTargetRequest = {
+    applicationId: number;
+    requestId: number;
+};
+
 export type BoardColumnContentProps = {
     applications: readonly BoardColumnApplication[];
     children: ReactNode;
@@ -14,4 +19,5 @@ export type BoardColumnContentProps = {
 export type ApplicationBoardColumnProps = BoardColumnContentProps & {
     droppable?: boolean;
     isDropDisabled?: boolean;
+    isDropOrigin?: boolean;
 };

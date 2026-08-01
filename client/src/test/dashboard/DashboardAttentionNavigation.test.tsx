@@ -8,6 +8,7 @@ import { routes } from '../../routes';
 import { render } from '../renderWithProviders';
 import { ConfirmProvider } from 'material-ui-confirm';
 import { defaultConfirmOptions } from '../../components/confirmation/defaultConfirmOptions';
+import * as highlightElement from '../../helper/highlightElement';
 
 const apiMocks = vi.hoisted(() => ({
     listApplications: vi.fn(),
@@ -52,9 +53,14 @@ const application = (jobStatus: JobApplication['job_status']): JobApplication =>
 });
 
 const AddInterviewDestination = () => {
-    const location = useLocation() as Location<{ app?: JobApplication }>;
+    const location = useLocation() as Location<{ app?: JobApplication; origin?: unknown }>;
 
-    return <p>Add Interview destination for {location.state?.app?.company_name ?? 'missing application'}</p>;
+    return (
+        <>
+            <p>Add Interview destination for {location.state?.app?.company_name ?? 'missing application'}</p>
+            <output data-testid='add-interview-state'>{JSON.stringify(location.state)}</output>
+        </>
+    );
 };
 
 const OfferComparisonDestination = () => {
@@ -62,10 +68,16 @@ const OfferComparisonDestination = () => {
     return <output data-testid='offer-comparison-state'>{JSON.stringify(location.state)}</output>;
 };
 
-const renderDashboardRoutes = () =>
+const LocationStateProbe = () => {
+    const location = useLocation();
+    return <output data-testid='dashboard-location-state'>{JSON.stringify(location.state)}</output>;
+};
+
+const renderDashboardRoutes = (initialEntry: string | { pathname: string; state?: unknown } = routes.dashboard) =>
     render(
-        <MemoryRouter initialEntries={[routes.dashboard]}>
+        <MemoryRouter initialEntries={[initialEntry]}>
             <ConfirmProvider defaultOptions={defaultConfirmOptions}>
+                <LocationStateProbe />
                 <Routes>
                     <Route path={routes.dashboard} element={<Dashboard />} />
                     <Route path={routes.addInterview} element={<AddInterviewDestination />} />
@@ -108,6 +120,32 @@ describe('signed-in dashboard attention navigation', () => {
         );
 
         expect(await screen.findByText('Add Interview destination for Acme')).toBeInTheDocument();
+        expect(screen.getByTestId('add-interview-state')).toHaveTextContent(
+            JSON.stringify({
+                app: application('Interview'),
+                origin: { kind: 'dashboard-needs-attention', category: 'interview-unscheduled' },
+            })
+        );
+    });
+
+    test('highlights and consumes the exact Needs Attention return target after dashboard data loads', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        apiMocks.listApplications.mockResolvedValue([application('Interview')]);
+        renderDashboardRoutes({
+            pathname: routes.dashboard,
+            state: {
+                dashboardAttentionTarget: { jobId: 42, category: 'interview-unscheduled' },
+            },
+        });
+
+        await waitFor(() =>
+            expect(scrollAndHighlight).toHaveBeenCalledWith(
+                'needs-attention-interview-unscheduled-42',
+                expect.any(String),
+                expect.anything()
+            )
+        );
+        await waitFor(() => expect(screen.getByTestId('dashboard-location-state')).toHaveTextContent('null'));
     });
 
     test('opens active Offer Comparison for an unevaluated offer action', async () => {

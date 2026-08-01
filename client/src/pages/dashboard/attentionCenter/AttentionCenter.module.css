@@ -37,6 +37,20 @@
     background: var(--colorCardBg);
 }
 
+.highlighted {
+    animation: highlightFade 4s ease-in-out;
+}
+
+@keyframes highlightFade {
+    0% {
+        background-color: var(--colorHighlightAnim);
+    }
+
+    100% {
+        background-color: var(--colorCardBg);
+    }
+}
+
 .attentionItem.applied {
     --attentionStatusColor: var(--colorStatusApplied);
 }

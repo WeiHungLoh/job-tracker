@@ -191,13 +191,22 @@ const InterviewCard = (props: InterviewCardProps) => {
                     >
                         {interview.meeting_url && (
                             <a
-                                className={styles.boardMeetingLink}
+                                className={styles.boardActionLink}
                                 href={interview.meeting_url}
                                 rel='noreferrer noopener'
                                 target='_blank'
                             >
                                 Click here to enter meeting
                             </a>
+                        )}
+                        {variant === 'job' && (
+                            <Link
+                                className={styles.boardActionLink}
+                                to={`${applicationRoute}#${applicationId}`}
+                                onClick={onViewApplicationClick}
+                            >
+                                Click here to view corresponding job application
+                            </Link>
                         )}
                         {variant === 'job' ? (
                             <div className={styles.boardNotesField}>

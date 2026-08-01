@@ -9,6 +9,7 @@ import type { OfferEvaluation } from '../../pages/offerDecision/models';
 import { render } from '../renderWithProviders';
 import { ConfirmProvider } from 'material-ui-confirm';
 import { defaultConfirmOptions } from '../../components/confirmation/defaultConfirmOptions';
+import * as highlightElement from '../../helper/highlightElement';
 
 const currentTime = new Date('2026-07-10T12:00:00.000Z');
 
@@ -48,6 +49,7 @@ describe('AttentionCenter', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -162,6 +164,72 @@ describe('AttentionCenter', () => {
             within(list).getByRole('button', { name: 'Record offer decision for Role 5 at Company 5' })
         );
         expect(onRecordOfferDecision).toHaveBeenCalledWith(applications[4], 'Evaluated Offers');
+    });
+
+    test('waits for and highlights only the exact navigation target before consuming it', async () => {
+        const onNavigationTargetHandled = vi.fn();
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const target = { jobId: 2, category: 'interview-unscheduled' as const };
+        const { rerender } = render(
+            <AttentionCenter
+                applications={[createApplication(1, 'Interview'), createApplication(2, 'Interview')]}
+                interviews={[]}
+                currentTime={currentTime}
+                isLoading
+                navigationTarget={target}
+                onNavigationTargetHandled={onNavigationTargetHandled}
+            />
+        );
+
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+        expect(onNavigationTargetHandled).not.toHaveBeenCalled();
+
+        rerender(
+            <AttentionCenter
+                applications={[createApplication(1, 'Interview'), createApplication(2, 'Interview')]}
+                interviews={[]}
+                currentTime={currentTime}
+                isLoading={false}
+                navigationTarget={target}
+                onNavigationTargetHandled={onNavigationTargetHandled}
+            />
+        );
+
+        await waitFor(() =>
+            expect(scrollAndHighlight).toHaveBeenCalledWith(
+                'needs-attention-interview-unscheduled-2',
+                expect.any(String),
+                expect.anything()
+            )
+        );
+        expect(screen.getByText('Company 2').closest('li')).toHaveAttribute(
+            'id',
+            'needs-attention-interview-unscheduled-2'
+        );
+        expect(onNavigationTargetHandled).toHaveBeenCalledTimes(1);
+    });
+
+    test('clears pending navigation highlight removal timers on unmount', () => {
+        vi.useFakeTimers();
+        const removalTimer = setTimeout(vi.fn(), 4000);
+        const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+        vi.spyOn(highlightElement, 'scrollAndHighlight').mockImplementation((elementId, _className, timeouts) => {
+            timeouts[elementId] = removalTimer;
+        });
+
+        const { unmount } = render(
+            <AttentionCenter
+                applications={[createApplication(2, 'Interview')]}
+                interviews={[]}
+                currentTime={currentTime}
+                isLoading={false}
+                navigationTarget={{ jobId: 2, category: 'interview-unscheduled' }}
+            />
+        );
+
+        unmount();
+
+        expect(clearTimeoutSpy).toHaveBeenCalledWith(removalTimer);
     });
 
     test('keeps ten ranked items and makes the list scrollable after the first six', () => {

@@ -11,6 +11,7 @@ import styles from './ApplicationCard.module.css';
 import { isApplicationStatusDisabled } from './applicationStatusRestrictions';
 import FollowUpSentBadge from '../../components/followUpSentBadge/FollowUpSentBadge';
 import PinControl from '../../components/pinControl/PinControl';
+import type { AddInterviewNavigationState } from '../interview/addInterviewNavigation';
 
 const JOB_STATUS_CARD_CLASS_MAP: Record<JobStatus, string> = {
     Accepted: styles.statusAccepted,
@@ -116,7 +117,15 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                     )}
 
                 {variant === 'job' && application.job_status === 'Interview' && (
-                    <Link to={routes.addInterview} state={{ app: application }}>
+                    <Link
+                        to={routes.addInterview}
+                        state={
+                            {
+                                app: application,
+                                origin: { kind: 'application-collection' },
+                            } satisfies AddInterviewNavigationState
+                        }
+                    >
                         Click here to add an interview
                     </Link>
                 )}

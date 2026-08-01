@@ -84,7 +84,7 @@ const clickConfirmedAction = async (button: HTMLElement) => {
 };
 
 const getExportCsvText = (): string => {
-    const href = screen.getByRole('link', { name: 'Export as CSV' }).getAttribute('href') ?? '';
+    const href = screen.getByRole('link', { name: 'Export filtered interviews as CSV' }).getAttribute('href') ?? '';
     const csvStart = href.indexOf(',');
     return decodeURIComponent(csvStart === -1 ? href : href.slice(csvStart + 1)).replace(/^\uFEFF/, '');
 };
@@ -120,7 +120,7 @@ describe('Job interview viewer flow', () => {
         expect(screen.queryByRole('region', { name: 'Application board' })).not.toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all interviews/i })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toBeInTheDocument();
     });
 
     test('shows every active List note from the persisted Interview preference and autosaves edits on blur', async () => {
@@ -270,7 +270,7 @@ describe('Job interview viewer flow', () => {
         expect(document.getElementById('1')?.className).toContain('highlighted');
     });
 
-    test('does not scroll to or highlight a pinned interview in Board view', async () => {
+    test('scrolls to and highlights a pinned interview in Board view when auto-scroll is enabled', async () => {
         const scrollIntoView = vi.fn();
         Element.prototype.scrollIntoView = scrollIntoView;
         fetch.mockImplementation(async (url: string, init?: RequestInit) => {
@@ -294,9 +294,38 @@ describe('Job interview viewer flow', () => {
         );
 
         await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
+
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' }));
+        expect(document.getElementById('1')?.className).toContain('highlighted');
+    });
+
+    test('does not scroll to or highlight a pinned interview in Board view when auto-scroll is disabled', async () => {
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews/1/pin')) {
+                return response({ interview_id: 1, is_pinned: true });
+            }
+            return init?.method === 'GET' ? response([mockInterview]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    ...mockPreferences,
+                    application_enable_scroll: false,
+                    interview_view_mode: 'board',
+                },
+            }
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
         expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
         await act(async () => {
-            await new Promise((resolve) => setTimeout(resolve, 150));
+            await new Promise((resolve) => setTimeout(resolve, 250));
         });
 
         expect(scrollIntoView).not.toHaveBeenCalled();
@@ -694,7 +723,7 @@ describe('Job interview viewer flow', () => {
         await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(
-            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+            JSON.stringify({ applicationJobStatus: 'Applied', applicationTargetId: 1 })
         );
         expect(fetch).toHaveBeenCalledTimes(1);
     });
@@ -746,9 +775,7 @@ describe('Job interview viewer flow', () => {
         ).toEqual(['ABC Pte Ltd interview', 'Second Company interview']);
         expect(within(list).queryByText(/time left/i)).not.toBeInTheDocument();
         expect(within(list).queryByText(/notes:/i)).not.toBeInTheDocument();
-        expect(
-            within(list).queryByRole('link', { name: /review corresponding job application/i })
-        ).not.toBeInTheDocument();
+        expect(within(list).getAllByRole('link', { name: /view corresponding job application/i })).toHaveLength(2);
         expect(within(list).getAllByText('Actions')).toHaveLength(2);
         expect(fetch).toHaveBeenCalledTimes(1);
     });
@@ -784,7 +811,7 @@ describe('Job interview viewer flow', () => {
         await userEvent.click(link);
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(
-            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+            JSON.stringify({ applicationJobStatus: 'Applied', applicationTargetId: 1 })
         );
         expect(fetch).toHaveBeenCalledTimes(1);
     });

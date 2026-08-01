@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ArchivedJobApplication } from '../../models';
 import { createApplicationCsvData } from '../../../../helper/csvExport';
 import { createApplicationRelationConfirmation } from '../../applicationRelationConfirmation';
@@ -44,10 +44,11 @@ import { sortApplications } from '../../applicationSorting';
 import { getApplicationsInBoardOrder } from '../../applicationBoard/applicationBoardUtils';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
 import {
-    getApplicationListJobStatuses,
-    getApplicationListJobStatus,
-    getApplicationListTargetId,
+    getApplicationNavigationJobStatus,
+    getApplicationNavigationTargetId,
+    resolveApplicationNavigationJobStatuses,
 } from '../../applicationNavigation';
+import type { ApplicationBoardTargetRequest } from '../../applicationBoard/models';
 
 const ViewArchivedApplication = () => {
     const api = useJobTrackerAPI();
@@ -55,9 +56,11 @@ const ViewArchivedApplication = () => {
     const [archivedApplications, setArchivedApplications] = useState<ArchivedJobApplication[]>([]);
     const location = useLocation();
     const navigate = useNavigate();
-    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
-    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
+    const navigationJobStatusRef = useRef(getApplicationNavigationJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationNavigationTargetId(location.state));
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const boardTargetRequestIdRef = useRef(0);
+    const [boardTargetRequest, setBoardTargetRequest] = useState<ApplicationBoardTargetRequest | null>(null);
     const confirm = useConfirm();
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isFilteringApplications, setIsFilteringApplications] = useState<boolean>(false);
@@ -79,6 +82,8 @@ const ViewArchivedApplication = () => {
     const selectedJobStatuses = preferences.archived_application_job_statuses;
     const showNotes = preferences.archived_application_show_notes;
     const viewMode = preferences.archived_application_view_mode;
+    const viewModeRef = useRef(viewMode);
+    viewModeRef.current = viewMode;
     const isBoardView = viewMode === 'board';
     const currentSortOrder = isBoardView
         ? preferences.archived_application_board_sort_order
@@ -97,8 +102,18 @@ const ViewArchivedApplication = () => {
     const csvData = useMemo(() => createApplicationCsvData(csvApplications), [csvApplications]);
 
     const handleViewModeChange = (nextViewMode: CollectionViewMode) => {
+        viewModeRef.current = nextViewMode;
+        if (nextViewMode !== 'board') {
+            setBoardTargetRequest(null);
+        }
         void handlePreferenceUpdate({ archived_application_view_mode: nextViewMode });
     };
+
+    const handleBoardTargetHandled = useCallback((handledRequest: ApplicationBoardTargetRequest) => {
+        setBoardTargetRequest((currentRequest) =>
+            currentRequest?.requestId === handledRequest.requestId ? null : currentRequest
+        );
+    }, []);
 
     const handleListSortOrderChange = async (sortOrder: ApplicationListSortOrder): Promise<boolean> => {
         try {
@@ -184,7 +199,7 @@ const ViewArchivedApplication = () => {
         const fetchApplications = async () => {
             const navigationJobStatus = navigationJobStatusRef.current;
             const navigationApplicationId = navigationApplicationIdRef.current;
-            const initialJobStatuses = getApplicationListJobStatuses(
+            const initialJobStatuses = resolveApplicationNavigationJobStatuses(
                 selectedJobStatuses,
                 navigationJobStatus,
                 navigationApplicationId
@@ -194,9 +209,6 @@ const ViewArchivedApplication = () => {
                 const preferenceUpdates: UpdateUserPreferencesRequest = {};
                 if (initialJobStatuses !== selectedJobStatuses) {
                     preferenceUpdates.archived_application_job_statuses = initialJobStatuses;
-                }
-                if (navigationApplicationId && isBoardView) {
-                    preferenceUpdates.archived_application_view_mode = 'list';
                 }
                 const preferenceUpdate =
                     Object.keys(preferenceUpdates).length > 0
@@ -235,12 +247,25 @@ const ViewArchivedApplication = () => {
 
     useEffect(() => {
         const targetApplicationId = navigationApplicationIdRef.current;
-        if (isLoading || isBoardView || !targetApplicationId) {
+        if (isLoading || !targetApplicationId) {
             return;
         }
 
         if (archivedApplications.some((application) => application.archived_job_id === targetApplicationId)) {
-            scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+            if (isBoardView) {
+                setBoardTargetRequest({
+                    applicationId: targetApplicationId,
+                    requestId: ++boardTargetRequestIdRef.current,
+                });
+            } else {
+                scrollAndHighlight(
+                    String(targetApplicationId),
+                    styles.highlighted,
+                    showCorrespondingAppTimeout.current,
+                    undefined,
+                    () => viewModeRef.current === 'list'
+                );
+            }
         }
 
         navigationApplicationIdRef.current = null;
@@ -250,7 +275,7 @@ const ViewArchivedApplication = () => {
 
     useEffect(() => {
         const targetApplicationId = location.hash.substring(1);
-        if (isLoading || isBoardView || !targetApplicationId) {
+        if (isLoading || !targetApplicationId) {
             return;
         }
 
@@ -261,7 +286,20 @@ const ViewArchivedApplication = () => {
             return;
         }
 
-        scrollAndHighlight(targetApplicationId, styles.highlighted, showCorrespondingAppTimeout.current);
+        if (isBoardView) {
+            setBoardTargetRequest({
+                applicationId: Number(targetApplicationId),
+                requestId: ++boardTargetRequestIdRef.current,
+            });
+        } else {
+            scrollAndHighlight(
+                targetApplicationId,
+                styles.highlighted,
+                showCorrespondingAppTimeout.current,
+                undefined,
+                () => viewModeRef.current === 'list'
+            );
+        }
         navigate(location.pathname, { replace: true });
     }, [archivedApplications, isBoardView, isLoading, location.hash, location.pathname, navigate]);
 
@@ -401,6 +439,7 @@ const ViewArchivedApplication = () => {
                                 csvData={csvData}
                                 csvFilename='archived_job_applications.csv'
                                 csvHeaders={APPLICATION_CSV_HEADERS}
+                                csvLabel='Export filtered applications as CSV'
                                 deleteDisabled={pendingBulkAction === 'unarchive'}
                                 deleteLabel='Delete all archived applications'
                                 id='archived-application-more-options'
@@ -484,9 +523,11 @@ const ViewArchivedApplication = () => {
                             applications={displayedApplications}
                             deletingApplicationIds={deletingApplicationIds}
                             onDelete={handleDelete}
+                            onTargetHandled={handleBoardTargetHandled}
                             onUnarchive={handleUnarchive}
                             selectedJobStatuses={selectedJobStatuses}
                             showNotes={showNotes}
+                            targetRequest={boardTargetRequest}
                             unarchivingApplicationIds={unarchivingApplicationIds}
                         />
                     )}

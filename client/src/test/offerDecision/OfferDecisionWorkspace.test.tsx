@@ -589,6 +589,57 @@ describe('OfferDecisionWorkspace', () => {
         expect(scrollIntoView).toHaveBeenCalledTimes(1);
         expect(card.className).not.toContain('highlight');
 
+        fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+        await screen.findByRole('table', { name: 'Previous Evaluations' });
+        expect(document.getElementById('offer-evaluation-11')?.className).not.toContain('highlight');
+        expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    test('does not carry a Table status highlight between horizontal and vertical layouts', async () => {
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+        const StatusHarness = () => {
+            const [application, setApplication] = useState(activeData.applications[0]);
+            return (
+                <OfferDecisionWorkspace
+                    data={{ applications: [application] }}
+                    onUpdateOfferStatus={async (_, status) =>
+                        setApplication((current) => ({ ...current, job_status: status }))
+                    }
+                    readOnly={false}
+                />
+            );
+        };
+
+        render(<StatusHarness />, {
+            initialPreferences: {
+                application_enable_scroll: true,
+                offer_decision_table_orientation: 'horizontal',
+                offer_decision_view_mode: 'table',
+            },
+        });
+
+        fireEvent.click(within(openOfferActions('Acme')).getByRole('menuitem', { name: 'Decline offer from Acme' }));
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+        expect(document.getElementById('offer-evaluation-11')?.className).toContain('highlight');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Table layout' }));
+        await userEvent.click(screen.getByRole('menuitemradio', { name: 'Vertical' }));
+
+        expect(document.querySelectorAll('[data-offer-evaluation-job-id="11"].highlight')).toHaveLength(0);
+        expect(document.querySelectorAll(`.${offerEvaluationStyles.highlighted}`)).toHaveLength(0);
+        expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Table layout' }));
+        await userEvent.click(screen.getByRole('menuitemradio', { name: 'Horizontal' }));
+
+        expect(document.getElementById('offer-evaluation-11')?.className).not.toContain('highlight');
+        expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
         HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     });
 
@@ -694,6 +745,46 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getByRole('article', { name: 'Acme Software Engineer' }).className).not.toContain('highlight');
 
         HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    test('cancels a scheduled Cards dashboard target highlight when Table mode opens first', async () => {
+        vi.useFakeTimers();
+        const scrollIntoView = vi.fn();
+        const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+        HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+        try {
+            render(
+                <OfferDecisionWorkspace
+                    data={activeData}
+                    onTargetOfferProcessed={vi.fn()}
+                    readOnly={false}
+                    selectedFilters={['Evaluated Offers']}
+                    targetOfferJobId={11}
+                />
+            );
+
+            fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+            await act(async () => undefined);
+            act(() => vi.advanceTimersByTime(100));
+
+            expect(screen.getByRole('button', { name: 'Table' })).toHaveAttribute('aria-pressed', 'true');
+            expect(scrollIntoView).not.toHaveBeenCalled();
+            expect(document.getElementById('offer-evaluation-11')?.className).not.toContain('highlight');
+
+            fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+            await act(async () => undefined);
+            act(() => vi.advanceTimersByTime(100));
+
+            expect(screen.getByRole('button', { name: 'Cards' })).toHaveAttribute('aria-pressed', 'true');
+            expect(screen.getByRole('article', { name: 'Acme Software Engineer' }).className).not.toContain(
+                'highlight'
+            );
+            expect(scrollIntoView).not.toHaveBeenCalled();
+        } finally {
+            HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+            vi.useRealTimers();
+        }
     });
 
     test('shows decision robustness only for two active current evaluated offers', () => {
@@ -1716,7 +1807,7 @@ describe('OfferDecisionWorkspace', () => {
         await userEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
 
-        const exportLink = screen.getByRole('link', { name: 'Export as CSV' });
+        const exportLink = screen.getByRole('link', { name: 'Export filtered offer evaluations as CSV' });
         const href = exportLink.getAttribute('href') ?? '';
         const encodedCsv = href.slice(href.indexOf(',') + 1).replace(/%(?![0-9a-f]{2})/gi, '%25');
         const csv = decodeURIComponent(encodedCsv).replace(/^\uFEFF/, '');
@@ -1749,7 +1840,8 @@ describe('OfferDecisionWorkspace', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
-        const href = screen.getByRole('link', { name: 'Export as CSV' }).getAttribute('href') ?? '';
+        const href =
+            screen.getByRole('link', { name: 'Export filtered offer evaluations as CSV' }).getAttribute('href') ?? '';
         const encodedCsv = href.slice(href.indexOf(',') + 1).replace(/%(?![0-9a-f]{2})/gi, '%25');
         const csv = decodeURIComponent(encodedCsv).replace(/^\uFEFF/, '');
 

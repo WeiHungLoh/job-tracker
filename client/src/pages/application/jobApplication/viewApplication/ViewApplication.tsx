@@ -36,6 +36,7 @@ import ActivityControls from '../../../../components/activityControls/ActivityCo
 import DisplayOptions from '../../../../components/activityControls/displayOptions/DisplayOptions';
 import MoreOptions from '../../../../components/activityControls/moreOptions/MoreOptions';
 import ApplicationBoard from '../applicationBoard/ApplicationBoard';
+import type { ApplicationBoardTargetRequest } from '../applicationBoard/models';
 import CollectionViewToggle from '../../../../components/activityControls/collectionViewToggle/CollectionViewToggle';
 import type { CollectionViewMode } from '../../../../components/activityControls/collectionViewToggle/models';
 import SkeletonBoard from '../../../../components/skeletonLoader/skeletonBoard/SkeletonBoard';
@@ -46,9 +47,9 @@ import SortOptions from '../../../../components/activityControls/sortOptions/Sor
 import { shouldAutoScrollAfterStatusChange, sortApplications } from '../../applicationSorting';
 import { getApplicationsInBoardOrder } from '../../applicationBoard/applicationBoardUtils';
 import {
-    getApplicationListJobStatuses,
-    getApplicationListJobStatus,
-    getApplicationListTargetId,
+    getApplicationNavigationJobStatus,
+    getApplicationNavigationTargetId,
+    resolveApplicationNavigationJobStatuses,
 } from '../../applicationNavigation';
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useAutosaveNotes from '../../../../hooks/useAutosaveNotes';
@@ -60,8 +61,8 @@ const ViewApplication = () => {
     const { preferences, updatePreferences } = useUserPreferences();
     const location = useLocation();
     const navigate = useNavigate();
-    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
-    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
+    const navigationJobStatusRef = useRef(getApplicationNavigationJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationNavigationTargetId(location.state));
     const [applications, setApplications] = useState<JobApplication[]>([]);
     const [editingApplicationId, setEditingApplicationId] = useState<number | null>(null);
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
@@ -69,6 +70,8 @@ const ViewApplication = () => {
     const confirm = useConfirm();
     const applicationHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const boardTargetRequestIdRef = useRef(0);
+    const [boardTargetRequest, setBoardTargetRequest] = useState<ApplicationBoardTargetRequest | null>(null);
     const updatingStatusApplicationIdRef = useRef<Set<number>>(new Set());
     const updatingPinApplicationIdRef = useRef<Set<number>>(new Set());
     const pendingApplicationActionIdsRef = useRef<Set<number>>(new Set());
@@ -122,9 +125,13 @@ const ViewApplication = () => {
     );
     const notesAutosave = useAutosaveNotes({ onSaveError: handleNoteSaveError, saveNotes: saveApplicationNotes });
     const selectedJobStatuses = preferences.application_job_statuses;
+    const selectedJobStatusesRef = useRef(selectedJobStatuses);
+    selectedJobStatusesRef.current = selectedJobStatuses;
     const showArchive = preferences.application_show_archive;
     const showNotes = preferences.application_show_notes;
     const isAutoScrollEnabled = preferences.application_enable_scroll;
+    const isAutoScrollEnabledRef = useRef(isAutoScrollEnabled);
+    isAutoScrollEnabledRef.current = isAutoScrollEnabled;
     const viewMode = preferences.application_view_mode;
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
@@ -163,6 +170,10 @@ const ViewApplication = () => {
     };
 
     const handleViewModeChange = (nextViewMode: CollectionViewMode) => {
+        viewModeRef.current = nextViewMode;
+        if (nextViewMode !== 'board') {
+            setBoardTargetRequest(null);
+        }
         if (nextViewMode === 'board') {
             closeStatusEditor();
             notesAutosave.setAllNotesVisibility(false);
@@ -171,6 +182,12 @@ const ViewApplication = () => {
         }
         void handlePreferenceUpdate({ application_view_mode: nextViewMode });
     };
+
+    const handleBoardTargetHandled = useCallback((handledRequest: ApplicationBoardTargetRequest) => {
+        setBoardTargetRequest((currentRequest) =>
+            currentRequest?.requestId === handledRequest.requestId ? null : currentRequest
+        );
+    }, []);
 
     const handleListSortOrderChange = async (sortOrder: ApplicationListSortOrder): Promise<boolean> => {
         try {
@@ -255,7 +272,7 @@ const ViewApplication = () => {
         const fetchData = async () => {
             const navigationJobStatus = navigationJobStatusRef.current;
             const navigationApplicationId = navigationApplicationIdRef.current;
-            const initialJobStatuses = getApplicationListJobStatuses(
+            const initialJobStatuses = resolveApplicationNavigationJobStatuses(
                 selectedJobStatuses,
                 navigationJobStatus,
                 navigationApplicationId
@@ -265,9 +282,6 @@ const ViewApplication = () => {
                 const preferenceUpdates: UpdateUserPreferencesRequest = {};
                 if (initialJobStatuses !== selectedJobStatuses) {
                     preferenceUpdates.application_job_statuses = initialJobStatuses;
-                }
-                if (navigationApplicationId && isBoardView) {
-                    preferenceUpdates.application_view_mode = 'list';
                 }
                 const preferenceUpdate =
                     Object.keys(preferenceUpdates).length > 0
@@ -308,12 +322,25 @@ const ViewApplication = () => {
 
     useEffect(() => {
         const targetApplicationId = navigationApplicationIdRef.current;
-        if (isLoading || isBoardView || !targetApplicationId) {
+        if (isLoading || !targetApplicationId) {
             return;
         }
 
         if (applications.some((application) => application.job_id === targetApplicationId)) {
-            scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+            if (isBoardView) {
+                setBoardTargetRequest({
+                    applicationId: targetApplicationId,
+                    requestId: ++boardTargetRequestIdRef.current,
+                });
+            } else {
+                scrollAndHighlight(
+                    String(targetApplicationId),
+                    styles.highlighted,
+                    showCorrespondingAppTimeout.current,
+                    undefined,
+                    () => viewModeRef.current === 'list'
+                );
+            }
         }
 
         navigationApplicationIdRef.current = null;
@@ -323,7 +350,7 @@ const ViewApplication = () => {
 
     useEffect(() => {
         const targetApplicationId = location.hash.substring(1);
-        if (isLoading || isBoardView || !targetApplicationId) {
+        if (isLoading || !targetApplicationId) {
             return;
         }
 
@@ -334,7 +361,20 @@ const ViewApplication = () => {
             return;
         }
 
-        scrollAndHighlight(targetApplicationId, styles.highlighted, showCorrespondingAppTimeout.current);
+        if (isBoardView) {
+            setBoardTargetRequest({
+                applicationId: Number(targetApplicationId),
+                requestId: ++boardTargetRequestIdRef.current,
+            });
+        } else {
+            scrollAndHighlight(
+                targetApplicationId,
+                styles.highlighted,
+                showCorrespondingAppTimeout.current,
+                undefined,
+                () => viewModeRef.current === 'list'
+            );
+        }
         // to remove the hash
         navigate(location.pathname, { replace: true });
     }, [applications, isBoardView, isLoading, location.hash, location.pathname, navigate]);
@@ -435,6 +475,7 @@ const ViewApplication = () => {
         }
 
         const shouldPin = !application.is_pinned;
+        const requestedViewMode = viewModeRef.current;
         updatingPinApplicationIdRef.current.add(application.job_id);
         startUpdatingApplicationPin(application.job_id);
 
@@ -450,13 +491,26 @@ const ViewApplication = () => {
             );
             showSuccessToast(shouldPin ? 'Job application pinned.' : 'Job application unpinned.');
 
-            if (isAutoScrollEnabled && viewModeRef.current === 'list') {
+            if (!isAutoScrollEnabledRef.current || viewModeRef.current !== requestedViewMode) {
+                return;
+            }
+
+            if (requestedViewMode === 'board') {
+                if (selectedJobStatusesRef.current.includes(application.job_status)) {
+                    setBoardTargetRequest({
+                        applicationId: application.job_id,
+                        requestId: ++boardTargetRequestIdRef.current,
+                    });
+                }
+            } else {
                 setTimeout(() => {
-                    if (viewModeRef.current === 'list') {
+                    if (isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode) {
                         scrollAndHighlight(
                             String(application.job_id),
                             styles.highlighted,
-                            applicationHighlightTimeout.current
+                            applicationHighlightTimeout.current,
+                            undefined,
+                            () => isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode
                         );
                     }
                 }, 100);
@@ -592,10 +646,15 @@ const ViewApplication = () => {
                 statusRemainsVisible
             ) {
                 setTimeout(() => {
+                    if (viewModeRef.current !== 'list') {
+                        return;
+                    }
                     scrollAndHighlight(
                         String(application.job_id),
                         styles.highlighted,
-                        applicationHighlightTimeout.current
+                        applicationHighlightTimeout.current,
+                        undefined,
+                        () => viewModeRef.current === 'list'
                     );
                 }, 100);
             }
@@ -639,6 +698,16 @@ const ViewApplication = () => {
                 jobStatus: newStatus,
             });
             showSuccessToast('Job application status updated.');
+            if (
+                isAutoScrollEnabledRef.current &&
+                viewModeRef.current === 'board' &&
+                selectedJobStatusesRef.current.includes(newStatus)
+            ) {
+                setBoardTargetRequest({
+                    applicationId: application.job_id,
+                    requestId: ++boardTargetRequestIdRef.current,
+                });
+            }
         } catch (error) {
             setApplications((current) => {
                 const applicationStillVisible = current.some((item) => item.job_id === application.job_id);
@@ -676,6 +745,7 @@ const ViewApplication = () => {
                                 csvData={csvData}
                                 csvFilename='job_applications.csv'
                                 csvHeaders={APPLICATION_CSV_HEADERS}
+                                csvLabel='Export filtered applications as CSV'
                                 deleteLabel='Delete all applications'
                                 id='application-more-options'
                                 deleteDisabled={pendingBulkAction === 'archive'}
@@ -692,7 +762,7 @@ const ViewApplication = () => {
                         ) : undefined
                     }
                     ariaLabel='Application view and management controls'
-                    mobileLayout={isBoardView || !hasApplications ? 'applicationCompact' : 'applicationWithDisplay'}
+                    mobileLayout={!hasApplications ? 'applicationCompact' : 'applicationWithDisplay'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Application view'
@@ -725,18 +795,26 @@ const ViewApplication = () => {
                                 selectedOption={preferences.application_list_sort_order}
                             />
                         ))}
-                    {hasApplications && !isBoardView && (
+                    {hasApplications && (
                         <DisplayOptions id='application-display-options'>
-                            <ToggleButton toggled={showNotes} onToggle={handleShowNotesToggle} label='Show notes' />
-                            <ToggleButton
-                                toggled={showArchive}
-                                onToggle={() =>
-                                    void handlePreferenceUpdate({
-                                        application_show_archive: !showArchive,
-                                    })
-                                }
-                                label='Show archive'
-                            />
+                            {!isBoardView && (
+                                <>
+                                    <ToggleButton
+                                        toggled={showNotes}
+                                        onToggle={handleShowNotesToggle}
+                                        label='Show notes'
+                                    />
+                                    <ToggleButton
+                                        toggled={showArchive}
+                                        onToggle={() =>
+                                            void handlePreferenceUpdate({
+                                                application_show_archive: !showArchive,
+                                            })
+                                        }
+                                        label='Show archive'
+                                    />
+                                </>
+                            )}
                             <ToggleButton
                                 toggled={isAutoScrollEnabled}
                                 onToggle={() =>
@@ -791,8 +869,10 @@ const ViewApplication = () => {
                             onPinToggle={handlePinToggle}
                             onRetryNotes={notesAutosave.retryNotes}
                             onStatusChange={updateApplicationStatusFromBoard}
+                            onTargetHandled={handleBoardTargetHandled}
                             onUndoFollowUp={handleUndoFollowUp}
                             selectedJobStatuses={selectedJobStatuses}
+                            targetRequest={boardTargetRequest}
                             upcomingInterviewCountByJob={upcomingInterviewCountByJob}
                         />
                     )}

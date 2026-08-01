@@ -27,7 +27,7 @@ import {
 } from '../../../../../helper/interviewTiming';
 import { useBulkInterviewCalendarExport } from '../../../../interview/calendarOptions/useBulkInterviewCalendarExport';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
-import type { ApplicationListNavigationState } from '../../../../application/applicationNavigation';
+import type { ApplicationCollectionNavigationState } from '../../../../application/applicationNavigation';
 import useAutosaveNotes from '../../../../../hooks/useAutosaveNotes';
 import { FIELD_MAX_LENGTHS } from '../../../../../helper/formValidation';
 import DisplayOptions from '../../../../../components/activityControls/displayOptions/DisplayOptions';
@@ -76,6 +76,8 @@ const DemoViewInterview = () => {
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
     const isAutoScrollEnabled = preferences.application_enable_scroll;
+    const isAutoScrollEnabledRef = useRef(isAutoScrollEnabled);
+    isAutoScrollEnabledRef.current = isAutoScrollEnabled;
     const isBoardView = viewMode === 'board';
 
     const handleViewModeChange = (nextViewMode: 'list' | 'board') => {
@@ -181,19 +183,22 @@ const DemoViewInterview = () => {
 
     const handlePinToggle = (interview: JobInterview) => {
         const shouldPin = !interview.is_pinned;
+        const requestedViewMode = viewModeRef.current;
         dispatch({
             type: 'UPDATE_INTERVIEW_PIN',
             payload: { interviewId: interview.interview_id, isPinned: shouldPin },
         });
         showSuccessToast(shouldPin ? 'Interview pinned.' : 'Interview unpinned.');
 
-        if (isAutoScrollEnabled && viewModeRef.current === 'list') {
+        if (isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode) {
             setTimeout(() => {
-                if (viewModeRef.current === 'list') {
+                if (isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode) {
                     scrollAndHighlight(
                         String(interview.interview_id),
                         styles.highlighted,
-                        interviewHighlightTimeout.current
+                        interviewHighlightTimeout.current,
+                        undefined,
+                        () => isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode
                     );
                 }
             }, 100);
@@ -203,9 +208,9 @@ const DemoViewInterview = () => {
     const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: JobInterview) => {
         event.preventDefault();
 
-        const navigationState: ApplicationListNavigationState = {
-            applicationListJobStatus: interview.job_status,
-            applicationListTargetId: interview.job_id,
+        const navigationState: ApplicationCollectionNavigationState = {
+            applicationJobStatus: interview.job_status,
+            applicationTargetId: interview.job_id,
         };
         navigate(routes.demoViewApplications, { state: navigationState });
     };
@@ -220,6 +225,7 @@ const DemoViewInterview = () => {
                                 csvData={csvData}
                                 csvFilename='demo_job_interviews.csv'
                                 csvHeaders={INTERVIEW_CSV_HEADERS}
+                                csvLabel='Export filtered interviews as CSV'
                                 deleteLabel='Delete all interviews'
                                 id='demo-interview-more-options'
                                 isDeleting={isDeletingAll}

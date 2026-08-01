@@ -29,6 +29,7 @@ import DisplayOptions from '../../../../../components/activityControls/displayOp
 import MoreOptions from '../../../../../components/activityControls/moreOptions/MoreOptions';
 import SortOptions from '../../../../../components/activityControls/sortOptions/SortOptions';
 import ApplicationBoard from '../../../../application/jobApplication/applicationBoard/ApplicationBoard';
+import type { ApplicationBoardTargetRequest } from '../../../../application/jobApplication/applicationBoard/models';
 import DemoApplicationCard from '../../DemoApplicationCard';
 import CollectionViewToggle from '../../../../../components/activityControls/collectionViewToggle/CollectionViewToggle';
 import type { CollectionViewMode } from '../../../../../components/activityControls/collectionViewToggle/models';
@@ -44,9 +45,9 @@ import { routes } from '../../../../../routes';
 import { createApplicationEmptyState } from '../../../../application/applicationEmptyState';
 import { getApplicationsInBoardOrder } from '../../../../application/applicationBoard/applicationBoardUtils';
 import {
-    getApplicationListJobStatuses,
-    getApplicationListJobStatus,
-    getApplicationListTargetId,
+    getApplicationNavigationJobStatus,
+    getApplicationNavigationTargetId,
+    resolveApplicationNavigationJobStatuses,
 } from '../../../../application/applicationNavigation';
 import useCurrentTime from '../../../../../hooks/useCurrentTime';
 import { shouldAutoScrollAfterStatusChange } from '../../../../application/applicationSorting';
@@ -61,13 +62,15 @@ const DemoViewApplication = () => {
     const { preferences, updatePreferences } = useUserPreferences();
     const location = useLocation();
     const navigate = useNavigate();
-    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
-    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
+    const navigationJobStatusRef = useRef(getApplicationNavigationJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationNavigationTargetId(location.state));
     const [editingApplicationId, setEditingApplicationId] = useState<number | null>(null);
     const [editedJobStatus, setEditedJobStatus] = useState<JobStatus | null>(null);
     const confirm = useConfirm();
     const applicationHighlightTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const boardTargetRequestIdRef = useRef(0);
+    const [boardTargetRequest, setBoardTargetRequest] = useState<ApplicationBoardTargetRequest | null>(null);
     const { showErrorToast, showSuccessToast } = useToast();
     const saveApplicationNotes = useCallback(
         (jobId: number, notes: string) => {
@@ -103,9 +106,13 @@ const DemoViewApplication = () => {
         [currentTime, state]
     );
     const selectedJobStatuses = preferences.application_job_statuses;
+    const selectedJobStatusesRef = useRef(selectedJobStatuses);
+    selectedJobStatusesRef.current = selectedJobStatuses;
     const showArchive = preferences.application_show_archive;
     const showNotes = preferences.application_show_notes;
     const isAutoScrollEnabled = preferences.application_enable_scroll;
+    const isAutoScrollEnabledRef = useRef(isAutoScrollEnabled);
+    isAutoScrollEnabledRef.current = isAutoScrollEnabled;
     const viewMode = preferences.application_view_mode;
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
@@ -132,20 +139,16 @@ const DemoViewApplication = () => {
 
         navigationJobStatusRef.current = null;
         const navigationApplicationId = navigationApplicationIdRef.current;
-        const navigationJobStatuses = getApplicationListJobStatuses(
+        const navigationJobStatuses = resolveApplicationNavigationJobStatuses(
             selectedJobStatuses,
             navigationJobStatus,
             navigationApplicationId
         );
         const preferenceUpdates: {
             application_job_statuses?: JobStatus[];
-            application_view_mode?: CollectionViewMode;
         } = {};
         if (navigationJobStatuses !== selectedJobStatuses) {
             preferenceUpdates.application_job_statuses = navigationJobStatuses;
-        }
-        if (navigationApplicationId && isBoardView) {
-            preferenceUpdates.application_view_mode = 'list';
         }
         if (Object.keys(preferenceUpdates).length > 0) {
             void updatePreferences(preferenceUpdates);
@@ -157,7 +160,7 @@ const DemoViewApplication = () => {
 
     useEffect(() => {
         const targetApplicationId = navigationApplicationIdRef.current;
-        if (isBoardView || !targetApplicationId) {
+        if (!targetApplicationId) {
             return;
         }
 
@@ -165,8 +168,22 @@ const DemoViewApplication = () => {
             return;
         }
 
-        scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+        if (isBoardView) {
+            setBoardTargetRequest({
+                applicationId: targetApplicationId,
+                requestId: ++boardTargetRequestIdRef.current,
+            });
+        } else {
+            scrollAndHighlight(
+                String(targetApplicationId),
+                styles.highlighted,
+                showCorrespondingAppTimeout.current,
+                undefined,
+                () => viewModeRef.current === 'list'
+            );
+        }
         navigationApplicationIdRef.current = null;
+        navigationJobStatusRef.current = null;
         navigate(location.pathname, { replace: true, state: null });
     }, [isBoardView, location.pathname, navigate, visibleApplicationIds]);
 
@@ -176,6 +193,10 @@ const DemoViewApplication = () => {
     };
 
     const handleViewModeChange = (nextViewMode: CollectionViewMode) => {
+        viewModeRef.current = nextViewMode;
+        if (nextViewMode !== 'board') {
+            setBoardTargetRequest(null);
+        }
         if (nextViewMode === 'board') {
             closeStatusEditor();
             notesAutosave.setAllNotesVisibility(false);
@@ -184,6 +205,12 @@ const DemoViewApplication = () => {
         }
         void updatePreferences({ application_view_mode: nextViewMode });
     };
+
+    const handleBoardTargetHandled = useCallback((handledRequest: ApplicationBoardTargetRequest) => {
+        setBoardTargetRequest((currentRequest) =>
+            currentRequest?.requestId === handledRequest.requestId ? null : currentRequest
+        );
+    }, []);
 
     const handleJobStatusChange = async (jobStatuses: JobStatus[]) => {
         closeStatusEditor();
@@ -355,7 +382,16 @@ const DemoViewApplication = () => {
 
         if (shouldAutoScrollAfterStatusChange(isAutoScrollEnabled, preferences.application_list_sort_order)) {
             setTimeout(() => {
-                scrollAndHighlight(String(application.job_id), styles.highlighted, applicationHighlightTimeout.current);
+                if (viewModeRef.current !== 'list') {
+                    return;
+                }
+                scrollAndHighlight(
+                    String(application.job_id),
+                    styles.highlighted,
+                    applicationHighlightTimeout.current,
+                    undefined,
+                    () => viewModeRef.current === 'list'
+                );
             }, 100);
         }
     };
@@ -370,6 +406,16 @@ const DemoViewApplication = () => {
             payload: { jobId: application.job_id, jobStatus: newStatus },
         });
         showSuccessToast('Job application status updated.');
+        if (
+            isAutoScrollEnabledRef.current &&
+            viewModeRef.current === 'board' &&
+            selectedJobStatusesRef.current.includes(newStatus)
+        ) {
+            setBoardTargetRequest({
+                applicationId: application.job_id,
+                requestId: ++boardTargetRequestIdRef.current,
+            });
+        }
     };
 
     const handleUndoFollowUp = (application: JobApplication) => {
@@ -383,6 +429,7 @@ const DemoViewApplication = () => {
         }
 
         const shouldPin = !application.is_pinned;
+        const requestedViewMode = viewModeRef.current;
         updatingPinApplicationIdRef.current.add(application.job_id);
         startUpdatingApplicationPin(application.job_id);
 
@@ -394,13 +441,26 @@ const DemoViewApplication = () => {
             });
             showSuccessToast(shouldPin ? 'Job application pinned.' : 'Job application unpinned.');
 
-            if (isAutoScrollEnabled && viewModeRef.current === 'list') {
+            if (!isAutoScrollEnabledRef.current || viewModeRef.current !== requestedViewMode) {
+                return;
+            }
+
+            if (requestedViewMode === 'board') {
+                if (selectedJobStatusesRef.current.includes(application.job_status)) {
+                    setBoardTargetRequest({
+                        applicationId: application.job_id,
+                        requestId: ++boardTargetRequestIdRef.current,
+                    });
+                }
+            } else {
                 setTimeout(() => {
-                    if (viewModeRef.current === 'list') {
+                    if (isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode) {
                         scrollAndHighlight(
                             String(application.job_id),
                             styles.highlighted,
-                            applicationHighlightTimeout.current
+                            applicationHighlightTimeout.current,
+                            undefined,
+                            () => isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode
                         );
                     }
                 }, 100);
@@ -430,6 +490,7 @@ const DemoViewApplication = () => {
                                 csvData={csvData}
                                 csvFilename='demo_job_applications.csv'
                                 csvHeaders={APPLICATION_CSV_HEADERS}
+                                csvLabel='Export filtered applications as CSV'
                                 deleteLabel='Delete all applications'
                                 id='demo-application-more-options'
                                 deleteDisabled={pendingBulkAction === 'archive'}
@@ -446,7 +507,7 @@ const DemoViewApplication = () => {
                         ) : undefined
                     }
                     ariaLabel='Demo application view and management controls'
-                    mobileLayout={isBoardView || !hasApplications ? 'applicationCompact' : 'applicationWithDisplay'}
+                    mobileLayout={!hasApplications ? 'applicationCompact' : 'applicationWithDisplay'}
                 >
                     <CollectionViewToggle
                         ariaLabel='Application view'
@@ -476,18 +537,26 @@ const DemoViewApplication = () => {
                                 selectedOption={preferences.application_list_sort_order}
                             />
                         ))}
-                    {hasApplications && !isBoardView && (
+                    {hasApplications && (
                         <DisplayOptions id='demo-application-display-options'>
-                            <ToggleButton toggled={showNotes} onToggle={handleShowNotesToggle} label='Show notes' />
-                            <ToggleButton
-                                toggled={showArchive}
-                                onToggle={() =>
-                                    void updatePreferences({
-                                        application_show_archive: !showArchive,
-                                    })
-                                }
-                                label='Show archive'
-                            />
+                            {!isBoardView && (
+                                <>
+                                    <ToggleButton
+                                        toggled={showNotes}
+                                        onToggle={handleShowNotesToggle}
+                                        label='Show notes'
+                                    />
+                                    <ToggleButton
+                                        toggled={showArchive}
+                                        onToggle={() =>
+                                            void updatePreferences({
+                                                application_show_archive: !showArchive,
+                                            })
+                                        }
+                                        label='Show archive'
+                                    />
+                                </>
+                            )}
                             <ToggleButton
                                 toggled={isAutoScrollEnabled}
                                 onToggle={() =>
@@ -526,8 +595,10 @@ const DemoViewApplication = () => {
                     onPinToggle={handlePinToggle}
                     onRetryNotes={notesAutosave.retryNotes}
                     onStatusChange={updateApplicationStatusFromBoard}
+                    onTargetHandled={handleBoardTargetHandled}
                     onUndoFollowUp={handleUndoFollowUp}
                     selectedJobStatuses={selectedJobStatuses}
+                    targetRequest={boardTargetRequest}
                     upcomingInterviewCountByJob={upcomingInterviewCountByJob}
                 />
             )}

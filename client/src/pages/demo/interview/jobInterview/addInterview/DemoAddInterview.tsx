@@ -1,5 +1,4 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import type { JobApplication } from '../../../../application/models';
 import type { CreateInterviewRequest } from '../../../../interview/models';
 import type { Location } from 'react-router-dom';
 import type { FormEvent, KeyboardEvent } from 'react';
@@ -38,6 +37,9 @@ import {
 } from '../../../../interview/interviewOfferDeadlineWarning';
 import { useUnsavedChangesBlocker } from '../../../../../hooks/useUnsavedChangesBlocker';
 import { hasUnsavedInterviewFormChanges } from '../../../../interview/interviewFormChanges';
+import type { ApplicationCollectionNavigationState } from '../../../../application/applicationNavigation';
+import { getAddInterviewOrigin, type AddInterviewNavigationState } from '../../../../interview/addInterviewNavigation';
+import type { DashboardAttentionNavigationState } from '../../../../dashboard/dashboardNavigation';
 
 const DemoAddInterview = () => {
     const [interviewDate, setInterviewDate] = useState<string>('');
@@ -58,7 +60,7 @@ const DemoAddInterview = () => {
     const notesInputRef = useRef<HTMLTextAreaElement>(null);
     const pendingSubmissionRef = useRef(false);
     const navigate = useNavigate();
-    const location = useLocation() as Location<{ app?: JobApplication }>;
+    const location = useLocation() as Location<AddInterviewNavigationState>;
     const app = location.state?.app;
     const { dispatch, state } = useDemo();
     const confirm = useConfirm();
@@ -218,6 +220,26 @@ const DemoAddInterview = () => {
         }
     };
 
+    const handleBack = () => {
+        const origin = getAddInterviewOrigin(location.state);
+        if (origin.kind === 'dashboard-needs-attention') {
+            const state: DashboardAttentionNavigationState = {
+                dashboardAttentionTarget: {
+                    jobId: app.job_id,
+                    category: origin.category,
+                },
+            };
+            navigate(routes.demoDashboard, { state });
+            return;
+        }
+
+        const state: ApplicationCollectionNavigationState = {
+            applicationJobStatus: app.job_status,
+            applicationTargetId: app.job_id,
+        };
+        navigate(routes.demoViewApplications, { state });
+    };
+
     return (
         <form className={styles.addInterview} noValidate onKeyDown={handleFormKeyDown} onSubmit={handleAdd}>
             <div className={styles.context}>
@@ -338,11 +360,7 @@ const DemoAddInterview = () => {
                 <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.demoViewInterviews)}>
                     View Interviews
                 </PrimaryButton>
-                <PrimaryButton
-                    type='button'
-                    variant='secondary'
-                    onClick={() => navigate(`${routes.demoViewApplications}#${app.job_id}`)}
-                >
+                <PrimaryButton type='button' variant='secondary' onClick={handleBack}>
                     Back
                 </PrimaryButton>
             </div>

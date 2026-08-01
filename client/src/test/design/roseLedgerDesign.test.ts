@@ -281,6 +281,14 @@ describe('Rose Ledger visual contract', () => {
         expect(archivedDemoView).not.toContain(archivedDemoBoardName);
     });
 
+    it('keeps the Application Board Move to select free of a native caret', () => {
+        const applicationBoardCss = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');
+
+        expect(applicationBoardCss).toMatch(
+            /\.statusSelectLabel select\s*\{[^}]*-webkit-appearance:\s*none;[^}]*appearance:\s*none;/s
+        );
+    });
+
     it('keeps Offer Comparison inside the existing solid-surface design system', () => {
         const offerDecisionWorkspace = readSource('src/pages/offerDecision/OfferDecisionWorkspace.tsx');
         const offerDecisionWorkspaceCss = readSource('src/pages/offerDecision/OfferDecisionWorkspace.module.css');
@@ -824,9 +832,9 @@ describe('Rose Ledger visual contract', () => {
         expect(narrowRules).toMatch(/\.boardDeleteButton\s*\{[^}]*margin-right:\s*0;/s);
         expect(wideRules).not.toContain('.listNotes textarea:focus-visible');
 
-        const boardMeetingLinkRules = interviewCard.match(/\.boardMeetingLink\s*\{([^}]*)\}/)?.[1] ?? '';
-        expect(boardMeetingLinkRules).not.toContain('margin-top');
-        expect(boardMeetingLinkRules).not.toContain('margin-bottom');
+        const boardActionLinkRules = interviewCard.match(/\.boardActionLink\s*\{([^}]*)\}/)?.[1] ?? '';
+        expect(boardActionLinkRules).not.toContain('margin-top');
+        expect(boardActionLinkRules).not.toContain('margin-bottom');
 
         const interviewBoardNotesRules = interviewCard.match(/\.boardNotesField textarea\s*\{([^}]*)\}/)?.[1] ?? '';
         expect(interviewBoardNotesRules).toContain('outline: none;');

@@ -8,7 +8,7 @@ import {
     type DragStartEvent,
     type Modifier,
 } from '@dnd-kit/core';
-import { useCallback, useRef, useState, type UIEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type UIEvent } from 'react';
 import ApplicationBoardCard from './ApplicationBoardCard';
 import ApplicationBoardColumn from '../../applicationBoard/ApplicationBoardColumn';
 import {
@@ -20,18 +20,22 @@ import {
 import type { ApplicationBoardProps } from './models';
 import styles from '../../applicationBoard/ApplicationBoard.module.css';
 import { isApplicationStatusDisabled } from '../../applicationStatusRestrictions';
+import {
+    BOARD_CARD_HIGHLIGHT_DURATION,
+    getMaxBoardScrollLeft,
+    revealApplicationBoardTarget,
+} from '../../applicationBoard/applicationBoardTarget';
+
+export { getCenteredBoardScrollLeft, getCenteredPageScrollTop } from '../../applicationBoard/applicationBoardTarget';
 
 const SCROLL_BOUNDARY_TOLERANCE = 1;
-
 const isApplicationBoardElement = (element: Element) => element.classList.contains(styles.board);
 
-const getMaxBoardScrollLeft = (board: Element) => Math.max(0, board.scrollWidth - board.clientWidth);
-
 const canAutoScrollBoard = (element: Element) =>
-    isApplicationBoardElement(element) && getMaxBoardScrollLeft(element) > 0;
+    isApplicationBoardElement(element) && getMaxBoardScrollLeft(element as HTMLElement) > 0;
 
 const clampBoardScrollLeft = (board: Element) => {
-    const maxScrollLeft = getMaxBoardScrollLeft(board);
+    const maxScrollLeft = getMaxBoardScrollLeft(board as HTMLElement);
 
     if (board.scrollLeft < 0) {
         board.scrollLeft = 0;
@@ -100,15 +104,22 @@ const ApplicationBoard = ({
     onPinToggle,
     onRetryNotes,
     onStatusChange,
+    onTargetHandled,
     onUndoFollowUp,
     selectedJobStatuses,
+    targetRequest,
     upcomingInterviewCountByJob,
 }: ApplicationBoardProps) => {
     const boardRef = useRef<HTMLDivElement>(null);
+    const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const onTargetHandledRef = useRef(onTargetHandled);
+    onTargetHandledRef.current = onTargetHandled;
     const [draggingApplicationId, setDraggingApplicationId] = useState<number | null>(null);
+    const [highlightedApplicationId, setHighlightedApplicationId] = useState<number | null>(null);
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
     const groupedApplications = groupApplicationsByStatus(applications);
     const boardStatuses = getOrderedBoardStatuses(selectedJobStatuses);
+    const draggingApplication = applications.find((application) => application.job_id === draggingApplicationId);
     const activeApplicationHasInterview = draggingApplicationId !== null && hasInterview(draggingApplicationId);
     const activeApplicationHasOfferEvaluation =
         draggingApplicationId !== null && hasOfferEvaluation(draggingApplicationId);
@@ -117,6 +128,42 @@ const ApplicationBoard = ({
             clampBoardScrollLeft(boardRef.current);
         }
     }, []);
+
+    useEffect(
+        () => () => {
+            if (highlightTimeoutRef.current) {
+                clearTimeout(highlightTimeoutRef.current);
+            }
+        },
+        []
+    );
+
+    useEffect(() => {
+        const board = boardRef.current;
+        if (!board || !targetRequest) {
+            return;
+        }
+
+        const target = document.getElementById(String(targetRequest.applicationId));
+        if (!target || !board.contains(target)) {
+            return;
+        }
+
+        revealApplicationBoardTarget(board, target);
+        setHighlightedApplicationId(targetRequest.applicationId);
+
+        if (highlightTimeoutRef.current) {
+            clearTimeout(highlightTimeoutRef.current);
+        }
+        const highlightTimeout = setTimeout(() => {
+            setHighlightedApplicationId((currentId) => (currentId === targetRequest.applicationId ? null : currentId));
+            if (highlightTimeoutRef.current === highlightTimeout) {
+                highlightTimeoutRef.current = null;
+            }
+        }, BOARD_CARD_HIGHLIGHT_DURATION);
+        highlightTimeoutRef.current = highlightTimeout;
+        onTargetHandledRef.current?.(targetRequest);
+    }, [applications, selectedJobStatuses, targetRequest]);
 
     const handleDragStart = (event: DragStartEvent) => {
         setDraggingApplicationId(getDragJobId(event.active.id));
@@ -186,6 +233,7 @@ const ApplicationBoard = ({
                         <ApplicationBoardColumn
                             applications={statusApplications}
                             isDropDisabled={isDropDisabled}
+                            isDropOrigin={draggingApplication?.job_status === status}
                             key={status}
                             status={status}
                         >
@@ -196,6 +244,7 @@ const ApplicationBoard = ({
                                     hasOfferEvaluation={hasOfferEvaluation(application.job_id)}
                                     isArchiving={isArchivingApplication(application.job_id)}
                                     isDeleting={deletingApplicationIds.has(application.job_id)}
+                                    isHighlighted={highlightedApplicationId === application.job_id}
                                     isUpdatingPin={isUpdatingApplicationPin(application.job_id)}
                                     isUpdatingStatus={isUpdatingApplicationStatus(application.job_id)}
                                     isUndoingFollowUp={isUndoingApplicationFollowUp?.(application.job_id)}

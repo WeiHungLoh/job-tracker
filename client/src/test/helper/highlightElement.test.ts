@@ -49,4 +49,21 @@ describe('scrollAndHighlight', () => {
         expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
         expect(timeouts.target).toBeUndefined();
     });
+
+    test('ignores a delayed request after its owning surface changes', () => {
+        const element = document.createElement('div');
+        const scrollIntoView = vi.fn();
+        const timeouts: Record<string, ReturnType<typeof setTimeout>> = {};
+
+        element.id = 'target';
+        element.scrollIntoView = scrollIntoView;
+        document.body.append(element);
+
+        scrollAndHighlight('target', 'highlight', timeouts, 'start', () => false);
+        vi.advanceTimersByTime(100);
+
+        expect(scrollIntoView).not.toHaveBeenCalled();
+        expect(element).not.toHaveClass('highlight');
+        expect(timeouts.target).toBeUndefined();
+    });
 });

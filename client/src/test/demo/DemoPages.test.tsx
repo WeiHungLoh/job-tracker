@@ -18,6 +18,7 @@ import { routes } from '../../routes';
 import userEvent from '@testing-library/user-event';
 import DemoRoutes from '../../pages/demo/components/demoLayout/DemoRoutes';
 import * as highlightElement from '../../helper/highlightElement';
+import boardStyles from '../../pages/application/applicationBoard/ApplicationBoard.module.css';
 import type { ChartData, ChartOptions } from 'chart.js';
 
 const calendarMocks = vi.hoisted(() => ({
@@ -117,8 +118,8 @@ const clickConfirmedAction = async (button: HTMLElement) => {
     });
 };
 
-const getExportCsvText = (): string => {
-    const href = screen.getByRole('link', { name: 'Export as CSV' }).getAttribute('href') ?? '';
+const getExportCsvText = (exportLabel: string): string => {
+    const href = screen.getByRole('link', { name: exportLabel }).getAttribute('href') ?? '';
     const csvStart = href.indexOf(',');
     return decodeURIComponent(csvStart === -1 ? href : href.slice(csvStart + 1)).replace(/^\uFEFF/, '');
 };
@@ -494,10 +495,21 @@ describe('demo page interactions', () => {
     });
 
     test('shows success feedback for board status changes and archiving', async () => {
+        const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
         renderDemo(<DemoViewApplication />);
 
         await userEvent.click(screen.getByRole('button', { name: 'Board' }));
         const board = screen.getByRole('region', { name: 'Application board' });
+        const boardScrollTo = vi.fn();
+        Object.defineProperty(board, 'scrollTo', { configurable: true, value: boardScrollTo });
+        expect(
+            screen.getByRole('region', { name: 'Demo application view and management controls' }).className
+        ).toContain('applicationWithDisplay');
+        await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
+        expect(screen.getByRole('switch', { name: 'Auto-scroll and highlight updates' })).toBeInTheDocument();
+        expect(screen.queryByRole('switch', { name: 'Show notes' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('switch', { name: 'Show archive' })).not.toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         const statusSelect = within(board).getByRole('combobox', { name: /Move HorizonAI Labs to status/i });
         const card = statusSelect.closest('article');
         if (!card) {
@@ -505,10 +517,22 @@ describe('demo page interactions', () => {
         }
         expect(within(card).getByRole('button', { name: /Drag HorizonAI Labs .+ application/ })).toBeInTheDocument();
         expect(statusSelect).toBeInTheDocument();
+
+        await userEvent.click(within(card).getByRole('button', { name: 'Pin HorizonAI Labs application' }));
+        expect(await screen.findByText('Job application pinned.')).toBeInTheDocument();
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(card).toHaveClass(boardStyles.cardHighlighted);
+
+        boardScrollTo.mockClear();
+        windowScrollTo.mockClear();
         fireEvent.change(screen.getByLabelText(/Move HorizonAI Labs to status/i), {
             target: { value: 'Rejected' },
         });
         expect(await screen.findByText('Job application status updated.')).toBeInTheDocument();
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(screen.getByRole('article', { name: /HorizonAI Labs/i })).toHaveClass(boardStyles.cardHighlighted);
 
         await userEvent.click(screen.getByRole('button', { name: 'List' }));
         expect(screen.getAllByText(/Job Status: Rejected/i).length).toBeGreaterThan(0);
@@ -631,7 +655,7 @@ describe('demo page interactions', () => {
             expect(displayedCompanyNames.length).toBeGreaterThan(0);
 
             await userEvent.click(screen.getByRole('button', { name: 'More...' }));
-            const csv = getExportCsvText();
+            const csv = getExportCsvText('Export filtered applications as CSV');
             let previousCompanyIndex = -1;
             for (const companyName of displayedCompanyNames) {
                 const companyIndex = csv.indexOf(companyName);
@@ -639,7 +663,10 @@ describe('demo page interactions', () => {
                 previousCompanyIndex = companyIndex;
             }
             expect(csv).not.toContain('HorizonAI Labs');
-            expect(screen.getByRole('link', { name: 'Export as CSV' })).toHaveAttribute('download', filename);
+            expect(screen.getByRole('link', { name: 'Export filtered applications as CSV' })).toHaveAttribute(
+                'download',
+                filename
+            );
         }
     );
 
@@ -895,14 +922,16 @@ describe('demo page interactions', () => {
         ).toEqual(listOrder);
         expect(within(interviews).queryByText(/time left/i)).not.toBeInTheDocument();
         expect(within(interviews).queryByText(/notes:/i)).not.toBeInTheDocument();
-        expect(
-            within(interviews).queryByRole('link', { name: /review corresponding job application/i })
-        ).not.toBeInTheDocument();
+        expect(within(interviews).getAllByRole('link', { name: /view corresponding job application/i })).toHaveLength(
+            listOrder.length
+        );
         expect(within(interviews).getAllByText('Actions').length).toBeGreaterThan(0);
     });
 
     test('pins and unpins demo interviews locally with ordering, highlighting and success feedback', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
         renderDemo(<DemoViewInterview />, [routes.demoViewInterviews]);
 
         const interviews = screen.getByRole('region', { name: 'Active interviews' });
@@ -919,6 +948,16 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Unpin Summit Talent interview' }));
 
         expect(await screen.findByText('Interview unpinned.')).toBeInTheDocument();
+
+        await userEvent.click(
+            within(screen.getByRole('group', { name: 'Interview view' })).getByRole('button', { name: 'Board' })
+        );
+        await waitFor(() => expect(interviews).toHaveAttribute('data-layout', 'board'));
+        scrollIntoView.mockClear();
+        await userEvent.click(screen.getByRole('button', { name: 'Pin Summit Talent interview' }));
+
+        await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' }));
+        expect(document.getElementById('410')?.className).toContain('highlighted');
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
@@ -984,8 +1023,11 @@ describe('demo page interactions', () => {
         }
     });
 
-    test('opens a corresponding demo application in List view while preserving existing filters', async () => {
+    test('opens and reveals a corresponding demo application in the current Board view while preserving filters', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        const boardScrollTo = vi.fn();
+        const pageScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        HTMLElement.prototype.scrollTo = boardScrollTo;
         renderDemo(
             <>
                 <SetCollectionViewMode />
@@ -1001,8 +1043,10 @@ describe('demo page interactions', () => {
         const targetId = link.getAttribute('href')?.split('#')[1];
         await userEvent.click(link);
 
-        expect(await screen.findByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
-        await waitFor(() => expect(document.getElementById(targetId ?? '')?.className).toContain('highlighted'));
+        expect(await screen.findByRole('button', { name: 'Board' })).toHaveAttribute('aria-pressed', 'true');
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(pageScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(document.getElementById(targetId ?? '')).toHaveClass(boardStyles.cardHighlighted);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Interview' })).toBeChecked();
@@ -1028,6 +1072,9 @@ describe('demo page interactions', () => {
 
     test('supports archived demo interview Board mode and opens its corresponding application consistently', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        const boardScrollTo = vi.fn();
+        const pageScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        HTMLElement.prototype.scrollTo = boardScrollTo;
         renderDemo(
             <>
                 <SetCollectionViewMode archived />
@@ -1058,8 +1105,10 @@ describe('demo page interactions', () => {
         const targetId = link.getAttribute('href')?.split('#')[1];
         await userEvent.click(link);
 
-        expect(await screen.findByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
-        await waitFor(() => expect(document.getElementById(targetId ?? '')?.className).toContain('highlighted'));
+        expect(await screen.findByRole('button', { name: 'Board' })).toHaveAttribute('aria-pressed', 'true');
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(pageScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(document.getElementById(targetId ?? '')).toHaveClass(boardStyles.cardHighlighted);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Accepted' })).toBeChecked();
@@ -1084,10 +1133,10 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('region', { name: 'Active interviews' })).toHaveAttribute('data-layout', 'board');
 
         fireEvent.click(screen.getByRole('button', { name: 'More...' }));
-        const csv = getExportCsvText();
+        const csv = getExportCsvText('Export filtered interviews as CSV');
         expect(csv).toContain('Recruiter follow-up');
         expect(csv).not.toContain('System design interview');
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toHaveAttribute(
+        expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toHaveAttribute(
             'download',
             'demo_job_interviews.csv'
         );
@@ -1128,8 +1177,8 @@ describe('demo page interactions', () => {
 
         expect(await screen.findByRole('region', { name: 'Archived interviews' })).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
-        expect(getExportCsvText()).toContain('Archived with rejected application.');
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toHaveAttribute(
+        expect(getExportCsvText('Export filtered interviews as CSV')).toContain('Archived with rejected application.');
+        expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toHaveAttribute(
             'download',
             'demo_archived_job_interviews.csv'
         );
@@ -1330,7 +1379,8 @@ describe('demo page interactions', () => {
             'offer-evaluation-111',
             expect.any(String),
             expect.anything(),
-            'start'
+            'start',
+            expect.any(Function)
         );
         expect(fetchSpy).not.toHaveBeenCalled();
         HTMLElement.prototype.scrollIntoView = originalScrollIntoView;

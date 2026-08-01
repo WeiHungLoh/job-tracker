@@ -74,8 +74,9 @@ type EvaluationDialogState = {
 };
 type EvaluationHighlight = {
     jobId: number;
-    viewMode: OfferDecisionViewMode;
+    surface: EvaluationHighlightSurface;
 };
+type EvaluationHighlightSurface = 'cards' | `table-${OfferDecisionTableOrientation}`;
 
 const OFFER_DECISION_VIEW_OPTIONS = [
     { label: 'Cards', value: 'cards' },
@@ -119,6 +120,11 @@ const removeRecordValue = <T,>(record: Record<number, T>, jobId: number): Record
 };
 
 const getEvaluationCardId = (jobId: number): string => `offer-evaluation-${jobId}`;
+
+const getEvaluationHighlightSurface = (
+    viewMode: OfferDecisionViewMode,
+    tableOrientation: OfferDecisionTableOrientation
+): EvaluationHighlightSurface => (viewMode === 'cards' ? 'cards' : `table-${tableOrientation}`);
 
 const createCounterofferDeletionConfirmation = (companyName: string): ConfirmOptions => ({
     title: 'Delete counteroffer plan?',
@@ -254,19 +260,24 @@ const OfferDecisionWorkspace = ({
     const [counterofferPlanAvailability, setCounterofferPlanAvailability] = useState<Record<number, boolean>>({});
     const [counterofferApplication, setCounterofferApplication] = useState<OfferDecisionApplication | null>(null);
     const [statusUpdatingJobId, setStatusUpdatingJobId] = useState<number>();
-    const [evaluationHighlight, setEvaluationHighlight] = useState<EvaluationHighlight>();
-    const highlightedJobId =
-        evaluationHighlight?.viewMode === 'table' && viewMode === 'table' ? evaluationHighlight.jobId : undefined;
     const persistedTableOrientation =
         (readOnly
             ? preferences.archived_offer_decision_table_orientation
             : preferences.offer_decision_table_orientation) ?? 'horizontal';
     const [tableOrientation, setTableOrientation] = useState<OfferDecisionTableOrientation>(persistedTableOrientation);
+    const [evaluationHighlight, setEvaluationHighlight] = useState<EvaluationHighlight>();
+    const currentHighlightSurface = getEvaluationHighlightSurface(viewMode, tableOrientation);
+    const highlightedJobId =
+        evaluationHighlight?.surface === currentHighlightSurface && viewMode === 'table'
+            ? evaluationHighlight.jobId
+            : undefined;
     const [evaluationDialog, setEvaluationDialog] = useState<EvaluationDialogState | null>(null);
     const deleteAllPendingRef = useRef(false);
     const statusUpdatePendingRef = useRef(false);
     const highlightTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const highlightFrameRef = useRef<number | undefined>(undefined);
+    const currentHighlightSurfaceRef = useRef(currentHighlightSurface);
+    currentHighlightSurfaceRef.current = currentHighlightSurface;
     const processedTargetOfferJobIdRef = useRef<number | undefined>(undefined);
 
     const groups = groupOfferDecisionApplications(data.applications);
@@ -340,17 +351,19 @@ const OfferDecisionWorkspace = ({
 
         processedTargetOfferJobIdRef.current = targetOfferJobId;
         if (viewMode === 'table') {
-            setEvaluationHighlight({ jobId: targetOfferJobId, viewMode });
+            setEvaluationHighlight({ jobId: targetOfferJobId, surface: currentHighlightSurface });
         } else {
+            const requestedSurface = currentHighlightSurface;
             scrollAndHighlight(
                 getEvaluationCardId(targetOfferJobId),
                 evaluationStyles.highlighted,
                 highlightTimeoutsRef.current,
-                'start'
+                'start',
+                () => currentHighlightSurfaceRef.current === requestedSurface
             );
         }
         onTargetOfferProcessed?.();
-    }, [isFiltering, isLoading, onTargetOfferProcessed, targetOfferJobId, viewMode]);
+    }, [currentHighlightSurface, isFiltering, isLoading, onTargetOfferProcessed, targetOfferJobId, viewMode]);
 
     useEffect(() => {
         if (!evaluationHighlight) {
@@ -358,7 +371,7 @@ const OfferDecisionWorkspace = ({
         }
 
         const highlightedElementId = getEvaluationCardId(evaluationHighlight.jobId);
-        if (evaluationHighlight.viewMode !== viewMode) {
+        if (evaluationHighlight.surface !== currentHighlightSurface) {
             const existingTimeout = highlightTimeoutsRef.current[highlightedElementId];
             if (existingTimeout) {
                 clearTimeout(existingTimeout);
@@ -368,13 +381,14 @@ const OfferDecisionWorkspace = ({
             return;
         }
 
-        const { jobId } = evaluationHighlight;
+        const { jobId, surface } = evaluationHighlight;
 
         scrollAndHighlight(
             getEvaluationCardId(jobId),
             viewMode === 'table' ? undefined : evaluationStyles.highlighted,
             highlightTimeoutsRef.current,
-            'start'
+            'start',
+            () => currentHighlightSurfaceRef.current === surface
         );
         if (viewMode !== 'table') {
             setEvaluationHighlight(undefined);
@@ -386,24 +400,39 @@ const OfferDecisionWorkspace = ({
             clearTimeout(existingTimeout);
         }
         highlightTimeoutsRef.current[highlightedElementId] = setTimeout(() => {
-            setEvaluationHighlight((current) => (current?.jobId === jobId ? undefined : current));
+            setEvaluationHighlight((current) =>
+                current?.jobId === jobId && current.surface === surface ? undefined : current
+            );
             delete highlightTimeoutsRef.current[highlightedElementId];
         }, 4000);
-    }, [evaluationHighlight, viewMode]);
+    }, [currentHighlightSurface, evaluationHighlight, viewMode]);
 
     const clearInvalidDeadline = (jobId: number) => {
         setInvalidDeadlineJobIds((current) => current.filter((currentJobId) => currentJobId !== jobId));
     };
 
     const requestEvaluationHighlight = (jobId: number) => {
+        const requestedSurface = currentHighlightSurface;
         setEvaluationHighlight(undefined);
         if (highlightFrameRef.current !== undefined) {
             cancelAnimationFrame(highlightFrameRef.current);
         }
         highlightFrameRef.current = requestAnimationFrame(() => {
-            setEvaluationHighlight({ jobId, viewMode });
+            if (currentHighlightSurfaceRef.current === requestedSurface) {
+                setEvaluationHighlight({ jobId, surface: requestedSurface });
+            }
             highlightFrameRef.current = undefined;
         });
+    };
+
+    const clearEvaluationHighlight = () => {
+        if (highlightFrameRef.current !== undefined) {
+            cancelAnimationFrame(highlightFrameRef.current);
+            highlightFrameRef.current = undefined;
+        }
+        Object.values(highlightTimeoutsRef.current).forEach(clearTimeout);
+        highlightTimeoutsRef.current = {};
+        setEvaluationHighlight(undefined);
     };
 
     const setInvalidDeadline = (jobId: number, hasBadInput: boolean) => {
@@ -437,6 +466,9 @@ const OfferDecisionWorkspace = ({
     };
 
     const handleViewModeChange = (nextViewMode: OfferDecisionViewMode) => {
+        if (nextViewMode !== viewMode) {
+            clearEvaluationHighlight();
+        }
         void updatePreferences(
             readOnly ? { archived_offer_decision_view_mode: nextViewMode } : { offer_decision_view_mode: nextViewMode }
         ).catch((error) =>
@@ -445,6 +477,9 @@ const OfferDecisionWorkspace = ({
     };
 
     const handleTableOrientationChange = (nextOrientation: OfferDecisionTableOrientation) => {
+        if (nextOrientation !== tableOrientation) {
+            clearEvaluationHighlight();
+        }
         setTableOrientation(nextOrientation);
         void updatePreferences(
             readOnly
@@ -895,6 +930,7 @@ const OfferDecisionWorkspace = ({
                                 csvFilename={
                                     readOnly ? 'archived_offer_evaluations.csv' : 'active_offer_evaluations.csv'
                                 }
+                                csvLabel='Export filtered offer evaluations as CSV'
                                 deleteLabel='Delete all evaluations'
                                 id={readOnly ? 'archived-offer-more-options' : 'offer-more-options'}
                                 isDeleting={isDeletingAll}

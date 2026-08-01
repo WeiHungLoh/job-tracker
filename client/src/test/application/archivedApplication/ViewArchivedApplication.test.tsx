@@ -7,6 +7,7 @@ import { JOB_STATUSES } from '../../../pages/application/models';
 import { routes } from '../../../routes';
 import type { UpdateUserPreferencesRequest, UserPreferences } from '../../../components/userPreferences/models';
 import * as highlightElement from '../../../helper/highlightElement';
+import boardStyles from '../../../pages/application/applicationBoard/ApplicationBoard.module.css';
 
 globalThis.fetch = vi.fn();
 
@@ -95,7 +96,7 @@ const expectListCompanyOrder = (companyNames: string[]) => {
 
 const getExportCsvText = async (): Promise<string> => {
     await userEvent.click(screen.getByRole('button', { name: 'More...' }));
-    const href = screen.getByRole('link', { name: 'Export as CSV' }).getAttribute('href') ?? '';
+    const href = screen.getByRole('link', { name: 'Export filtered applications as CSV' }).getAttribute('href') ?? '';
     const csvStart = href.indexOf(',');
 
     return decodeURIComponent(csvStart === -1 ? href : href.slice(csvStart + 1)).replace(/^\uFEFF/, '');
@@ -150,7 +151,7 @@ describe('Archived job application viewing flow', () => {
         });
     });
 
-    test('preserves filters, switches to List once and highlights a corresponding archived application', async () => {
+    test('preserves Board mode and filters while revealing a corresponding archived application', async () => {
         const initialPreferences = {
             ...mockPreferences,
             archived_application_job_statuses: ['Offer'] as UserPreferences['archived_application_job_statuses'],
@@ -161,13 +162,16 @@ describe('Archived job application viewing flow', () => {
             ...updates,
         }));
         const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const boardScrollTo = vi.fn();
+        const pageScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        HTMLElement.prototype.scrollTo = boardScrollTo;
 
         render(
             <MemoryRouter
                 initialEntries={[
                     {
                         pathname: '/application/archived',
-                        state: { applicationListJobStatus: 'Applied', applicationListTargetId: 1 },
+                        state: { applicationJobStatus: 'Applied', applicationTargetId: 1 },
                     },
                 ]}
             >
@@ -180,12 +184,15 @@ describe('Archived job application viewing flow', () => {
         await waitFor(() =>
             expect(updatePreferences).toHaveBeenCalledWith({
                 archived_application_job_statuses: ['Offer', 'Applied'],
-                archived_application_view_mode: 'list',
             })
         );
-        await waitFor(() =>
-            expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything())
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(pageScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).toHaveClass(
+            boardStyles.cardHighlighted
         );
+        expect(screen.getByRole('button', { name: 'Board' })).toHaveAttribute('aria-pressed', 'true');
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
         expect(updatePreferences).toHaveBeenCalledTimes(1);
         await waitFor(() => expect(screen.getByTestId('location-state')).toHaveTextContent('null'));
         scrollAndHighlight.mockRestore();
@@ -214,7 +221,7 @@ describe('Archived job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all archived applications/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /unarchive all applications/i })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Export filtered applications as CSV' })).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(
             `${
                 import.meta.env.VITE_API_URL
@@ -622,7 +629,7 @@ describe('Archived job application viewing flow', () => {
         const csv = await getExportCsvText();
         expect(csv).toContain('Filtered Archived Offer');
         expect(csv).not.toContain('ABC Pte Ltd');
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toHaveAttribute(
+        expect(screen.getByRole('link', { name: 'Export filtered applications as CSV' })).toHaveAttribute(
             'download',
             'archived_job_applications.csv'
         );
@@ -1322,9 +1329,12 @@ describe('Archived job application viewing flow', () => {
         expect(screen.queryByRole('region', { name: 'Archived application board' })).not.toBeInTheDocument();
     });
 
-    test('does not run hash scroll-and-highlight while archived applications use Board view', async () => {
+    test('reveals an archived hash target with Board scrolling instead of the List helper', async () => {
         const scrollIntoView = vi.fn();
+        const boardScrollTo = vi.fn();
+        const pageScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
         HTMLElement.prototype.scrollIntoView = scrollIntoView;
+        HTMLElement.prototype.scrollTo = boardScrollTo;
 
         render(
             <MemoryRouter initialEntries={[`${routes.archivedApplications}#1`]}>
@@ -1334,6 +1344,11 @@ describe('Archived job application viewing flow', () => {
         );
 
         expect(await screen.findByRole('region', { name: 'Archived application board' })).toBeInTheDocument();
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(pageScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).toHaveClass(
+            boardStyles.cardHighlighted
+        );
         expect(scrollIntoView).not.toHaveBeenCalled();
     });
 

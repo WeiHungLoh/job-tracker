@@ -7,6 +7,7 @@ import { JOB_STATUSES } from '../../../pages/application/models';
 import type { UpdateUserPreferencesRequest, UserPreferences } from '../../../components/userPreferences/models';
 import type { ReactNode } from 'react';
 import * as highlightElement from '../../../helper/highlightElement';
+import boardStyles from '../../../pages/application/applicationBoard/ApplicationBoard.module.css';
 
 globalThis.fetch = vi.fn();
 
@@ -153,7 +154,7 @@ const expectListCompanyOrder = (companyNames: string[]) => {
 
 const getExportCsvText = async (): Promise<string> => {
     await userEvent.click(screen.getByRole('button', { name: 'More...' }));
-    const href = screen.getByRole('link', { name: 'Export as CSV' }).getAttribute('href') ?? '';
+    const href = screen.getByRole('link', { name: 'Export filtered applications as CSV' }).getAttribute('href') ?? '';
     const csvStart = href.indexOf(',');
 
     return decodeURIComponent(csvStart === -1 ? href : href.slice(csvStart + 1)).replace(/^\uFEFF/, '');
@@ -268,7 +269,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all applications/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /archive all applications/i })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Export filtered applications as CSV' })).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(
             `${
                 import.meta.env.VITE_API_URL
@@ -334,7 +335,15 @@ describe('Job application viewing flow', () => {
             'true'
         );
         expect(await screen.findByText('Job application pinned.')).toBeInTheDocument();
-        await waitFor(() => expect(highlightSpy).toHaveBeenCalledWith('1', expect.any(String), expect.any(Object)));
+        await waitFor(() =>
+            expect(highlightSpy).toHaveBeenCalledWith(
+                '1',
+                expect.any(String),
+                expect.any(Object),
+                undefined,
+                expect.any(Function)
+            )
+        );
 
         await userEvent.click(screen.getByRole('button', { name: 'Unpin Zulu Systems application' }));
 
@@ -395,17 +404,14 @@ describe('Job application viewing flow', () => {
         expect(applicationListRequestCount()).toBe(1);
     });
 
-    test.each([
-        { enableScroll: false, viewMode: 'list' },
-        { enableScroll: true, viewMode: 'board' },
-    ] as const)(
-        'does not auto scroll or trigger a status change when pinning in $viewMode view',
-        async ({ enableScroll, viewMode }) => {
+    test.each([{ viewMode: 'list' }, { viewMode: 'board' }] as const)(
+        'does not auto scroll or trigger a status change when pinning in $viewMode view with auto-scroll disabled',
+        async ({ viewMode }) => {
             fetch.mockImplementation(async (url: string, init?: RequestInit) => {
                 if (url.endsWith('/user-preferences')) {
                     return response({
                         ...mockPreferences,
-                        application_enable_scroll: enableScroll,
+                        application_enable_scroll: false,
                         application_view_mode: viewMode,
                         ...(init?.body ? JSON.parse(String(init.body)) : {}),
                     });
@@ -426,7 +432,7 @@ describe('Job application viewing flow', () => {
                 </MemoryRouter>,
                 {
                     initialPreferences: {
-                        application_enable_scroll: enableScroll,
+                        application_enable_scroll: false,
                         application_view_mode: viewMode,
                     },
                 }
@@ -443,6 +449,53 @@ describe('Job application viewing flow', () => {
             highlightSpy.mockRestore();
         }
     );
+
+    test('centers and highlights a pinned application in Board view when auto-scroll is enabled', async () => {
+        const boardScrollTo = vi.fn();
+        const pageScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        const highlightSpy = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        HTMLElement.prototype.scrollTo = boardScrollTo;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/user-preferences')) {
+                return response({
+                    ...mockPreferences,
+                    application_enable_scroll: true,
+                    application_view_mode: 'board',
+                    ...(init?.body ? JSON.parse(String(init.body)) : {}),
+                });
+            }
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/pin')) {
+                return response({ job_id: 1, is_pinned: true });
+            }
+            return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    application_enable_scroll: true,
+                    application_view_mode: 'board',
+                },
+            }
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd application' }));
+
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(pageScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).toHaveClass(
+            boardStyles.cardHighlighted
+        );
+        expect(highlightSpy).not.toHaveBeenCalled();
+        expect(statusUpdateRequestCount(1)).toBe(0);
+        highlightSpy.mockRestore();
+    });
 
     test('undoes a persisted application follow-up without refetching and shows success', async () => {
         const sentApplication = {
@@ -812,7 +865,10 @@ describe('Job application viewing flow', () => {
         const csv = await getExportCsvText();
         expect(csv).toContain('Filtered Offer');
         expect(csv).not.toContain('ABC Pte Ltd');
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toHaveAttribute('download', 'job_applications.csv');
+        expect(screen.getByRole('link', { name: 'Export filtered applications as CSV' })).toHaveAttribute(
+            'download',
+            'job_applications.csv'
+        );
         expect(fetch.mock.calls.some(([url]) => String(url).includes('/job-applications?jobStatuses=Offer'))).toBe(
             true
         );
@@ -915,7 +971,16 @@ describe('Job application viewing flow', () => {
         expect(pinButton.compareDocumentPosition(statusBadge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(statusBadge.compareDocumentPosition(dragButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(within(board).getByRole('article', { name: /Offer Pte Ltd Software Engineer/i })).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Display options' })).not.toBeInTheDocument();
+        expect(screen.getByRole('region', { name: 'Application view and management controls' }).className).toContain(
+            'applicationWithDisplay'
+        );
+        await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
+        const autoScrollToggle = screen.getByRole('switch', { name: 'Auto-scroll and highlight updates' });
+        expect(autoScrollToggle).toHaveAttribute('aria-checked', 'false');
+        expect(screen.queryByRole('switch', { name: 'Show notes' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('switch', { name: 'Show archive' })).not.toBeInTheDocument();
+        await userEvent.click(autoScrollToggle);
+        await waitFor(() => expect(autoScrollToggle).toHaveAttribute('aria-checked', 'true'));
     });
 
     test('board filters hide excluded columns without resetting the selected view', async () => {
@@ -986,9 +1051,12 @@ describe('Job application viewing flow', () => {
         expect(screen.queryByRole('region', { name: 'Application board' })).not.toBeInTheDocument();
     });
 
-    test('updates status from the board fallback without auto scrolling and shows the update in list view', async () => {
+    test('updates status from the board fallback with horizontal feedback and shows the update in list view', async () => {
         const scrollIntoView = vi.fn();
+        const scrollTo = vi.fn();
+        const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
         HTMLElement.prototype.scrollIntoView = scrollIntoView;
+        HTMLElement.prototype.scrollTo = scrollTo;
 
         render(
             <MemoryRouter>
@@ -1013,15 +1081,23 @@ describe('Job application viewing flow', () => {
         );
         expect(screen.getByRole('heading', { name: 'Applied 0' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Interview 1' })).toBeInTheDocument();
+        await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).toHaveClass(
+            boardStyles.cardHighlighted
+        );
         expect(scrollIntoView).not.toHaveBeenCalled();
 
         await userEvent.click(screen.getByRole('button', { name: 'List' }));
         expect(screen.getByText(/^Job Status: Interview$/)).toBeInTheDocument();
     });
 
-    test('dragging a board card updates status through the existing status endpoint without auto scrolling', async () => {
+    test('dragging a board card updates status through the existing endpoint with horizontal feedback', async () => {
         const scrollIntoView = vi.fn();
+        const scrollTo = vi.fn();
+        const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
         HTMLElement.prototype.scrollIntoView = scrollIntoView;
+        HTMLElement.prototype.scrollTo = scrollTo;
 
         render(
             <MemoryRouter>
@@ -1042,7 +1118,89 @@ describe('Job application viewing flow', () => {
             })
         );
         expect(screen.getByRole('heading', { name: 'Interview 1' })).toBeInTheDocument();
+        await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).toHaveClass(
+            boardStyles.cardHighlighted
+        );
         expect(scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    test('does not reveal a board status change when auto-scroll and highlight is disabled', async () => {
+        const scrollTo = vi.fn();
+        const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        HTMLElement.prototype.scrollTo = scrollTo;
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>
+        );
+
+        await screen.findByText(/ABC Pte Ltd/i);
+        await userEvent.click(screen.getByRole('button', { name: 'Board' }));
+        await userEvent.selectOptions(
+            screen.getByRole('combobox', { name: 'Move ABC Pte Ltd to status' }),
+            'Interview'
+        );
+
+        await screen.findByText('Job application status updated.');
+        expect(scrollTo).not.toHaveBeenCalled();
+        expect(windowScrollTo).not.toHaveBeenCalled();
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).not.toHaveClass(
+            boardStyles.cardHighlighted
+        );
+    });
+
+    test('does not queue a board reveal after leaving Board before the status request succeeds', async () => {
+        let resolveStatusUpdate: ((value: ReturnType<typeof response>) => void) | undefined;
+        const pendingStatusUpdate = new Promise<ReturnType<typeof response>>((resolve) => {
+            resolveStatusUpdate = resolve;
+        });
+        const scrollTo = vi.fn();
+        const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        HTMLElement.prototype.scrollTo = scrollTo;
+
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/status') && init?.method === 'PATCH') {
+                return await pendingStatusUpdate;
+            }
+            return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>,
+            { initialPreferences: { application_enable_scroll: true } }
+        );
+
+        await screen.findByText(/ABC Pte Ltd/i);
+        await userEvent.click(screen.getByRole('button', { name: 'Board' }));
+        await userEvent.selectOptions(
+            screen.getByRole('combobox', { name: 'Move ABC Pte Ltd to status' }),
+            'Interview'
+        );
+        await waitFor(() => expect(statusUpdateRequestCount(1)).toBe(1));
+
+        await userEvent.click(screen.getByRole('button', { name: 'List' }));
+        expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
+
+        await act(async () => resolveStatusUpdate?.(response(undefined, 204)));
+        expect(await screen.findByText('Job application status updated.')).toBeInTheDocument();
+        expect(scrollTo).not.toHaveBeenCalled();
+        expect(windowScrollTo).not.toHaveBeenCalled();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Board' }));
+        await screen.findByRole('region', { name: 'Application board' });
+        expect(scrollTo).not.toHaveBeenCalled();
+        expect(windowScrollTo).not.toHaveBeenCalled();
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).not.toHaveClass(
+            boardStyles.cardHighlighted
+        );
     });
 
     test('dropping a board card into its current status does not call the update endpoint', async () => {
@@ -1145,6 +1303,9 @@ describe('Job application viewing flow', () => {
     });
 
     test('rolls back an optimistic board status update when the API fails', async () => {
+        const scrollTo = vi.fn();
+        const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        HTMLElement.prototype.scrollTo = scrollTo;
         fetch.mockImplementation(async (url: string, init?: RequestInit) => {
             if (url.endsWith('/user-preferences')) {
                 return response({
@@ -1164,7 +1325,8 @@ describe('Job application viewing flow', () => {
         render(
             <MemoryRouter>
                 <ViewApplication />
-            </MemoryRouter>
+            </MemoryRouter>,
+            { initialPreferences: { application_enable_scroll: true } }
         );
 
         await screen.findByText(/ABC Pte Ltd/i);
@@ -1177,6 +1339,8 @@ describe('Job application viewing flow', () => {
         expect(await screen.findByText('Status update is temporarily unavailable.')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Applied 1' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Interview 0' })).toBeInTheDocument();
+        expect(scrollTo).not.toHaveBeenCalled();
+        expect(windowScrollTo).not.toHaveBeenCalled();
     });
 
     test('keeps board actions available without showing full notes directly on the card', async () => {
@@ -1288,7 +1452,7 @@ describe('Job application viewing flow', () => {
 
         render(
             <MemoryRouter
-                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Offer' } }]}
+                initialEntries={[{ pathname: '/application/view', state: { applicationJobStatus: 'Offer' } }]}
             >
                 <ViewApplication />
                 <LocationStateProbe />
@@ -1304,8 +1468,11 @@ describe('Job application viewing flow', () => {
         expect(applicationListRequestCount()).toBe(1);
     });
 
-    test('forces List view and highlights the exact offer selected from Needs Attention', async () => {
+    test('keeps Board view, restores the missing filter and reveals the exact navigation target', async () => {
         const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const boardScrollTo = vi.fn();
+        const pageScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+        HTMLElement.prototype.scrollTo = boardScrollTo;
         const initialPreferences: UserPreferences = {
             ...mockPreferences,
             application_view_mode: 'board',
@@ -1321,7 +1488,7 @@ describe('Job application viewing flow', () => {
                 initialEntries={[
                     {
                         pathname: '/application/view',
-                        state: { applicationListJobStatus: 'Offer', applicationListTargetId: 1 },
+                        state: { applicationJobStatus: 'Offer', applicationTargetId: 1 },
                     },
                 ]}
             >
@@ -1334,13 +1501,15 @@ describe('Job application viewing flow', () => {
         await waitFor(() =>
             expect(updatePreferences).toHaveBeenCalledWith({
                 application_job_statuses: ['Applied', 'Offer'],
-                application_view_mode: 'list',
             })
         );
-        await waitFor(() =>
-            expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything())
+        await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+        expect(pageScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+        expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).toHaveClass(
+            boardStyles.cardHighlighted
         );
-        expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+        expect(screen.getByRole('button', { name: 'Board' })).toHaveAttribute('aria-pressed', 'true');
         await waitFor(() => expect(screen.getByTestId('location-state')).toHaveTextContent('null'));
         scrollAndHighlight.mockRestore();
     });
@@ -1351,7 +1520,7 @@ describe('Job application viewing flow', () => {
 
         render(
             <MemoryRouter
-                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Offer' } }]}
+                initialEntries={[{ pathname: '/application/view', state: { applicationJobStatus: 'Offer' } }]}
             >
                 <ViewApplication />
             </MemoryRouter>,
@@ -1368,7 +1537,7 @@ describe('Job application viewing flow', () => {
 
         render(
             <MemoryRouter
-                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Unknown' } }]}
+                initialEntries={[{ pathname: '/application/view', state: { applicationJobStatus: 'Unknown' } }]}
             >
                 <ViewApplication />
             </MemoryRouter>,
@@ -1384,7 +1553,7 @@ describe('Job application viewing flow', () => {
 
         render(
             <MemoryRouter
-                initialEntries={[{ pathname: '/application/view', state: { applicationListJobStatus: 'Offer' } }]}
+                initialEntries={[{ pathname: '/application/view', state: { applicationJobStatus: 'Offer' } }]}
             >
                 <ViewApplication />
             </MemoryRouter>,
@@ -1403,7 +1572,7 @@ describe('Job application viewing flow', () => {
                 initialEntries={[
                     {
                         pathname: '/application/view',
-                        state: { applicationListJobStatus: 'Applied', applicationListTargetId: 1 },
+                        state: { applicationJobStatus: 'Applied', applicationTargetId: 1 },
                     },
                 ]}
             >
@@ -1416,7 +1585,13 @@ describe('Job application viewing flow', () => {
         );
 
         await waitFor(() =>
-            expect(scrollAndHighlight).toHaveBeenCalledWith('1', expect.any(String), expect.anything())
+            expect(scrollAndHighlight).toHaveBeenCalledWith(
+                '1',
+                expect.any(String),
+                expect.anything(),
+                undefined,
+                expect.any(Function)
+            )
         );
         expect(updatePreferences).not.toHaveBeenCalled();
         scrollAndHighlight.mockRestore();
@@ -2373,14 +2548,20 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
-        const options = screen.getByRole('link', { name: 'Export as CSV' }).parentElement;
+        const options = screen.getByRole('link', { name: 'Export filtered applications as CSV' }).parentElement;
 
         expect(options).not.toBeNull();
         expect(
             Array.from(options?.children ?? []).map((item) =>
                 item.tagName === 'HR' ? 'divider' : item.textContent?.trim()
             )
-        ).toEqual(['Export as CSV', 'divider', 'Archive all applications', 'divider', 'Delete all applications']);
+        ).toEqual([
+            'Export filtered applications as CSV',
+            'divider',
+            'Archive all applications',
+            'divider',
+            'Delete all applications',
+        ]);
     });
 
     test('archives every active application with accurate related-interview counts', async () => {

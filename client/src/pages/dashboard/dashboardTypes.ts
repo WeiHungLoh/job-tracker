@@ -1,7 +1,7 @@
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../application/models';
 import type { JobInterview } from '../interview/models';
 import type { OfferEvaluation } from '../offerDecision/models';
-import type { DashboardRecordOfferDecisionFilter } from './dashboardNavigation';
+import type { DashboardAttentionTarget, DashboardRecordOfferDecisionFilter } from './dashboardNavigation';
 
 export type DashboardInterviewSelectHandler = (interviewId: number) => void;
 export type DashboardStatusSelectHandler = (status: JobStatus) => void;
@@ -23,6 +23,7 @@ export type DashboardDataProps = {
 };
 
 export type DashboardNavigationProps = {
+    attentionTarget?: DashboardAttentionTarget | null;
     onAddInterview?: DashboardApplicationActionHandler;
     onInterviewSelect?: DashboardInterviewSelectHandler;
     onOpenOfferComparison?: DashboardApplicationActionHandler;
@@ -31,6 +32,7 @@ export type DashboardNavigationProps = {
     onMarkApplicationFollowUpSent?: DashboardApplicationFollowUpHandler;
     onMarkInterviewFollowUpSent?: DashboardInterviewFollowUpHandler;
     onMarkApplicationGhosted?: DashboardMarkApplicationGhostedHandler;
+    onAttentionTargetHandled?: () => void;
 };
 
 export type DashboardContentProps = DashboardDataProps &

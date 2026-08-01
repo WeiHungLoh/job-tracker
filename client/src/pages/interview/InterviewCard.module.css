@@ -271,7 +271,7 @@
     overflow-wrap: anywhere;
 }
 
-.boardMeetingLink {
+.boardActionLink {
     width: fit-content;
     padding: 4px 8px;
     border-radius: var(--radiusPill);
@@ -282,11 +282,11 @@
     text-decoration: none;
 }
 
-.boardMeetingLink:hover {
+.boardActionLink:hover {
     background-color: var(--colorLinkHoverBg);
 }
 
-.boardMeetingLink:focus-visible {
+.boardActionLink:focus-visible {
     outline: 2px solid var(--colorPrimaryFocusOutline);
     outline-offset: 2px;
 }
@@ -351,7 +351,7 @@
         margin-right: 0;
     }
 
-    .boardMeetingLink {
+    .boardActionLink {
         font-size: 0.7rem;
     }
 }

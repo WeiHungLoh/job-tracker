@@ -19,6 +19,7 @@ const ApplicationBoardCard = ({
     hasOfferEvaluation,
     isArchiving,
     isDeleting,
+    isHighlighted = false,
     isUpdatingPin,
     isUpdatingStatus,
     isUndoingFollowUp,
@@ -44,6 +45,7 @@ const ApplicationBoardCard = ({
     const cardClassName = [
         styles.card,
         isDragging ? styles.cardDragging : '',
+        isHighlighted ? styles.cardHighlighted : '',
         isUpdatingStatus ? styles.cardUpdating : '',
     ]
         .filter(Boolean)

@@ -31,7 +31,7 @@ import {
 } from '../../../../helper/interviewTiming';
 import useCurrentTime from '../../../../hooks/useCurrentTime';
 import useFilterRequest from '../../../../hooks/useFilterRequest';
-import type { ApplicationListNavigationState } from '../../../application/applicationNavigation';
+import type { ApplicationCollectionNavigationState } from '../../../application/applicationNavigation';
 import DisplayOptions from '../../../../components/activityControls/displayOptions/DisplayOptions';
 import ToggleButton from '../../../../components/toggleButton/ToggleButton';
 
@@ -228,9 +228,9 @@ const ViewArchivedInterview = () => {
     const handleViewApplicationClick = (event: MouseEvent<HTMLAnchorElement>, interview: ArchivedJobInterview) => {
         event.preventDefault();
 
-        const state: ApplicationListNavigationState = {
-            applicationListJobStatus: interview.job_status,
-            applicationListTargetId: interview.archived_job_id,
+        const state: ApplicationCollectionNavigationState = {
+            applicationJobStatus: interview.job_status,
+            applicationTargetId: interview.archived_job_id,
         };
         navigate(routes.archivedApplications, { state });
     };
@@ -245,6 +245,7 @@ const ViewArchivedInterview = () => {
                                 csvData={csvData}
                                 csvFilename='archived_job_interviews.csv'
                                 csvHeaders={INTERVIEW_CSV_HEADERS}
+                                csvLabel='Export filtered interviews as CSV'
                                 deleteLabel='Delete all archived interviews'
                                 id='archived-interview-more-options'
                                 isDeleting={isDeletingAll}

@@ -9,6 +9,7 @@ const MoreOptions = ({
     csvData,
     csvFilename,
     csvHeaders,
+    csvLabel,
     deleteDisabled = false,
     deleteLabel,
     id,
@@ -26,7 +27,7 @@ const MoreOptions = ({
         <div className={styles.options}>
             <CSVLink className={styles.action} data={csvData} filename={csvFilename} headers={csvHeaders}>
                 <Icon name='export' size={18} />
-                <span>Export as CSV</span>
+                <span>{csvLabel}</span>
             </CSVLink>
             <hr className={styles.divider} />
             {middleAction && (

@@ -44,6 +44,7 @@ export type MoreOptionsProps = {
     csvData: ComponentProps<typeof CSVLink>['data'];
     csvFilename: string;
     csvHeaders?: ComponentProps<typeof CSVLink>['headers'];
+    csvLabel: string;
     deleteLabel: string;
     deleteDisabled?: boolean;
     id: string;

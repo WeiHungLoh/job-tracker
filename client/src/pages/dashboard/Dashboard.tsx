@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardContent from './DashboardContent';
 import type {
     DashboardApplicationSummary,
@@ -14,7 +14,9 @@ import type {
     DashboardOfferDecisionNavigationState,
     DashboardRecordOfferDecisionFilter,
 } from './dashboardNavigation';
-import type { ApplicationListNavigationState } from '../application/applicationNavigation';
+import { getDashboardAttentionTarget } from './dashboardNavigation';
+import type { AddInterviewNavigationState } from '../interview/addInterviewNavigation';
+import type { ApplicationCollectionNavigationState } from '../application/applicationNavigation';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
 import { useToast } from '../../components/toast/ToastProvider';
@@ -68,9 +70,15 @@ const Dashboard = () => {
     const api = useJobTrackerAPI();
     const { showErrorToast, showSuccessToast } = useToast();
     const navigate = useNavigate();
+    const location = useLocation();
+    const attentionTarget = getDashboardAttentionTarget(location.state);
+
+    const handleAttentionTargetHandled = useCallback(() => {
+        navigate(location.pathname, { replace: true, state: null });
+    }, [location.pathname, navigate]);
 
     const handleStatusSelect = (status: JobStatus) => {
-        const state: ApplicationListNavigationState = { applicationListJobStatus: status };
+        const state: ApplicationCollectionNavigationState = { applicationJobStatus: status };
         navigate(routes.viewApplications, { state });
     };
 
@@ -80,7 +88,11 @@ const Dashboard = () => {
     };
 
     const handleAddInterview = (application: JobApplication) => {
-        navigate(routes.addInterview, { state: { app: application } });
+        const state: AddInterviewNavigationState = {
+            app: application,
+            origin: { kind: 'dashboard-needs-attention', category: 'interview-unscheduled' },
+        };
+        navigate(routes.addInterview, { state });
     };
 
     const handleOpenOfferComparison = (application: JobApplication) => {
@@ -344,6 +356,7 @@ const Dashboard = () => {
     return (
         <DashboardContent
             applications={applications.data ?? []}
+            attentionTarget={attentionTarget}
             applicationsError={attentionHasError}
             applicationsIsLoading={attentionIsLoading}
             interviewedApplicationCount={statusSummary.data?.interviewedApplicationCount ?? 0}
@@ -363,6 +376,7 @@ const Dashboard = () => {
             onRetryStatus={() => void retry(loadStatusSummary)}
             onRetryWeeklyApplications={() => void retry(loadWeeklyApplications)}
             onAddInterview={handleAddInterview}
+            onAttentionTargetHandled={handleAttentionTargetHandled}
             onInterviewSelect={handleInterviewSelect}
             onOpenOfferComparison={handleOpenOfferComparison}
             onRecordOfferDecision={handleRecordOfferDecision}

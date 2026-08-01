@@ -12,6 +12,7 @@ const DashboardContent = ({
     applications,
     applicationsError = false,
     applicationsIsLoading,
+    attentionTarget,
     interviewedApplicationCount,
     statusCounts,
     interviews,
@@ -20,6 +21,7 @@ const DashboardContent = ({
     interviewError = false,
     interviewIsLoading,
     onAddInterview,
+    onAttentionTargetHandled,
     offerEvaluations = [],
     onInterviewSelect,
     onOpenOfferComparison,
@@ -60,12 +62,14 @@ const DashboardContent = ({
             <section className={styles.attentionSection}>
                 <AttentionCenter
                     applications={applications}
+                    navigationTarget={attentionTarget}
                     currentTime={currentTime}
                     interviews={interviews}
                     hasError={applicationsError}
                     isLoading={applicationsIsLoading ?? isLoading}
                     onRetry={onRetryNeedsAttention}
                     onAddInterview={onAddInterview}
+                    onNavigationTargetHandled={onAttentionTargetHandled}
                     offerEvaluations={offerEvaluations}
                     onOpenOfferComparison={onOpenOfferComparison}
                     onRecordOfferDecision={onRecordOfferDecision}

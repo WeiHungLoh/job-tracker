@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useConfirm, type ConfirmOptions } from 'material-ui-confirm';
 import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
 import PrimaryButton from '../../../components/button/PrimaryButton';
@@ -15,6 +15,8 @@ import styles from './AttentionCenter.module.css';
 import NeedsAttentionSettingsDialog from './NeedsAttentionSettingsDialog';
 import { useUserPreferences } from '../../../components/userPreferences/UserPreferencesProvider';
 import { getNeedsAttentionSettings } from './needsAttentionSettings';
+import type { DashboardAttentionTarget } from '../dashboardNavigation';
+import { scrollAndHighlight } from '../../../helper/highlightElement';
 
 type AttentionCenterProps = {
     applications: readonly JobApplication[];
@@ -23,12 +25,14 @@ type AttentionCenterProps = {
     hasError?: boolean;
     currentTime?: Date;
     offerEvaluations?: readonly OfferEvaluation[];
+    navigationTarget?: DashboardAttentionTarget | null;
     onAddInterview?: (application: JobApplication) => void;
     onOpenOfferComparison?: (application: JobApplication) => void;
     onRecordOfferDecision?: (application: JobApplication, filter: DashboardRecordOfferDecisionFilter) => void;
     onMarkApplicationGhosted?: (application: JobApplication) => Promise<void>;
     onMarkApplicationFollowUpSent?: (application: JobApplication) => void | Promise<void>;
     onMarkInterviewFollowUpSent?: (interview: JobInterview) => void | Promise<void>;
+    onNavigationTargetHandled?: () => void;
     onRetry?: () => void;
 };
 
@@ -103,17 +107,21 @@ const AttentionCenter = ({
     isLoading,
     currentTime = new Date(),
     offerEvaluations = [],
+    navigationTarget,
     onAddInterview,
     onOpenOfferComparison,
     onRecordOfferDecision,
     onMarkApplicationGhosted,
     onMarkApplicationFollowUpSent,
     onMarkInterviewFollowUpSent,
+    onNavigationTargetHandled,
     onRetry,
 }: AttentionCenterProps) => {
     const { preferences } = useUserPreferences();
     const settings = getNeedsAttentionSettings(preferences);
     const attentionListRef = useRef<HTMLUListElement>(null);
+    const navigationHighlightTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const handledNavigationTargetRef = useRef<string | null>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [selectedFollowUp, setSelectedFollowUp] = useState<{
         draft: FollowUpDraft;
@@ -124,6 +132,42 @@ const AttentionCenter = ({
         [applications, currentTime, interviews, offerEvaluations, settings]
     );
     const isAttentionListScrollable = items.length > VISIBLE_ATTENTION_ITEMS;
+
+    useEffect(
+        () => () => {
+            Object.values(navigationHighlightTimeoutRef.current).forEach((timeout) => clearTimeout(timeout));
+            navigationHighlightTimeoutRef.current = {};
+        },
+        []
+    );
+
+    useEffect(() => {
+        if (!navigationTarget) {
+            handledNavigationTargetRef.current = null;
+            return;
+        }
+        if (isLoading || hasError) {
+            return;
+        }
+
+        const targetKey = `${navigationTarget.category}-${navigationTarget.jobId}`;
+        if (handledNavigationTargetRef.current === targetKey) {
+            return;
+        }
+
+        handledNavigationTargetRef.current = targetKey;
+        const targetItem = items.find(
+            (item) => item.application.job_id === navigationTarget.jobId && item.category === navigationTarget.category
+        );
+        if (targetItem) {
+            scrollAndHighlight(
+                `needs-attention-${targetKey}`,
+                styles.highlighted,
+                navigationHighlightTimeoutRef.current
+            );
+        }
+        onNavigationTargetHandled?.();
+    }, [hasError, isLoading, items, navigationTarget, onNavigationTargetHandled]);
 
     useLayoutEffect(() => {
         const list = attentionListRef.current;
@@ -276,6 +320,7 @@ const AttentionCenter = ({
                                         styles[application.job_status.toLowerCase()]
                                     }`}
                                     data-category={category}
+                                    id={`needs-attention-${category}-${application.job_id}`}
                                     key={application.job_id}
                                 >
                                     <div className={styles.itemHeading}>

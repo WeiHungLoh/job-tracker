@@ -184,6 +184,9 @@ describe('renders user guide properly', () => {
         expect(screen.getByText(/change to declined/i)).toBeVisible();
         expect(screen.getByText(/archived evaluations are read-only/i)).toBeVisible();
         expect(screen.getByText(/show all can therefore export up to six tables/i)).toBeVisible();
+        expect(
+            screen.getByText(/export filtered offer evaluations as csv follows the selected offer comparison filters/i)
+        ).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: /adding and managing applications/i }));
 
@@ -252,6 +255,7 @@ describe('renders user guide properly', () => {
 
         await userEvent.click(screen.getByRole('button', { name: /exporting and sorting records/i }));
 
+        expect(screen.getByRole('heading', { name: 'Filtered CSV exports' })).toBeVisible();
         expect(screen.getByText(/spreadsheet apps could interpret as formulas/i)).toBeVisible();
         expect(
             screen.getByText((_content, element) => {

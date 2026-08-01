@@ -50,7 +50,7 @@ const clickConfirmedAction = async (button: HTMLElement) => {
 };
 
 const getExportCsvText = (): string => {
-    const href = screen.getByRole('link', { name: 'Export as CSV' }).getAttribute('href') ?? '';
+    const href = screen.getByRole('link', { name: 'Export filtered interviews as CSV' }).getAttribute('href') ?? '';
     const csvStart = href.indexOf(',');
     return decodeURIComponent(csvStart === -1 ? href : href.slice(csvStart + 1)).replace(/^\uFEFF/, '');
 };
@@ -84,7 +84,7 @@ describe('Archived job interview viewer flow', () => {
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         expect(screen.getByRole('button', { name: /delete all archived interviews/i })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Export as CSV' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toBeInTheDocument();
     });
 
     test('uses an independent archived Interview Show notes preference and keeps List notes read-only', async () => {
@@ -293,7 +293,7 @@ describe('Archived job interview viewer flow', () => {
         await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(
-            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+            JSON.stringify({ applicationJobStatus: 'Applied', applicationTargetId: 1 })
         );
         expect(fetch).toHaveBeenCalledTimes(1);
     });
@@ -361,7 +361,7 @@ describe('Archived job interview viewer flow', () => {
         await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(
-            JSON.stringify({ applicationListJobStatus: 'Applied', applicationListTargetId: 1 })
+            JSON.stringify({ applicationJobStatus: 'Applied', applicationTargetId: 1 })
         );
         expect(fetch).toHaveBeenCalledTimes(1);
     });

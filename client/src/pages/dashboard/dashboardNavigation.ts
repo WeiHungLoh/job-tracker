@@ -12,6 +12,15 @@ export type DashboardOfferDecisionNavigationState = {
     dashboardOfferDecisionFilter: DashboardOfferDecisionFilter;
 };
 
+export type DashboardAttentionTarget = {
+    jobId: number;
+    category: 'interview-unscheduled';
+};
+
+export type DashboardAttentionNavigationState = {
+    dashboardAttentionTarget: DashboardAttentionTarget;
+};
+
 export const getDashboardInterviewId = (state: unknown): number | null => {
     if (typeof state !== 'object' || state === null || !('dashboardInterviewId' in state)) {
         return null;
@@ -19,6 +28,24 @@ export const getDashboardInterviewId = (state: unknown): number | null => {
 
     const interviewId = state.dashboardInterviewId;
     return typeof interviewId === 'number' && Number.isInteger(interviewId) && interviewId > 0 ? interviewId : null;
+};
+
+export const getDashboardAttentionTarget = (state: unknown): DashboardAttentionTarget | null => {
+    if (typeof state !== 'object' || state === null || !('dashboardAttentionTarget' in state)) {
+        return null;
+    }
+
+    const target = state.dashboardAttentionTarget;
+    if (typeof target !== 'object' || target === null || !('jobId' in target) || !('category' in target)) {
+        return null;
+    }
+
+    return typeof target.jobId === 'number' &&
+        Number.isInteger(target.jobId) &&
+        target.jobId > 0 &&
+        target.category === 'interview-unscheduled'
+        ? { jobId: target.jobId, category: target.category }
+        : null;
 };
 
 export const getDashboardOfferDecisionJobId = (state: unknown): number | null => {

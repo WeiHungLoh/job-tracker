@@ -397,13 +397,13 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <h3>Export evaluations and counteroffer plans</h3>
                 <p>
-                    Export as CSV follows the selected Offer Comparison filters. Each non-empty selected evaluation
-                    section produces an evaluation table. A matching counteroffer-plan table is included only when that
-                    section contains at least one saved plan, and it includes only applications with saved plans. Show
-                    All can therefore export up to six tables: Evaluated, Expired Evaluated and Previous Evaluations,
-                    plus one counteroffer table for each. Counteroffer tables compare current and ideal terms, all four
-                    ratings, current and ideal Fit ratings, and the overall Fit rating change. Empty saved-plan fields
-                    are exported as <code>N/A</code>.
+                    Export filtered offer evaluations as CSV follows the selected Offer Comparison filters. Each
+                    non-empty selected evaluation section produces an evaluation table. A matching counteroffer-plan
+                    table is included only when that section contains at least one saved plan, and it includes only
+                    applications with saved plans. Show All can therefore export up to six tables: Evaluated, Expired
+                    Evaluated and Previous Evaluations, plus one counteroffer table for each. Counteroffer tables
+                    compare current and ideal terms, all four ratings, current and ideal Fit ratings, and the overall
+                    Fit rating change. Empty saved-plan fields are exported as <code>N/A</code>.
                 </p>
             </>
         ),
@@ -751,7 +751,7 @@ const guideSections: readonly UserGuideSection[] = [
         icon: 'export',
         content: (
             <>
-                <h3>Export as CSV</h3>
+                <h3>Filtered CSV exports</h3>
                 <p>
                     Application exports contain the records visible under the selected status filters in their current
                     display order. List exports follow the visible list. Board exports move from left to right through

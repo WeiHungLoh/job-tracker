@@ -12,6 +12,7 @@ const EMPTY_NOTES_MESSAGE = 'You do not have any notes here';
 const ArchivedApplicationBoardCard = ({
     application,
     isDeleting,
+    isHighlighted = false,
     isUnarchiving,
     onDelete,
     onUnarchive,
@@ -24,7 +25,7 @@ const ArchivedApplicationBoardCard = ({
     return (
         <article
             aria-label={`${application.company_name} ${application.job_title}`}
-            className={`${styles.card} ${styles.readOnlyCard}`}
+            className={`${styles.card} ${styles.readOnlyCard} ${isHighlighted ? styles.cardHighlighted : ''}`}
             id={String(application.archived_job_id)}
         >
             <div className={styles.cardHeader}>

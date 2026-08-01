@@ -1,5 +1,4 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import type { JobApplication } from '../../../application/models';
 import type { CreateInterviewRequest } from '../../models';
 import type { Location } from 'react-router-dom';
 import type { FormEvent, KeyboardEvent } from 'react';
@@ -31,6 +30,9 @@ import {
 } from '../../interviewOfferDeadlineWarning';
 import { useUnsavedChangesBlocker } from '../../../../hooks/useUnsavedChangesBlocker';
 import { hasUnsavedInterviewFormChanges } from '../../interviewFormChanges';
+import type { ApplicationCollectionNavigationState } from '../../../application/applicationNavigation';
+import { getAddInterviewOrigin, type AddInterviewNavigationState } from '../../addInterviewNavigation';
+import type { DashboardAttentionNavigationState } from '../../../dashboard/dashboardNavigation';
 
 const AddInterview = () => {
     const [interviewDate, setInterviewDate] = useState<string>('');
@@ -51,7 +53,7 @@ const AddInterview = () => {
     const notesInputRef = useRef<HTMLTextAreaElement>(null);
     const pendingSubmissionRef = useRef(false);
     const navigate = useNavigate();
-    const location = useLocation() as Location<{ app?: JobApplication }>;
+    const location = useLocation() as Location<AddInterviewNavigationState>;
     const app = location.state?.app;
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const api = useJobTrackerAPI();
@@ -198,6 +200,26 @@ const AddInterview = () => {
         }
     };
 
+    const handleBack = () => {
+        const origin = getAddInterviewOrigin(location.state);
+        if (origin.kind === 'dashboard-needs-attention') {
+            const state: DashboardAttentionNavigationState = {
+                dashboardAttentionTarget: {
+                    jobId: app.job_id,
+                    category: origin.category,
+                },
+            };
+            navigate(routes.dashboard, { state });
+            return;
+        }
+
+        const state: ApplicationCollectionNavigationState = {
+            applicationJobStatus: app.job_status,
+            applicationTargetId: app.job_id,
+        };
+        navigate(routes.viewApplications, { state });
+    };
+
     return (
         <form className={styles.addInterview} noValidate onKeyDown={handleFormKeyDown} onSubmit={handleAdd}>
             <div className={styles.context}>
@@ -318,11 +340,7 @@ const AddInterview = () => {
                 <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.viewInterviews)}>
                     View Interviews
                 </PrimaryButton>
-                <PrimaryButton
-                    type='button'
-                    variant='secondary'
-                    onClick={() => navigate(`${routes.viewApplications}#${app.job_id}`)}
-                >
+                <PrimaryButton type='button' variant='secondary' onClick={handleBack}>
                     Back
                 </PrimaryButton>
             </div>

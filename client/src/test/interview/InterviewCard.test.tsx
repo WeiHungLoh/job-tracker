@@ -286,6 +286,7 @@ describe('InterviewCard calendar options', () => {
             follow_up_sent_at: '2026-07-27T07:42:00.000Z',
             meeting_url: 'https://meet.example.com/room',
         };
+        const onViewApplicationClick = vi.fn();
         renderJobCard(interview);
 
         const listFollowUp = screen.getByRole('status');
@@ -305,7 +306,7 @@ describe('InterviewCard calendar options', () => {
                     layout='board'
                     onDelete={vi.fn()}
                     onPinToggle={vi.fn()}
-                    onViewApplicationClick={vi.fn()}
+                    onViewApplicationClick={onViewApplicationClick}
                     variant='job'
                 />
             </MemoryRouter>
@@ -318,14 +319,26 @@ describe('InterviewCard calendar options', () => {
         const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to enter meeting' });
         expect(boardMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
         expect(boardMeetingURL).toHaveAttribute('target', '_blank');
+        const boardApplicationLink = within(boardCard).getByRole('link', {
+            name: 'Click here to view corresponding job application',
+        });
+        expect(boardApplicationLink).toHaveAttribute('href', '/application/view#7');
+        expect(boardApplicationLink).toHaveClass(interviewStyles.boardActionLink);
+        expect(boardMeetingURL).toHaveClass(interviewStyles.boardActionLink);
         const editNotes = within(boardCard).getByText('Edit notes');
         const boardNotes = within(boardCard).getByRole('textbox', { name: 'Notes for Acme' });
         const actionButtons = within(boardCard).getByRole('button', { name: 'Delete' }).parentElement;
-        expect(boardMeetingURL.compareDocumentPosition(editNotes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(
+            boardMeetingURL.compareDocumentPosition(boardApplicationLink) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+        expect(boardApplicationLink.compareDocumentPosition(editNotes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(editNotes.compareDocumentPosition(boardNotes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(boardNotes.compareDocumentPosition(actionButtons!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(boardMeetingURL.compareDocumentPosition(actionButtons!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(boardActions).toHaveAttribute('open');
+
+        await userEvent.click(boardApplicationLink);
+        expect(onViewApplicationClick).toHaveBeenCalledOnce();
     });
 
     test('uses shared Board actions and hides List-only interview details', async () => {
@@ -359,13 +372,14 @@ describe('InterviewCard calendar options', () => {
         expect(screen.queryByText(/Interview Date:/)).not.toBeInTheDocument();
         expect(screen.queryByText('Notes: Bring examples')).not.toBeInTheDocument();
         expect(screen.queryByText(/time left/i)).not.toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /review corresponding job application/i })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /view corresponding job application/i })).not.toBeVisible();
         const actions = screen.getByText('Actions').closest('details');
         expect(actions).not.toHaveAttribute('open');
 
         await userEvent.click(screen.getByText('Actions'));
 
         expect(actions).toHaveAttribute('open');
+        expect(screen.getByRole('link', { name: /view corresponding job application/i })).toBeVisible();
         expect(getCalendarTrigger()).toBeInTheDocument();
         const deleteButton = screen.getByRole('button', { name: 'Delete' });
         expect(deleteButton.parentElement?.className).toContain('compactActions');

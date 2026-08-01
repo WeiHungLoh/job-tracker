@@ -6,12 +6,13 @@ export const scrollAndHighlight = (
     elementId: string,
     highlightClass: string | undefined,
     timeouts: Record<string, ReturnType<typeof setTimeout>>,
-    block?: ScrollLogicalPosition
+    block?: ScrollLogicalPosition,
+    isRequestCurrent: () => boolean = () => true
 ): void => {
     const highlightClasses = highlightClass?.split(/\s+/).filter(Boolean) ?? [];
 
     setTimeout(() => {
-        if (typeof document === 'undefined') {
+        if (!isRequestCurrent() || typeof document === 'undefined') {
             return;
         }
 

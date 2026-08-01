@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createApplicationCsvData } from '../../../../../helper/csvExport';
 import { createApplicationRelationConfirmation } from '../../../../application/applicationRelationConfirmation';
 import {
@@ -38,21 +38,24 @@ import usePendingIds from '../../../../../hooks/usePendingIds';
 import { useToast } from '../../../../../components/toast/ToastProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-    getApplicationListJobStatuses,
-    getApplicationListJobStatus,
-    getApplicationListTargetId,
+    getApplicationNavigationJobStatus,
+    getApplicationNavigationTargetId,
+    resolveApplicationNavigationJobStatuses,
 } from '../../../../application/applicationNavigation';
 import { scrollAndHighlight } from '../../../../../helper/highlightElement';
+import type { ApplicationBoardTargetRequest } from '../../../../application/applicationBoard/models';
 
 const DemoViewArchivedApplication = () => {
     const { dispatch, state } = useDemo();
     const { preferences, updatePreferences } = useUserPreferences();
     const location = useLocation();
     const navigate = useNavigate();
-    const navigationJobStatusRef = useRef(getApplicationListJobStatus(location.state));
-    const navigationApplicationIdRef = useRef(getApplicationListTargetId(location.state));
+    const navigationJobStatusRef = useRef(getApplicationNavigationJobStatus(location.state));
+    const navigationApplicationIdRef = useRef(getApplicationNavigationTargetId(location.state));
     const archivedApplications = useMemo(() => selectArchivedApplications(state), [state]);
     const showCorrespondingAppTimeout = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const boardTargetRequestIdRef = useRef(0);
+    const [boardTargetRequest, setBoardTargetRequest] = useState<ApplicationBoardTargetRequest | null>(null);
     const confirm = useConfirm();
     const { showSuccessToast } = useToast();
     const [pendingBulkAction, setPendingBulkAction] = useState<'delete' | 'unarchive' | null>(null);
@@ -71,6 +74,8 @@ const DemoViewArchivedApplication = () => {
     const selectedJobStatuses = preferences.archived_application_job_statuses;
     const showNotes = preferences.archived_application_show_notes;
     const viewMode = preferences.archived_application_view_mode;
+    const viewModeRef = useRef(viewMode);
+    viewModeRef.current = viewMode;
     const isBoardView = viewMode === 'board';
     const csvApplications = isBoardView
         ? getApplicationsInBoardOrder(archivedApplications, selectedJobStatuses)
@@ -96,20 +101,14 @@ const DemoViewArchivedApplication = () => {
 
         navigationJobStatusRef.current = null;
         const navigationApplicationId = navigationApplicationIdRef.current;
-        const navigationJobStatuses = getApplicationListJobStatuses(
+        const navigationJobStatuses = resolveApplicationNavigationJobStatuses(
             selectedJobStatuses,
             navigationJobStatus,
             navigationApplicationId
         );
-        const preferenceUpdates: {
-            archived_application_job_statuses?: JobStatus[];
-            archived_application_view_mode?: CollectionViewMode;
-        } = {};
+        const preferenceUpdates: { archived_application_job_statuses?: JobStatus[] } = {};
         if (navigationJobStatuses !== selectedJobStatuses) {
             preferenceUpdates.archived_application_job_statuses = navigationJobStatuses;
-        }
-        if (navigationApplicationId && isBoardView) {
-            preferenceUpdates.archived_application_view_mode = 'list';
         }
         if (Object.keys(preferenceUpdates).length > 0) {
             void updatePreferences(preferenceUpdates);
@@ -118,7 +117,7 @@ const DemoViewArchivedApplication = () => {
 
     useEffect(() => {
         const targetApplicationId = navigationApplicationIdRef.current;
-        if (isBoardView || !targetApplicationId) {
+        if (!targetApplicationId) {
             return;
         }
 
@@ -126,14 +125,38 @@ const DemoViewArchivedApplication = () => {
             return;
         }
 
-        scrollAndHighlight(String(targetApplicationId), styles.highlighted, showCorrespondingAppTimeout.current);
+        if (isBoardView) {
+            setBoardTargetRequest({
+                applicationId: targetApplicationId,
+                requestId: ++boardTargetRequestIdRef.current,
+            });
+        } else {
+            scrollAndHighlight(
+                String(targetApplicationId),
+                styles.highlighted,
+                showCorrespondingAppTimeout.current,
+                undefined,
+                () => viewModeRef.current === 'list'
+            );
+        }
         navigationApplicationIdRef.current = null;
+        navigationJobStatusRef.current = null;
         navigate(location.pathname, { replace: true, state: null });
     }, [isBoardView, location.pathname, navigate, visibleApplicationIds]);
 
     const handleViewModeChange = (nextViewMode: CollectionViewMode) => {
+        viewModeRef.current = nextViewMode;
+        if (nextViewMode !== 'board') {
+            setBoardTargetRequest(null);
+        }
         void updatePreferences({ archived_application_view_mode: nextViewMode });
     };
+
+    const handleBoardTargetHandled = useCallback((handledRequest: ApplicationBoardTargetRequest) => {
+        setBoardTargetRequest((currentRequest) =>
+            currentRequest?.requestId === handledRequest.requestId ? null : currentRequest
+        );
+    }, []);
 
     const handleJobStatusChange = async (jobStatuses: JobStatus[]) => {
         await updatePreferences({ archived_application_job_statuses: jobStatuses });
@@ -276,6 +299,7 @@ const DemoViewArchivedApplication = () => {
                                 csvData={csvData}
                                 csvFilename='demo_archived_job_applications.csv'
                                 csvHeaders={APPLICATION_CSV_HEADERS}
+                                csvLabel='Export filtered applications as CSV'
                                 deleteLabel='Delete all archived applications'
                                 id='demo-archived-application-more-options'
                                 deleteDisabled={pendingBulkAction === 'unarchive'}
@@ -345,9 +369,11 @@ const DemoViewArchivedApplication = () => {
                     applications={archivedApplications}
                     deletingApplicationIds={deletingApplicationIds}
                     onDelete={handleDelete}
+                    onTargetHandled={handleBoardTargetHandled}
                     onUnarchive={handleRestore}
                     selectedJobStatuses={selectedJobStatuses}
                     showNotes={showNotes}
+                    targetRequest={boardTargetRequest}
                     unarchivingApplicationIds={restoringApplicationIds}
                 />
             )}
