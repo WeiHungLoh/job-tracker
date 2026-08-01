@@ -26,14 +26,14 @@ const getSavedFitRating = (jobId: number, applications: readonly EvaluatedOfferD
     return application ? calculateOfferDecisionScore(application.evaluation.ratings) : 0;
 };
 
-const getFitChangeLabel = (difference: number, savedFitRating: number): string => {
+const getFitChangeLabel = (difference: number): string => {
     if (difference === 0) {
         return 'No change';
     }
     const prefix = difference > 0 ? '+' : '';
     const pointLabel = Math.abs(difference) === 1 ? 'percentage point' : 'percentage points';
 
-    return `${prefix}${difference} ${pointLabel} from ${savedFitRating}%`;
+    return `${prefix}${difference} ${pointLabel}`;
 };
 
 const OfferDecisionRobustnessLab = ({ applications }: OfferDecisionRobustnessLabProps) => {
@@ -144,7 +144,7 @@ const OfferDecisionRobustnessLab = ({ applications }: OfferDecisionRobustnessLab
                                             <span className={styles.fitResult}>
                                                 <strong className={styles.newFitRating}>{result.score}%</strong>
                                                 <span className={`${styles.fitChange} ${fitChangeClass}`}>
-                                                    {getFitChangeLabel(fitDifference, savedFitRating)}
+                                                    {getFitChangeLabel(fitDifference)}
                                                 </span>
                                             </span>
                                         </div>

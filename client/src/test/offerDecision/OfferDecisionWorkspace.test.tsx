@@ -1780,7 +1780,7 @@ describe('OfferDecisionWorkspace', () => {
             expect.objectContaining({
                 title: 'Confirm Delete All',
                 confirmationText: 'Delete All',
-                description: expect.stringContaining('Applications and offers without evaluations are not deleted.'),
+                description: expect.stringContaining('Offers without evaluations are not deleted.'),
             })
         );
         const preventDefault = vi.fn();

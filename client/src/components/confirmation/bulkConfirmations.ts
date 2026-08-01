@@ -154,7 +154,7 @@ export const createDeleteAllOfferEvaluationsConfirmation = (
 
     return bulkOptions(
         'Confirm Delete All',
-        `Delete all ${evaluationLabel} you own? This removes only saved evaluations for ${state} applications.${counterofferDescription} Applications and offers without evaluations are not deleted. ${PERMANENT_DELETION_WARNING}`,
+        `Delete all ${evaluationLabel} you own? This removes only saved evaluations for ${state} applications.${counterofferDescription} Offers without evaluations are not deleted. ${PERMANENT_DELETION_WARNING}`,
         'Delete All'
     );
 };

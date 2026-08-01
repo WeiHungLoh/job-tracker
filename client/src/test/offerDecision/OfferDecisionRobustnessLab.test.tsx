@@ -104,7 +104,8 @@ describe('OfferDecisionRobustnessLab', () => {
         const adjustedTopResult = within(ranking).getAllByRole('listitem')[0];
         expect(adjustedTopResult).toHaveTextContent('Acme');
         expect(within(adjustedTopResult).getByText('79%', { selector: 'strong' })).toBeInTheDocument();
-        expect(adjustedTopResult).toHaveTextContent('+4 percentage points from 75%');
+        expect(adjustedTopResult).toHaveTextContent('+4 percentage points');
+        expect(adjustedTopResult).not.toHaveTextContent('from 75%');
 
         fireEvent.click(screen.getByRole('button', { name: 'Reset importance to balanced' }));
         expect(growthInput).toHaveValue('3');
@@ -114,7 +115,13 @@ describe('OfferDecisionRobustnessLab', () => {
         const acmeResult = within(ranking)
             .getAllByRole('listitem')
             .find((result) => result.textContent?.includes('Acme'));
-        expect(acmeResult).toHaveTextContent('+1 percentage point from 75%');
+        expect(acmeResult).toHaveTextContent('+1 percentage point');
+        expect(acmeResult).not.toHaveTextContent('from 75%');
+        const betaResult = within(ranking)
+            .getAllByRole('listitem')
+            .find((result) => result.textContent?.includes('Beta Labs'));
+        expect(betaResult).toHaveTextContent('-2 percentage points');
+        expect(betaResult).not.toHaveTextContent('from 80%');
 
         fireEvent.change(growthInput, { target: { value: '5' } });
         fireEvent.click(screen.getByRole('button', { name: 'Close' }));
