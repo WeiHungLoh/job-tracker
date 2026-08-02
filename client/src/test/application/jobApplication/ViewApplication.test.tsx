@@ -176,6 +176,52 @@ const statusUpdateRequestCount = (jobId: number) =>
             url.endsWith(`/job-applications/${jobId}/status`) && init?.method === 'PATCH'
     ).length;
 
+const mockPendingApplicationStatusUpdate = () => {
+    let resolveStatusUpdate: ((value: ReturnType<typeof response>) => void) | undefined;
+    fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+        if (url.endsWith('/job-interviews')) {
+            return response([]);
+        }
+        if (url.endsWith('/job-applications/1/status') && init?.method === 'PATCH') {
+            return new Promise((resolve) => {
+                resolveStatusUpdate = resolve;
+            });
+        }
+        return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+    });
+
+    return () => {
+        if (!resolveStatusUpdate) {
+            throw new Error('Expected a pending application status update.');
+        }
+        resolveStatusUpdate(response(undefined, 204));
+    };
+};
+
+const renderPendingApplicationStatusUpdate = (initialPreferences: Partial<UserPreferences>) => {
+    const resolveStatusUpdate = mockPendingApplicationStatusUpdate();
+    render(
+        <MemoryRouter>
+            <ViewApplication />
+        </MemoryRouter>,
+        { initialPreferences }
+    );
+    return resolveStatusUpdate;
+};
+
+const beginPendingListStatusUpdate = async () => {
+    await screen.findByText(/ABC Pte Ltd/i);
+    await userEvent.click(screen.getByRole('button', { name: /edit status/i }));
+    await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+};
+
+const waitForStatusAutoScrollDelay = async () => {
+    await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+    });
+};
+
 const LocationStateProbe = () => {
     const location = useLocation();
     return <output data-testid='location-state'>{JSON.stringify(location.state)}</output>;
@@ -1343,6 +1389,58 @@ describe('Job application viewing flow', () => {
         expect(windowScrollTo).not.toHaveBeenCalled();
     });
 
+    test('keeps a board status rollback within the current status filter', async () => {
+        let resolveStatusUpdate: ((value: ReturnType<typeof response>) => void) | undefined;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/status') && init?.method === 'PATCH') {
+                return new Promise((resolve) => {
+                    resolveStatusUpdate = resolve;
+                });
+            }
+            if (url.includes('/job-applications?jobStatuses=Interview')) {
+                return response([]);
+            }
+            return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>,
+            {
+                initialPreferences: {
+                    application_job_statuses: ['Applied', 'Interview'],
+                    application_view_mode: 'board',
+                },
+            }
+        );
+
+        await screen.findByText(/ABC Pte Ltd/i);
+        await userEvent.selectOptions(
+            screen.getByRole('combobox', { name: 'Move ABC Pte Ltd to status' }),
+            'Interview'
+        );
+        await waitFor(() => expect(screen.getByRole('heading', { name: 'Interview 1' })).toBeInTheDocument());
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Applied' }));
+        expect(await screen.findByRole('heading', { name: 'No applications match your filters' })).toBeInTheDocument();
+
+        await act(async () => {
+            if (!resolveStatusUpdate) {
+                throw new Error('Expected a pending board status update.');
+            }
+            resolveStatusUpdate(response({ message: 'Status update is temporarily unavailable.' }, 400));
+        });
+
+        expect(await screen.findByText('Status update is temporarily unavailable.')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'No applications match your filters' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Sort by' })).not.toBeInTheDocument();
+    });
+
     test('keeps board actions available without showing full notes directly on the card', async () => {
         render(
             <MemoryRouter>
@@ -1938,6 +2036,82 @@ describe('Job application viewing flow', () => {
             scrollAndHighlight.mockRestore();
         }
     );
+
+    test('cancels a pending status auto-scroll when auto-scroll is disabled before the update completes', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const resolveStatusUpdate = renderPendingApplicationStatusUpdate({
+            application_enable_scroll: true,
+            application_list_sort_order: 'job_status',
+        });
+        await beginPendingListStatusUpdate();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
+        const autoScrollToggle = screen.getByRole('switch', { name: 'Auto-scroll and highlight updates' });
+        await userEvent.click(autoScrollToggle);
+        await waitFor(() => expect(autoScrollToggle).toHaveAttribute('aria-checked', 'false'));
+
+        await act(async () => resolveStatusUpdate());
+        await waitFor(() => expect(screen.getByText(/^Job Status: Interview$/)).toBeInTheDocument());
+        await waitForStatusAutoScrollDelay();
+
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+        scrollAndHighlight.mockRestore();
+    });
+
+    test('cancels a pending status auto-scroll when list sorting changes before the update completes', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const resolveStatusUpdate = renderPendingApplicationStatusUpdate({
+            application_enable_scroll: true,
+            application_list_sort_order: 'job_status',
+        });
+        await beginPendingListStatusUpdate();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
+        await userEvent.click(screen.getByRole('radio', { name: /Company A/ }));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Sort by' })).toBeEnabled());
+
+        await act(async () => resolveStatusUpdate());
+        await waitFor(() => expect(screen.getByText(/^Job Status: Interview$/)).toBeInTheDocument());
+        await waitForStatusAutoScrollDelay();
+
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+        scrollAndHighlight.mockRestore();
+    });
+
+    test('applies the current status filter when a pending status update completes', async () => {
+        const resolveStatusUpdate = renderPendingApplicationStatusUpdate({
+            application_job_statuses: ['Applied', 'Interview'],
+        });
+        await beginPendingListStatusUpdate();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Interview' }));
+        await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Interview' })).not.toBeChecked());
+
+        await act(async () => resolveStatusUpdate());
+
+        await waitFor(() => expect(screen.queryByText(/ABC Pte Ltd/i)).not.toBeInTheDocument());
+    });
+
+    test('cancels a pending status auto-scroll when the current filter excludes the new status', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        const resolveStatusUpdate = renderPendingApplicationStatusUpdate({
+            application_enable_scroll: true,
+            application_job_statuses: ['Applied', 'Interview'],
+            application_list_sort_order: 'job_status',
+        });
+        await beginPendingListStatusUpdate();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Interview' }));
+        await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Interview' })).not.toBeChecked());
+
+        await act(async () => resolveStatusUpdate());
+        await waitForStatusAutoScrollDelay();
+
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+        scrollAndHighlight.mockRestore();
+    });
 
     test('does not scroll when a status change removes the application from the selected filter', async () => {
         const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');

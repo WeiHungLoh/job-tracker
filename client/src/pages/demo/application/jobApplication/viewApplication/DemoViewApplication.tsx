@@ -117,6 +117,8 @@ const DemoViewApplication = () => {
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
     const isBoardView = viewMode === 'board';
+    const applicationListSortOrderRef = useRef(preferences.application_list_sort_order);
+    applicationListSortOrderRef.current = preferences.application_list_sort_order;
     const csvApplications = isBoardView ? getApplicationsInBoardOrder(applications, selectedJobStatuses) : applications;
     const csvData = createApplicationCsvData(csvApplications);
     const visibleApplicationIds = useMemo(
@@ -380,9 +382,14 @@ const DemoViewApplication = () => {
         });
         showSuccessToast('Job application status updated.');
 
-        if (shouldAutoScrollAfterStatusChange(isAutoScrollEnabled, preferences.application_list_sort_order)) {
+        const canAutoScrollAfterListStatusChange = () =>
+            viewModeRef.current === 'list' &&
+            selectedJobStatusesRef.current.includes(newStatus) &&
+            shouldAutoScrollAfterStatusChange(isAutoScrollEnabledRef.current, applicationListSortOrderRef.current);
+
+        if (canAutoScrollAfterListStatusChange()) {
             setTimeout(() => {
-                if (viewModeRef.current !== 'list') {
+                if (!canAutoScrollAfterListStatusChange()) {
                     return;
                 }
                 scrollAndHighlight(
@@ -390,7 +397,7 @@ const DemoViewApplication = () => {
                     styles.highlighted,
                     applicationHighlightTimeout.current,
                     undefined,
-                    () => viewModeRef.current === 'list'
+                    canAutoScrollAfterListStatusChange
                 );
             }, 100);
         }

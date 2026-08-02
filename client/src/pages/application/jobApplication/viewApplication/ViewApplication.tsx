@@ -136,9 +136,10 @@ const ViewApplication = () => {
     const viewModeRef = useRef(viewMode);
     viewModeRef.current = viewMode;
     const isBoardView = viewMode === 'board';
-    const currentSortOrder = isBoardView
-        ? preferences.application_board_sort_order
-        : preferences.application_list_sort_order;
+    const applicationListSortOrder = preferences.application_list_sort_order;
+    const applicationListSortOrderRef = useRef(applicationListSortOrder);
+    applicationListSortOrderRef.current = applicationListSortOrder;
+    const currentSortOrder = isBoardView ? preferences.application_board_sort_order : applicationListSortOrder;
     const displayedApplications = useMemo(
         () => sortApplications(applications, currentSortOrder),
         [applications, currentSortOrder]
@@ -609,7 +610,6 @@ const ViewApplication = () => {
         const newStatus = editedJobStatus ?? application.job_status;
         const oldStatus = application.job_status;
         const statusChanged = newStatus !== oldStatus;
-        const statusRemainsVisible = selectedJobStatuses.includes(newStatus);
 
         if (!statusChanged) {
             closeStatusEditor();
@@ -637,16 +637,18 @@ const ViewApplication = () => {
                               }
                             : item
                     )
-                    .filter((item) => selectedJobStatuses.includes(item.job_status))
+                    .filter((item) => selectedJobStatusesRef.current.includes(item.job_status))
             );
             showSuccessToast('Job application status updated.');
 
-            if (
-                shouldAutoScrollAfterStatusChange(isAutoScrollEnabled, preferences.application_list_sort_order) &&
-                statusRemainsVisible
-            ) {
+            const canAutoScrollAfterListStatusChange = () =>
+                viewModeRef.current === 'list' &&
+                selectedJobStatusesRef.current.includes(newStatus) &&
+                shouldAutoScrollAfterStatusChange(isAutoScrollEnabledRef.current, applicationListSortOrderRef.current);
+
+            if (canAutoScrollAfterListStatusChange()) {
                 setTimeout(() => {
-                    if (viewModeRef.current !== 'list') {
+                    if (!canAutoScrollAfterListStatusChange()) {
                         return;
                     }
                     scrollAndHighlight(
@@ -654,7 +656,7 @@ const ViewApplication = () => {
                         styles.highlighted,
                         applicationHighlightTimeout.current,
                         undefined,
-                        () => viewModeRef.current === 'list'
+                        canAutoScrollAfterListStatusChange
                     );
                 }, 100);
             }
@@ -715,7 +717,7 @@ const ViewApplication = () => {
                     ? current.map((item) => (item.job_id === application.job_id ? application : item))
                     : [...current, application];
 
-                return restoredApplications;
+                return restoredApplications.filter((item) => selectedJobStatusesRef.current.includes(item.job_status));
             });
             showErrorToast(
                 getErrorToastMessage(error, 'Unable to update the job application status. Please try again.')

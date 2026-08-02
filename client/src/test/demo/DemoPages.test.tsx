@@ -79,6 +79,18 @@ const renderDemo = (children: ReactNode, initialEntries: DemoInitialEntry[] = [r
     );
 };
 
+const saveFirstDemoApplicationAsOffer = () => {
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit Status' })[0]);
+    fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Offer' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+};
+
+const waitForScheduledApplicationAutoScroll = async () => {
+    await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+    });
+};
+
 const openOfferActions = (companyName: string) => {
     fireEvent.click(screen.getByRole('button', { name: `More actions for ${companyName}` }));
     return screen.getByRole('menu', { name: `More actions for ${companyName}` });
@@ -494,6 +506,51 @@ describe('demo page interactions', () => {
         expect(scrollAndHighlight).not.toHaveBeenCalled();
     });
 
+    test('cancels a scheduled status auto-scroll when auto-scroll is disabled', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        renderDemo(<DemoViewApplication />);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
+        const autoScrollToggle = screen.getByRole('switch', { name: 'Auto-scroll and highlight updates' });
+        saveFirstDemoApplicationAsOffer();
+        fireEvent.click(autoScrollToggle);
+
+        await waitFor(() => expect(autoScrollToggle).toHaveAttribute('aria-checked', 'false'));
+        await waitForScheduledApplicationAutoScroll();
+
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+    });
+
+    test('cancels a scheduled status auto-scroll when list sorting changes', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        renderDemo(<DemoViewApplication />);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
+        const companySortOption = screen.getByRole('radio', { name: /Company A/ });
+        saveFirstDemoApplicationAsOffer();
+        fireEvent.click(companySortOption);
+
+        await waitFor(() => expect(companySortOption).toBeChecked());
+        await waitForScheduledApplicationAutoScroll();
+
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+    });
+
+    test('cancels a scheduled status auto-scroll when the current filter excludes the new status', async () => {
+        const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
+        renderDemo(<DemoViewApplication />);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        const offerFilter = screen.getByRole('checkbox', { name: 'Offer' });
+        saveFirstDemoApplicationAsOffer();
+        fireEvent.click(offerFilter);
+
+        await waitFor(() => expect(offerFilter).not.toBeChecked());
+        await waitForScheduledApplicationAutoScroll();
+
+        expect(scrollAndHighlight).not.toHaveBeenCalled();
+    });
+
     test('shows success feedback for board status changes and archiving', async () => {
         const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
         renderDemo(<DemoViewApplication />);
@@ -518,7 +575,9 @@ describe('demo page interactions', () => {
         expect(within(card).getByRole('button', { name: /Drag HorizonAI Labs .+ application/ })).toBeInTheDocument();
         expect(statusSelect).toBeInTheDocument();
 
-        await userEvent.click(within(card).getByRole('button', { name: 'Pin HorizonAI Labs application' }));
+        await act(async () => {
+            await userEvent.click(within(card).getByRole('button', { name: 'Pin HorizonAI Labs application' }));
+        });
         expect(await screen.findByText('Job application pinned.')).toBeInTheDocument();
         await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
         expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
