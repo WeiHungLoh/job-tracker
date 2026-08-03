@@ -1,544 +1,189 @@
-import type { UserGuideSection } from './models';
-import Icon from '../../components/icon/Icon';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PrimaryButton from '../../components/button/PrimaryButton';
+import Icon from '../../components/icon/Icon';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../helper/formValidation';
 import { routes } from '../../routes';
-import styles from './UserGuide.module.css';
-import { useState } from 'react';
-import { FIELD_MAX_LENGTHS, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../helper/formValidation';
-import { INTERVIEW_DURATION_MINUTES_MAX, INTERVIEW_DURATION_MINUTES_MIN } from '../../helper/interviewTiming';
 import QuickCaptureBookmarklet from '../application/jobApplication/QuickCaptureBookmarklet';
-import {
-    OFFER_ANNUAL_LEAVE_DAYS_MAX,
-    OFFER_DETAILS_MAX_LENGTHS,
-    OFFER_MONTHLY_BASE_SALARY_MAX,
-} from '../offerDecision/offerDecisionConfig';
+import styles from './UserGuide.module.css';
+import type { UserGuideSection } from './models';
 
 const guideSections: readonly UserGuideSection[] = [
     {
-        id: 'account-security',
-        title: 'Account security',
-        icon: 'lock',
+        id: 'getting-started',
+        title: 'Getting started',
+        icon: 'guide',
         content: (
             <>
-                <h3>Creating an account</h3>
                 <p>
-                    Email addresses are trimmed and treated as lowercase, so capitalization does not create a separate
-                    account.
+                    Job Tracker keeps your applications, interviews, offers, notes and follow-ups in one place. You do
+                    not need to set everything up at once. Start with the jobs you are applying for today, then add more
+                    detail when you need it.
+                </p>
+                <h3>A simple way to begin</h3>
+                <ol>
+                    <li>Add an application with the company, job title and current status.</li>
+                    <li>Update the status whenever the application moves forward.</li>
+                    <li>Add interview details when an interview is arranged.</li>
+                    <li>Use Offer Comparison when you receive an offer.</li>
+                    <li>Archive finished records that you may want to look back on.</li>
+                </ol>
+                <p>
+                    The main menu takes you to your Dashboard, Applications, Interviews and Offer Comparison. On list
+                    pages, choose <strong>Show Archived</strong> to see records you have put away.
                 </p>
                 <p>
-                    Passwords must contain {PASSWORD_MIN_LENGTH}–{PASSWORD_MAX_LENGTH} characters. Spaces and Unicode
-                    characters are allowed, with no required uppercase letters, numbers or symbols. Some Unicode
-                    characters use multiple bytes, so the secure encoding limit may be reached before the character
-                    limit.
-                </p>
-                <p>
-                    The password-strength meter estimates how difficult the password is to guess. Its score is guidance;
-                    the length and encoding limits determine whether the password can be submitted.
-                </p>
-                <p>
-                    Repeated sign-in or sign-up attempts may be temporarily limited. Wait before trying again if the
-                    rate-limit message appears.
+                    Want to look around first? <Link to={routes.demoViewApplications}>Explore Demo</Link> with sample
+                    data. No account is needed.
                 </p>
             </>
         ),
     },
     {
         id: 'dashboard',
-        title: 'Dashboard',
+        title: 'Dashboard and reminders',
         icon: 'dashboard',
         content: (
             <>
-                <p>The dashboard gives you a quick visual overview of your job search progress:</p>
-                <h3>Stat cards</h3>
+                <h3>Your job search at a glance</h3>
                 <p>
-                    Shows total applications, applications added this week, upcoming interviews, interview rate, and
-                    offer rate. Dashboard sections load independently. If one dataset is unavailable, successful cards,
-                    charts and actions remain usable, unavailable values show an em dash, and Try Again reloads only the
-                    affected data.
-                </p>
-                <h3>Needs attention</h3>
-                <p>
-                    Shows applications that may require action, ordered by category priority, and suggests one next
-                    action for each selected application. The item limit defaults to ten and can be set from 1 to 50.
-                    The first six are visible before scrolling through the remaining items. Within a category, the most
-                    urgent or longest-waiting items appear first.
+                    The Dashboard shows your total applications, recent activity, upcoming interviews, interview rate
+                    and offer rate. It also includes charts for weekly activity, your current application pipeline and
+                    closed outcomes.
                 </p>
                 <p>
-                    <strong>Customise Dashboard Reminders</strong> lets you enable or disable each of the eight reminder
-                    types by selecting the whole reminder card. Selected cards keep their highlighted background. Timing
-                    labels and other card text toggle the reminder, while the number input itself never toggles it.
-                    Timing fields always remain visible but can only be edited while their card is selected. The
-                    numbered priority is fixed and cannot be reordered. The values below are the product defaults; your
-                    saved settings may make reminders eligible sooner or later. Press Enter anywhere in the dialog to
-                    save; a number field does not need focus. Disabling a reminder changes only what appears and does
-                    not modify applications, interviews, offers, statuses or follow-up timestamps.
+                    Each part loads on its own. If one part cannot load, the rest of the Dashboard stays available. Use
+                    <strong> Try Again</strong> on the part that needs to be reloaded.
                 </p>
+
+                <h3>Needs Attention</h3>
                 <p>
-                    Opening Settings uses the preferences already loaded for the signed-in session, so it does not make
-                    another preferences request or reload dashboard sections. Saving fetches application or offer data
-                    only when a newly enabled reminder type requires data that the Dashboard has not loaded yet.
+                    Needs Attention brings urgent or easy-to-miss tasks to the top of the Dashboard. Depending on your
+                    records and settings, it can remind you about:
                 </p>
-                <ol>
-                    <li>Evaluated offers due before their decision deadline — three days before by default.</li>
-                    <li>Evaluated offers that are overdue — kept for 14 days by default.</li>
-                    <li>Unevaluated offers.</li>
-                    <li>Completed-interview follow-ups still unanswered 14 days after being marked as sent.</li>
-                    <li>Completed-interview follow-ups eligible seven days after the latest interview ends.</li>
-                    <li>Interview-status applications without a scheduled interview.</li>
-                    <li>Applied applications unchanged for 14 days after a sent follow-up.</li>
-                    <li>Applied applications eligible for an initial follow-up after seven days.</li>
-                </ol>
-                <p>
-                    The maximum reminder count accepts whole numbers from 1 to 50. Timing fields accept 1–14 days for
-                    offers due soon, 1–30 days for overdue offers, 1–60 days for unanswered interview follow-ups, 1–30
-                    days for interview follow-ups due, 1–60 days for unanswered application follow-ups, and 1–30 days
-                    for application follow-ups due. An overdue offer starts showing when its deadline passes and stays
-                    visible until it reaches the chosen number of days overdue. An unanswered follow-up starts showing
-                    when the chosen number of full days has passed since it was marked as sent, provided the application
-                    has not progressed. Out-of-range input is not accepted, and Save remains available unless a save is
-                    already in progress.
-                </p>
-                <p>
-                    <strong>Reset to Default</strong> changes only the draft in the open settings dialog; select Save to
-                    persist it. If every category is disabled, the card says that no reminders are enabled instead of
-                    saying you are all caught up, using the same centred empty-state layout.
-                </p>
-                <h3>Evaluated offers due within 72 hours</h3>
-                <p>
-                    The action opens active Offer Comparison, ensures Evaluated Offers is visible, then scrolls to and
-                    highlights the exact offer card so you can record it as Accepted or Declined. This targeted
-                    navigation always scrolls and highlights, regardless of the auto-scroll preference. Evaluated offers
-                    more than 72 hours away do not appear.
-                </p>
-                <h3>Evaluated offers up to 14 days overdue</h3>
-                <p>
-                    These appear as soon as the decision deadline is reached and remain in Needs Attention through
-                    exactly 14 days overdue. <strong>Record offer decision</strong> opens active Offer Comparison, adds
-                    Expired Evaluated Offers only when it is missing, preserves every other selected filter, then
-                    scrolls the exact offer to the top and highlights it. Offers more than 14 days overdue remain in
-                    Expired Evaluated Offers but no longer occupy Needs Attention.
-                </p>
-                <h3>Unevaluated offers</h3>
-                <p>
-                    These appear next regardless of deadline because their deadline has not been recorded yet. The
-                    action opens active Offer Comparison, ensures Offers to Evaluate is visible, then scrolls to and
-                    highlights the exact card so you can add the offer details and decision deadline.
-                </p>
-                <h3>Unanswered completed-interview follow-ups</h3>
-                <p>
-                    After you mark the latest completed interview&apos;s follow-up as sent, the reminder disappears. If
-                    the application remains at Interview for another 14 full days, Needs Attention suggests{' '}
-                    <strong>Mark as Ghosted</strong>. This uses the same confirmation and immediate Dashboard count
-                    update as the stale Applied follow-up action. The interview follow-up time remains as historical
-                    activity because it belongs to that interview.
-                </p>
-                <h3>Completed interviews</h3>
-                <p>
-                    Interview applications appear when every scheduled interview has ended and at least seven full days
-                    have passed since the latest interview ended. The number of days is calculated from the latest
-                    interview&apos;s end time, including its duration, and applications waiting longer are ranked
-                    higher. These items can generate a copyable post-interview template.
-                </p>
-                <p>
-                    When an application has multiple interviews, only the latest scheduled interview controls the
-                    reminder. A newer future, ongoing or recently completed interview prevents an older sent follow-up
-                    from suggesting Ghosted. Once that newer interview has been completed for seven full days, it
-                    receives its own follow-up draft and sent timestamp.
-                </p>
-                <h3>Interview applications without a scheduled interview</h3>
-                <p>
-                    Applications marked as Interview with no scheduled interview prompt you to add one. The action opens
-                    Add Interview without creating an interview automatically.
-                </p>
-                <h3>Applied applications unchanged after a sent follow-up</h3>
-                <p>
-                    Mark as sent stores the time. If the application remains Applied with no recorded interview for
-                    another 14 full days, Needs Attention suggests <strong>Mark as Ghosted</strong>. Job Tracker does
-                    not inspect email and does not know whether the employer replied; it only knows the application is
-                    still Applied and no interview has been recorded. Mark as Ghosted requires confirmation, and a
-                    successful change updates Dashboard counts immediately.
-                </p>
-                <h3>Initial Applied follow-ups</h3>
-                <p>
-                    Applied applications with no linked interview appear after seven days, with older applications
-                    ranked higher. These items can generate a copyable application follow-up template.
-                </p>
-                <h3>Follow-up drafts and sent status</h3>
-                <p>
-                    Follow-up templates are generated locally and are never sent by Job Tracker. Replace bracketed
-                    placeholders before using a template. Copying a message does not mark it as sent. Use{' '}
-                    <strong>Mark as sent</strong> only after you send it yourself; Job Tracker stores the current time
-                    and removes that exact follow-up from Needs Attention. The server only accepts this action after the
-                    interview has finished.
-                </p>
-                <p>
-                    Active list cards show the full sent time with <strong>Undo</strong>. Board cards show a compact
-                    indicator, with the full sent time and Undo in <strong>Actions</strong>. Archived cards keep the
-                    sent time as read-only context. The sent label uses bold green text. Changing Needs Attention
-                    timing, categories or the item limit does not hide these sent badges. An application follow-up
-                    clears when you press <strong>Undo</strong> or when the application leaves <code>Applied</code>. An
-                    interview follow-up remains until you undo it or delete the interview (including deletion through
-                    its linked application), even when the application changes status. Only the latest sent time is
-                    kept; Job Tracker does not maintain a follow-up history. Future and ongoing interviews remain in the
-                    Upcoming Interviews card.
-                </p>
-                <h3>Application trend</h3>
-                <p>
-                    Shows applications added over the past eight weeks, with a summary of this week, the change from
-                    last week, and the best week.
-                </p>
-                <h3>Upcoming interviews</h3>
-                <p>Shows the next three scheduled interviews.</p>
-                <h3>Application pipeline</h3>
-                <p>Shows current Applied, Interview, Offer, and Accepted totals.</p>
-                <h3>Closed outcomes</h3>
-                <p>Shows current Rejected, Ghosted, Withdrawn, and Declined totals.</p>
-                <p>
-                    Interview rate counts applications currently at <code>Interview</code>, <code>Offer</code>,{' '}
-                    <code>Accepted</code> or <code>Declined</code>, plus applications in any other current status with
-                    at least one active or archived recorded interview. Each application counts once, even when it has
-                    multiple interviews. An application at <code>Offer</code>, <code>Accepted</code> or{' '}
-                    <code>Declined</code> counts even when it has no interview record because it has reached a later
-                    application stage. Offer rate remains <code>Offer</code>, <code>Accepted</code> or{' '}
-                    <code>Declined</code>. A declined application is included because it means you received an offer and
-                    chose not to accept it. Withdrawn counts toward Total Active Applications and both rate
-                    denominators; it enters the Interview Rate numerator only when a recorded interview exists. Applied
-                    This Week is based on application date, so a later status change does not remove it.
-                </p>
-                <p>
-                    Open it by selecting <code>Dashboard</code> from the navigation bar.
-                </p>
-            </>
-        ),
-    },
-    {
-        id: 'demo-mode',
-        title: 'Demo mode',
-        icon: 'dashboard',
-        content: (
-            <>
-                <p>
-                    Demo mode mirrors the signed-in Job Tracker flows with sample data stored only in React state. Open
-                    it from the sign-in page or the <Link to={routes.demoViewApplications}>Explore Demo</Link> link.
-                </p>
-                <h3>What is different in demo mode</h3>
                 <ul>
-                    <li>No account, authentication, backend request or database write is used.</li>
-                    <li>Changes remain while you move around demo pages, then reset when the browser refreshes.</li>
-                    <li>
-                        Success toasts match the signed-in app when adding an application or interview, first saving an
-                        offer evaluation, and marking or undoing follow-ups.
-                    </li>
+                    <li>offers that are due soon, overdue or still waiting to be evaluated;</li>
+                    <li>follow-ups after a completed interview;</li>
+                    <li>interview applications that do not yet have an interview date;</li>
+                    <li>applications that have been waiting for a follow-up; and</li>
+                    <li>applications that have not moved after a follow-up was sent.</li>
                 </ul>
-                <h3>Applications</h3>
                 <p>
-                    Add applications, switch between list and board view, filter by status, edit notes, update status,
-                    archive, restore, delete and export CSV records. Follow-up marking and Undo use demo state only and
-                    mirror the signed-in list, board and archived-card behavior. Demo mode supports Withdrawn, overdue
-                    offer attention, stale sent follow-ups, Mark as Ghosted confirmation, and the same Dashboard count
-                    updates without backend requests.
+                    Each reminder suggests a next step. When that step opens another page, Job Tracker finds the exact
+                    application, interview or offer even if it is outside your current filters.
                 </p>
-                <h3>Offer comparison</h3>
+
+                <h3>Choose which reminders you see</h3>
                 <p>
-                    Compare the sample offers using monthly salary, bonus, practical offer facts and four fit ratings.
-                    Saving or deleting an evaluation updates demo state only. Archived comparisons use the same
-                    read-only, deletable view as the signed-in app.
+                    Open <strong>Settings</strong> in Needs Attention to turn reminder types on or off, change how long
+                    Job Tracker waits and choose the maximum number of reminders shown. Reminders keep their built-in
+                    priority order so the most time-sensitive work appears first.
                 </p>
                 <p>
-                    Form validation uses the same limits as the signed-in app, including the{' '}
-                    {FIELD_MAX_LENGTHS.companyName}-character company limit, {FIELD_MAX_LENGTHS.jobTitle}-character job
-                    title limit and valid <code>http://</code> or <code>https://</code> Job Posting URLs.
+                    <strong>Reset to Default</strong> restores the original choices in the open window. Select
+                    <strong> Save</strong> to keep those changes. Changing reminder settings does not change your
+                    applications, interviews or offers.
                 </p>
-                <h3>Interviews</h3>
+
+                <h3>Follow-up reminders are private drafts</h3>
                 <p>
-                    Create interviews from an application with status <code>Interview</code>, switch active or archived
-                    interviews between list and responsive board view, open their related application and export CSV
-                    records. Post-interview follow-up marking and Undo also stay entirely in demo state. The interview
-                    date must be after the linked application date, and notes use the shared {FIELD_MAX_LENGTHS.notes}
-                    -character limit.
+                    Job Tracker can prepare a message for you to copy, but it never sends email and cannot read your
+                    inbox. Check the message, replace any placeholders and send it using your usual email service. Then
+                    choose <strong>Mark as sent</strong> in Job Tracker. Use <strong>Undo</strong> if you marked it by
+                    mistake.
                 </p>
+
+                <h3>How the rates are worked out</h3>
                 <p>
-                    Interview notes can be edited and autosaved in active demo list and board views. Archived demo
-                    interview notes remain read-only.
-                </p>
-                <h3>Navigation and reset</h3>
-                <p>
-                    Use <code>Show Archived</code> to open archived applications and switch the demo navigation to
-                    archived records. Use <code>Show Active</code> to return to active applications. Use{' '}
-                    <code>Exit Demo</code> to return to sign in without logging out or verifying authentication.
-                </p>
-            </>
-        ),
-    },
-    {
-        id: 'offer-decisions',
-        title: 'Offer Comparison',
-        icon: 'briefcase',
-        content: (
-            <>
-                <h3>Compare current offers</h3>
-                <p>
-                    Open Offer Comparison from the active navigation bar. Only active applications with status{' '}
-                    <code>Offer</code> appear in Offers to Evaluate, Evaluated Offers and Expired Evaluated Offers. Only
-                    Offers to Evaluate can add a first evaluation; saved evaluations can be edited in all active
-                    sections, including Previous Evaluations.
-                </p>
-                <p>
-                    Select <code>Add evaluation</code> for an unevaluated offer. New fit ratings begin at 3 of 5. Select{' '}
-                    <code>Cancel evaluation</code> to discard a new evaluation before it is saved.
-                </p>
-                <h3>Record terms and rate fit</h3>
-                <p>
-                    Enter the required decision deadline, currency and monthly base salary. Currency starts as{' '}
-                    <code>SGD</code>. Bonus, annual leave, work arrangement, pros and cons are optional. After the offer
-                    terms, rate career growth, company and culture fit, work-life balance, and compensation from 1 to 5
-                    with the sliders; the equal-weight fit rating updates immediately.
-                </p>
-                <p>
-                    Currency uses exactly three letters. Monthly base salary accepts whole numbers from 0 to{' '}
-                    {OFFER_MONTHLY_BASE_SALARY_MAX.toLocaleString()}, annual leave accepts whole numbers from 0 to{' '}
-                    {OFFER_ANNUAL_LEAVE_DAYS_MAX}, bonus is limited to {OFFER_DETAILS_MAX_LENGTHS.bonus} characters, and
-                    Pros and Cons are each limited to {OFFER_DETAILS_MAX_LENGTHS.notes} characters. The decision
-                    deadline cannot be earlier than the application date.
-                </p>
-                <p>
-                    Select <code>Save evaluation</code> on that offer. A successful first save moves it from Offers to
-                    evaluate into Evaluated offers, locks its fields and shows a confirmation. Select{' '}
-                    <code>Edit evaluation</code> to unlock it again. Save evaluation stays available and validates the
-                    required fields when selected. Press Enter from a normal form field or Shift+Enter from Pros or Cons
-                    to save; plain Enter creates a new line in those text areas. Press Escape in any evaluation field to
-                    cancel. Unsaved changes remain on screen if saving fails.
-                </p>
-                <p>
-                    The decision deadline stays visible above the fit rating when details are collapsed. Evaluated and
-                    expired offers are sorted by deadline, then fit rating and name. Expired offers remain available to
-                    review, edit, delete, accept or decline when their applications still have Offer status.
-                </p>
-                <h3>Offer deadline calendar exports</h3>
-                <p>
-                    Active, non-expired Evaluated Offers provide <code>Add to Google Calendar</code> and{' '}
-                    <code>Add to Apple Calendar / Outlook (.ics)</code> under the card&apos;s <code>More...</code> menu.
-                    Activity Controls also provides <code>Export all active evaluated offer deadlines (.ics)</code> to
-                    download every eligible active offer deadline in one file, regardless of the visible Offer
-                    Comparison filters. Expired, previous and archived evaluations are excluded.
-                </p>
-                <p>
-                    Calendar links and files are generated locally. Job Tracker does not connect to a calendar account
-                    or synchronize later deadline changes, so export the updated deadline again when needed. The same
-                    calendar actions are available for eligible offers in Demo Mode without making a backend request.
-                </p>
-                <h3>Try different priorities</h3>
-                <p>
-                    When at least two active, non-expired offers have saved evaluations, select{' '}
-                    <code>Try priorities</code> in Evaluated offers. Change how important career growth, company and
-                    culture fit, work-life balance, and compensation are. The results show your top match and whether a
-                    small priority change could change it.
-                </p>
-                <p>
-                    This uses saved ratings only. Your changes and results are not saved, do not change an offer&apos;s
-                    fit rating, and reset when you close the tool. It is not available for expired, previous or archived
-                    evaluations.
-                </p>
-                <h3>Plan a counteroffer</h3>
-                <p>
-                    For an active, non-expired offer with a saved evaluation, select <code>Plan counteroffer</code> on
-                    its card. The dialog shows the read-only Current offer first and one editable Ideal offer directly
-                    below it. The Ideal offer starts with the current terms and all four current ratings. Terms and
-                    ratings remain separate inputs: changing salary, bonus, leave or work arrangement does not change a
-                    rating automatically. Ideal salary, bonus, annual leave, work arrangement and ratings use the same
-                    limits as the saved evaluation. Empty values that remain visible are shown as <code>-</code>;
-                    <code>N/A</code> is reserved for CSV exports.
-                </p>
-                <p>
-                    While creating or editing a counteroffer plan, press Enter anywhere in the dialog to save; an input
-                    does not need focus. Offer Comparison evaluation forms keep their field-based shortcuts: Enter from
-                    a normal field, Shift+Enter from Pros or Cons, and Escape from an evaluation field.
-                </p>
-                <p>
-                    The Ideal offer shows its equal-weight fit rating, the difference from the current offer and how it
-                    compares with your other active evaluated offers. Its rating comparison clearly separates Current,
-                    Ideal and Change values. Individual rating differences use rating points; Fit rating differences use
-                    percentage points. The Ideal offer must differ from the current offer and cannot have a lower
-                    overall Fit rating. Saving an unchanged Ideal offer shows an error and does not create or update the
-                    plan. It never alters the saved evaluation or application status.
-                </p>
-                <p>
-                    If an edited evaluation would have a higher Fit rating than its saved counteroffer plan, the server
-                    rejects the first evaluation save and asks whether to delete the counteroffer plan. Confirming
-                    deletes that plan and retries the evaluation save; cancelling keeps the evaluation form open.
-                </p>
-                <p>
-                    Saved plans remain available to review or delete after a deadline passes or the application moves to
-                    Accepted or Declined. They cannot be created or edited from Expired Evaluated Offers or Previous
-                    Evaluations. Archived Offer Comparison does not expose counteroffer-plan actions.
-                </p>
-                <h3>Status changes, deletion and archive</h3>
-                <p>
-                    Under active Evaluated Offers and Expired Evaluated Offers, open <code>More...</code> to mark an
-                    Offer as <code>Accepted</code> or <code>Declined</code>. Confirming updates only that application
-                    and moves its saved evaluation to Previous Evaluations; its evaluation and counteroffer plan remain
-                    saved.
-                </p>
-                <p>
-                    Active Previous Evaluations can be edited. An Accepted application offers{' '}
-                    <code>Change to Offer</code> or <code>Change to Declined</code>, while a Declined application offers{' '}
-                    <code>Change to Offer</code> or <code>Change to Accepted</code>. Changing back to Offer keeps the
-                    evaluation and counteroffer plan and moves the card to Evaluated Offers or Expired Evaluated Offers
-                    according to its decision deadline. Saved counteroffer plans are view-only in this section. If a
-                    card has multiple workflow actions beyond Show/Hide details and Delete, those actions are grouped
-                    under <code>More...</code>.
-                </p>
-                <p>
-                    <code>Show Archived</code> opens Archived Offer Comparisons. Archived evaluations are read-only but
-                    can only be shown, hidden or deleted there. They cannot be edited, change status, or open a
-                    counteroffer plan. Deleting an application still permanently deletes its saved evaluation and
-                    counteroffer plan through the existing cascade.
-                </p>
-                <h3>Export evaluations and counteroffer plans</h3>
-                <p>
-                    Export filtered offer evaluations as CSV follows the selected Offer Comparison filters. Each
-                    non-empty selected evaluation section produces an evaluation table. A matching counteroffer-plan
-                    table is included only when that section contains at least one saved plan, and it includes only
-                    applications with saved plans. Show All can therefore export up to six tables: Evaluated, Expired
-                    Evaluated and Previous Evaluations, plus one counteroffer table for each. Counteroffer tables
-                    compare current and ideal terms, all four ratings, current and ideal Fit ratings, and the overall
-                    Fit rating change. Empty saved-plan fields are exported as <code>N/A</code>.
+                    Interview rate is the share of applications that reached Interview, Offer, Accepted or Declined.
+                    Offer rate is the share that reached Offer, Accepted or Declined. Archived applications are not
+                    included in the Dashboard totals.
                 </p>
             </>
         ),
     },
     {
         id: 'applications',
-        title: 'Adding and managing applications',
+        title: 'Applications',
         icon: 'briefcase',
         content: (
             <>
-                <h3>Add a job application</h3>
+                <h3>Add an application</h3>
                 <p>
-                    Enter the company name, job title and status. Application date, location and Job Posting URL are
-                    optional. If the application date is blank, the current date is used.
+                    Company, job title and status are required. Application date, location and job posting link are
+                    optional. If you leave the application date blank, Job Tracker uses today&apos;s date. A future date
+                    cannot be saved.
                 </p>
-                <ul>
-                    <li>
-                        Company name is required, trimmed before saving, and limited to {FIELD_MAX_LENGTHS.companyName}{' '}
-                        characters.
-                    </li>
-                    <li>
-                        Job title is required, trimmed before saving, and limited to {FIELD_MAX_LENGTHS.jobTitle}{' '}
-                        characters.
-                    </li>
-                    <li>The application date cannot be in the future.</li>
-                    <li>
-                        Job location is a separate application field and is limited to {FIELD_MAX_LENGTHS.location}{' '}
-                        characters.
-                    </li>
-                    <li>
-                        Job Posting URLs are limited to {FIELD_MAX_LENGTHS.jobURL} characters and must use{' '}
-                        <code>http://</code> or <code>https://</code> with a valid domain and suffix.
-                    </li>
-                </ul>
-                <p>If the server rejects the submission, the entered application details remain in the form.</p>
-                <h3>Quick capture from a job posting</h3>
                 <p>
-                    Sign in to Job Tracker before using Quick Capture. In a desktop browser, make the bookmarks bar
-                    visible, then install the bookmark once. If you already use an older Quick Capture bookmark, replace
-                    that saved bookmark once to enable smart prefilling:
+                    If something goes wrong while saving, the information you entered stays on the page so you can try
+                    again without retyping it.
                 </p>
-                <p>Expand Quick Capture at the top of the Add Application form for the same setup shortcut.</p>
+
+                <h3>Quick Capture from a job posting</h3>
+                <p>
+                    Drag the button below to your browser&apos;s bookmarks bar. When you are viewing a job posting,
+                    select the bookmark to open Job Tracker with any available company, job title, location and link
+                    already filled in. Always check the details before saving because job sites arrange their pages
+                    differently.
+                </p>
                 <QuickCaptureBookmarklet />
-                <ol>
-                    <li>Visit a job advertisement and select the saved bookmark.</li>
-                    <li>Job Tracker opens the Add Application page in a new tab.</li>
-                    <li>The Job Posting URL is prefilled from the current page.</li>
-                    <li>
-                        When the page provides structured job-posting metadata, Quick Capture fills only the company
-                        name, job title and location provided by that metadata.
-                    </li>
-                    <li>
-                        Missing details stay empty, and the Quick Capture reference panel keeps the browser-tab title as
-                        a reference.
-                    </li>
-                    <li>Review every populated field and complete the application before submitting.</li>
-                </ol>
                 <p>
-                    Quick Capture reads the current top-level URL, browser-tab title and Schema.org JobPosting metadata.
-                    It does not guess from visible page text or inspect an Easy Apply modal or embedded iframe. Some
-                    portals may also use temporary or session-dependent URLs.
+                    If your browser blocks the shortcut or the page does not provide enough information, copy the job
+                    posting link and add the application normally.
+                </p>
+
+                <h3>List and Board views</h3>
+                <p>
+                    <strong>List</strong> puts applications in rows that are easy to scan. <strong>Board</strong> groups
+                    them by status so you can see your pipeline. On the Board, drag a card to another column or use
+                    <strong> Move to</strong> from the card menu. Both views use the same records, filters and actions.
                 </p>
                 <p>
-                    Quick Capture works on most standard desktop job pages. Pages without supported metadata keep the
-                    existing URL and page-title fallback. Some websites or browser security settings may block
-                    bookmarklets. If it does not open, copy the job page URL and paste it into the Job Posting URL field
-                    manually.
+                    You can search, filter and sort your applications, pin important ones and choose whether notes are
+                    shown. Your List and Board choices are remembered separately for active and archived records.
                 </p>
-                <h3>View job applications</h3>
-                <p>
-                    The application viewer lets you delete applications, edit their status and open their original job
-                    posting URL. Select <code>Edit Status</code> to reveal the status menu.
-                </p>
-                <p>
-                    Use the <strong>List</strong> and <strong>Board</strong> switch to choose between the standard card
-                    list and the board layout. The active application board groups cards by status, shows the
-                    application date, and lets you drag cards between columns or use the <code>Move to</code> menu to
-                    update status. Opening <strong>Actions</strong> reveals compact Archive and Delete controls aligned
-                    to the right; archived board cards show compact Unarchive and Delete controls in the same place.
-                </p>
-                <h3>Job status definitions</h3>
+
+                <h3>Application statuses</h3>
                 <ul>
                     <li>
-                        <strong>Applied:</strong> You submitted the application and it has not yet moved into the
-                        interview process.
+                        <strong>Applied:</strong> your application has been sent.
                     </li>
                     <li>
-                        <strong>Interview:</strong> The application has entered the interview stage. An interview may
-                        already be scheduled or may still need to be scheduled.
+                        <strong>Interview:</strong> you are in the interview process.
                     </li>
                     <li>
-                        <strong>Offer:</strong> The employer has made an offer that you have not yet accepted or
-                        declined.
+                        <strong>Offer:</strong> you have received an offer.
                     </li>
                     <li>
-                        <strong>Accepted:</strong> You accepted the employer&apos;s offer.
+                        <strong>Accepted:</strong> you accepted the offer.
                     </li>
                     <li>
-                        <strong>Declined:</strong> You received an offer and chose not to accept it.
+                        <strong>Declined:</strong> you declined or turned down the offer.
                     </li>
                     <li>
-                        <strong>Withdrawn:</strong> You voluntarily ended your candidacy before receiving an offer. Use
-                        Declined instead when an offer was received.
+                        <strong>Rejected:</strong> the employer ended the application.
                     </li>
                     <li>
-                        <strong>Ghosted:</strong> The employer stopped responding without giving a clear final decision
-                        after a reasonable waiting or follow-up period.
+                        <strong>Withdrawn:</strong> you chose to stop the application.
                     </li>
                     <li>
-                        <strong>Rejected:</strong> The employer explicitly ended your candidacy without making an offer.
+                        <strong>Ghosted:</strong> the employer stopped responding.
                     </li>
                 </ul>
+
+                <h3>When a status is tied to another record</h3>
                 <p>
-                    Withdrawn means you ended the process before an offer. Declined means you rejected an offer.
-                    Rejected means the employer ended the process. Ghosted means the employer stopped responding without
-                    a clear outcome.
+                    An interview can only be added to an active application with the Interview status. If an application
+                    already has an interview, it cannot be moved back to Applied until the linked interviews are
+                    removed.
                 </p>
                 <p>
-                    Changing a status to <code>Interview</code> displays a link for creating an interview tied to that
-                    application. If an interview already exists, delete it before changing the status back to{' '}
-                    <code>Applied</code>. The board also prevents moving an application back to <code>Applied</code>{' '}
-                    while it still has an interview.
+                    A saved offer evaluation keeps its application in Offer, Accepted or Declined. Delete the evaluation
+                    first if you need to move the application to an earlier status.
                 </p>
                 <p>
-                    An application with an interview may still move to Interview, Offer, Accepted, Declined, Withdrawn,
-                    Ghosted or Rejected. When a saved offer evaluation exists, only Offer, Accepted and Declined are
-                    available until the evaluation is deleted.
-                </p>
-                <p>
-                    Use <strong>Filter by</strong> to show one or more statuses, or select <code>Show All</code>. The
-                    archive toggle reveals or hides the archive action for each application.
-                </p>
-                <p>
-                    An orange <strong>Upcoming Interviews</strong> badge appears below the status when an application
-                    has one or more interviews that have not ended yet.
+                    Applications with a future interview show an upcoming-interview badge. Select it to open the
+                    matching interview.
                 </p>
             </>
         ),
@@ -551,308 +196,278 @@ const guideSections: readonly UserGuideSection[] = [
             <>
                 <h3>Add an interview</h3>
                 <p>
-                    The related active application must have Interview status. Interview date and interview location are
-                    required, and the interview date must be after the application date. The server checks these rules
-                    as well as the form.
-                </p>
-                <ul>
-                    <li>
-                        Interview location is separate from job location, but both use the same{' '}
-                        {FIELD_MAX_LENGTHS.location}-character limit.
-                    </li>
-                    <li>
-                        Duration must be a whole number from {INTERVIEW_DURATION_MINUTES_MIN} to{' '}
-                        {INTERVIEW_DURATION_MINUTES_MAX} minutes.
-                    </li>
-                    <li>Interview type is optional and limited to {FIELD_MAX_LENGTHS.interviewType} characters.</li>
-                    <li>
-                        Meeting URL is optional, limited to {FIELD_MAX_LENGTHS.meetingURL} characters, and must use{' '}
-                        <code>http://</code> or <code>https://</code> with a valid domain and suffix.
-                    </li>
-                    <li>Interview notes are optional and limited to {FIELD_MAX_LENGTHS.notes} characters.</li>
-                </ul>
-                <p>
-                    Before saving a present or future interview, Job Tracker warns you if its time range overlaps a
-                    present or future active interview. Interviews that have already ended are ignored, and adding an
-                    interview in the past does not show a scheduling-conflict warning.
+                    Choose an active application with the Interview status, then enter the interview date, time and
+                    location. Interview type, duration, meeting link and notes are optional. The interview cannot be
+                    earlier than the application date.
                 </p>
                 <p>
-                    It also warns when a present or future interview reaches or passes another active Offer
-                    application&apos;s present or future decision deadline. Expired deadlines and deadlines belonging to
-                    Accepted or Declined applications are ignored. Adding an interview in the past does not show an
-                    offer-deadline warning. A warning does not add the interview unless you choose{' '}
-                    <strong>Add Anyway</strong>; choose <strong>Cancel</strong> to keep the form unchanged.
+                    If the time overlaps another interview or an offer deadline is close, Job Tracker warns you before
+                    saving. Review the warning, then choose <strong>Add Anyway</strong> if the timing is correct or
+                    <strong> Cancel</strong> to make a change.
+                </p>
+
+                <h3>Organise interviews</h3>
+                <p>
+                    Use List or Board view, switch between Upcoming and Past, and pin the interviews you need most.
+                    Notes are available from each interview&apos;s Actions area when they are not shown on the card.
                 </p>
                 <p>
-                    Press Enter in a normal field to add the interview. In Additional Notes, plain Enter creates a new
-                    line and Shift+Enter submits the form.
+                    Select the corresponding application from an interview to go directly to it. Job Tracker keeps your
+                    current List or Board view, preserves your filters, reveals the record and briefly highlights it.
                 </p>
-                <p>If the server rejects the submission, the entered interview details remain in the form.</p>
-                <h3>View interviews</h3>
+
+                <h3>Add interviews to your calendar</h3>
                 <p>
-                    Interview records are linked to their job applications and can be deleted from the interview viewer.
-                    Use the <strong>List</strong> and <strong>Board</strong> switch to choose a standard card list or a
-                    responsive multi-column card grid. Both views keep exactly the same interview order.
-                </p>
-                <p>
-                    Active interview notes can be edited after the interview has been created. In List mode, use{' '}
-                    <code>Show notes</code> under Activity Controls to display notes for all visible interviews at once.
-                    On wide screens, the notes panel appears to the right; at medium widths it moves below the interview
-                    details. At narrow widths it remains inside the horizontally scrollable interview card.
-                </p>
-                <p>
-                    In Board mode, edit notes inside <strong>Actions</strong>; the list <code>Show notes</code> control
-                    is not displayed there. When a meeting URL exists, the meeting link appears above{' '}
-                    <strong>Edit notes</strong>. Upcoming calendar-eligible interviews show Calendar and Delete, while
-                    past or otherwise calendar-ineligible interviews show Delete only.
-                </p>
-                <p>
-                    Archived interview notes appear when <code>Show notes</code> is enabled in archived Interview List
-                    Activity Controls, but they cannot be edited. Archived Board cards keep the read-only Notes field
-                    inside <strong>Actions</strong> and never show Calendar options.
-                </p>
-                <p>
-                    Select <code>Click here to review corresponding job application</code> to return to the related
-                    application. Job Tracker switches the relevant active or archived Application page from Board to
-                    List only when needed. If the application&apos;s status is not selected, that one status is added
-                    while your existing filters remain selected. The exact application is then always scrolled into view
-                    and highlighted for four seconds, regardless of the Auto-scroll preference.
-                </p>
-                <p>
-                    Both active and archived interviews are sorted with upcoming interviews first (closest date at the
-                    top), followed by past interviews (earliest date first).
-                </p>
-                <h3>Calendar exports</h3>
-                <p>
-                    Under Activity Controls, <code>Export all upcoming active interviews (.ics)</code> downloads every
-                    upcoming interview from the active Interview collection, regardless of the current Upcoming/Past
-                    filter. Completed and archived interviews are excluded.
-                </p>
-                <p>
-                    When a meeting URL is saved, individual Google Calendar exports include it in the description and
-                    Apple Calendar or Outlook .ics exports include it in both the description and URL field. Bulk
-                    upcoming-interview exports use the same behaviour. The meeting URL does not replace the physical
-                    interview location, and Dashboard Upcoming Interviews remains unchanged. Calendar links and files
-                    are generated locally, and Job Tracker does not synchronize later calendar changes.
+                    Download one interview or all currently shown interviews as a calendar file. Open that file in Apple
+                    Calendar, Google Calendar, Outlook or another calendar app. This is a one-time copy, not a live
+                    calendar connection, so download it again if the interview changes.
                 </p>
             </>
         ),
     },
     {
-        id: 'notes',
-        title: 'Notes and visibility',
-        icon: 'notes',
-        content: (
-            <>
-                <p>
-                    Application and Interview List pages each provide their own <code>Show notes</code> toggle under
-                    Activity Controls. Turning it on immediately displays notes for every visible record in that list;
-                    turning it off hides those notes. Application and interview visibility preferences are stored
-                    independently.
-                </p>
-                <h3>Active notes</h3>
-                <p>
-                    Active application and interview notes are editable. Application notes and interview notes are
-                    separate fields, but both use the same {FIELD_MAX_LENGTHS.notes}-character limit.
-                </p>
-                <p>
-                    Notes save automatically after you stop typing for one second. <code>Saving…</code>,{' '}
-                    <code>Saved</code>, and <code>Couldn’t save — Retry</code> communicate save progress. Leaving the
-                    field, hiding notes, closing a Board <strong>Actions</strong> panel, or switching views flushes
-                    pending changes. A failed save retains the current draft so you can select <code>Retry</code>.
-                </p>
-                <p>
-                    Active Application and Interview Board cards keep notes inside <strong>Actions</strong> even though
-                    the List <code>Show notes</code> control is not displayed in Board mode.
-                </p>
-                <h3>Archived notes</h3>
-                <p>
-                    Archived application and interview notes are read-only in both list and board views. Restore the
-                    related application before making further changes.
-                </p>
-            </>
-        ),
-    },
-    {
-        id: 'archive',
-        title: 'Archive mode',
-        icon: 'archive',
-        content: (
-            <>
-                <p>
-                    Select <code>Show Archived</code> to open archived applications and replace the active navigation
-                    links with archived applications, archived interviews and archived offer comparisons. Select{' '}
-                    <code>Show Active</code> to return to active job applications. When toggled from either Offer
-                    Comparison page, the button opens its directly paired active or archived page.
-                </p>
-                <ul>
-                    <li>
-                        <strong>Archived applications:</strong> View, filter, delete or unarchive applications in list
-                        or board view. Archived board cards use the same visual format as active board cards, but they
-                        cannot be dragged, cannot change status, and cannot edit notes. Unarchiving also restores the
-                        linked interview, if one exists.
-                    </li>
-                    <li>
-                        <strong>Archived interviews:</strong> View them in list or responsive board view. They are
-                        read-only; unarchive their related application to restore them. Sorted with upcoming first, past
-                        last.
-                    </li>
-                </ul>
-            </>
-        ),
-    },
-    {
-        id: 'deletion',
-        title: 'Deletion, archiving and restoration rules',
-        icon: 'delete',
-        content: (
-            <>
-                <ul>
-                    <li>Deleting an active or archived application also deletes its linked interview.</li>
-                    <li>
-                        Deleting an active or archived application also deletes its saved offer evaluation and
-                        counteroffer plan.
-                    </li>
-                    <li>Archiving an application automatically archives its linked interview.</li>
-                    <li>Archiving preserves its saved offer evaluation and counteroffer plan data.</li>
-                    <li>Unarchiving an application automatically restores its linked interview.</li>
-                    <li>Unarchiving restores access to its saved evaluation; only Offer status makes it editable.</li>
-                    <li>Archived records are not editable until they are restored.</li>
-                    <li>
-                        <strong>Archive All</strong> affects every active application you own, not only applications
-                        visible under the current filters, and archives all related active interviews.
-                    </li>
-                    <li>
-                        <strong>Unarchive All</strong> affects every archived application you own, not only archived
-                        applications visible under the current filters, and restores all related archived interviews.
-                    </li>
-                    <li>
-                        <strong>Delete All applications</strong> permanently deletes the complete active or archived
-                        application collection selected, all of its related interviews and all saved offer evaluations,
-                        regardless of filters.
-                    </li>
-                    <li>
-                        <strong>Delete All interviews</strong> permanently deletes the complete active or archived
-                        interview collection selected without changing the opposite collection.
-                    </li>
-                </ul>
-                <p>
-                    Bulk confirmations show the current application, related-interview and saved-evaluation counts
-                    before the action. Single and bulk deletions are permanent, so review the selected records before
-                    confirming. Single-record delete, save, archive, restore and status-change confirmations focus their
-                    primary action, so Enter confirms it. Bulk confirmations do not auto-focus their primary action.
-                </p>
-            </>
-        ),
-    },
-    {
-        id: 'export-sorting',
-        title: 'Exporting and sorting records',
-        icon: 'export',
-        content: (
-            <>
-                <h3>Filtered CSV exports</h3>
-                <p>
-                    Application exports contain the records visible under the selected status filters in their current
-                    display order. List exports follow the visible list. Board exports move from left to right through
-                    the visible status columns and keep each column&apos;s selected ordering. Interview and
-                    archived-record viewers also provide CSV export actions under <strong>More...</strong> when at least
-                    one record is available. Application and interview exports include the date their follow-up was sent
-                    in the same format as the record&apos;s main date, or <code>N/A</code> when no follow-up has been
-                    sent. <code>N/A</code> is used only in CSV output; visible empty values in the app use{' '}
-                    <code>-</code>.
-                </p>
-                <p>
-                    Offer Comparison exports follow its selected sections and include separate evaluation and
-                    counteroffer-plan tables. Export actions do not show a success toast.
-                </p>
-                <p>
-                    Values that spreadsheet apps could interpret as formulas are exported as text for safer opening in
-                    CSV software.
-                </p>
-                <h3>Sorting order</h3>
-                <p>
-                    Use <strong>Sort by</strong> to order application lists by <code>Job Status</code>,{' '}
-                    <code>Newest Application</code>, <code>Oldest Application</code>, <code>Company A–Z</code> or{' '}
-                    <code>Company Z–A</code>. The default list order is <code>Job Status</code>, which groups
-                    applications by status. Applications with the same status are ordered by Company A–Z. Newest and
-                    Oldest Application sorts also use Company A–Z when application dates match.
-                </p>
-                <p>
-                    Application boards keep columns in this order: <code>Accepted</code>, <code>Offer</code>,{' '}
-                    <code>Declined</code>, <code>Interview</code>, <code>Applied</code>, <code>Withdrawn</code>,{' '}
-                    <code>Ghosted</code> and <code>Rejected</code>. Board sorting applies inside each column and
-                    defaults to <code>Newest Application</code>. Active and archived list and board choices are saved
-                    independently.
-                </p>
-                <p>
-                    Interview time filters are applied first. Within the matching interviews, pinned interviews appear
-                    first, followed by upcoming dates (closest at the top), then past dates (earliest first). Archived
-                    interviews keep their saved pin indicator as read-only. Interviews at the same date and time are
-                    ordered by Company A–Z.
-                </p>
-            </>
-        ),
-    },
-    {
-        id: 'highlighting',
-        title: 'Auto-scroll and highlighting',
+        id: 'offer-comparison',
+        title: 'Offer Comparison',
         icon: 'highlight',
         content: (
             <>
+                <h3>Add and review offers</h3>
                 <p>
-                    Use <strong>Auto-scroll and highlight updates</strong> under <strong>Display options</strong> in
-                    Application List or Board view. When enabled, Job Tracker scrolls to and briefly highlights an
-                    application or interview after it is pinned or unpinned.
+                    Applications with the Offer status appear under <strong>Offers to Evaluate</strong>. Once you save
+                    an evaluation, the offer stays available in the suitable Evaluated, Expired or Previous section,
+                    even if its application later becomes Accepted or Declined.
                 </p>
                 <p>
-                    Application status changes receive the same feedback when the Application List is sorted by Job
-                    Status and the updated application remains visible. In Board view, status changes and pin/unpin
-                    actions reveal and briefly highlight the affected card when enabled. In Offer Comparison, the
-                    preference controls both scrolling and highlighting after saving a first evaluation and after
-                    changing a saved evaluation between Offer, Accepted and Declined. When the preference is disabled,
-                    those updates do not scroll or highlight, including Board card reveals.
+                    Add the pay, benefits, decision deadline and any other details you know. Rate career growth, company
+                    and culture fit, work-life balance, and compensation from 1 to 5. Job Tracker uses those ratings to
+                    calculate the overall fit. You can edit the evaluation whenever the offer changes.
+                </p>
+
+                <h3>Choose the view that works for you</h3>
+                <p>
+                    View offers as <strong>Cards or Table</strong>. Cards keep each offer in its own panel. Table places
+                    details next to one another for quicker comparison. In Table view, choose
+                    <strong> Horizontal or Vertical</strong> to change which direction the information is arranged.
                 </p>
                 <p>
-                    The preference does not control targeted navigation between pages. Opening a corresponding
-                    application from an interview preserves the current List or Board view when possible, preserves
-                    existing filters, adds only the missing status filter, and targets the exact application: List view
-                    scrolls to and highlights it, while Board view reveals and highlights its card.
+                    Cards and Table use the same evaluations and actions. In Cards, you add and edit details in the
+                    card. In Table, the same form opens in a window. Your chosen view is remembered separately for
+                    active and archived offers.
+                </p>
+
+                <h3>Filter and compare</h3>
+                <p>
+                    Use the section filters to show Offers to Evaluate, Evaluated Offers, Expired Evaluated Offers and
+                    Previous Offers. Select at least two current evaluated offers to <strong>Try priorities</strong>.
+                    This lets you see how different priorities affect the ranking without changing your saved ratings.
                 </p>
                 <p>
-                    Dashboard Evaluate offer and Record offer decision actions always target and highlight the exact
-                    Offer Comparison card. Opening a dashboard interview likewise switches to Interview List when
-                    needed, restores the missing Upcoming filter when necessary, and always targets that interview.
-                    Saving an edit to an existing evaluation scrolls to the bottom of its locked, still-expanded card.
-                    Cancelling an evaluation scrolls to the top of a new evaluation card or the bottom of an existing
-                    evaluation card, and Hide details scrolls to the top. These dedicated movements apply regardless of
-                    the preference and never use the highlight animation.
+                    An offer moves to Expired when its deadline passes without an Accepted or Declined decision.
+                    Accepted and Declined offers move to Previous Offers, where their evaluation remains available for
+                    reference.
+                </p>
+
+                <h3>Plan a counteroffer</h3>
+                <p>
+                    A current, non-expired evaluated offer can have a saved counteroffer plan. Start with the present
+                    offer, enter the outcome you want and compare the difference. Change at least one term or rating;
+                    the plan cannot have a lower overall fit than the current offer. Saving a plan does not change the
+                    application status or original evaluation.
                 </p>
                 <p>
-                    After you scroll down, active, archived and demo Application, Interview and Offer Comparison pages
-                    provide a subdued up arrow near the top of the screen that returns to the navigation bar. There is
-                    no down-arrow control. The up-arrow control is independent of the Auto-scroll preference and is not
-                    shown on Dashboard or Add forms.
+                    Previous offers keep saved plans for reference. Archived offers are read-only, so their evaluation
+                    and plan can be viewed but not changed.
+                </p>
+
+                <h3>Record a decision, export or add a deadline</h3>
+                <p>
+                    Choose <strong>Accept Offer</strong> or <strong>Decline Offer</strong> to update the application and
+                    keep the evaluation as a previous offer. You can export the offer sections you are viewing, and
+                    download decision deadlines as a calendar file.
+                </p>
+
+                <h3>Delete evaluations carefully</h3>
+                <p>
+                    Deleting all evaluations removes the saved evaluations and their counteroffer plans from the active
+                    or archived collection you are viewing. It does not delete the applications themselves.
+                    <strong> Offers without evaluations are not deleted.</strong>
                 </p>
             </>
         ),
     },
     {
-        id: 'dark-mode',
-        title: 'Dark mode',
-        icon: 'darkMode',
+        id: 'notes-follow-ups',
+        title: 'Notes and follow-ups',
+        icon: 'notes',
+        content: (
+            <>
+                <h3>Keep notes with the right record</h3>
+                <p>
+                    Applications and interviews each have their own notes. Use <strong>Display</strong> to show notes on
+                    List cards. On Board cards, open <strong>Actions</strong> to view or edit them.
+                </p>
+                <p>
+                    Notes on active records save automatically about one second after you stop typing. The label shows
+                    <strong> Saving</strong>, <strong>Saved</strong> or <strong>Couldn&apos;t save</strong>. Choose
+                    <strong> Retry</strong> if needed. Leaving the note or hiding it also starts a final save. Archived
+                    notes are read-only.
+                </p>
+
+                <h3>Follow-up messages</h3>
+                <p>
+                    Job Tracker can prepare a follow-up draft for an older application or a completed interview. The
+                    draft stays on your device and is never sent automatically. Review it, replace any placeholders and
+                    copy it into your email service.
+                </p>
+                <p>
+                    After you send the message yourself, choose <strong>Mark as sent</strong>. List view shows the sent
+                    time on the card. Board view shows a smaller indicator, with the full details under Actions. Use
+                    <strong> Undo</strong> if you need to remove the sent mark.
+                </p>
+                <p>
+                    An application follow-up mark clears when you use Undo or move the application away from Applied. An
+                    interview follow-up remains as part of that interview&apos;s history until you undo it or delete the
+                    interview. Only the latest sent time is kept for each follow-up.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'archived-records-deletion',
+        title: 'Archived records and deletion',
+        icon: 'archive',
+        content: (
+            <>
+                <h3>Archive when you may need the record later</h3>
+                <p>
+                    Archiving removes a record from your active workspace without erasing it. Choose
+                    <strong> Show Archived</strong> to see archived records, then choose <strong>Show Active</strong> to
+                    return.
+                </p>
+                <p>
+                    When you archive an application, all of its linked interviews are archived with it. Saved offer
+                    evaluations and counteroffer plans are kept as read-only records. Unarchiving the application brings
+                    its linked interviews and offer information back to the active workspace.
+                </p>
+
+                <h3>Deletion cannot be undone</h3>
+                <p>
+                    Deleting an application permanently removes the application, all linked interviews, its offer
+                    evaluation and any saved counteroffer plan. Deleting an interview removes only that interview.
+                </p>
+                <p>
+                    Bulk actions such as <strong>Archive All</strong>, <strong>Unarchive All</strong> and
+                    <strong> Delete All</strong> affect the full active or archived collection you selected, not only
+                    the records currently shown by your search or filters. The confirmation tells you how many related
+                    records and plans will be affected. Read it carefully before continuing.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'exporting-sorting-display',
+        title: 'Exporting, sorting and display',
+        icon: 'export',
+        content: (
+            <>
+                <h3>Export what you are viewing</h3>
+                <p>
+                    Open <strong>More</strong> and choose Export to download a CSV file. Application and interview
+                    exports follow your current search, filters and order. A Board export moves from the leftmost column
+                    to the rightmost column. Follow-up sent times are included when available.
+                </p>
+                <p>
+                    Offer Comparison exports the sections you selected and includes counteroffer plan details when they
+                    exist. Exported text is prepared so spreadsheet apps do not treat ordinary notes as formulas.
+                </p>
+
+                <h3>Sort and pin records</h3>
+                <p>
+                    Application List view can sort by job status, newest or oldest application date, or company name.
+                    Board view can sort cards within each status column by application date or company name. Interview
+                    views keep Upcoming and Past records in a useful date order, while pinned records stay easy to
+                    reach.
+                </p>
+                <p>
+                    Sorting choices are remembered separately for active and archived records. Use Display options to
+                    show or hide notes and to control automatic movement after updates.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'finding-records',
+        title: 'Finding records after updates',
+        icon: 'highlight',
+        content: (
+            <>
+                <h3>Automatic movement and highlighting</h3>
+                <p>
+                    When automatic movement is on, Job Tracker brings a changed record into view and briefly highlights
+                    it. This is helpful when a status change moves an application to another List position or Board
+                    column, or when an offer moves to another section.
+                </p>
+                <p>
+                    Turn this off in Display options if you prefer the page to stay where it is after ordinary updates.
+                    Direct links from the Dashboard or an interview still find and highlight the exact record, because
+                    you asked to go to it.
+                </p>
+                <p>
+                    Moving between an interview and its application keeps your current List or Board view and preserves
+                    your filters. On long collection pages, use the up-arrow button to return to the top.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'demo-mode',
+        title: 'Demo mode',
+        icon: 'dashboard',
         content: (
             <>
                 <p>
-                    Click the moon or sun icon in the navigation bar to switch between light and dark mode. The icon
-                    appears between the archive toggle and the Logout link.
+                    <Link to={routes.demoViewApplications}>Explore Demo</Link> to try Job Tracker with sample data. No
+                    account is needed.
                 </p>
                 <p>
-                    Your preference is saved to <strong>localStorage</strong> and persists across sessions. On your
-                    first visit, if no saved preference is found, the app checks your operating system setting (light or
-                    dark mode) and uses that.
+                    You can explore the Dashboard, Applications, Interviews, Offer Comparison, Cards and Table views,
+                    notes, follow-ups, archives and exports. Changes stay in the demo while you use it, then the sample
+                    data resets when you refresh the page.
                 </p>
-                <p>All colours — text, backgrounds, buttons, badges, charts and form inputs — adapt automatically.</p>
+                <p>
+                    Demo changes never affect a real account. Choose <strong>Exit Demo</strong> when you are ready to
+                    return to sign in.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'account-appearance',
+        title: 'Account and appearance',
+        icon: 'lock',
+        content: (
+            <>
+                <h3>Account basics</h3>
+                <p>
+                    Email addresses are saved in lowercase, so using capital letters does not create a different
+                    account.
+                </p>
+                <p>
+                    Passwords must be {PASSWORD_MIN_LENGTH}–{PASSWORD_MAX_LENGTH} characters long. Spaces and
+                    international characters are allowed. The strength meter is a helpful guide, not another password
+                    rule.
+                </p>
+                <p>
+                    If there are too many sign-in or sign-up attempts, Job Tracker may ask you to wait before trying
+                    again. This helps protect accounts.
+                </p>
+
+                <h3>Light and dark appearance</h3>
+                <p>
+                    Use the moon or sun button to switch between light and dark appearance. On your first visit, Job
+                    Tracker follows your device setting. After that, it remembers your choice. Text, controls, charts
+                    and loading indicators all change with the selected appearance.
+                </p>
             </>
         ),
     },
@@ -874,7 +489,7 @@ const UserGuide = () => {
                     </span>
                     <div>
                         <h1>Job Tracker User Guide</h1>
-                        <p>Quick answers for managing applications, interviews and archived records.</p>
+                        <p>Straightforward help for every part of Job Tracker.</p>
                     </div>
                 </header>
 
@@ -916,7 +531,8 @@ const UserGuide = () => {
                 </div>
 
                 <p className={styles.tip}>
-                    Tip: Archive records instead of deleting them when you may need them later.
+                    Tip: Archive a record when you may need it later. Delete it only when you are sure you no longer
+                    need it.
                 </p>
             </div>
         </main>

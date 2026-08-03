@@ -1,5 +1,10 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent as ReactKeyboardEvent, Ref } from 'react';
+import type {
+    KeyboardEvent as ReactKeyboardEvent,
+    MouseEvent as ReactMouseEvent,
+    Ref,
+    TouchEvent as ReactTouchEvent,
+} from 'react';
 import { MdChevronLeft, MdChevronRight, MdOpenInFull } from 'react-icons/md';
 import darkAddApplicationPreview from '../../../images/dark-add-application.png';
 import darkArchivedOfferComparisonPreview from '../../../images/dark-archived-offer-comparison.png';
@@ -33,6 +38,9 @@ import styles from './AuthProductIntro.module.css';
 import ProductPreviewFullscreenViewer from './ProductPreviewFullscreenViewer';
 
 const PRODUCT_HOST = 'jobtracker.weihungloh.com';
+const SWIPE_CLICK_SUPPRESSION_MS = 350;
+const SWIPE_DISTANCE_THRESHOLD = 48;
+const SWIPE_HORIZONTAL_BIAS = 1.2;
 
 type ProductPreview = {
     readonly alt: string;
@@ -187,6 +195,7 @@ const getAdjacentPreviewIndexes = (activeIndex: number) => [
 
 type CarouselControlsProps = {
     activeIndex: number;
+    activeLabel: string;
     isNavigationLoading: boolean;
     onSelect: (index: number) => void;
     onShowNext: () => void;
@@ -194,7 +203,14 @@ type CarouselControlsProps = {
 };
 
 const CarouselControls = memo(
-    ({ activeIndex, isNavigationLoading, onSelect, onShowNext, onShowPrevious }: CarouselControlsProps) => {
+    ({
+        activeIndex,
+        activeLabel,
+        isNavigationLoading,
+        onSelect,
+        onShowNext,
+        onShowPrevious,
+    }: CarouselControlsProps) => {
         const previousLabel =
             productPreviews[(activeIndex - 1 + productPreviews.length) % productPreviews.length].label;
         const nextLabel = productPreviews[(activeIndex + 1) % productPreviews.length].label;
@@ -227,8 +243,8 @@ const CarouselControls = memo(
                             />
                         ))}
                     </div>
-                    <span className={styles.carouselCounter}>
-                        {activeIndex + 1} of {productPreviews.length}
+                    <span aria-atomic='true' aria-live='polite' className={styles.carouselCounter}>
+                        {activeLabel} · {activeIndex + 1} of {productPreviews.length}
                     </span>
                 </div>
 
@@ -307,13 +323,14 @@ const PreviewFrame = memo(
                     </span>
                     {isNavigationLoading ? (
                         <span className={styles.previewLoadingOverlay}>
-                            <LoadingSpinner size={32} title='Loading preview' variant='light' />
+                            <LoadingSpinner size={32} title='Loading preview' variant='primary' />
                         </span>
                     ) : null}
                 </button>
 
                 <CarouselControls
                     activeIndex={activeIndex}
+                    activeLabel={activePreview.label}
                     isNavigationLoading={isNavigationLoading}
                     onSelect={onSelect}
                     onShowNext={onShowNext}
@@ -336,6 +353,9 @@ const ProductPreviewCarousel = () => {
     const navigationRequestIdRef = useRef(0);
     const restoreFocusRef = useRef(false);
     const isMountedRef = useRef(true);
+    const suppressClickAfterSwipeRef = useRef(false);
+    const swipeClickSuppressionTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
     const markImageLoaded = useCallback((src: string) => {
         loadedPreviewImages.add(src);
@@ -414,6 +434,73 @@ const ProductPreviewCarousel = () => {
         selectPreview((activeIndex + 1) % productPreviews.length);
     }, [activeIndex, selectPreview]);
 
+    const handleCarouselClickCapture = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
+        if (!suppressClickAfterSwipeRef.current) {
+            return;
+        }
+
+        suppressClickAfterSwipeRef.current = false;
+        if (swipeClickSuppressionTimeoutRef.current) {
+            clearTimeout(swipeClickSuppressionTimeoutRef.current);
+            swipeClickSuppressionTimeoutRef.current = undefined;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+    }, []);
+
+    const handleCarouselTouchStart = useCallback(
+        (event: ReactTouchEvent<HTMLDivElement>) => {
+            if (isNavigationLoading || event.touches.length !== 1) {
+                touchStartRef.current = null;
+                return;
+            }
+
+            const touch = event.touches[0];
+            touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+        },
+        [isNavigationLoading]
+    );
+
+    const handleCarouselTouchEnd = useCallback(
+        (event: ReactTouchEvent<HTMLDivElement>) => {
+            const touchStart = touchStartRef.current;
+            touchStartRef.current = null;
+
+            if (!touchStart || isNavigationLoading || event.changedTouches.length !== 1) {
+                return;
+            }
+
+            const touch = event.changedTouches[0];
+            const horizontalDistance = touch.clientX - touchStart.x;
+            const verticalDistance = touch.clientY - touchStart.y;
+            const isHorizontalSwipe =
+                Math.abs(horizontalDistance) >= SWIPE_DISTANCE_THRESHOLD &&
+                Math.abs(horizontalDistance) > Math.abs(verticalDistance) * SWIPE_HORIZONTAL_BIAS;
+
+            if (!isHorizontalSwipe) {
+                return;
+            }
+
+            event.preventDefault();
+            suppressClickAfterSwipeRef.current = true;
+            if (swipeClickSuppressionTimeoutRef.current) {
+                clearTimeout(swipeClickSuppressionTimeoutRef.current);
+            }
+            swipeClickSuppressionTimeoutRef.current = setTimeout(() => {
+                suppressClickAfterSwipeRef.current = false;
+                swipeClickSuppressionTimeoutRef.current = undefined;
+            }, SWIPE_CLICK_SUPPRESSION_MS);
+
+            if (horizontalDistance < 0) {
+                showNextPreview();
+                return;
+            }
+
+            showPreviousPreview();
+        },
+        [isNavigationLoading, showNextPreview, showPreviousPreview]
+    );
+
     const handleCarouselKeyDown = useCallback(
         (event: ReactKeyboardEvent<HTMLDivElement>) => {
             if (event.key === 'ArrowLeft') {
@@ -459,6 +546,9 @@ const ProductPreviewCarousel = () => {
         () => () => {
             isMountedRef.current = false;
             navigationRequestIdRef.current += 1;
+            if (swipeClickSuppressionTimeoutRef.current) {
+                clearTimeout(swipeClickSuppressionTimeoutRef.current);
+            }
         },
         []
     );
@@ -470,7 +560,13 @@ const ProductPreviewCarousel = () => {
                 role='region'
                 aria-roledescription='carousel'
                 aria-label='Job Tracker product preview'
+                onClickCapture={handleCarouselClickCapture}
                 onKeyDown={handleCarouselKeyDown}
+                onTouchCancel={() => {
+                    touchStartRef.current = null;
+                }}
+                onTouchEnd={handleCarouselTouchEnd}
+                onTouchStart={handleCarouselTouchStart}
                 tabIndex={0}
             >
                 <PreviewFrame

@@ -936,8 +936,12 @@ describe('Rose Ledger visual contract', () => {
         expect(inactiveDotStart).toBeGreaterThan(0);
         expect(activeDotStart).toBeGreaterThan(inactiveDotStart);
         expect(activeDotEnd).toBeGreaterThan(activeDotStart);
+        expect(inactiveDotRules).toContain('width: 9px;');
+        expect(inactiveDotRules).toContain('height: 9px;');
         expect(inactiveDotRules).toContain('background-color: var(--colorTextSecondary);');
         expect(inactiveDotRules).not.toContain('opacity: 0.45;');
+        expect(activeDotRules).not.toMatch(/\bwidth:/);
+        expect(activeDotRules).not.toMatch(/\bheight:/);
         expect(activeDotRules).toContain('background-color: var(--colorPrimary);');
         expect(activeDotRules).toContain('opacity: 1;');
         expect(authProductIntro).toContain('.carouselDot:focus-visible {\n    outline-offset: 2px;\n}');

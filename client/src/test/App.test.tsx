@@ -496,9 +496,7 @@ describe('App routing and authentication behavior', () => {
 
         expect(await screen.findByRole('heading', { name: /start organising your job search/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
-        expect(
-            screen.queryByRole('heading', { name: /your job search, without the spreadsheet mess/i })
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
     });
 
@@ -516,9 +514,7 @@ describe('App routing and authentication behavior', () => {
 
         expect(await screen.findByRole('heading', { name: /sign in to job tracker/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
-        expect(
-            screen.queryByRole('heading', { name: /your job search, without the spreadsheet mess/i })
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
     });
 

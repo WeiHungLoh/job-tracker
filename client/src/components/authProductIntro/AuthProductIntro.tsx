@@ -9,11 +9,11 @@ import ProductPreviewCarousel from './ProductPreviewCarousel';
 const productBenefits = [
     {
         icon: 'activeApplications',
-        text: 'Add jobs as you apply and update them when things change',
+        text: 'See where every application stands',
     },
     {
         icon: 'interview',
-        text: 'Keep interview details attached to the right application',
+        text: 'Keep interviews, notes and follow-ups together',
     },
 ] as const;
 
@@ -101,10 +101,9 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                 inert={isFocusedMode ? true : undefined}
             >
                 <div className={styles.productCopy}>
-                    <h1 id='auth-product-heading'>Your job search, without the spreadsheet mess</h1>
+                    <h1 id='auth-product-heading'>Your job search. One clear view.</h1>
                     <p className={styles.description}>
-                        Keep your applications, interviews and status updates together, so you can quickly see what is
-                        moving and what needs your attention.
+                        Keep applications, interviews and offers in one place, so you always know what to do next.
                     </p>
                     <ul className={styles.benefitList}>
                         {productBenefits.map((benefit) => (
@@ -134,7 +133,8 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                         </Link>
                     </div>
                     <p className={styles.demoCopy}>
-                        No account needed. The demo uses sample data and resets when the page is refreshed.
+                        Explore Job Tracker with sample data. No account needed. The demo resets when you refresh the
+                        page.
                     </p>
                 </div>
 

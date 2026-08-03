@@ -1,6 +1,7 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import ProductPreviewCarousel from '../../components/authProductIntro/ProductPreviewCarousel';
 import { useTheme } from '../../components/theme/ThemeContext';
+import spinnerStyles from '../../components/loadingSpinner/LoadingSpinner.module.css';
 import { render } from '../renderWithProviders';
 import userEvent from '@testing-library/user-event';
 
@@ -56,7 +57,7 @@ describe('ProductPreviewCarousel', () => {
         render(<ProductPreviewCarousel />);
 
         expect(screen.getAllByRole('button', { name: /^Jump to / })).toHaveLength(12);
-        expect(screen.getByText('1 of 12')).toBeInTheDocument();
+        expect(screen.getByText('Dashboard · 1 of 12')).toBeInTheDocument();
         expect(screen.getByText('View full page')).toBeInTheDocument();
 
         expectedSlides.forEach(([label, lightImage], index) => {
@@ -66,8 +67,34 @@ describe('ProductPreviewCarousel', () => {
 
             expect(screen.getByRole('button', { name: `Open ${label} screenshot in fullscreen` })).toBeInTheDocument();
             expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining(lightImage));
-            expect(screen.getByText(`${index + 1} of 12`)).toBeInTheDocument();
+            expect(screen.getByText(`${label} · ${index + 1} of 12`)).toBeInTheDocument();
         });
+    });
+
+    test('swipes between previews without opening fullscreen or hijacking vertical scrolling', () => {
+        render(<ProductPreviewCarousel />);
+
+        const carousel = screen.getByRole('region', { name: 'Job Tracker product preview' });
+        const dashboardPreview = screen.getByRole('button', { name: 'Open Dashboard screenshot in fullscreen' });
+
+        fireEvent.touchStart(dashboardPreview, { touches: [{ clientX: 280, clientY: 120 }] });
+        fireEvent.touchEnd(dashboardPreview, { changedTouches: [{ clientX: 120, clientY: 126 }] });
+
+        const addApplicationPreview = screen.getByRole('button', {
+            name: 'Open Add Application screenshot in fullscreen',
+        });
+        expect(screen.getByText('Add Application · 2 of 12')).toBeInTheDocument();
+
+        fireEvent.click(addApplicationPreview);
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+        fireEvent.touchStart(carousel, { touches: [{ clientX: 180, clientY: 300 }] });
+        fireEvent.touchEnd(carousel, { changedTouches: [{ clientX: 190, clientY: 120 }] });
+        expect(screen.getByText('Add Application · 2 of 12')).toBeInTheDocument();
+
+        fireEvent.touchStart(carousel, { touches: [{ clientX: 120, clientY: 120 }] });
+        fireEvent.touchEnd(carousel, { changedTouches: [{ clientX: 280, clientY: 126 }] });
+        expect(screen.getByText('Dashboard · 1 of 12')).toBeInTheDocument();
     });
 
     test('uses the paired dark screenshots without changing the logical slide', () => {
@@ -95,8 +122,11 @@ describe('ProductPreviewCarousel', () => {
         userEvent.click(screen.getByRole('button', { name: 'Open Dashboard screenshot in fullscreen' }));
 
         const dialog = screen.getByRole('dialog', { name: 'Dashboard screenshot viewer' });
+        const loadingSpinner = within(dialog).getByRole('progressbar', { name: 'Loading preview' });
         expect(within(dialog).getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
         expect(within(dialog).getByText('1 of 12')).toBeInTheDocument();
+        expect(loadingSpinner).toHaveClass(spinnerStyles.primary);
+        expect(loadingSpinner).not.toHaveClass(spinnerStyles.light);
         expect(within(dialog).getByRole('button', { name: 'Fit width' })).toHaveAttribute('aria-pressed', 'true');
         expect(within(dialog).queryByRole('button', { name: 'Actual size' })).not.toBeInTheDocument();
         expect(within(dialog).getByRole('button', { name: 'Zoom out' })).toBeInTheDocument();

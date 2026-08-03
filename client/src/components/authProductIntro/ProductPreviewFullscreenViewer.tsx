@@ -354,7 +354,7 @@ const ProductPreviewFullscreenViewer = ({
                     </div>
                     {isNavigationLoading || (!activeImageDimensions && !hasImageLoadError) ? (
                         <span className={styles.previewLoadingOverlay}>
-                            <LoadingSpinner size={32} title='Loading preview' variant='light' />
+                            <LoadingSpinner size={32} title='Loading preview' variant='primary' />
                         </span>
                     ) : null}
                 </div>

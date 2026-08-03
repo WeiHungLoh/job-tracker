@@ -156,12 +156,10 @@ describe('User sign in flow', () => {
             </MemoryRouter>
         );
 
-        expect(
-            screen.getByRole('heading', { name: /your job search, without the spreadsheet mess/i })
-        ).toBeInTheDocument();
-        expect(screen.getByText(/keep your applications, interviews and status updates together/i)).toBeInTheDocument();
-        expect(screen.getByText('Add jobs as you apply and update them when things change')).toBeInTheDocument();
-        expect(screen.getByText('Keep interview details attached to the right application')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /your job search\. one clear view\./i })).toBeInTheDocument();
+        expect(screen.getByText(/keep applications, interviews and offers in one place/i)).toBeInTheDocument();
+        expect(screen.getByText('See where every application stands')).toBeInTheDocument();
+        expect(screen.getByText('Keep interviews, notes and follow-ups together')).toBeInTheDocument();
         expect(
             screen.getByRole('img', {
                 name: /job tracker dashboard showing application, interview and priority statistics/i,
@@ -285,9 +283,7 @@ describe('User sign in flow', () => {
         fireEvent.focus(screen.getByLabelText(label, { exact: true }));
 
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
-        expect(
-            screen.queryByRole('heading', { name: /your job search, without the spreadsheet mess/i })
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
         expect(
             screen.queryByRole('img', {
                 name: /job tracker dashboard showing application, interview and priority statistics/i,
@@ -316,9 +312,7 @@ describe('User sign in flow', () => {
         userEvent.click(screen.getByRole('button', { name: /why use job tracker/i }));
 
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBeNull();
-        expect(
-            screen.getByRole('heading', { name: /your job search, without the spreadsheet mess/i })
-        ).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /your job search\. one clear view\./i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: /explore demo/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: /see how it works/i })).toBeInTheDocument();
         expect(emailInput).toHaveValue('user@example.com');
@@ -337,9 +331,7 @@ describe('User sign in flow', () => {
         );
 
         expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
-        expect(
-            screen.queryByRole('heading', { name: /your job search, without the spreadsheet mess/i })
-        ).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /explore demo/i })).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /see how it works/i })).not.toBeInTheDocument();
     });

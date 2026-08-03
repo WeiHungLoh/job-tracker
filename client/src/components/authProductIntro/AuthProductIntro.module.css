@@ -654,11 +654,12 @@
 }
 
 .carouselCounter {
-    color: var(--colorTextSecondary);
-    font-size: 0.6875rem;
+    color: var(--colorPrimary);
+    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
     font-weight: 700;
     line-height: 1;
+    text-align: center;
 }
 
 .carouselDot {
@@ -669,6 +670,7 @@
     border-radius: 50%;
     background-color: var(--colorTextSecondary);
     cursor: pointer;
+    transition: background-color 180ms ease;
 }
 
 .activeCarouselDot {
@@ -823,6 +825,10 @@
         gap: 6px;
     }
 
+    .carouselRegion {
+        touch-action: pan-y;
+    }
+
     .carouselDot {
         width: 8px;
         height: 8px;
@@ -907,7 +913,8 @@
     .productPanel,
     .restoreControl,
     .restoreOverviewButton,
-    .restoreIcon {
+    .restoreIcon,
+    .carouselDot {
         transition: none;
     }
 }
