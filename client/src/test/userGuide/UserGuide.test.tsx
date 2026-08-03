@@ -293,8 +293,17 @@ describe('renders user guide properly', () => {
         expect(
             screen.getByText(/when the preference is disabled, those updates do not scroll or highlight/i)
         ).toBeVisible();
+        expect(
+            screen.getByText(
+                /in Board view, status changes and pin\/unpin actions reveal and briefly highlight the affected card/i
+            )
+        ).toBeVisible();
+        expect(
+            screen.getByText(
+                /opening a corresponding application from an interview preserves the current List or Board view/i
+            )
+        ).toBeVisible();
         expect(screen.getByText(/saving an edit to an existing evaluation scrolls to the bottom/i)).toBeVisible();
         expect(screen.getByText(/cancelling an evaluation scrolls to the top of a new evaluation card/i)).toBeVisible();
-        expect(screen.getByText(/board views never automatically scroll or highlight cards/i)).toBeVisible();
     });
 });

@@ -126,9 +126,22 @@ const DemoViewApplication = () => {
         [applications]
     );
 
+    const handleBoardHashTarget = useCallback((targetId: string) => {
+        const applicationId = Number(targetId);
+        if (!Number.isInteger(applicationId)) {
+            return;
+        }
+
+        setBoardTargetRequest({
+            applicationId,
+            requestId: ++boardTargetRequestIdRef.current,
+        });
+    }, []);
+
     useDemoHashHighlight({
-        disabled: isBoardView,
         highlightClass: styles.highlighted,
+        isBoardView,
+        onBoardTarget: handleBoardHashTarget,
         timeouts: showCorrespondingAppTimeout.current,
         visibleIds: visibleApplicationIds,
     });

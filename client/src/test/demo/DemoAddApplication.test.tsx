@@ -177,6 +177,22 @@ describe('Demo Add Application duplicate confirmation', () => {
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
 
+    test('shows the submit button as pending while duplicate confirmation is open', async () => {
+        renderDemoAddApplication(ACTIVE_DUPLICATE_ACTION);
+        await waitForSeededApplication('Morgan Stanley');
+
+        await userEvent.type(screen.getByLabelText(/company name/i), 'Morgan Stanley');
+        await userEvent.type(screen.getByLabelText(/job title/i), 'Software Engineer');
+        await submitApplication();
+
+        await screen.findByRole('dialog');
+
+        const submitButton = document.querySelector<HTMLButtonElement>('form button[type="submit"]');
+        expect(submitButton).not.toBeNull();
+        expect(submitButton).toBeDisabled();
+        expect(submitButton).toHaveAttribute('aria-busy', 'true');
+    });
+
     test('checks archived applications for duplicates', async () => {
         renderDemoAddApplication();
         const initialApplicationCount = getActiveApplicationCount();

@@ -3,15 +3,17 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 type UseDemoHashHighlightOptions = {
-    disabled?: boolean;
     highlightClass: string;
+    isBoardView?: boolean;
+    onBoardTarget?: (targetId: string) => void;
     timeouts: Record<string, ReturnType<typeof setTimeout>>;
     visibleIds: string[];
 };
 
 export const useDemoHashHighlight = ({
-    disabled = false,
     highlightClass,
+    isBoardView = false,
+    onBoardTarget,
     timeouts,
     visibleIds,
 }: UseDemoHashHighlightOptions) => {
@@ -21,20 +23,25 @@ export const useDemoHashHighlight = ({
 
     useEffect(() => {
         const targetId = location.hash.substring(1);
-        if (disabled || !targetId || !visibleIds.includes(targetId)) {
+        if (!targetId || !visibleIds.includes(targetId)) {
             return;
         }
 
-        setPendingHighlightId(targetId);
+        if (isBoardView) {
+            onBoardTarget?.(targetId);
+            setPendingHighlightId(null);
+        } else {
+            setPendingHighlightId(targetId);
+        }
         navigate(location.pathname, { replace: true });
-    }, [disabled, location.hash, location.pathname, navigate, visibleIds]);
+    }, [isBoardView, location.hash, location.pathname, navigate, onBoardTarget, visibleIds]);
 
     useEffect(() => {
-        if (disabled || !pendingHighlightId || !visibleIds.includes(pendingHighlightId)) {
+        if (isBoardView || !pendingHighlightId || !visibleIds.includes(pendingHighlightId)) {
             return;
         }
 
         scrollAndHighlight(pendingHighlightId, highlightClass, timeouts);
         setPendingHighlightId(null);
-    }, [disabled, highlightClass, pendingHighlightId, timeouts, visibleIds]);
+    }, [highlightClass, isBoardView, pendingHighlightId, timeouts, visibleIds]);
 };

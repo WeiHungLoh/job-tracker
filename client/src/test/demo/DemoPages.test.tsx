@@ -153,6 +153,19 @@ const SetCollectionViewMode = ({ archived = false }: { archived?: boolean }) => 
     );
 };
 
+const RenderDemoApplicationWhenBoardIsSelected = ({ archived = false }: { archived?: boolean }) => {
+    const { state } = useDemo();
+    const viewMode = archived
+        ? state.preferences.archived_application_view_mode
+        : state.preferences.application_view_mode;
+
+    if (viewMode !== 'board') {
+        return <SetCollectionViewMode archived={archived} />;
+    }
+
+    return archived ? <DemoViewArchivedApplication /> : <DemoViewApplication />;
+};
+
 const DemoRouteHarness = () => (
     <Routes>
         <Route path={`${routes.demoRoot}/*`} element={<DemoRoutes />} />
@@ -550,6 +563,37 @@ describe('demo page interactions', () => {
 
         expect(scrollAndHighlight).not.toHaveBeenCalled();
     });
+
+    test.each([
+        {
+            archived: false,
+            boardName: 'Application board',
+            entry: `${routes.demoViewApplications}#114`,
+            targetName: 'Aster Security Security Tooling Engineer',
+        },
+        {
+            archived: true,
+            boardName: 'Archived application board',
+            entry: `${routes.demoArchivedApplications}#201`,
+            targetName: 'Riverlane Studio Frontend Developer',
+        },
+    ])(
+        'reveals a direct hash target in the $archived Board view',
+        async ({ archived, boardName, entry, targetName }) => {
+            const boardScrollTo = vi.fn();
+            const pageScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+            HTMLElement.prototype.scrollTo = boardScrollTo;
+
+            renderDemo(<RenderDemoApplicationWhenBoardIsSelected archived={archived} />, [entry]);
+
+            await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
+            await screen.findByRole('region', { name: boardName });
+
+            await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
+            expect(pageScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
+            expect(screen.getByRole('article', { name: targetName })).toHaveClass(boardStyles.cardHighlighted);
+        }
+    );
 
     test('shows success feedback for board status changes and archiving', async () => {
         const windowScrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);

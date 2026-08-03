@@ -802,21 +802,22 @@ const guideSections: readonly UserGuideSection[] = [
             <>
                 <p>
                     Use <strong>Auto-scroll and highlight updates</strong> under <strong>Display options</strong> in
-                    Application List view. When enabled, Job Tracker scrolls to and briefly highlights an application or
-                    interview after it is pinned or unpinned.
+                    Application List or Board view. When enabled, Job Tracker scrolls to and briefly highlights an
+                    application or interview after it is pinned or unpinned.
                 </p>
                 <p>
                     Application status changes receive the same feedback when the Application List is sorted by Job
-                    Status and the updated application remains visible. In Offer Comparison, the preference controls
-                    both scrolling and highlighting after saving a first evaluation and after changing a saved
-                    evaluation between Offer, Accepted and Declined. When the preference is disabled, those updates do
-                    not scroll or highlight. Board views never automatically scroll or highlight cards for these in-page
-                    updates.
+                    Status and the updated application remains visible. In Board view, status changes and pin/unpin
+                    actions reveal and briefly highlight the affected card when enabled. In Offer Comparison, the
+                    preference controls both scrolling and highlighting after saving a first evaluation and after
+                    changing a saved evaluation between Offer, Accepted and Declined. When the preference is disabled,
+                    those updates do not scroll or highlight, including Board card reveals.
                 </p>
                 <p>
                     The preference does not control targeted navigation between pages. Opening a corresponding
-                    application from an interview always switches to List when necessary, preserves existing filters,
-                    adds only the missing status filter, and scrolls to and highlights the exact application.
+                    application from an interview preserves the current List or Board view when possible, preserves
+                    existing filters, adds only the missing status filter, and targets the exact application: List view
+                    scrolls to and highlights it, while Board view reveals and highlights its card.
                 </p>
                 <p>
                     Dashboard Evaluate offer and Record offer decision actions always target and highlight the exact

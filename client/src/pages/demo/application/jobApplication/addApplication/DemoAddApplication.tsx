@@ -246,7 +246,7 @@ const DemoAddApplication = () => {
             <FormFieldError id='job-url-error' message={errors.jobURL} />
 
             <div className={styles.submitButton}>
-                <PrimaryButton type='submit' variant='compact'>
+                <PrimaryButton isLoading={isSubmissionPending} type='submit' variant='compact'>
                     Add Job Application
                 </PrimaryButton>
                 <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.demoViewApplications)}>
