@@ -271,6 +271,7 @@ describe('User sign in flow', () => {
         userEvent.click(within(dialog).getByRole('button', { name: /next screenshot/i }));
         const addApplicationDialog = screen.getByRole('dialog', { name: /add application screenshot viewer/i });
         expect(addApplicationDialog).toBeInTheDocument();
+        fireEvent.load(within(addApplicationDialog).getByRole('img'));
         fireEvent.animationEnd(addApplicationDialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
 
         userEvent.click(screen.getByRole('button', { name: /show list archived interview/i }));
@@ -279,6 +280,7 @@ describe('User sign in flow', () => {
         userEvent.click(screen.getByRole('button', { name: /close fullscreen preview/i }));
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         await waitFor(() => expect(imageButton).toHaveFocus());
+        expect(screen.getByRole('button', { name: /next preview/i })).toBeEnabled();
         expect(document.body).not.toHaveStyle({ overflow: 'hidden' });
 
         userEvent.click(imageButton);

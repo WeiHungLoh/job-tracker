@@ -969,7 +969,7 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(authProductIntro).toMatch(/\.fullscreenTrackSnapshot\s*\{[^}]*width:\s*100%;[^}]*height:\s*auto;/s);
         expect(authProductIntro).toMatch(
-            /\.fullscreenPreviewTrack\[data-track-phase='transitioning'\]\s+\.fullscreenImageCanvas\s*\{[^}]*width:\s*100%;/s
+            /\.fullscreenPreviewTrack\[data-track-phase\]\s+\.fullscreenImageCanvas\s*\{[^}]*width:\s*100%;/s
         );
         expect(mobilePreviewRules).not.toContain('.fullscreenImageViewport');
         expect(mobilePreviewRules).not.toContain('.fullscreenTrackSnapshot');
@@ -987,6 +987,12 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(authProductIntro).toMatch(
             /\.fullscreenPreviewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='backward'\]\s*\{[^}]*animation:\s*previewTrackBackward 560ms cubic-bezier\(0\.4, 0, 0\.2, 1\) both;/s
+        );
+        expect(authProductIntro).toMatch(
+            /\.fullscreenPreviewTrack\[data-track-phase='preparing'\]\[data-motion-direction='forward'\]\s*\{[^}]*transform:\s*translate3d\(var\(--preview-track-start-offset, 0px\), 0, 0\);/s
+        );
+        expect(authProductIntro).toMatch(
+            /\.fullscreenPreviewTrack\[data-track-phase='preparing'\]\[data-motion-direction='backward'\]\s*\{[^}]*transform:\s*translate3d\(calc\(-50% \+ var\(--preview-track-start-offset, 0px\)\), 0, 0\);/s
         );
         expect(productPreviewCarousel).toContain('const PREVIEW_TRANSITION_FALLBACK_MS = 680;');
         expect(authProductIntro).toMatch(

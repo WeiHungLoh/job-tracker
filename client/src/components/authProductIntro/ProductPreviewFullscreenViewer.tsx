@@ -30,6 +30,7 @@ type ProductPreviewFullscreenViewerProps = {
     onShowNext: () => void;
     onShowPrevious: () => void;
     onTransitionEnd: () => void;
+    onTransitionStart: () => void;
     previousImage: string | null;
     transitionStartOffsetPx: number;
 };
@@ -65,9 +66,11 @@ const ProductPreviewFullscreenViewer = ({
     onShowNext,
     onShowPrevious,
     onTransitionEnd,
+    onTransitionStart,
     previousImage,
     transitionStartOffsetPx,
 }: ProductPreviewFullscreenViewerProps) => {
+    const [displayReadyImage, setDisplayReadyImage] = useState<string | null>(null);
     const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
     const [failedImage, setFailedImage] = useState<string | null>(null);
     const [fitWidthZoom, setFitWidthZoom] = useState(1);
@@ -76,6 +79,8 @@ const ProductPreviewFullscreenViewer = ({
     const imageDimensionsBySourceRef = useRef(new Map<string, ImageDimensions>());
     const imageRef = useRef<HTMLImageElement>(null);
     const navigationLockRef = useRef(false);
+    const preparingImageElementRef = useRef<HTMLImageElement | null>(null);
+    const startedTransitionImageRef = useRef<string | null>(null);
     const viewportRef = useRef<HTMLDivElement>(null);
     const activeImageDimensions = imageDimensions?.src === image ? imageDimensions : null;
 
@@ -125,11 +130,46 @@ const ProductPreviewFullscreenViewer = ({
         [fitImageToWidth, image, onImageLoad]
     );
 
+    const prepareImageForDisplay = useCallback(
+        (imageElement: HTMLImageElement) => {
+            readImageDimensions(imageElement);
+
+            if (preparingImageElementRef.current === imageElement) {
+                return;
+            }
+
+            preparingImageElementRef.current = imageElement;
+            const markImageDisplayReady = () => {
+                if (imageRef.current === imageElement) {
+                    setDisplayReadyImage(image);
+                }
+            };
+            const markImageDisplayReadyAfterPaint = () => {
+                if (typeof window.requestAnimationFrame !== 'function') {
+                    markImageDisplayReady();
+                    return;
+                }
+
+                window.requestAnimationFrame(() => {
+                    window.requestAnimationFrame(markImageDisplayReady);
+                });
+            };
+
+            if (typeof imageElement.decode === 'function') {
+                void imageElement.decode().then(markImageDisplayReadyAfterPaint, markImageDisplayReadyAfterPaint);
+                return;
+            }
+
+            markImageDisplayReady();
+        },
+        [image, readImageDimensions]
+    );
+
     const handleImageLoad = useCallback(
         (event: SyntheticEvent<HTMLImageElement>) => {
-            readImageDimensions(event.currentTarget);
+            prepareImageForDisplay(event.currentTarget);
         },
-        [readImageDimensions]
+        [prepareImageForDisplay]
     );
 
     const handleFitWidth = useCallback(() => {
@@ -190,11 +230,14 @@ const ProductPreviewFullscreenViewer = ({
     );
 
     useLayoutEffect(() => {
+        setDisplayReadyImage(null);
         setImageDimensions(null);
         setFailedImage(null);
         setFitWidthZoom(1);
         setZoom(1);
         setZoomLevel(0);
+        preparingImageElementRef.current = null;
+        startedTransitionImageRef.current = null;
         resetViewport();
     }, [image, resetViewport]);
 
@@ -207,9 +250,9 @@ const ProductPreviewFullscreenViewer = ({
     useEffect(() => {
         const imageElement = imageRef.current;
         if (imageElement?.complete) {
-            readImageDimensions(imageElement);
+            prepareImageForDisplay(imageElement);
         }
-    }, [image, readImageDimensions]);
+    }, [image, prepareImageForDisplay]);
 
     useEffect(() => {
         const viewport = viewportRef.current;
@@ -330,6 +373,20 @@ const ProductPreviewFullscreenViewer = ({
     ]);
 
     const hasImageLoadError = failedImage === image;
+    const hasPairedTrack = previousImage !== null;
+    const isTransitionPreparing = hasPairedTrack && displayReadyImage !== image && !hasImageLoadError;
+    const isTransitioning = hasPairedTrack && !isTransitionPreparing;
+    const trackPhase = isTransitionPreparing ? 'preparing' : isTransitioning ? 'transitioning' : undefined;
+
+    useLayoutEffect(() => {
+        if (!isTransitioning || startedTransitionImageRef.current === image) {
+            return;
+        }
+
+        startedTransitionImageRef.current = image;
+        onTransitionStart();
+    }, [image, isTransitioning, onTransitionStart]);
+
     const previousLabel = labels[(activeIndex - 1 + labels.length) % labels.length];
     const nextLabel = labels[(activeIndex + 1) % labels.length];
     const percentage = Math.round(zoom * 100);
@@ -340,7 +397,6 @@ const ProductPreviewFullscreenViewer = ({
           }
         : undefined;
 
-    const isTransitioning = previousImage !== null;
     const outgoingImageDimensions = previousImage ? imageDimensionsBySourceRef.current.get(previousImage) : undefined;
     const outgoingFitWidthZoom = outgoingImageDimensions
         ? calculateFitWidthZoom(viewportRef.current?.clientWidth ?? 0, outgoingImageDimensions.width)
@@ -351,7 +407,7 @@ const ProductPreviewFullscreenViewer = ({
               width: `${outgoingImageDimensions.width * outgoingFitWidthZoom}px`,
           }
         : undefined;
-    const trackStyle: PreviewTrackStyle | undefined = isTransitioning
+    const trackStyle: PreviewTrackStyle | undefined = hasPairedTrack
         ? { '--preview-track-start-offset': `${transitionStartOffsetPx}px` }
         : undefined;
     const activePanel = (
@@ -372,6 +428,7 @@ const ProductPreviewFullscreenViewer = ({
                         onError={() => {
                             setImageDimensions(null);
                             setFailedImage(image);
+                            setDisplayReadyImage(image);
                         }}
                         onLoad={handleImageLoad}
                         style={imageStyle}
@@ -465,20 +522,24 @@ const ProductPreviewFullscreenViewer = ({
                 <div
                     ref={viewportRef}
                     className={styles.fullscreenImageViewport}
-                    data-track-active={isTransitioning ? 'true' : undefined}
+                    data-track-active={hasPairedTrack ? 'true' : undefined}
                     data-testid='fullscreen-image-viewport'
                 >
                     <div
                         className={styles.fullscreenPreviewTrack}
                         data-motion-direction={motionDirection}
                         data-preview-track='fullscreen'
-                        data-track-phase={isTransitioning ? 'transitioning' : undefined}
+                        data-track-phase={trackPhase}
                         onAnimationEnd={isTransitioning ? onTransitionEnd : undefined}
                         style={trackStyle}
                     >
                         {trackPanels}
                     </div>
-                    {isNavigationLoading || (!isTransitioning && !activeImageDimensions && !hasImageLoadError) ? (
+                    {isNavigationLoading ||
+                    isTransitionPreparing ||
+                    (!hasPairedTrack &&
+                        (!activeImageDimensions || displayReadyImage !== image) &&
+                        !hasImageLoadError) ? (
                         <span className={styles.previewLoadingOverlay}>
                             <LoadingSpinner size={32} title='Loading preview' variant='primary' />
                         </span>

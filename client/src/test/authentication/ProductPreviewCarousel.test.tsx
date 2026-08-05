@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import ProductPreviewCarousel from '../../components/authProductIntro/ProductPreviewCarousel';
 import ProductPreviewFullscreenViewer from '../../components/authProductIntro/ProductPreviewFullscreenViewer';
 import { useTheme } from '../../components/theme/ThemeContext';
@@ -155,6 +155,7 @@ describe('ProductPreviewCarousel', () => {
         expect(within(dialog).getByRole('img')).toHaveAttribute('data-motion-direction', 'forward');
         expect(within(dialog).getByTestId('fullscreen-image-viewport').style.backgroundImage).toBe('');
         const fullscreenTrack = dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement;
+        fireEvent.load(within(dialog).getByRole('img'));
         expect(fullscreenTrack).toHaveAttribute('data-track-phase', 'transitioning');
         expect(fullscreenTrack).toHaveAttribute('data-motion-direction', 'forward');
         const outgoingFullscreenImage = dialog.querySelector('[data-preview-layer="outgoing"]');
@@ -358,7 +359,7 @@ describe('ProductPreviewCarousel', () => {
         expect(image).toHaveStyle({ width: '600px', height: '1200px' });
     });
 
-    test('fits the outgoing fullscreen slide to the current viewport even when the active image was zoomed', () => {
+    test('fits the outgoing fullscreen slide to the current viewport and waits for the incoming image to decode', async () => {
         render(<ProductPreviewCarousel />);
         userEvent.click(screen.getByRole('button', { name: /open dashboard screenshot/i }));
 
@@ -387,14 +388,23 @@ describe('ProductPreviewCarousel', () => {
         expect(outgoingImage).not.toHaveStyle({ transform: 'translate3d(-240px, -320px, 0)' });
         expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
             'data-track-phase',
-            'transitioning'
+            'preparing'
         );
+        expect(within(dialog).getByRole('progressbar', { name: 'Loading preview' })).toBeInTheDocument();
         expect(within(dialog).getByRole('button', { name: /next screenshot/i })).toBeDisabled();
 
         fireEvent.keyDown(document, { key: '+' });
         expect(outgoingImage).toHaveStyle({ width: '900px', height: '1800px' });
 
         const incomingImage = within(dialog).getByRole('img');
+        let resolveDecode!: () => void;
+        const decodePromise = new Promise<void>((resolve) => {
+            resolveDecode = resolve;
+        });
+        Object.defineProperty(incomingImage, 'decode', {
+            configurable: true,
+            value: vi.fn(() => decodePromise),
+        });
         setNaturalImageSize(incomingImage, 1200, 2400);
         fireEvent.load(incomingImage);
         expect(incomingImage).toHaveStyle({ width: '900px', height: '1800px' });
@@ -403,6 +413,42 @@ describe('ProductPreviewCarousel', () => {
             height: '1800px',
         });
         expect(outgoingImage).not.toHaveStyle({ transform: 'translate3d(-240px, -320px, 0)' });
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'preparing'
+        );
+
+        const animationFrameCallbacks: FrameRequestCallback[] = [];
+        const requestAnimationFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+            animationFrameCallbacks.push(callback);
+            return animationFrameCallbacks.length;
+        });
+        await act(async () => {
+            resolveDecode();
+            await decodePromise;
+        });
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'preparing'
+        );
+        expect(animationFrameCallbacks).toHaveLength(1);
+
+        act(() => animationFrameCallbacks.shift()?.(0));
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'preparing'
+        );
+        expect(animationFrameCallbacks).toHaveLength(1);
+
+        act(() => animationFrameCallbacks.shift()?.(16));
+        await waitFor(() =>
+            expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+                'data-track-phase',
+                'transitioning'
+            )
+        );
+        requestAnimationFrame.mockRestore();
+        expect(within(dialog).queryByRole('progressbar', { name: 'Loading preview' })).not.toBeInTheDocument();
 
         fireEvent.animationEnd(dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
 
@@ -426,12 +472,24 @@ describe('ProductPreviewCarousel', () => {
             'data-motion-direction',
             'backward'
         );
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'preparing'
+        );
+        const backwardIncomingImage = within(dialog).getByRole('img');
+        setNaturalImageSize(backwardIncomingImage, 1200, 2400);
+        fireEvent.load(backwardIncomingImage);
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'transitioning'
+        );
 
         fireEvent.animationEnd(dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
     });
 
     test('keeps the current fullscreen frame still while a target loads and ignores rapid navigation', () => {
         const onShowNext = vi.fn();
+        const onTransitionStart = vi.fn();
         const baseProps = {
             activeIndex: 0,
             alt: 'Current screenshot',
@@ -447,6 +505,7 @@ describe('ProductPreviewCarousel', () => {
             onShowNext,
             onShowPrevious: vi.fn(),
             onTransitionEnd: vi.fn(),
+            onTransitionStart,
             previousImage: null,
             transitionStartOffsetPx: 0,
         };
@@ -497,6 +556,52 @@ describe('ProductPreviewCarousel', () => {
             height: '1800px',
         });
         expect(outgoingImage).not.toHaveStyle({ transform: 'translate3d(-240px, -320px, 0)' });
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'preparing'
+        );
+        expect(onTransitionStart).not.toHaveBeenCalled();
+
+        const nextImage = within(dialog).getByRole('img');
+        setNaturalImageSize(nextImage, 1200, 2400);
+        fireEvent.load(nextImage);
+
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'transitioning'
+        );
+        expect(onTransitionStart).toHaveBeenCalledTimes(1);
+    });
+
+    test('starts the fullscreen transition fallback only after the incoming image is ready', () => {
+        vi.useFakeTimers();
+
+        try {
+            render(<ProductPreviewCarousel />);
+            fireEvent.click(screen.getByRole('button', { name: /open dashboard screenshot/i }));
+
+            let dialog = screen.getByRole('dialog', { name: 'Dashboard screenshot viewer' });
+            fireEvent.load(within(dialog).getByRole('img'));
+            fireEvent.click(within(dialog).getByRole('button', { name: /next screenshot/i }));
+
+            dialog = screen.getByRole('dialog', { name: 'Add Application screenshot viewer' });
+            let track = dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement;
+            expect(track).toHaveAttribute('data-track-phase', 'preparing');
+
+            act(() => vi.advanceTimersByTime(1_000));
+            expect(track).toHaveAttribute('data-track-phase', 'preparing');
+            expect(track.querySelector('[data-preview-layer="outgoing"]')).toBeInTheDocument();
+
+            fireEvent.load(within(dialog).getByRole('img'));
+            expect(track).toHaveAttribute('data-track-phase', 'transitioning');
+
+            act(() => vi.advanceTimersByTime(1_000));
+            track = dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement;
+            expect(track).not.toHaveAttribute('data-track-phase');
+            expect(track.querySelector('[data-preview-layer="outgoing"]')).not.toBeInTheDocument();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     test('reads natural dimensions when a preloaded fullscreen image is already complete', () => {
@@ -567,6 +672,7 @@ describe('ProductPreviewCarousel', () => {
         dialog = screen.getByRole('dialog', { name: 'Add Application screenshot viewer' });
         expect(within(dialog).getByText('2 of 12')).toBeInTheDocument();
         expect(within(dialog).getByRole('button', { name: 'Fit width' })).toHaveAttribute('aria-pressed', 'true');
+        fireEvent.load(within(dialog).getByRole('img'));
         fireEvent.animationEnd(dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
 
         fireEvent.keyDown(document, { key: 'ArrowRight', repeat: true });
@@ -593,9 +699,9 @@ describe('ProductPreviewCarousel', () => {
 
         const updatedDialog = screen.getByRole('dialog', { name: 'Archived Offer Comparison screenshot viewer' });
         expect(within(updatedDialog).getByText('12 of 12')).toBeInTheDocument();
-        fireEvent.animationEnd(updatedDialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
         fireEvent.error(within(updatedDialog).getByRole('img'));
         expect(within(updatedDialog).getByText('Unable to load this preview.')).toBeInTheDocument();
+        fireEvent.animationEnd(updatedDialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
         expect(
             within(updatedDialog).getByRole('button', { name: 'Previous screenshot: Board Archived Interview' })
         ).toBeEnabled();

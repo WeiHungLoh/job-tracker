@@ -520,6 +520,14 @@ const ProductPreviewCarousel = () => {
         setTransitionStartOffsetPx(0);
     }, []);
 
+    const startPreviewTransitionFallback = useCallback(() => {
+        if (previewTransitionTimeoutRef.current) {
+            clearTimeout(previewTransitionTimeoutRef.current);
+        }
+
+        previewTransitionTimeoutRef.current = setTimeout(finishPreviewTransition, PREVIEW_TRANSITION_FALLBACK_MS);
+    }, [finishPreviewTransition]);
+
     const finishDragSettle = useCallback(() => {
         if (dragSettleTimeoutRef.current) {
             clearTimeout(dragSettleTimeoutRef.current);
@@ -570,9 +578,11 @@ const ProductPreviewCarousel = () => {
             setTransitionStartOffsetPx(startOffsetPx);
             setActiveIndex(index);
 
-            previewTransitionTimeoutRef.current = setTimeout(finishPreviewTransition, PREVIEW_TRANSITION_FALLBACK_MS);
+            if (!isFullscreen) {
+                startPreviewTransitionFallback();
+            }
         },
-        [activeIndex, finishPreviewTransition]
+        [activeIndex, isFullscreen, startPreviewTransitionFallback]
     );
 
     const selectPreview = useCallback(
@@ -800,8 +810,13 @@ const ProductPreviewCarousel = () => {
 
     const closeFullscreen = useCallback(() => {
         restoreFocusRef.current = true;
+        navigationRequestIdRef.current += 1;
+        setIsNavigationLoading(false);
+        if (previousIndex !== null) {
+            finishPreviewTransition();
+        }
         setIsFullscreen(false);
-    }, []);
+    }, [finishPreviewTransition, previousIndex]);
 
     const activePreview = productPreviews[activeIndex];
     const activeImage = getPreviewImage(activePreview, theme);
@@ -866,7 +881,7 @@ const ProductPreviewCarousel = () => {
                     onShowPrevious={showPreviousPreview}
                     onTrackSettleEnd={finishDragSettle}
                     onTransitionEnd={finishPreviewTransition}
-                    previousIndex={previousIndex}
+                    previousIndex={isFullscreen ? null : previousIndex}
                     theme={theme}
                     transitionStartOffsetPx={transitionStartOffsetPx}
                 />
@@ -888,6 +903,7 @@ const ProductPreviewCarousel = () => {
                     onShowNext={showNextPreview}
                     onShowPrevious={showPreviousPreview}
                     onTransitionEnd={finishPreviewTransition}
+                    onTransitionStart={startPreviewTransitionFallback}
                     previousImage={previousImage}
                     transitionStartOffsetPx={transitionStartOffsetPx}
                 />
