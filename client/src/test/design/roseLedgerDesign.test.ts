@@ -97,7 +97,7 @@ const expectedBoxShadowDeclarations = {
     ],
     'src/components/authProductIntro/AuthProductIntro.module.css': [
         'box-shadow: none;',
-        'box-shadow: 0 18px 45px var(--colorAuthCardShadow);',
+        'box-shadow: none;',
         'box-shadow: 0 24px 80px rgb(0 0 0 / 45%);',
     ],
     'src/components/fallbackScreen/FallbackScreen.module.css': ['box-shadow: 0 0px 20px var(--colorAuthCardShadow);'],
@@ -917,11 +917,10 @@ describe('Rose Ledger visual contract', () => {
             /@media \(max-width: 768px\)[\s\S]*?\.total\s*\{[^}]*margin:\s*16px 0 10px;/s
         );
         [
-            'grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);',
-            'left: calc(200px - 50cqw);',
+            'width: min(100%, 1240px);',
+            '@media (max-width: 1100px)',
             '@media (max-width: 900px)',
             '@media (max-width: 600px)',
-            'grid-template-rows: 0fr auto;',
         ].forEach((declaration) => expect(authProductIntro).toContain(declaration));
     });
 
@@ -949,6 +948,15 @@ describe('Rose Ledger visual contract', () => {
 
     it('keeps product previews compact while the fullscreen viewer scrolls on both axes', () => {
         const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+        const productPreviewCarousel = readSource('src/components/authProductIntro/ProductPreviewCarousel.tsx');
+        const previewMotionRules = authProductIntro.slice(
+            authProductIntro.indexOf('.previewTrack'),
+            authProductIntro.indexOf('.fullPageAffordance')
+        );
+        const mobilePreviewRules = authProductIntro.slice(
+            authProductIntro.indexOf('@media (max-width: 600px)'),
+            authProductIntro.indexOf('@media (prefers-reduced-motion: reduce)')
+        );
 
         expect(authProductIntro).toMatch(
             /\.previewImageButton img\s*\{[^}]*object-fit:\s*cover;[^}]*object-position:\s*top;/s
@@ -959,8 +967,51 @@ describe('Rose Ledger visual contract', () => {
         expect(authProductIntro).toMatch(
             /\.fullscreenImageViewport\s*\{[^}]*min-width:\s*0;[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s
         );
+        expect(authProductIntro).toMatch(/\.fullscreenTrackSnapshot\s*\{[^}]*width:\s*100%;[^}]*height:\s*auto;/s);
+        expect(authProductIntro).toMatch(
+            /\.fullscreenPreviewTrack\[data-track-phase='transitioning'\]\s+\.fullscreenImageCanvas\s*\{[^}]*width:\s*100%;/s
+        );
+        expect(mobilePreviewRules).not.toContain('.fullscreenImageViewport');
+        expect(mobilePreviewRules).not.toContain('.fullscreenTrackSnapshot');
         expect(authProductIntro).toMatch(/\.fullscreenToolbar\s*\{[^}]*flex-wrap:\s*wrap;/s);
+        expect(authProductIntro).toContain('@keyframes previewTrackForward');
+        expect(authProductIntro).toContain('@keyframes previewTrackBackward');
+        expect(authProductIntro).toMatch(
+            /\.previewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='forward'\]\s*\{[^}]*animation:\s*previewTrackForward 480ms cubic-bezier\(0\.22, 1, 0\.36, 1\) both;/s
+        );
+        expect(authProductIntro).toMatch(
+            /\.previewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='backward'\]\s*\{[^}]*animation:\s*previewTrackBackward 480ms cubic-bezier\(0\.22, 1, 0\.36, 1\) both;/s
+        );
+        expect(authProductIntro).toMatch(
+            /\.fullscreenPreviewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='forward'\]\s*\{[^}]*animation:\s*previewTrackForward 560ms cubic-bezier\(0\.4, 0, 0\.2, 1\) both;/s
+        );
+        expect(authProductIntro).toMatch(
+            /\.fullscreenPreviewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='backward'\]\s*\{[^}]*animation:\s*previewTrackBackward 560ms cubic-bezier\(0\.4, 0, 0\.2, 1\) both;/s
+        );
+        expect(productPreviewCarousel).toContain('const PREVIEW_TRANSITION_FALLBACK_MS = 680;');
+        expect(authProductIntro).toMatch(
+            /\.previewTrack\[data-track-phase='settling'\]\s*\{[^}]*transition:\s*transform 240ms cubic-bezier\(0\.22, 1, 0\.36, 1\);/s
+        );
+        expect(authProductIntro).toMatch(
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.previewTrack,\s*\.fullscreenPreviewTrack\s*\{[^}]*animation:\s*none;[^}]*transition:\s*none;/s
+        );
+        expect(authProductIntro).toMatch(
+            /@keyframes previewTrackForward\s*\{[\s\S]*?from\s*\{[^}]*transform:\s*translate3d\(var\(--preview-track-start-offset, 0px\), 0, 0\);[\s\S]*?to\s*\{[^}]*transform:\s*translate3d\(-50%, 0, 0\);/s
+        );
+        expect(authProductIntro).toMatch(
+            /@keyframes previewTrackBackward\s*\{[\s\S]*?from\s*\{[^}]*transform:\s*translate3d\(calc\(-50% \+ var\(--preview-track-start-offset, 0px\)\), 0, 0\);[\s\S]*?to\s*\{[^}]*transform:\s*translate3d\(0, 0, 0\);/s
+        );
+        expect(previewMotionRules).not.toContain('opacity');
+        expect(previewMotionRules).not.toContain('rotate');
+        expect(authProductIntro).not.toContain('previewSlideIn');
+        expect(authProductIntro).not.toContain('previewSlideOut');
+        expect(authProductIntro).not.toContain('.previewOutgoingImage');
+        expect(authProductIntro).not.toContain('.fullscreenOutgoingImage');
         expect(authProductIntro).not.toContain('linear-gradient');
+        expect(productPreviewCarousel).toContain('const productPreviewIndexes = productPreviews.map');
+        expect(productPreviewCarousel).toContain('void Promise.all(sources.map(preloadPreviewImage))');
+        expect(productPreviewCarousel).toContain('preloadImages(productPreviewIndexes);');
+        expect(productPreviewCarousel).not.toContain('getAdjacentPreviewIndexes');
     });
 
     it('keeps offer filter config and demo status badge ownership with their runtime features', () => {
@@ -1092,6 +1143,128 @@ describe('Rose Ledger visual contract', () => {
 
     it('preserves every existing gradient declaration and stop', () => {
         expect(declarationsByFile(/^\s*[-\w]+:\s*[^;]*gradient\([^;]+;/gm)).toEqual(expectedGradientDeclarations);
+    });
+
+    it('uses the shared public-page tint with a border-led product preview', () => {
+        const authLayout = readSource('src/components/authLayout/AuthLayout.module.css');
+        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authLayout).toMatch(/\.authPage\s*\{[^}]*background:\s*var\(--colorPublicPageBg\);/s);
+        expect(authIntro).toMatch(/\.authPanel\s*\{[^}]*background:\s*var\(--colorPublicPageBg\);/s);
+        expect(authIntro).not.toContain('box-shadow: 0 18px 45px var(--colorAuthCardShadow);');
+    });
+
+    it('uses a balanced product story and preview with a centred full-page account stage', () => {
+        const authLayout = readSource('src/components/authLayout/AuthLayout.module.css');
+        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authLayout).toMatch(/\.authPage\s*\{[^}]*background:\s*var\(--colorPublicPageBg\);/s);
+        expect(authLayout).toMatch(/\.authPage\s*\{[^}]*padding:\s*16px 28px 48px;/s);
+        expect(authIntro).toMatch(/\.authContainer\s*\{[^}]*width:\s*min\(100%, 1240px\);/s);
+        expect(authIntro).toMatch(
+            /\.authContainer\s*\{[^}]*--auth-motion-duration:\s*560ms;[^}]*--auth-return-duration:\s*680ms;[^}]*--auth-motion-easing:\s*cubic-bezier\(0\.32, 0\.72, 0, 1\);/s
+        );
+        expect(authIntro).toMatch(
+            /\.productPanel\s*\{[^}]*grid-template-columns:\s*minmax\(280px, 0\.72fr\) minmax\(0, 1\.28fr\);[^}]*grid-template-areas:\s*'header header'\s*'story preview';/s
+        );
+        expect(authIntro).toMatch(/\.productHeader\s*\{[^}]*grid-area:\s*header;[^}]*border-bottom:/s);
+        expect(authIntro).toMatch(/\.heroRow\s*\{[^}]*grid-area:\s*story;/s);
+        expect(authIntro).toMatch(/\.carouselRegion\s*\{[^}]*grid-area:\s*preview;/s);
+        expect(authIntro).toMatch(/\.productDetails\s*\{[^}]*gap:\s*24px;/s);
+        expect(authIntro).toMatch(/\.productActions\s*\{[^}]*gap:\s*24px;/s);
+        expect(authIntro).toMatch(/\.demoLink\s*\{[^}]*border-radius:\s*10px;/s);
+        expect(authIntro).toMatch(/\.guideLink\s*\{[^}]*gap:\s*6px;/s);
+        expect(authIntro).toMatch(
+            /\.authPanel\s*\{[^}]*position:\s*fixed;[^}]*width:\s*100vw;[^}]*clip-path:\s*polygon\(110% 0, 100% 0, 100% 100%, 124% 100%\);[^}]*opacity:\s*1;/s
+        );
+        expect(authIntro).toMatch(
+            /\.authPanel\s*\{[^}]*transform:\s*perspective\(1200px\) rotateY\(-14deg\) translateX\(40px\) scale\(0\.985\);[^}]*transform-origin:\s*right center;/s
+        );
+        expect(authIntro).toMatch(/\.authStage\s*\{[^}]*width:\s*min\(100%, 400px\);/s);
+        expect(authIntro).toMatch(
+            /\.focusedMode \.productPanel\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*translateX\(-18px\) scale\(0\.992\);[^}]*visibility:\s*hidden;/s
+        );
+        expect(authIntro).toMatch(
+            /\.focusedMode \.authPanel\s*\{[^}]*clip-path:\s*polygon\(0 0, 100% 0, 100% 100%, 0 100%\);[^}]*transform:\s*perspective\(1200px\) rotateY\(0deg\) translateX\(0\) scale\(1\);/s
+        );
+        expect(authIntro).toMatch(
+            /\.authPanel\s*\{[^}]*transition:\s*clip-path var\(--auth-return-duration\) var\(--auth-motion-easing\),\s*transform var\(--auth-return-duration\) var\(--auth-motion-easing\),\s*visibility 0s linear var\(--auth-return-duration\);/s
+        );
+        expect(authIntro).toMatch(
+            /\.focusedMode \.authPanel\s*\{[^}]*transition:\s*clip-path var\(--auth-motion-duration\) var\(--auth-motion-easing\),\s*transform var\(--auth-motion-duration\) var\(--auth-motion-easing\), visibility 0s linear;/s
+        );
+        expect(authIntro).not.toContain('.authPanel::before');
+        expect(authIntro).not.toContain('@keyframes authPageCrease');
+        expect(authIntro).toMatch(
+            /@media \(max-width:\s*900px\)[\s\S]*?\.productPanel\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*grid-template-areas:\s*'header'\s*'story'\s*'preview';/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.authPanel[\s\S]*?transition:\s*none;/s
+        );
+        expect(authIntro).not.toContain('box-shadow: 0 18px 45px var(--colorAuthCardShadow);');
+    });
+
+    it('removes account drawer translation and product fading for reduced motion', () => {
+        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authIntro).toMatch(
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.authPanel\s*\{[^}]*clip-path:\s*none;/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.authPanel\s*\{[^}]*transform:\s*none;/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.focusedMode \.authPanel\s*\{[^}]*clip-path:\s*none;/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.focusedMode \.productPanel\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;/s
+        );
+    });
+
+    it('centres both account forms while allowing the sign-up strength meter to grow safely', () => {
+        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authIntro).toMatch(
+            /\.authStage\s*\{[^}]*width:\s*min\(100%, 400px\);[^}]*align-content:\s*safe center;[^}]*margin:\s*0 auto;[^}]*opacity:\s*0;[^}]*transform:\s*translateX\(14px\);/s
+        );
+        expect(authIntro).toMatch(
+            /\.focusedMode \.authStage\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*translateX\(0\);/s
+        );
+        expect(authIntro).toMatch(
+            /\.authCardSlot\s*\{[^}]*width:\s*100%;[^}]*justify-items:\s*stretch;[^}]*margin-bottom:\s*24px;/s
+        );
+        expect(authIntro).not.toMatch(/@media \(max-width:\s*600px\)[\s\S]*?\.authStage\s*\{[^}]*width:\s*100%;/s);
+        expect(authIntro).toMatch(
+            /@media \(max-width:\s*600px\)[\s\S]*?\.authPanel\s*\{[^}]*clip-path:\s*polygon\(0 112%, 100% 100%, 100% 100%, 0 100%\);/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(max-width:\s*600px\)[\s\S]*?\.authPanel\s*\{[^}]*transform:\s*perspective\(900px\) rotateX\(12deg\) translateY\(28px\) scale\(0\.99\);[^}]*transform-origin:\s*center bottom;/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(max-width:\s*600px\)[\s\S]*?\.authStage\s*\{[^}]*transform:\s*translateY\(18px\);/s
+        );
+        expect(authIntro).toMatch(/\.restoreOverviewButton\s*\{[^}]*justify-self:\s*start;/s);
+        expect(authIntro).toMatch(
+            /@media \(max-width:\s*600px\)[\s\S]*?\.restoreOverviewButton\s*\{[^}]*justify-self:\s*start;/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(max-width:\s*600px\)[\s\S]*?\.authContainer\s*\{[^}]*--auth-motion-duration:\s*480ms;[^}]*--auth-return-duration:\s*560ms;/s
+        );
+        expect(authIntro).toMatch(
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.authStage\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;[^}]*transition:\s*none;/s
+        );
+    });
+
+    it('uses the product header briefcase treatment on both account cards', () => {
+        const authentication = readSource('src/pages/authentication/Authentication.module.css');
+        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authIntro).toMatch(
+            /\.productBrandIcon\s*\{[^}]*background-color:\s*var\(--colorPrimary\);[^}]*color:\s*var\(--colorBtnPrimaryText\);/s
+        );
+        expect(authentication).toMatch(
+            /\.logoIcon\s*\{[^}]*border:\s*0;[^}]*background-color:\s*var\(--colorPrimary\);[^}]*color:\s*var\(--colorBtnPrimaryText\);/s
+        );
     });
 
     it('does not expand or remove the existing box-shadow inventory', () => {

@@ -1,28 +1,18 @@
-import { useState } from 'react';
-import type { PointerEvent, ReactNode, SyntheticEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { routes } from '../../routes';
 import Icon from '../icon/Icon';
 import styles from './AuthProductIntro.module.css';
 import ProductPreviewCarousel from './ProductPreviewCarousel';
-
-const productBenefits = [
-    {
-        icon: 'activeApplications',
-        text: 'See where every application stands',
-    },
-    {
-        icon: 'interview',
-        text: 'Keep interviews, notes and follow-ups together',
-    },
-] as const;
 
 type AuthProductIntroProps = {
     children: ReactNode;
 };
 
 export const AUTH_FOCUSED_MODE_STORAGE_KEY = 'jobTrackerAuthFocusedMode';
-const AUTH_FOCUS_TRANSITION_MS = 420;
+const AUTH_PANEL_ID = 'auth-account-panel';
+const AUTH_FOCUS_TRANSITION_MS = 560;
 
 const getInitialFocusedMode = (): boolean => {
     try {
@@ -33,134 +23,170 @@ const getInitialFocusedMode = (): boolean => {
 };
 
 const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
+    const location = useLocation();
     const [isFocusedMode, setIsFocusedMode] = useState<boolean>(getInitialFocusedMode);
+    const accountTriggerRef = useRef<HTMLButtonElement>(null);
+    const accountPanelRef = useRef<HTMLElement>(null);
+    const focusTimerRef = useRef<number | undefined>(undefined);
+    const restoreTriggerFocusRef = useRef(false);
+    const accountTriggerLabel = location.pathname === routes.signUp ? 'Create account' : 'Sign in';
     const containerClassName = `${styles.authContainer} ${isFocusedMode ? styles.focusedMode : ''}`;
 
-    const enableFocusedMode = () => {
+    const openAccountAccess = () => {
         if (isFocusedMode) {
             return;
         }
 
         setIsFocusedMode(true);
-
         try {
             localStorage.setItem(AUTH_FOCUSED_MODE_STORAGE_KEY, 'true');
         } catch {
-            // Focused mode still works when storage is unavailable.
+            // Account access still opens when storage is unavailable.
         }
+
+        const prefersReducedMotion =
+            typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        focusTimerRef.current = window.setTimeout(
+            () => {
+                focusTimerRef.current = undefined;
+                accountPanelRef.current?.querySelector<HTMLInputElement>('#email')?.focus({ preventScroll: true });
+            },
+            prefersReducedMotion ? 0 : AUTH_FOCUS_TRANSITION_MS
+        );
     };
 
-    const showProductOverview = () => {
-        setIsFocusedMode(false);
+    const showProductOverview = useCallback(() => {
+        if (focusTimerRef.current !== undefined) {
+            window.clearTimeout(focusTimerRef.current);
+            focusTimerRef.current = undefined;
+        }
 
+        restoreTriggerFocusRef.current = true;
+        setIsFocusedMode(false);
         try {
             localStorage.removeItem(AUTH_FOCUSED_MODE_STORAGE_KEY);
         } catch {
-            // Product overview still works when storage is unavailable.
+            // The product stage still opens when storage is unavailable.
         }
-    };
+    }, []);
 
-    const handleAuthInteraction = (event: SyntheticEvent<HTMLDivElement>) => {
-        const target = event.target as HTMLElement;
-        if (target.tagName !== 'INPUT' || (target.id !== 'email' && target.id !== 'password')) {
-            return;
-        }
-
-        enableFocusedMode();
-    };
-
-    const handleAuthPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-        const target = event.target as HTMLInputElement;
-        const isDesktopAuthInteraction =
-            !isFocusedMode &&
-            target.tagName === 'INPUT' &&
-            (target.id === 'email' || target.id === 'password') &&
-            typeof window.matchMedia === 'function' &&
-            window.matchMedia('(min-width: 901px)').matches;
-
-        if (!isDesktopAuthInteraction) {
-            return;
-        }
-
-        event.preventDefault();
-        enableFocusedMode();
-
-        window.setTimeout(() => {
-            if (target.isConnected) {
-                target.focus({ preventScroll: true });
+    useEffect(
+        () => () => {
+            if (focusTimerRef.current !== undefined) {
+                window.clearTimeout(focusTimerRef.current);
             }
-        }, AUTH_FOCUS_TRANSITION_MS);
-    };
+        },
+        []
+    );
+
+    useEffect(() => {
+        if (isFocusedMode || !restoreTriggerFocusRef.current) {
+            return;
+        }
+
+        restoreTriggerFocusRef.current = false;
+        accountTriggerRef.current?.focus({ preventScroll: true });
+    }, [isFocusedMode]);
+
+    useEffect(() => {
+        if (!isFocusedMode) {
+            return;
+        }
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+
+            event.preventDefault();
+            showProductOverview();
+        };
+
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [isFocusedMode, showProductOverview]);
 
     return (
         <div className={containerClassName} data-auth-focused={isFocusedMode ? 'true' : undefined}>
             <section
                 className={styles.productPanel}
-                aria-hidden={isFocusedMode}
+                aria-hidden={isFocusedMode ? true : undefined}
                 aria-labelledby='auth-product-heading'
                 inert={isFocusedMode ? true : undefined}
             >
-                <div className={styles.productCopy}>
-                    <h1 id='auth-product-heading'>Your job search. One clear view.</h1>
-                    <p className={styles.description}>
-                        Keep applications, interviews and offers in one place, so you always know what to do next.
-                    </p>
-                    <ul className={styles.benefitList}>
-                        {productBenefits.map((benefit) => (
-                            <li key={benefit.text}>
-                                <span className={styles.benefitIcon}>
-                                    <Icon name={benefit.icon} />
-                                </span>
-                                <span>{benefit.text}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                <div className={styles.productActions}>
-                    <div className={styles.productActionRow}>
-                        <a
-                            className={styles.demoLink}
-                            href={routes.demoViewApplications}
-                            rel='noreferrer'
-                            target='_blank'
-                        >
-                            Explore Demo
-                            <span aria-hidden='true'>→</span>
-                        </a>
-                        <Link className={styles.guideLink} rel='noreferrer' to={routes.userGuide} target='_blank'>
-                            See how it works <span aria-hidden='true'>→</span>
-                        </Link>
+                <header className={styles.productHeader}>
+                    <div className={styles.productBrand}>
+                        <span className={styles.productBrandIcon} aria-hidden='true'>
+                            <Icon name='briefcase' />
+                        </span>
+                        <span>Job Tracker</span>
                     </div>
-                    <p className={styles.demoCopy}>
-                        Explore Job Tracker with sample data. No account needed. The demo resets when you refresh the
-                        page.
-                    </p>
+                    <button
+                        ref={accountTriggerRef}
+                        type='button'
+                        className={styles.accountTrigger}
+                        aria-controls={AUTH_PANEL_ID}
+                        aria-expanded={isFocusedMode}
+                        onClick={openAccountAccess}
+                    >
+                        {accountTriggerLabel}
+                        <span aria-hidden='true'>→</span>
+                    </button>
+                </header>
+
+                <div className={styles.heroRow}>
+                    <div className={styles.productCopy}>
+                        <h1 id='auth-product-heading'>Your job search. One clear view.</h1>
+                    </div>
+                    <div className={styles.productDetails}>
+                        <p className={styles.description}>
+                            Keep applications, interviews and offers in one place, so you always know what to do next.
+                        </p>
+                        <div className={styles.productActions}>
+                            <div className={styles.productActionRow}>
+                                <a
+                                    className={styles.demoLink}
+                                    href={routes.demoViewApplications}
+                                    rel='noreferrer'
+                                    target='_blank'
+                                >
+                                    Explore Demo
+                                    <span aria-hidden='true'>→</span>
+                                </a>
+                                <Link
+                                    className={styles.guideLink}
+                                    rel='noreferrer'
+                                    to={routes.userGuide}
+                                    target='_blank'
+                                >
+                                    See how it works <span aria-hidden='true'>→</span>
+                                </Link>
+                            </div>
+                            <p className={styles.demoCopy}>
+                                Explore Job Tracker with sample data. No account needed. The demo resets when you
+                                refresh the page.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <ProductPreviewCarousel />
             </section>
 
-            <section className={styles.authPanel} aria-label='Account access'>
-                <div
-                    className={styles.restoreControl}
-                    aria-hidden={!isFocusedMode}
-                    inert={!isFocusedMode ? true : undefined}
-                >
+            <section
+                id={AUTH_PANEL_ID}
+                ref={accountPanelRef}
+                className={styles.authPanel}
+                aria-label='Account access'
+                aria-hidden={!isFocusedMode ? true : undefined}
+                inert={!isFocusedMode ? true : undefined}
+            >
+                <div className={styles.authStage}>
                     <button type='button' className={styles.restoreOverviewButton} onClick={showProductOverview}>
-                        <span className={styles.restoreIcon} aria-hidden='true'>
-                            <Icon name='arrowBack' />
-                        </span>
-                        <span>Why use Job Tracker?</span>
+                        <Icon name='arrowBack' />
+                        <span>Back to product</span>
                     </button>
-                </div>
-
-                <div
-                    className={styles.authCardSlot}
-                    onFocusCapture={handleAuthInteraction}
-                    onPointerDownCapture={handleAuthPointerDown}
-                >
-                    {children}
+                    <div className={styles.authCardSlot}>{children}</div>
                 </div>
             </section>
         </div>

@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AUTH_FOCUSED_MODE_STORAGE_KEY } from '../../components/authProductIntro/AuthProductIntro';
 import SignUp from '../../pages/authentication/signUp/SignUp';
@@ -15,6 +15,10 @@ vi.mock('react-router-dom', async () => ({
 
 globalThis.fetch = vi.fn();
 const VALID_PASSWORD = 'correct horse battery staple';
+
+const openSignUpPanel = async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+};
 
 const mockUnauthenticatedSession = (signUpResponse: object) => {
     globalThis.fetch.mockImplementation(async (url: string) => {
@@ -51,11 +55,12 @@ describe('User sign up flow', () => {
         });
 
         render(
-            <MemoryRouter>
+            <MemoryRouter initialEntries={['/sign-up']}>
                 <SignUp />
             </MemoryRouter>
         );
 
+        await openSignUpPanel();
         userEvent.type(screen.getByLabelText(/email/i), 'StarBoy98@Hotmail.COM');
         userEvent.type(screen.getByLabelText(/^password$/i), VALID_PASSWORD);
         userEvent.click(screen.getByRole('button', { name: /sign up/i }));
@@ -100,11 +105,12 @@ describe('User sign up flow', () => {
         });
 
         render(
-            <MemoryRouter>
+            <MemoryRouter initialEntries={['/sign-up']}>
                 <SignUp />
             </MemoryRouter>
         );
 
+        await openSignUpPanel();
         userEvent.type(screen.getByLabelText(/email/i), 'starboy98@hotmail.com');
         userEvent.type(screen.getByLabelText(/^password$/i), VALID_PASSWORD);
         userEvent.click(screen.getByRole('button', { name: /sign up/i }));
@@ -121,13 +127,14 @@ describe('User sign up flow', () => {
         expect(mockNavigate).not.toHaveBeenCalledWith('/');
     });
 
-    test('links user to sign in page', () => {
+    test('links user to sign in page', async () => {
         render(
             <MemoryRouter initialEntries={['/sign-up']}>
                 <SignUp />
             </MemoryRouter>
         );
 
+        await openSignUpPanel();
         expect(screen.getByRole('link', { name: /already have an account/i })).toHaveAttribute('href', '/');
     });
 
@@ -140,18 +147,19 @@ describe('User sign up flow', () => {
         });
 
         render(
-            <MemoryRouter>
+            <MemoryRouter initialEntries={['/sign-up']}>
                 <SignUp />
             </MemoryRouter>
         );
 
+        await openSignUpPanel();
         userEvent.type(screen.getByLabelText(/email/i), 'new-user@example.com');
         userEvent.type(screen.getByLabelText(/^password$/i), 'short');
         userEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
         await waitFor(() => expect(screen.getByText('Password must be at least 8 characters.')).toBeInTheDocument());
         expect(fetch.mock.calls.some(([url]) => String(url).endsWith('/authentication/users'))).toBe(false);
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
     });
 
     test('shows a password-strength meter while entering a password', async () => {
@@ -163,11 +171,12 @@ describe('User sign up flow', () => {
         });
 
         render(
-            <MemoryRouter>
+            <MemoryRouter initialEntries={['/sign-up']}>
                 <SignUp />
             </MemoryRouter>
         );
 
+        await openSignUpPanel();
         const passwordInput = screen.getByLabelText(/^password$/i);
         const unicodePassword = `${'x'.repeat(63)}😀`;
         expect(passwordInput).toHaveAttribute('maxlength', '72');
@@ -177,40 +186,41 @@ describe('User sign up flow', () => {
         expect(await screen.findByText(/password strength:/i)).toBeInTheDocument();
     });
 
-    test('displays the product introduction and single-password sign-up form', () => {
+    test('displays the product introduction with account access closed', () => {
         render(
-            <MemoryRouter>
+            <MemoryRouter initialEntries={['/sign-up']}>
                 <SignUp />
             </MemoryRouter>
         );
 
         expect(screen.getByRole('heading', { name: /your job search\. one clear view\./i })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: /start organising your job search/i })).toBeInTheDocument();
-        expect(screen.getByText('Create an account to track your applications and interviews.')).toBeInTheDocument();
         expect(screen.getAllByRole('link', { name: /explore demo/i })).toHaveLength(1);
         expect(screen.getByRole('link', { name: /explore demo/i })).toHaveAttribute(
             'href',
             routes.demoViewApplications
         );
-        expect(screen.getAllByLabelText(/^password$/i)).toHaveLength(1);
-        expect(screen.queryByLabelText(/confirm password/i)).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: /why use job tracker/i })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Create account' })).toBeInTheDocument();
+        expect(document.querySelector('#auth-account-panel')).toHaveAttribute('inert');
     });
 
-    test.each(['Email', 'Password'])('focuses authentication when the %s input receives focus', (label) => {
+    test('opens account access from the Create account stage trigger', async () => {
         render(
-            <MemoryRouter>
+            <MemoryRouter initialEntries={['/sign-up']}>
                 <SignUp />
             </MemoryRouter>
         );
 
-        fireEvent.focus(screen.getByLabelText(label, { exact: true }));
+        await openSignUpPanel();
 
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
-        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /explore demo/i })).not.toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: /start organising your job search/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
+        expect(document.querySelector('[aria-labelledby="auth-product-heading"]')).toHaveAttribute(
+            'aria-hidden',
+            'true'
+        );
+        expect(screen.getByRole('heading', { name: /create your account/i })).toBeInTheDocument();
+        expect(screen.getByText('Track your applications and interviews in one place.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
         expect(screen.getAllByLabelText(/^password$/i)).toHaveLength(1);
+        expect(screen.queryByLabelText(/confirm password/i)).not.toBeInTheDocument();
     });
 });

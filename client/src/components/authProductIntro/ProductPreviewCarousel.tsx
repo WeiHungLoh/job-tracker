@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
+    CSSProperties,
     KeyboardEvent as ReactKeyboardEvent,
     MouseEvent as ReactMouseEvent,
     Ref,
@@ -38,6 +39,9 @@ import styles from './AuthProductIntro.module.css';
 import ProductPreviewFullscreenViewer from './ProductPreviewFullscreenViewer';
 
 const PRODUCT_HOST = 'jobtracker.weihungloh.com';
+const DRAG_INTENT_THRESHOLD = 8;
+const DRAG_SETTLE_FALLBACK_MS = 300;
+const PREVIEW_TRANSITION_FALLBACK_MS = 680;
 const SWIPE_CLICK_SUPPRESSION_MS = 350;
 const SWIPE_DISTANCE_THRESHOLD = 48;
 const SWIPE_HORIZONTAL_BIAS = 1.2;
@@ -48,6 +52,26 @@ type ProductPreview = {
     readonly label: string;
     readonly lightImage: string;
     readonly route: string;
+};
+
+type PreviewMotionDirection = 'backward' | 'forward';
+type PreviewDragPhase = 'dragging' | 'settling';
+
+type PreviewDragState = {
+    direction: PreviewMotionDirection;
+    offsetPx: number;
+    phase: PreviewDragPhase;
+    targetIndex: number;
+};
+
+type PreviewTrackStyle = CSSProperties & {
+    '--preview-track-start-offset'?: string;
+};
+
+type TouchStart = {
+    intent: 'horizontal' | 'pending' | 'vertical';
+    x: number;
+    y: number;
 };
 
 const productPreviews: readonly ProductPreview[] = [
@@ -187,16 +211,21 @@ const preloadPreviewImage = (src: string) => {
     return request;
 };
 
-const getAdjacentPreviewIndexes = (activeIndex: number) => [
-    activeIndex,
-    (activeIndex - 1 + productPreviews.length) % productPreviews.length,
-    (activeIndex + 1) % productPreviews.length,
-];
+const productPreviewIndexes = productPreviews.map((_, index) => index);
+
+const getPreviewMotionDirection = (currentIndex: number, nextIndex: number): PreviewMotionDirection => {
+    const forwardDistance = (nextIndex - currentIndex + productPreviews.length) % productPreviews.length;
+    const backwardDistance = (currentIndex - nextIndex + productPreviews.length) % productPreviews.length;
+    return forwardDistance <= backwardDistance ? 'forward' : 'backward';
+};
+
+const prefersReducedMotion = () =>
+    typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 type CarouselControlsProps = {
     activeIndex: number;
     activeLabel: string;
-    isNavigationLoading: boolean;
+    isNavigationDisabled: boolean;
     onSelect: (index: number) => void;
     onShowNext: () => void;
     onShowPrevious: () => void;
@@ -206,7 +235,7 @@ const CarouselControls = memo(
     ({
         activeIndex,
         activeLabel,
-        isNavigationLoading,
+        isNavigationDisabled,
         onSelect,
         onShowNext,
         onShowPrevious,
@@ -221,7 +250,7 @@ const CarouselControls = memo(
                     type='button'
                     className={styles.carouselArrow}
                     onClick={onShowPrevious}
-                    disabled={isNavigationLoading}
+                    disabled={isNavigationDisabled}
                 >
                     <MdChevronLeft className={styles.carouselArrowIcon} aria-hidden='true' focusable='false' />
                     <span className={styles.visuallyHidden}>Previous preview: {previousLabel}</span>
@@ -237,7 +266,7 @@ const CarouselControls = memo(
                                     index === activeIndex ? styles.activeCarouselDot : ''
                                 }`}
                                 onClick={() => onSelect(index)}
-                                disabled={isNavigationLoading}
+                                disabled={isNavigationDisabled}
                                 aria-label={`Jump to ${preview.label}`}
                                 aria-current={index === activeIndex ? 'true' : undefined}
                             />
@@ -252,7 +281,7 @@ const CarouselControls = memo(
                     type='button'
                     className={styles.carouselArrow}
                     onClick={onShowNext}
-                    disabled={isNavigationLoading}
+                    disabled={isNavigationDisabled}
                 >
                     <MdChevronRight className={styles.carouselArrowIcon} aria-hidden='true' focusable='false' />
                     <span className={styles.visuallyHidden}>Next preview: {nextLabel}</span>
@@ -266,30 +295,75 @@ CarouselControls.displayName = 'CarouselControls';
 
 type PreviewFrameProps = {
     activeIndex: number;
+    dragState: PreviewDragState | null;
     imageButtonRef: Ref<HTMLButtonElement>;
+    isNavigationDisabled: boolean;
     isNavigationLoading: boolean;
+    motionDirection: PreviewMotionDirection;
     onImageClick: () => void;
     onImageLoad: (src: string) => void;
     onSelect: (index: number) => void;
     onShowNext: () => void;
     onShowPrevious: () => void;
+    onTrackSettleEnd: () => void;
+    onTransitionEnd: () => void;
+    previousIndex: number | null;
     theme: Theme;
+    transitionStartOffsetPx: number;
 };
 
 const PreviewFrame = memo(
     ({
         activeIndex,
+        dragState,
         imageButtonRef,
+        isNavigationDisabled,
         isNavigationLoading,
+        motionDirection,
         onImageClick,
         onImageLoad,
         onSelect,
         onShowNext,
         onShowPrevious,
+        onTrackSettleEnd,
+        onTransitionEnd,
+        previousIndex,
         theme,
+        transitionStartOffsetPx,
     }: PreviewFrameProps) => {
         const activePreview = productPreviews[activeIndex];
-        const image = getPreviewImage(activePreview, theme);
+        const isTransitioning = previousIndex !== null;
+        const trackDirection = dragState?.direction ?? motionDirection;
+        const trackPhase = dragState?.phase ?? (isTransitioning ? 'transitioning' : undefined);
+        const trackIndexes = (() => {
+            if (previousIndex !== null) {
+                return trackDirection === 'forward' ? [previousIndex, activeIndex] : [activeIndex, previousIndex];
+            }
+
+            if (dragState) {
+                return trackDirection === 'forward'
+                    ? [activeIndex, dragState.targetIndex]
+                    : [dragState.targetIndex, activeIndex];
+            }
+
+            return [activeIndex];
+        })();
+        const trackStyle: PreviewTrackStyle | undefined = (() => {
+            if (isTransitioning) {
+                return { '--preview-track-start-offset': `${transitionStartOffsetPx}px` };
+            }
+
+            if (!dragState) {
+                return undefined;
+            }
+
+            return {
+                transform:
+                    trackDirection === 'forward'
+                        ? `translate3d(${dragState.offsetPx}px, 0, 0)`
+                        : `translate3d(calc(-50% + ${dragState.offsetPx}px), 0, 0)`,
+            };
+        })();
 
         return (
             <div className={styles.preview}>
@@ -310,13 +384,45 @@ const PreviewFrame = memo(
                     onClick={onImageClick}
                     aria-label={`Open ${activePreview.label} screenshot in fullscreen`}
                 >
-                    <img
-                        src={image}
-                        alt={activePreview.alt}
-                        decoding='async'
-                        loading='eager'
-                        onLoad={() => onImageLoad(image)}
-                    />
+                    <span
+                        className={styles.previewTrack}
+                        data-motion-direction={trackDirection}
+                        data-preview-track='embedded'
+                        data-track-phase={trackPhase}
+                        onAnimationEnd={isTransitioning ? onTransitionEnd : undefined}
+                        onTransitionEnd={dragState?.phase === 'settling' ? onTrackSettleEnd : undefined}
+                        style={trackStyle}
+                    >
+                        {trackIndexes.map((index) => {
+                            const preview = productPreviews[index];
+                            const image = getPreviewImage(preview, theme);
+                            const isActiveImage = index === activeIndex;
+                            const layer = isTransitioning
+                                ? isActiveImage
+                                    ? 'incoming'
+                                    : 'outgoing'
+                                : dragState
+                                ? isActiveImage
+                                    ? 'current'
+                                    : 'target'
+                                : 'incoming';
+
+                            return (
+                                <img
+                                    key={index}
+                                    className={isActiveImage ? styles.previewImage : styles.previewTrackImage}
+                                    data-motion-direction={trackDirection}
+                                    data-preview-layer={layer}
+                                    src={image}
+                                    alt={isActiveImage ? preview.alt : ''}
+                                    aria-hidden={isActiveImage ? undefined : 'true'}
+                                    decoding='async'
+                                    loading='eager'
+                                    onLoad={isActiveImage ? () => onImageLoad(image) : undefined}
+                                />
+                            );
+                        })}
+                    </span>
                     <span className={styles.fullPageAffordance}>
                         <MdOpenInFull aria-hidden='true' focusable='false' />
                         View full page
@@ -331,7 +437,7 @@ const PreviewFrame = memo(
                 <CarouselControls
                     activeIndex={activeIndex}
                     activeLabel={activePreview.label}
-                    isNavigationLoading={isNavigationLoading}
+                    isNavigationDisabled={isNavigationDisabled}
                     onSelect={onSelect}
                     onShowNext={onShowNext}
                     onShowPrevious={onShowPrevious}
@@ -346,16 +452,22 @@ PreviewFrame.displayName = 'PreviewFrame';
 const ProductPreviewCarousel = () => {
     const { theme } = useTheme();
     const [activeIndex, setActiveIndex] = useState(0);
+    const [dragState, setDragState] = useState<PreviewDragState | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isNavigationLoading, setIsNavigationLoading] = useState(false);
     const [loadedImages, setLoadedImages] = useState(() => new Set(loadedPreviewImages));
+    const [motionDirection, setMotionDirection] = useState<PreviewMotionDirection>('forward');
+    const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+    const [transitionStartOffsetPx, setTransitionStartOffsetPx] = useState(0);
+    const dragSettleTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const imageButtonRef = useRef<HTMLButtonElement>(null);
     const navigationRequestIdRef = useRef(0);
+    const previewTransitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const restoreFocusRef = useRef(false);
     const isMountedRef = useRef(true);
     const suppressClickAfterSwipeRef = useRef(false);
     const swipeClickSuppressionTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+    const touchStartRef = useRef<TouchStart | null>(null);
 
     const markImageLoaded = useCallback((src: string) => {
         loadedPreviewImages.add(src);
@@ -376,36 +488,110 @@ const ProductPreviewCarousel = () => {
 
     const preloadImages = useCallback(
         (indexes: number[]) => {
-            indexes.forEach((index) => {
-                const src = getPreviewImage(productPreviews[index], theme);
+            const sources = indexes.map((index) => getPreviewImage(productPreviews[index], theme));
 
-                if (!canPreloadPreviewImages()) {
-                    loadedPreviewImages.add(src);
-                    return;
-                }
-
-                void preloadPreviewImage(src).then(() => markImageLoaded(src));
-            });
-        },
-        [markImageLoaded, theme]
-    );
-
-    const selectPreview = useCallback(
-        (index: number) => {
-            if (index === activeIndex || isNavigationLoading) {
+            if (!canPreloadPreviewImages()) {
+                sources.forEach((src) => loadedPreviewImages.add(src));
                 return;
             }
 
+            void Promise.all(sources.map(preloadPreviewImage)).then(() => {
+                if (!isMountedRef.current) {
+                    return;
+                }
+
+                setLoadedImages((currentLoadedImages) => {
+                    const nextLoadedImages = new Set(currentLoadedImages);
+                    sources.forEach((src) => nextLoadedImages.add(src));
+                    return nextLoadedImages;
+                });
+            });
+        },
+        [theme]
+    );
+
+    const finishPreviewTransition = useCallback(() => {
+        if (previewTransitionTimeoutRef.current) {
+            clearTimeout(previewTransitionTimeoutRef.current);
+            previewTransitionTimeoutRef.current = undefined;
+        }
+
+        setPreviousIndex(null);
+        setTransitionStartOffsetPx(0);
+    }, []);
+
+    const finishDragSettle = useCallback(() => {
+        if (dragSettleTimeoutRef.current) {
+            clearTimeout(dragSettleTimeoutRef.current);
+            dragSettleTimeoutRef.current = undefined;
+        }
+
+        setDragState(null);
+    }, []);
+
+    const settleDrag = useCallback(
+        (releasedDragState: PreviewDragState) => {
+            if (dragSettleTimeoutRef.current) {
+                clearTimeout(dragSettleTimeoutRef.current);
+            }
+
+            if (prefersReducedMotion()) {
+                finishDragSettle();
+                return;
+            }
+
+            setDragState({ ...releasedDragState, offsetPx: 0, phase: 'settling' });
+            dragSettleTimeoutRef.current = setTimeout(finishDragSettle, DRAG_SETTLE_FALLBACK_MS);
+        },
+        [finishDragSettle]
+    );
+
+    const beginPreviewTransition = useCallback(
+        (index: number, direction: PreviewMotionDirection, startOffsetPx = 0) => {
+            if (previewTransitionTimeoutRef.current) {
+                clearTimeout(previewTransitionTimeoutRef.current);
+            }
+            if (dragSettleTimeoutRef.current) {
+                clearTimeout(dragSettleTimeoutRef.current);
+                dragSettleTimeoutRef.current = undefined;
+            }
+
+            setDragState(null);
+            if (prefersReducedMotion()) {
+                setPreviousIndex(null);
+                setMotionDirection(direction);
+                setTransitionStartOffsetPx(0);
+                setActiveIndex(index);
+                return;
+            }
+
+            setPreviousIndex(activeIndex);
+            setMotionDirection(direction);
+            setTransitionStartOffsetPx(startOffsetPx);
+            setActiveIndex(index);
+
+            previewTransitionTimeoutRef.current = setTimeout(finishPreviewTransition, PREVIEW_TRANSITION_FALLBACK_MS);
+        },
+        [activeIndex, finishPreviewTransition]
+    );
+
+    const selectPreview = useCallback(
+        (index: number, requestedDirection?: PreviewMotionDirection, startOffsetPx = 0) => {
+            if (index === activeIndex || isNavigationLoading || previousIndex !== null) {
+                return;
+            }
+
+            const nextMotionDirection = requestedDirection ?? getPreviewMotionDirection(activeIndex, index);
             const nextImage = getPreviewImage(productPreviews[index], theme);
 
             if (!canPreloadPreviewImages()) {
                 loadedPreviewImages.add(nextImage);
-                setActiveIndex(index);
+                beginPreviewTransition(index, nextMotionDirection, startOffsetPx);
                 return;
             }
 
             if (loadedImages.has(nextImage) || loadedPreviewImages.has(nextImage)) {
-                setActiveIndex(index);
+                beginPreviewTransition(index, nextMotionDirection, startOffsetPx);
                 return;
             }
 
@@ -419,19 +605,19 @@ const ProductPreviewCarousel = () => {
                 }
 
                 markImageLoaded(nextImage);
-                setActiveIndex(index);
+                beginPreviewTransition(index, nextMotionDirection, startOffsetPx);
                 setIsNavigationLoading(false);
             });
         },
-        [activeIndex, isNavigationLoading, loadedImages, markImageLoaded, theme]
+        [activeIndex, beginPreviewTransition, isNavigationLoading, loadedImages, markImageLoaded, previousIndex, theme]
     );
 
     const showPreviousPreview = useCallback(() => {
-        selectPreview((activeIndex - 1 + productPreviews.length) % productPreviews.length);
+        selectPreview((activeIndex - 1 + productPreviews.length) % productPreviews.length, 'backward');
     }, [activeIndex, selectPreview]);
 
     const showNextPreview = useCallback(() => {
-        selectPreview((activeIndex + 1) % productPreviews.length);
+        selectPreview((activeIndex + 1) % productPreviews.length, 'forward');
     }, [activeIndex, selectPreview]);
 
     const handleCarouselClickCapture = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
@@ -448,17 +634,74 @@ const ProductPreviewCarousel = () => {
         event.stopPropagation();
     }, []);
 
+    const suppressNextCarouselClick = useCallback(() => {
+        suppressClickAfterSwipeRef.current = true;
+        if (swipeClickSuppressionTimeoutRef.current) {
+            clearTimeout(swipeClickSuppressionTimeoutRef.current);
+        }
+        swipeClickSuppressionTimeoutRef.current = setTimeout(() => {
+            suppressClickAfterSwipeRef.current = false;
+            swipeClickSuppressionTimeoutRef.current = undefined;
+        }, SWIPE_CLICK_SUPPRESSION_MS);
+    }, []);
+
     const handleCarouselTouchStart = useCallback(
         (event: ReactTouchEvent<HTMLDivElement>) => {
-            if (isNavigationLoading || event.touches.length !== 1) {
+            if (dragState || isNavigationLoading || previousIndex !== null || event.touches.length !== 1) {
                 touchStartRef.current = null;
                 return;
             }
 
             const touch = event.touches[0];
-            touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+            touchStartRef.current = { intent: 'pending', x: touch.clientX, y: touch.clientY };
         },
-        [isNavigationLoading]
+        [dragState, isNavigationLoading, previousIndex]
+    );
+
+    const handleCarouselTouchMove = useCallback(
+        (event: ReactTouchEvent<HTMLDivElement>) => {
+            const touchStart = touchStartRef.current;
+            if (
+                !touchStart ||
+                touchStart.intent === 'vertical' ||
+                isNavigationLoading ||
+                previousIndex !== null ||
+                event.touches.length !== 1
+            ) {
+                return;
+            }
+
+            const touch = event.touches[0];
+            const horizontalDistance = touch.clientX - touchStart.x;
+            const verticalDistance = touch.clientY - touchStart.y;
+
+            if (touchStart.intent === 'pending') {
+                if (Math.max(Math.abs(horizontalDistance), Math.abs(verticalDistance)) < DRAG_INTENT_THRESHOLD) {
+                    return;
+                }
+
+                if (Math.abs(horizontalDistance) <= Math.abs(verticalDistance) * SWIPE_HORIZONTAL_BIAS) {
+                    touchStart.intent = 'vertical';
+                    setDragState(null);
+                    return;
+                }
+
+                touchStart.intent = 'horizontal';
+            }
+
+            event.preventDefault();
+            const direction: PreviewMotionDirection = horizontalDistance < 0 ? 'forward' : 'backward';
+            const targetIndex =
+                direction === 'forward'
+                    ? (activeIndex + 1) % productPreviews.length
+                    : (activeIndex - 1 + productPreviews.length) % productPreviews.length;
+            const frameWidth = imageButtonRef.current?.clientWidth ?? 0;
+            const maximumOffset = frameWidth > 0 ? frameWidth : Math.abs(horizontalDistance);
+            const offsetPx = Math.sign(horizontalDistance) * Math.min(Math.abs(horizontalDistance), maximumOffset);
+
+            setDragState({ direction, offsetPx, phase: 'dragging', targetIndex });
+        },
+        [activeIndex, isNavigationLoading, previousIndex]
     );
 
     const handleCarouselTouchEnd = useCallback(
@@ -466,40 +709,67 @@ const ProductPreviewCarousel = () => {
             const touchStart = touchStartRef.current;
             touchStartRef.current = null;
 
-            if (!touchStart || isNavigationLoading || event.changedTouches.length !== 1) {
+            if (
+                !touchStart ||
+                touchStart.intent === 'vertical' ||
+                isNavigationLoading ||
+                previousIndex !== null ||
+                event.changedTouches.length !== 1
+            ) {
                 return;
             }
 
             const touch = event.changedTouches[0];
             const horizontalDistance = touch.clientX - touchStart.x;
             const verticalDistance = touch.clientY - touchStart.y;
-            const isHorizontalSwipe =
-                Math.abs(horizontalDistance) >= SWIPE_DISTANCE_THRESHOLD &&
-                Math.abs(horizontalDistance) > Math.abs(verticalDistance) * SWIPE_HORIZONTAL_BIAS;
+            const hasHorizontalIntent =
+                touchStart.intent === 'horizontal' ||
+                (Math.abs(horizontalDistance) >= DRAG_INTENT_THRESHOLD &&
+                    Math.abs(horizontalDistance) > Math.abs(verticalDistance) * SWIPE_HORIZONTAL_BIAS);
 
-            if (!isHorizontalSwipe) {
+            if (!hasHorizontalIntent) {
                 return;
             }
 
             event.preventDefault();
-            suppressClickAfterSwipeRef.current = true;
-            if (swipeClickSuppressionTimeoutRef.current) {
-                clearTimeout(swipeClickSuppressionTimeoutRef.current);
-            }
-            swipeClickSuppressionTimeoutRef.current = setTimeout(() => {
-                suppressClickAfterSwipeRef.current = false;
-                swipeClickSuppressionTimeoutRef.current = undefined;
-            }, SWIPE_CLICK_SUPPRESSION_MS);
+            suppressNextCarouselClick();
+            const direction: PreviewMotionDirection = horizontalDistance < 0 ? 'forward' : 'backward';
+            const targetIndex =
+                direction === 'forward'
+                    ? (activeIndex + 1) % productPreviews.length
+                    : (activeIndex - 1 + productPreviews.length) % productPreviews.length;
 
-            if (horizontalDistance < 0) {
-                showNextPreview();
+            if (Math.abs(horizontalDistance) >= SWIPE_DISTANCE_THRESHOLD) {
+                selectPreview(targetIndex, direction, horizontalDistance);
                 return;
             }
 
-            showPreviousPreview();
+            settleDrag(
+                dragState ?? {
+                    direction,
+                    offsetPx: horizontalDistance,
+                    phase: 'dragging',
+                    targetIndex,
+                }
+            );
         },
-        [isNavigationLoading, showNextPreview, showPreviousPreview]
+        [
+            activeIndex,
+            dragState,
+            isNavigationLoading,
+            previousIndex,
+            selectPreview,
+            settleDrag,
+            suppressNextCarouselClick,
+        ]
     );
+
+    const handleCarouselTouchCancel = useCallback(() => {
+        touchStartRef.current = null;
+        if (dragState) {
+            settleDrag(dragState);
+        }
+    }, [dragState, settleDrag]);
 
     const handleCarouselKeyDown = useCallback(
         (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -518,22 +788,30 @@ const ProductPreviewCarousel = () => {
     );
 
     const handleOpenFullscreen = useCallback(() => {
+        if (dragState || isNavigationLoading) {
+            return;
+        }
+
+        if (previousIndex !== null) {
+            finishPreviewTransition();
+        }
         setIsFullscreen(true);
-    }, []);
+    }, [dragState, finishPreviewTransition, isNavigationLoading, previousIndex]);
 
     const closeFullscreen = useCallback(() => {
         restoreFocusRef.current = true;
         setIsFullscreen(false);
     }, []);
 
-    const adjacentPreviewIndexes = useMemo(() => getAdjacentPreviewIndexes(activeIndex), [activeIndex]);
     const activePreview = productPreviews[activeIndex];
     const activeImage = getPreviewImage(activePreview, theme);
+    const isNavigationDisabled = isNavigationLoading || previousIndex !== null || dragState !== null;
+    const previousImage = previousIndex === null ? null : getPreviewImage(productPreviews[previousIndex], theme);
     const previewLabels = useMemo(() => productPreviews.map((preview) => preview.label), []);
 
     useEffect(() => {
-        preloadImages(adjacentPreviewIndexes);
-    }, [adjacentPreviewIndexes, preloadImages]);
+        preloadImages(productPreviewIndexes);
+    }, [preloadImages]);
 
     useEffect(() => {
         if (!isFullscreen && restoreFocusRef.current) {
@@ -549,6 +827,12 @@ const ProductPreviewCarousel = () => {
             if (swipeClickSuppressionTimeoutRef.current) {
                 clearTimeout(swipeClickSuppressionTimeoutRef.current);
             }
+            if (dragSettleTimeoutRef.current) {
+                clearTimeout(dragSettleTimeoutRef.current);
+            }
+            if (previewTransitionTimeoutRef.current) {
+                clearTimeout(previewTransitionTimeoutRef.current);
+            }
         },
         []
     );
@@ -562,23 +846,29 @@ const ProductPreviewCarousel = () => {
                 aria-label='Job Tracker product preview'
                 onClickCapture={handleCarouselClickCapture}
                 onKeyDown={handleCarouselKeyDown}
-                onTouchCancel={() => {
-                    touchStartRef.current = null;
-                }}
+                onTouchCancel={handleCarouselTouchCancel}
                 onTouchEnd={handleCarouselTouchEnd}
+                onTouchMove={handleCarouselTouchMove}
                 onTouchStart={handleCarouselTouchStart}
                 tabIndex={0}
             >
                 <PreviewFrame
                     activeIndex={activeIndex}
+                    dragState={dragState}
                     imageButtonRef={imageButtonRef}
+                    isNavigationDisabled={isNavigationDisabled}
                     isNavigationLoading={isNavigationLoading}
+                    motionDirection={motionDirection}
                     onImageClick={handleOpenFullscreen}
                     onImageLoad={markImageLoaded}
                     onSelect={selectPreview}
                     onShowNext={showNextPreview}
                     onShowPrevious={showPreviousPreview}
+                    onTrackSettleEnd={finishDragSettle}
+                    onTransitionEnd={finishPreviewTransition}
+                    previousIndex={previousIndex}
                     theme={theme}
+                    transitionStartOffsetPx={transitionStartOffsetPx}
                 />
             </div>
 
@@ -587,14 +877,19 @@ const ProductPreviewCarousel = () => {
                     activeIndex={activeIndex}
                     alt={activePreview.alt}
                     image={activeImage}
+                    isNavigationDisabled={isNavigationDisabled}
                     isNavigationLoading={isNavigationLoading}
                     label={activePreview.label}
                     labels={previewLabels}
+                    motionDirection={motionDirection}
                     onClose={closeFullscreen}
                     onImageLoad={markImageLoaded}
                     onSelect={selectPreview}
                     onShowNext={showNextPreview}
                     onShowPrevious={showPreviousPreview}
+                    onTransitionEnd={finishPreviewTransition}
+                    previousImage={previousImage}
+                    transitionStartOffsetPx={transitionStartOffsetPx}
                 />
             ) : null}
         </>

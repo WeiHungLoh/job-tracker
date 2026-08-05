@@ -69,8 +69,8 @@ const SignUp = () => {
         <AuthLayout>
             <div className={`${styles.card} ${styles.signUpCard}`}>
                 <Icon name='briefcase' className={styles.logoIcon} />
-                <h2 className={`${styles.title} ${styles.titleWithDescription}`}>Start organising your job search</h2>
-                <p className={styles.cardDescription}>Create an account to track your applications and interviews.</p>
+                <h2 className={`${styles.title} ${styles.titleWithDescription}`}>Create your account</h2>
+                <p className={styles.cardDescription}>Track your applications and interviews in one place.</p>
                 <form onSubmit={handleSignUp}>
                     <label htmlFor='email'>Email</label>
                     <div className={styles.inputBox}>

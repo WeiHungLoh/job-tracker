@@ -7,6 +7,7 @@
     gap: 12px;
     border: 1px solid var(--colorOfflineBannerBorder);
     border-left: 3px solid var(--colorOfflineBannerAccent);
+    border-bottom: 3px solid var(--colorOfflineBannerAccent);
     border-radius: var(--notificationBorderRadius);
     background-color: var(--colorOfflineBannerBg);
     box-shadow: 0 18px 42px var(--colorOfflineBannerShadow);

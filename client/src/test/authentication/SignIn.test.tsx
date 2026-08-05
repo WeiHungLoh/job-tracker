@@ -15,6 +15,10 @@ vi.mock('react-router-dom', async () => ({
 
 globalThis.fetch = vi.fn();
 
+const openSignInPanel = async () => {
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+};
+
 const mockUnauthenticatedSession = (signInResponse: object) => {
     globalThis.fetch.mockImplementation(async (url: string) => {
         if (url.endsWith('/authentication/sessions/current') || url.endsWith('/authentication/sessions/refresh')) {
@@ -64,6 +68,7 @@ describe('User sign in flow', () => {
             </MemoryRouter>
         );
 
+        await openSignInPanel();
         userEvent.type(screen.getByLabelText(/email/i), 'starboy98@hotmail.com');
         userEvent.type(screen.getByLabelText(/^password$/i), '123456');
         userEvent.click(screen.getByRole('button', { name: /sign in/i }));
@@ -93,6 +98,7 @@ describe('User sign in flow', () => {
             </MemoryRouter>
         );
 
+        await openSignInPanel();
         userEvent.type(screen.getByLabelText(/email/i), 'starboy98@hotmail.com');
         userEvent.type(screen.getByLabelText(/^password$/i), '123456');
         userEvent.click(screen.getByRole('button', { name: /sign in/i }));
@@ -106,7 +112,7 @@ describe('User sign in flow', () => {
         );
 
         await waitFor(() => expect(screen.getByText('Invalid email or password.')).toBeInTheDocument());
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
     });
 
@@ -124,6 +130,7 @@ describe('User sign in flow', () => {
             </MemoryRouter>
         );
 
+        await openSignInPanel();
         userEvent.type(screen.getByLabelText(/email/i), 'starboy98@hotmail.com');
         userEvent.type(screen.getByLabelText(/^password$/i), '123456');
         userEvent.click(screen.getByRole('button', { name: /sign in/i }));
@@ -139,17 +146,18 @@ describe('User sign in flow', () => {
         await waitFor(() => expect(screen.getByText('Invalid email or password.')).toBeInTheDocument());
     });
 
-    test('links user to sign up page', () => {
+    test('links user to sign up page', async () => {
         render(
             <MemoryRouter initialEntries={['/']}>
                 <SignIn />
             </MemoryRouter>
         );
 
+        await openSignInPanel();
         expect(screen.getByRole('link', { name: /create one/i })).toHaveAttribute('href', '/sign-up');
     });
 
-    test('displays the product introduction and server notice', () => {
+    test('displays the product introduction with sign-in account access closed', () => {
         render(
             <MemoryRouter initialEntries={['/']}>
                 <SignIn />
@@ -158,8 +166,6 @@ describe('User sign in flow', () => {
 
         expect(screen.getByRole('heading', { name: /your job search\. one clear view\./i })).toBeInTheDocument();
         expect(screen.getByText(/keep applications, interviews and offers in one place/i)).toBeInTheDocument();
-        expect(screen.getByText('See where every application stands')).toBeInTheDocument();
-        expect(screen.getByText('Keep interviews, notes and follow-ups together')).toBeInTheDocument();
         expect(
             screen.getByRole('img', {
                 name: /job tracker dashboard showing application, interview and priority statistics/i,
@@ -172,7 +178,9 @@ describe('User sign in flow', () => {
             routes.demoViewApplications
         );
         expect(screen.getByRole('link', { name: /see how it works/i })).toHaveAttribute('href', '/user-guide');
-        expect(screen.queryByRole('button', { name: /why use job tracker/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /back to product/i })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+        expect(document.querySelector('#auth-account-panel')).toHaveAttribute('inert');
     });
 
     test('cycles through product previews in route order', () => {
@@ -201,6 +209,7 @@ describe('User sign in flow', () => {
             userEvent.click(screen.getByRole('button', { name: /next preview/i }));
             expect(screen.getByText(`jobtracker.weihungloh.com/${route}`)).toBeInTheDocument();
             expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining(image));
+            fireEvent.animationEnd(document.querySelector('[data-preview-track="embedded"]') as HTMLElement);
         });
     });
 
@@ -215,6 +224,7 @@ describe('User sign in flow', () => {
         carousel.focus();
         fireEvent.keyDown(carousel, { key: 'ArrowRight' });
         expect(screen.getByText('jobtracker.weihungloh.com/application/add')).toBeInTheDocument();
+        fireEvent.animationEnd(document.querySelector('[data-preview-track="embedded"]') as HTMLElement);
 
         fireEvent.keyDown(carousel, { key: 'ArrowLeft' });
         expect(screen.getByText('jobtracker.weihungloh.com/dashboard')).toBeInTheDocument();
@@ -237,6 +247,7 @@ describe('User sign in flow', () => {
 
         userEvent.click(screen.getByRole('button', { name: /next preview/i }));
         expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-add-application.png'));
+        fireEvent.animationEnd(document.querySelector('[data-preview-track="embedded"]') as HTMLElement);
 
         userEvent.click(screen.getByRole('button', { name: /next preview/i }));
         expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-list-application.png'));
@@ -258,7 +269,9 @@ describe('User sign in flow', () => {
         expect(within(dialog).getByRole('button', { name: /close fullscreen preview/i })).toHaveFocus();
 
         userEvent.click(within(dialog).getByRole('button', { name: /next screenshot/i }));
-        expect(screen.getByRole('dialog', { name: /add application screenshot viewer/i })).toBeInTheDocument();
+        const addApplicationDialog = screen.getByRole('dialog', { name: /add application screenshot viewer/i });
+        expect(addApplicationDialog).toBeInTheDocument();
+        fireEvent.animationEnd(addApplicationDialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
 
         userEvent.click(screen.getByRole('button', { name: /show list archived interview/i }));
         expect(screen.getByRole('dialog', { name: /list archived interview screenshot viewer/i })).toBeInTheDocument();
@@ -273,43 +286,40 @@ describe('User sign in flow', () => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    test.each(['Email', 'Password'])('focuses authentication when the %s input receives focus', (label) => {
+    test('opens account access from the Sign in stage trigger', async () => {
         render(
             <MemoryRouter>
                 <SignIn />
             </MemoryRouter>
         );
 
-        fireEvent.focus(screen.getByLabelText(label, { exact: true }));
+        await openSignInPanel();
 
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
-        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
-        expect(
-            screen.queryByRole('img', {
-                name: /job tracker dashboard showing application, interview and priority statistics/i,
-            })
-        ).not.toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /see how it works/i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /explore demo/i })).not.toBeInTheDocument();
+        expect(document.querySelector('[aria-labelledby="auth-product-heading"]')).toHaveAttribute(
+            'aria-hidden',
+            'true'
+        );
         expect(screen.getByRole('heading', { name: /sign in to job tracker/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
     });
 
-    test('restores the overview without clearing entered sign-in details', () => {
+    test('restores the overview without clearing entered sign-in details', async () => {
         render(
             <MemoryRouter>
                 <SignIn />
             </MemoryRouter>
         );
 
+        await openSignInPanel();
         const emailInput = screen.getByLabelText('Email', { exact: true });
         const passwordInput = screen.getByLabelText('Password', { exact: true });
         userEvent.type(emailInput, 'user@example.com');
         userEvent.type(passwordInput, 'saved password');
         userEvent.click(screen.getByRole('button', { name: /show password/i }));
 
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
-        userEvent.click(screen.getByRole('button', { name: /why use job tracker/i }));
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
+        userEvent.click(screen.getByRole('button', { name: /back to product/i }));
 
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBeNull();
         expect(screen.getByRole('heading', { name: /your job search\. one clear view\./i })).toBeInTheDocument();
@@ -318,7 +328,7 @@ describe('User sign in flow', () => {
         expect(emailInput).toHaveValue('user@example.com');
         expect(passwordInput).toHaveValue('saved password');
         expect(passwordInput).toHaveAttribute('type', 'text');
-        expect(screen.queryByRole('button', { name: /why use job tracker/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /back to product/i })).not.toBeInTheDocument();
     });
 
     test('restores focused mode immediately from localStorage', () => {
@@ -330,9 +340,11 @@ describe('User sign in flow', () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /explore demo/i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /see how it works/i })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
+        expect(document.querySelector('#auth-account-panel')).not.toHaveAttribute('inert');
+        expect(document.querySelector('[aria-labelledby="auth-product-heading"]')).toHaveAttribute(
+            'aria-hidden',
+            'true'
+        );
     });
 });

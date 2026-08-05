@@ -35,10 +35,10 @@
     padding: 13px;
     margin: auto;
     box-sizing: border-box;
-    border: 1px solid var(--colorAuthCardBorder);
+    border: 0;
     border-radius: 14px;
-    background-color: var(--colorStatIconBg);
-    color: var(--colorPrimary);
+    background-color: var(--colorPrimary);
+    color: var(--colorBtnPrimaryText);
 }
 
 .title {

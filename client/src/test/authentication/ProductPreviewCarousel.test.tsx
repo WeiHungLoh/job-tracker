@@ -1,5 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import ProductPreviewCarousel from '../../components/authProductIntro/ProductPreviewCarousel';
+import ProductPreviewFullscreenViewer from '../../components/authProductIntro/ProductPreviewFullscreenViewer';
 import { useTheme } from '../../components/theme/ThemeContext';
 import spinnerStyles from '../../components/loadingSpinner/LoadingSpinner.module.css';
 import { render } from '../renderWithProviders';
@@ -68,6 +69,10 @@ describe('ProductPreviewCarousel', () => {
             expect(screen.getByRole('button', { name: `Open ${label} screenshot in fullscreen` })).toBeInTheDocument();
             expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining(lightImage));
             expect(screen.getByText(`${label} · ${index + 1} of 12`)).toBeInTheDocument();
+
+            if (index > 0) {
+                fireEvent.animationEnd(document.querySelector('[data-preview-track="embedded"]') as HTMLElement);
+            }
         });
     });
 
@@ -84,6 +89,7 @@ describe('ProductPreviewCarousel', () => {
             name: 'Open Add Application screenshot in fullscreen',
         });
         expect(screen.getByText('Add Application · 2 of 12')).toBeInTheDocument();
+        fireEvent.animationEnd(addApplicationPreview.querySelector('[data-preview-track="embedded"]') as HTMLElement);
 
         fireEvent.click(addApplicationPreview);
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -95,6 +101,171 @@ describe('ProductPreviewCarousel', () => {
         fireEvent.touchStart(carousel, { touches: [{ clientX: 120, clientY: 120 }] });
         fireEvent.touchEnd(carousel, { changedTouches: [{ clientX: 280, clientY: 126 }] });
         expect(screen.getByText('Dashboard · 1 of 12')).toBeInTheDocument();
+    });
+
+    test('moves one shared screenshot track in both embedded and fullscreen previews', () => {
+        render(<ProductPreviewCarousel />);
+
+        const initialDashboardImage = screen.getByRole('img');
+        userEvent.click(screen.getByRole('button', { name: /next preview/i }));
+        let embeddedImage = screen.getByRole('img');
+        expect(embeddedImage.className).toContain('previewImage');
+        expect(embeddedImage).toHaveAttribute('data-motion-direction', 'forward');
+        const embeddedFrame = screen.getByRole('button', {
+            name: 'Open Add Application screenshot in fullscreen',
+        });
+        let embeddedTrack = embeddedFrame.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(embeddedFrame.style.backgroundImage).toBe('');
+        expect(embeddedTrack).toHaveAttribute('data-track-phase', 'transitioning');
+        expect(embeddedTrack).toHaveAttribute('data-motion-direction', 'forward');
+        const outgoingDashboardImage = embeddedFrame.querySelector('[data-preview-layer="outgoing"]');
+        const incomingAddApplicationImage = embeddedFrame.querySelector('[data-preview-layer="incoming"]');
+        expect(outgoingDashboardImage).toBe(initialDashboardImage);
+        expect(outgoingDashboardImage).toHaveAttribute('src', expect.stringContaining('light-dashboard.png'));
+        expect(incomingAddApplicationImage).toHaveAttribute(
+            'src',
+            expect.stringContaining('light-add-application.png')
+        );
+        expect(embeddedTrack.querySelectorAll(':scope > img')).toHaveLength(2);
+        fireEvent.animationEnd(embeddedTrack);
+        expect(embeddedFrame.querySelector('[data-preview-layer="outgoing"]')).not.toBeInTheDocument();
+        expect(screen.getByRole('img')).toBe(incomingAddApplicationImage);
+
+        userEvent.click(screen.getByRole('button', { name: /previous preview/i }));
+        embeddedImage = screen.getByRole('img');
+        expect(embeddedImage).toHaveAttribute('data-motion-direction', 'backward');
+        embeddedTrack = document.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(embeddedTrack).toHaveAttribute('data-motion-direction', 'backward');
+        expect(
+            screen
+                .getByRole('button', { name: 'Open Dashboard screenshot in fullscreen' })
+                .querySelector('[data-preview-layer="outgoing"]')
+        ).toHaveAttribute('src', expect.stringContaining('light-add-application.png'));
+        expect(embeddedTrack.firstElementChild).toHaveAttribute('data-preview-layer', 'incoming');
+        expect(embeddedTrack.lastElementChild).toHaveAttribute('data-preview-layer', 'outgoing');
+        fireEvent.animationEnd(embeddedTrack);
+
+        userEvent.click(screen.getByRole('button', { name: /open dashboard screenshot in fullscreen/i }));
+        let dialog = screen.getByRole('dialog');
+        const initialFullscreenImage = within(dialog).getByRole('img');
+        expect(initialFullscreenImage.className).toContain('fullscreenPreviewImage');
+
+        userEvent.click(within(dialog).getByRole('button', { name: /next screenshot/i }));
+        dialog = screen.getByRole('dialog', { name: 'Add Application screenshot viewer' });
+        expect(within(dialog).getByRole('img')).toHaveAttribute('data-motion-direction', 'forward');
+        expect(within(dialog).getByTestId('fullscreen-image-viewport').style.backgroundImage).toBe('');
+        const fullscreenTrack = dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement;
+        expect(fullscreenTrack).toHaveAttribute('data-track-phase', 'transitioning');
+        expect(fullscreenTrack).toHaveAttribute('data-motion-direction', 'forward');
+        const outgoingFullscreenImage = dialog.querySelector('[data-preview-layer="outgoing"]');
+        expect(outgoingFullscreenImage).toBe(initialFullscreenImage);
+        expect(outgoingFullscreenImage).toHaveAttribute('src', expect.stringContaining('light-dashboard.png'));
+        expect(fullscreenTrack.children).toHaveLength(2);
+        fireEvent.animationEnd(fullscreenTrack);
+        expect(dialog.querySelector('[data-preview-layer="outgoing"]')).not.toBeInTheDocument();
+    });
+
+    test('lets a horizontal mobile drag follow the finger and settle from its release position', () => {
+        render(<ProductPreviewCarousel />);
+
+        const dashboardPreview = screen.getByRole('button', { name: 'Open Dashboard screenshot in fullscreen' });
+        fireEvent.touchStart(dashboardPreview, { touches: [{ clientX: 280, clientY: 120 }] });
+        fireEvent.touchMove(dashboardPreview, { touches: [{ clientX: 210, clientY: 124 }] });
+
+        let track = dashboardPreview.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(track).toHaveAttribute('data-track-phase', 'dragging');
+        expect(track).toHaveAttribute('data-motion-direction', 'forward');
+        expect(track).toHaveStyle({ transform: 'translate3d(-70px, 0, 0)' });
+        expect(track.querySelector('[data-preview-layer="target"]')).toHaveAttribute(
+            'src',
+            expect.stringContaining('light-add-application.png')
+        );
+
+        fireEvent.touchEnd(dashboardPreview, { changedTouches: [{ clientX: 180, clientY: 126 }] });
+
+        expect(screen.getByText('Add Application · 2 of 12')).toBeInTheDocument();
+        track = document.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(track).toHaveAttribute('data-track-phase', 'transitioning');
+        expect(track.style.getPropertyValue('--preview-track-start-offset')).toBe('-100px');
+    });
+
+    test('snaps a short horizontal drag back without opening fullscreen or changing slides', () => {
+        render(<ProductPreviewCarousel />);
+
+        const dashboardPreview = screen.getByRole('button', { name: 'Open Dashboard screenshot in fullscreen' });
+        fireEvent.touchStart(dashboardPreview, { touches: [{ clientX: 200, clientY: 120 }] });
+        fireEvent.touchMove(dashboardPreview, { touches: [{ clientX: 170, clientY: 122 }] });
+        fireEvent.touchEnd(dashboardPreview, { changedTouches: [{ clientX: 170, clientY: 122 }] });
+
+        let track = dashboardPreview.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(screen.getByText('Dashboard · 1 of 12')).toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(track).toHaveAttribute('data-track-phase', 'settling');
+        expect(track).toHaveStyle({ transform: 'translate3d(0px, 0, 0)' });
+
+        fireEvent.transitionEnd(track);
+        track = dashboardPreview.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(track).not.toHaveAttribute('data-track-phase');
+        expect(track.querySelector('[data-preview-layer="target"]')).not.toBeInTheDocument();
+    });
+
+    test('keeps the current slide visible while a short backward drag snaps home', () => {
+        render(<ProductPreviewCarousel />);
+
+        const dashboardPreview = screen.getByRole('button', { name: 'Open Dashboard screenshot in fullscreen' });
+        fireEvent.touchStart(dashboardPreview, { touches: [{ clientX: 150, clientY: 120 }] });
+        fireEvent.touchMove(dashboardPreview, { touches: [{ clientX: 180, clientY: 122 }] });
+
+        let track = dashboardPreview.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(track).toHaveAttribute('data-motion-direction', 'backward');
+        expect(track).toHaveStyle({ transform: 'translate3d(calc(-50% + 30px), 0, 0)' });
+        expect(track.querySelector('[data-preview-layer="target"]')).toHaveAttribute(
+            'src',
+            expect.stringContaining('light-archived-offer-comparison.png')
+        );
+
+        fireEvent.touchEnd(dashboardPreview, { changedTouches: [{ clientX: 180, clientY: 122 }] });
+
+        track = dashboardPreview.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+        expect(track).toHaveAttribute('data-track-phase', 'settling');
+        expect(track).toHaveStyle({ transform: 'translate3d(calc(-50% + 0px), 0, 0)' });
+        fireEvent.click(dashboardPreview);
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+        fireEvent.transitionEnd(track);
+        expect(screen.getByText('Dashboard · 1 of 12')).toBeInTheDocument();
+    });
+
+    test('changes slides without mounting a paired track when reduced motion is requested', () => {
+        const originalMatchMedia = window.matchMedia;
+        Object.defineProperty(window, 'matchMedia', {
+            configurable: true,
+            value: vi.fn().mockImplementation((query: string) => ({
+                addEventListener: vi.fn(),
+                matches: query === '(prefers-reduced-motion: reduce)',
+                media: query,
+                onchange: null,
+                removeEventListener: vi.fn(),
+            })),
+        });
+
+        try {
+            render(<ProductPreviewCarousel />);
+            userEvent.click(screen.getByRole('button', { name: /next preview/i }));
+
+            const addApplicationPreview = screen.getByRole('button', {
+                name: 'Open Add Application screenshot in fullscreen',
+            });
+            const track = addApplicationPreview.querySelector('[data-preview-track="embedded"]') as HTMLElement;
+            expect(track).not.toHaveAttribute('data-track-phase');
+            expect(track.querySelector('[data-preview-layer="outgoing"]')).not.toBeInTheDocument();
+            expect(screen.getByText('Add Application · 2 of 12')).toBeInTheDocument();
+        } finally {
+            Object.defineProperty(window, 'matchMedia', {
+                configurable: true,
+                value: originalMatchMedia,
+            });
+        }
     });
 
     test('uses the paired dark screenshots without changing the logical slide', () => {
@@ -187,6 +358,147 @@ describe('ProductPreviewCarousel', () => {
         expect(image).toHaveStyle({ width: '600px', height: '1200px' });
     });
 
+    test('fits the outgoing fullscreen slide to the current viewport even when the active image was zoomed', () => {
+        render(<ProductPreviewCarousel />);
+        userEvent.click(screen.getByRole('button', { name: /open dashboard screenshot/i }));
+
+        let dialog = screen.getByRole('dialog');
+        const viewport = within(dialog).getByTestId('fullscreen-image-viewport');
+        Object.defineProperties(viewport, {
+            clientWidth: { configurable: true, value: 932 },
+            scrollLeft: { configurable: true, value: 240 },
+            scrollTop: { configurable: true, value: 320 },
+        });
+        const zoomedImage = within(dialog).getByRole('img');
+        setNaturalImageSize(zoomedImage, 1200, 2400);
+        fireEvent.load(zoomedImage);
+        userEvent.click(within(dialog).getByRole('button', { name: 'Zoom in' }));
+
+        expect(zoomedImage).toHaveStyle({ width: '1350px', height: '2700px' });
+
+        userEvent.click(within(dialog).getByRole('button', { name: /next screenshot/i }));
+        dialog = screen.getByRole('dialog', { name: 'Add Application screenshot viewer' });
+        const outgoingImage = dialog.querySelector('[data-preview-layer="outgoing"]');
+        expect(outgoingImage).toBe(zoomedImage);
+        expect(outgoingImage).toHaveStyle({
+            width: '900px',
+            height: '1800px',
+        });
+        expect(outgoingImage).not.toHaveStyle({ transform: 'translate3d(-240px, -320px, 0)' });
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-track-phase',
+            'transitioning'
+        );
+        expect(within(dialog).getByRole('button', { name: /next screenshot/i })).toBeDisabled();
+
+        fireEvent.keyDown(document, { key: '+' });
+        expect(outgoingImage).toHaveStyle({ width: '900px', height: '1800px' });
+
+        const incomingImage = within(dialog).getByRole('img');
+        setNaturalImageSize(incomingImage, 1200, 2400);
+        fireEvent.load(incomingImage);
+        expect(incomingImage).toHaveStyle({ width: '900px', height: '1800px' });
+        expect(outgoingImage).toHaveStyle({
+            width: '900px',
+            height: '1800px',
+        });
+        expect(outgoingImage).not.toHaveStyle({ transform: 'translate3d(-240px, -320px, 0)' });
+
+        fireEvent.animationEnd(dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
+
+        dialog = screen.getByRole('dialog', { name: 'Add Application screenshot viewer' });
+        userEvent.click(within(dialog).getByRole('button', { name: 'Zoom in' }));
+        Object.defineProperties(viewport, {
+            scrollLeft: { configurable: true, value: 180 },
+            scrollTop: { configurable: true, value: 240 },
+        });
+        userEvent.click(within(dialog).getByRole('button', { name: /previous screenshot/i }));
+
+        dialog = screen.getByRole('dialog', { name: 'Dashboard screenshot viewer' });
+        const backwardOutgoingImage = dialog.querySelector('[data-preview-layer="outgoing"]');
+        expect(backwardOutgoingImage).toBe(incomingImage);
+        expect(backwardOutgoingImage).toHaveStyle({
+            width: '900px',
+            height: '1800px',
+        });
+        expect(backwardOutgoingImage).not.toHaveStyle({ transform: 'translate3d(-180px, -240px, 0)' });
+        expect(dialog.querySelector('[data-preview-track="fullscreen"]')).toHaveAttribute(
+            'data-motion-direction',
+            'backward'
+        );
+
+        fireEvent.animationEnd(dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
+    });
+
+    test('keeps the current fullscreen frame still while a target loads and ignores rapid navigation', () => {
+        const onShowNext = vi.fn();
+        const baseProps = {
+            activeIndex: 0,
+            alt: 'Current screenshot',
+            image: '/current.png',
+            isNavigationDisabled: false,
+            isNavigationLoading: false,
+            label: 'Current',
+            labels: ['Current', 'Next'],
+            motionDirection: 'forward' as const,
+            onClose: vi.fn(),
+            onImageLoad: vi.fn(),
+            onSelect: vi.fn(),
+            onShowNext,
+            onShowPrevious: vi.fn(),
+            onTransitionEnd: vi.fn(),
+            previousImage: null,
+            transitionStartOffsetPx: 0,
+        };
+        const view = render(<ProductPreviewFullscreenViewer {...baseProps} />);
+        let dialog = screen.getByRole('dialog', { name: 'Current screenshot viewer' });
+        const viewport = within(dialog).getByTestId('fullscreen-image-viewport');
+        Object.defineProperties(viewport, {
+            clientWidth: { configurable: true, value: 932 },
+            scrollLeft: { configurable: true, value: 240 },
+            scrollTop: { configurable: true, value: 320 },
+        });
+        const currentImage = within(dialog).getByRole('img');
+        setNaturalImageSize(currentImage, 1200, 2400);
+        fireEvent.load(currentImage);
+        userEvent.click(within(dialog).getByRole('button', { name: 'Zoom in' }));
+        vi.mocked(viewport.scrollTo).mockClear();
+
+        const nextButton = within(dialog).getByRole('button', { name: 'Next screenshot: Next' });
+        userEvent.click(nextButton);
+        userEvent.click(nextButton);
+        fireEvent.keyDown(document, { key: 'ArrowRight' });
+
+        expect(onShowNext).toHaveBeenCalledTimes(1);
+        expect(viewport.scrollTo).not.toHaveBeenCalled();
+        expect(currentImage).toHaveStyle({ width: '1350px', height: '2700px' });
+
+        view.rerender(<ProductPreviewFullscreenViewer {...baseProps} isNavigationDisabled isNavigationLoading />);
+        expect(viewport.scrollTo).not.toHaveBeenCalled();
+        expect(currentImage).toHaveStyle({ width: '1350px', height: '2700px' });
+
+        view.rerender(
+            <ProductPreviewFullscreenViewer
+                {...baseProps}
+                activeIndex={1}
+                alt='Next screenshot'
+                image='/next.png'
+                isNavigationDisabled
+                label='Next'
+                previousImage='/current.png'
+            />
+        );
+
+        dialog = screen.getByRole('dialog', { name: 'Next screenshot viewer' });
+        const outgoingImage = dialog.querySelector('[data-preview-layer="outgoing"]');
+        expect(viewport.scrollTo).toHaveBeenCalledWith({ left: 0, top: 0 });
+        expect(outgoingImage).toHaveStyle({
+            width: '900px',
+            height: '1800px',
+        });
+        expect(outgoingImage).not.toHaveStyle({ transform: 'translate3d(-240px, -320px, 0)' });
+    });
+
     test('reads natural dimensions when a preloaded fullscreen image is already complete', () => {
         const completeDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'complete');
         const naturalHeightDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'naturalHeight');
@@ -255,6 +567,10 @@ describe('ProductPreviewCarousel', () => {
         dialog = screen.getByRole('dialog', { name: 'Add Application screenshot viewer' });
         expect(within(dialog).getByText('2 of 12')).toBeInTheDocument();
         expect(within(dialog).getByRole('button', { name: 'Fit width' })).toHaveAttribute('aria-pressed', 'true');
+        fireEvent.animationEnd(dialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
+
+        fireEvent.keyDown(document, { key: 'ArrowRight', repeat: true });
+        expect(screen.getByRole('dialog', { name: 'Add Application screenshot viewer' })).toBeInTheDocument();
 
         fireEvent.keyDown(document, { key: 'ArrowLeft' });
         expect(screen.getByRole('dialog', { name: 'Dashboard screenshot viewer' })).toBeInTheDocument();
@@ -277,6 +593,7 @@ describe('ProductPreviewCarousel', () => {
 
         const updatedDialog = screen.getByRole('dialog', { name: 'Archived Offer Comparison screenshot viewer' });
         expect(within(updatedDialog).getByText('12 of 12')).toBeInTheDocument();
+        fireEvent.animationEnd(updatedDialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
         fireEvent.error(within(updatedDialog).getByRole('img'));
         expect(within(updatedDialog).getByText('Unable to load this preview.')).toBeInTheDocument();
         expect(

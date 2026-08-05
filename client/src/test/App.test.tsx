@@ -491,12 +491,12 @@ describe('App routing and authentication behavior', () => {
         });
         renderRoute('/');
 
-        userEvent.click(await screen.findByLabelText('Email', { exact: true }));
-        userEvent.click(screen.getByRole('link', { name: /create one/i }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
+        await userEvent.click(screen.getByRole('link', { name: /create one/i }));
 
-        expect(await screen.findByRole('heading', { name: /start organising your job search/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
+        expect(document.querySelector('#auth-account-panel')).not.toHaveAttribute('inert');
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
     });
 
@@ -509,12 +509,12 @@ describe('App routing and authentication behavior', () => {
         });
         renderRoute('/sign-up');
 
-        userEvent.click(await screen.findByLabelText('Password', { exact: true }));
-        userEvent.click(screen.getByRole('link', { name: /already have an account/i }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Create account' }));
+        await userEvent.click(screen.getByRole('link', { name: /already have an account/i }));
 
         expect(await screen.findByRole('heading', { name: /sign in to job tracker/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /why use job tracker/i })).toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: /your job search\. one clear view\./i })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
+        expect(document.querySelector('#auth-account-panel')).not.toHaveAttribute('inert');
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
     });
 
