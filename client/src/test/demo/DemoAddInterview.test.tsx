@@ -172,7 +172,7 @@ describe('Demo Add Interview scheduling conflicts', () => {
 
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
         expect(screen.getAllByTestId('toast')).toHaveLength(1);
-        expect(screen.getByText('Successfully added an interview!')).toBeInTheDocument();
+        expect(screen.getByText('Successfully added an interview')).toBeInTheDocument();
         expect(screen.getByLabelText('Interview Date')).toHaveValue('');
         expect(screen.getByLabelText('Duration (minutes)')).toHaveValue(60);
         expect(screen.getByLabelText('Interview Location')).toHaveValue('');
@@ -220,7 +220,7 @@ describe('Demo Add Interview scheduling conflicts', () => {
 
         expect(getActiveInterviewCount()).toBe(initialCount + 1);
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-        expect(screen.getByText('Successfully added an interview!')).toBeInTheDocument();
+        expect(screen.getByText('Successfully added an interview')).toBeInTheDocument();
     });
 
     test('uses the same ordered numbering as production for multiple future conflicts', async () => {

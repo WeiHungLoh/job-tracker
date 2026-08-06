@@ -314,10 +314,10 @@ const AddApplication = () => {
 
             <div className={styles.submitButton}>
                 <PrimaryButton isLoading={isLoading} type='submit' variant='compact'>
-                    Add Job Application
+                    Add Application
                 </PrimaryButton>
                 <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.viewApplications)}>
-                    View Job Applications
+                    View Applications
                 </PrimaryButton>
             </div>
         </form>

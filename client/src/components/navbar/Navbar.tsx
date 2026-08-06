@@ -17,16 +17,16 @@ const ARCHIVED_LOCATIONS: readonly string[] = [
 
 const ACTIVE_NAV_LINKS = [
     { to: routes.dashboard, label: 'Dashboard' },
-    { to: routes.addApplication, label: 'Add Job Application' },
-    { to: routes.viewApplications, label: 'View Job Applications' },
-    { to: routes.viewInterviews, label: 'View Interviews' },
+    { to: routes.addApplication, label: 'New Application' },
+    { to: routes.viewApplications, label: 'Applications' },
+    { to: routes.viewInterviews, label: 'Interviews' },
     { to: routes.offerDecisions, label: 'Offer Comparison' },
 ] as const;
 
 const ARCHIVED_NAV_LINKS = [
-    { to: routes.archivedApplications, label: 'View Archived Applications' },
-    { to: routes.archivedInterviews, label: 'View Archived Interviews' },
-    { to: routes.archivedOfferDecisions, label: 'Archived Offer Comparisons' },
+    { to: routes.archivedApplications, label: 'Archived Applications' },
+    { to: routes.archivedInterviews, label: 'Archived Interviews' },
+    { to: routes.archivedOfferDecisions, label: 'Archived Offer Comparison' },
 ] as const;
 
 const Navbar = () => {

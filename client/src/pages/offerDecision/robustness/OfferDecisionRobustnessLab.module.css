@@ -71,6 +71,7 @@
 
 .importanceFields legend {
     padding: 0;
+    margin-bottom: var(--spaceControl);
     color: var(--colorText);
     font-size: var(--fontSizeControl);
     font-weight: 700;

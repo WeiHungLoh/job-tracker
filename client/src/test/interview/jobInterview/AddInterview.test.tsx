@@ -452,7 +452,7 @@ describe('AddInterview page', () => {
         userEvent.type(screen.getByLabelText('Interview Type (optional)'), 'Technical');
         userEvent.click(screen.getByTestId('add-interview'));
 
-        await waitFor(() => expect(screen.getByText('Interview fields are invalid.')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Interview fields are invalid')).toBeInTheDocument());
         expect(screen.getByLabelText('Interview Date')).toHaveValue('2025-08-03T14:30');
         expect(screen.getByLabelText('Interview Location')).toHaveValue('Zoom');
         expect(screen.getByLabelText('Interview Type (optional)')).toHaveValue('Technical');
@@ -552,7 +552,7 @@ describe('AddInterview page', () => {
             allowSchedulingConflict: true,
             allowOfferDeadlineWarning: true,
         });
-        expect(await screen.findByText('Successfully added an interview!')).toBeInTheDocument();
+        expect(await screen.findByText('Successfully added an interview')).toBeInTheDocument();
         expect(screen.getAllByTestId('toast')).toHaveLength(1);
     });
 
@@ -571,7 +571,7 @@ describe('AddInterview page', () => {
         userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
         userEvent.click(screen.getByTestId('add-interview'));
 
-        expect(await screen.findByText('Successfully added an interview!')).toBeInTheDocument();
+        expect(await screen.findByText('Successfully added an interview')).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         expect(fetch).toHaveBeenCalledTimes(1);
     });
@@ -619,7 +619,7 @@ describe('AddInterview page', () => {
         expect(firstRequest).not.toHaveProperty('allowSchedulingConflict');
         expect(allowSchedulingConflict).toBe(true);
         expect(confirmedRequestWithoutOverride).toEqual(firstRequest);
-        await waitFor(() => expect(screen.getByText('Successfully added an interview!')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Successfully added an interview')).toBeInTheDocument());
         expect(screen.getAllByTestId('toast')).toHaveLength(1);
         expect(screen.getByLabelText('Interview Date')).toHaveValue('');
         expect(screen.getByLabelText('Duration (minutes)')).toHaveValue(60);
@@ -725,7 +725,7 @@ describe('AddInterview page', () => {
         expect(screen.getByTestId('add-interview')).toBeDisabled();
 
         resolveRetry(successResponse());
-        await waitFor(() => expect(screen.getByText('Successfully added an interview!')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Successfully added an interview')).toBeInTheDocument());
         expect(fetch).toHaveBeenCalledTimes(2);
     });
 

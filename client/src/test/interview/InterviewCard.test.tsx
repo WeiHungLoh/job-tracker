@@ -218,7 +218,7 @@ describe('InterviewCard calendar options', () => {
         await userEvent.click(getCalendarTrigger());
         await userEvent.click(screen.getByRole('button', { name: 'Add to Apple Calendar / Outlook (.ics)' }));
 
-        expect(await screen.findByText('Unable to create the calendar event. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to create the calendar event. Please try again')).toBeInTheDocument();
         expect(screen.queryByRole('group', { name: 'Calendar options' })).not.toBeInTheDocument();
     });
 

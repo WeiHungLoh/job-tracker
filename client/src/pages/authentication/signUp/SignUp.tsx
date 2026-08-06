@@ -54,7 +54,7 @@ const SignUp = () => {
         try {
             await api.authentication.signUp({ email: normalizeEmail(email), password });
 
-            showSuccessToast('Sign up successful! Redirecting you to login page');
+            showSuccessToast('Sign up successful — redirecting you to login page');
             setTimeout(() => {
                 navigate(routes.signIn);
             }, 1500);

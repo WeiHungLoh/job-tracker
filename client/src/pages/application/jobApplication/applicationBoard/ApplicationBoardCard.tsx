@@ -168,7 +168,7 @@ const ApplicationBoardCard = ({
             >
                 {application.job_posting_url !== '' && (
                     <a href={application.job_posting_url} rel='noreferrer noopener' target='_blank'>
-                        Click here to view job posting
+                        View job posting
                     </a>
                 )}
                 <div className={styles.notesField}>

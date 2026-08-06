@@ -380,7 +380,7 @@ describe('Job application viewing flow', () => {
             'aria-pressed',
             'true'
         );
-        expect(await screen.findByText('Job application pinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application pinned')).toBeInTheDocument();
         await waitFor(() =>
             expect(highlightSpy).toHaveBeenCalledWith(
                 '1',
@@ -394,7 +394,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Unpin Zulu Systems application' }));
 
         await waitFor(() => expectListCompanyOrder(['Alpha Labs', 'Zulu Systems']));
-        expect(await screen.findByText('Job application unpinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application unpinned')).toBeInTheDocument();
         await waitFor(() => expect(highlightSpy).toHaveBeenCalledTimes(2));
         expect(applicationListRequestCount()).toBe(1);
         expect(fetch).toHaveBeenCalledWith(
@@ -445,7 +445,7 @@ describe('Job application viewing flow', () => {
             resolvePinRequest?.(response({ message: 'Pin update unavailable.' }, 400));
         });
 
-        expect(await screen.findByText('Pin update unavailable.')).toBeInTheDocument();
+        expect(await screen.findByText('Pin update unavailable')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Pin ABC Pte Ltd application' })).toBeEnabled();
         expect(applicationListRequestCount()).toBe(1);
     });
@@ -566,7 +566,7 @@ describe('Job application viewing flow', () => {
             })
         );
         await waitFor(() => expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument());
-        expect(await screen.findByText('Application follow-up undone.')).toBeInTheDocument();
+        expect(await screen.findByText('Application follow-up undone')).toBeInTheDocument();
         expect(applicationListRequestCount()).toBe(1);
     });
 
@@ -943,7 +943,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('radio', { name: 'Company A–Z' }));
 
         expect(
-            await screen.findByText('Unable to save the application sorting preference. Please try again.')
+            await screen.findByText('Unable to save the application sorting preference. Please try again')
         ).toBeInTheDocument();
         expect(updatePreferences).toHaveBeenCalledWith({ application_list_sort_order: 'company_name_asc' });
         expect(getListCompanyHeadings()).toEqual(['1. Zulu Offer', '2. Alpha Applied']);
@@ -1190,7 +1190,7 @@ describe('Job application viewing flow', () => {
             'Interview'
         );
 
-        await screen.findByText('Job application status updated.');
+        await screen.findByText('Job application status updated');
         expect(scrollTo).not.toHaveBeenCalled();
         expect(windowScrollTo).not.toHaveBeenCalled();
         expect(screen.getByRole('article', { name: /ABC Pte Ltd Software Engineer/i })).not.toHaveClass(
@@ -1236,7 +1236,7 @@ describe('Job application viewing flow', () => {
         expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
 
         await act(async () => resolveStatusUpdate?.(response(undefined, 204)));
-        expect(await screen.findByText('Job application status updated.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application status updated')).toBeInTheDocument();
         expect(scrollTo).not.toHaveBeenCalled();
         expect(windowScrollTo).not.toHaveBeenCalled();
 
@@ -1382,7 +1382,7 @@ describe('Job application viewing flow', () => {
             'Interview'
         );
 
-        expect(await screen.findByText('Status update is temporarily unavailable.')).toBeInTheDocument();
+        expect(await screen.findByText('Status update is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Applied 1' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Interview 0' })).toBeInTheDocument();
         expect(scrollTo).not.toHaveBeenCalled();
@@ -1436,7 +1436,7 @@ describe('Job application viewing flow', () => {
             resolveStatusUpdate(response({ message: 'Status update is temporarily unavailable.' }, 400));
         });
 
-        expect(await screen.findByText('Status update is temporarily unavailable.')).toBeInTheDocument();
+        expect(await screen.findByText('Status update is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'No applications match your filters' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Sort by' })).not.toBeInTheDocument();
     });
@@ -1458,7 +1458,7 @@ describe('Job application viewing flow', () => {
         expect(screen.getByPlaceholderText('Add your notes here')).not.toBeVisible();
         await userEvent.click(screen.getByText('Actions'));
 
-        expect(screen.getByRole('link', { name: 'Click here to view job posting' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'View job posting' })).toBeInTheDocument();
         const notesField = screen.getByPlaceholderText('Add your notes here');
         expect(notesField).toBeVisible();
         expect(notesField).toHaveAttribute('maxlength', '3000');
@@ -1658,7 +1658,7 @@ describe('Job application viewing flow', () => {
             { updatePreferences }
         );
 
-        expect(await screen.findByText('Unable to filter job applications. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to filter job applications. Please try again')).toBeInTheDocument();
     });
 
     test('does not resave List mode or an already-selected status before highlighting a navigation target', async () => {
@@ -1900,7 +1900,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
-        expect(await screen.findByText('Job application filtering is temporarily unavailable.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application filtering is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
     });
@@ -1994,7 +1994,7 @@ describe('Job application viewing flow', () => {
         await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
         await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
-        expect(await screen.findByText('Status update is temporarily unavailable.')).toBeInTheDocument();
+        expect(await screen.findByText('Status update is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
         expect(screen.getByRole('listbox')).toHaveValue('Interview');
         expect(screen.getByText(/^Job Status: Applied$/)).toBeInTheDocument();
@@ -2324,7 +2324,7 @@ describe('Job application viewing flow', () => {
         });
         await userEvent.click(screen.getByRole('button', { name: 'Archive' }));
 
-        expect(await screen.findByText('Preserve these notes before archiving.')).toBeInTheDocument();
+        expect(await screen.findByText('Preserve these notes before archiving')).toBeInTheDocument();
         expect(screen.getByText(/ABC Pte Ltd/i)).toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications`, {
             method: 'PATCH',
@@ -2442,7 +2442,7 @@ describe('Job application viewing flow', () => {
 
         await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
 
-        expect(await screen.findByText('Unable to inspect this application.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to inspect this application')).toBeInTheDocument();
         expect(mockConfirm).not.toHaveBeenCalled();
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1`, {
             method: 'DELETE',
@@ -2563,7 +2563,7 @@ describe('Job application viewing flow', () => {
         await act(async () => vi.advanceTimersByTimeAsync(1_000));
 
         expect(screen.getByText('Couldn’t save')).toBeInTheDocument();
-        expect(screen.getByText('Notes could not be saved.')).toBeInTheDocument();
+        expect(screen.getByText('Notes could not be saved')).toBeInTheDocument();
 
         await act(async () => {
             fireEvent.click(screen.getByRole('button', { name: 'Retry saving notes for ABC Pte Ltd' }));
@@ -2693,7 +2693,7 @@ describe('Job application viewing flow', () => {
                 expect.objectContaining({
                     title: 'Confirm Delete All',
                     description:
-                        'Delete all 1 active job application and its 0 related active interviews? This affects every active application you own, including applications not visible under the current job-status filters. This action is permanent and cannot be undone.',
+                        'Delete all 1 active job application? This affects every active application you own, including applications not visible under the current job-status filters. This action is permanent and cannot be undone.',
                     confirmationText: 'Delete All',
                     cancellationText: 'Cancel',
                     confirmationButtonProps: expect.objectContaining({
@@ -2870,7 +2870,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Delete all applications' }));
 
         expect(
-            await screen.findByText('Unable to load active application counts. Please try again.')
+            await screen.findByText('Unable to load active application counts. Please try again')
         ).toBeInTheDocument();
         expect(mockConfirm).not.toHaveBeenCalled();
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications`, {

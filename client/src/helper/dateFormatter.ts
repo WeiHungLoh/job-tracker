@@ -29,6 +29,26 @@ export const parseDatetimeLocal = (value: string): Date => {
 
 const padDateTimePart = (value: number): string => String(value).padStart(2, '0');
 
+const formatElapsedDuration = (dateDiff: number): string => {
+    const totalMinutes = Math.max(0, Math.floor(dateDiff / (60 * 1000)));
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    const parts: string[] = [];
+
+    if (days > 0) {
+        parts.push(`${days} day${days === 1 ? '' : 's'}`);
+    }
+    if (hours > 0) {
+        parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
+    }
+    if (minutes > 0) {
+        parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
+    }
+
+    return parts.length > 0 ? parts.join(' ') : '0 minutes';
+};
+
 export const formatLongDate = (value: string | Date): string =>
     new Date(value).toLocaleString('en-GB', {
         day: 'numeric',
@@ -130,7 +150,7 @@ const formatDate = (dueDate: string) => {
         return `${days} days ${remainingHours} hours ${remainingMinutes} minutes`;
     };
 
-    const timeSinceApplication = formatDuration(dateSinceApplication);
+    const timeSinceApplication = formatElapsedDuration(dateSinceApplication);
     const timeBeforeInterview = formatDuration(dateBeforeInterview, 'Past due');
 
     return { formattedDay, formattedDate, timeSinceApplication, timeBeforeInterview };

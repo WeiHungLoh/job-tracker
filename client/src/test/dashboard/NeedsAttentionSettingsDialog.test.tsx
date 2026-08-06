@@ -69,7 +69,7 @@ describe('NeedsAttentionSettingsDialog', () => {
         expect(resetButton).not.toHaveClass(primaryButtonStyles.secondary);
         await userEvent.click(resetButton);
         expect(
-            await screen.findByText('Reminder settings reset to default. Click Save to apply these changes.')
+            await screen.findByText('Reminder settings reset to default. Click Save to apply these changes')
         ).toBeInTheDocument();
         expect(screen.getByLabelText('Start showing this many days before the deadline (1–14)')).toHaveValue(3);
         expect(screen.getByLabelText('Maximum reminders shown (1–50)')).toHaveValue(10);
@@ -138,7 +138,7 @@ describe('NeedsAttentionSettingsDialog', () => {
             ...testPreferences,
             needs_attention_application_follow_up_days: 9,
         });
-        expect(await screen.findByText('Needs Attention settings saved.')).toBeInTheDocument();
+        expect(await screen.findByText('Needs Attention settings saved')).toBeInTheDocument();
         expect(onClose).toHaveBeenCalledTimes(1);
     });
 

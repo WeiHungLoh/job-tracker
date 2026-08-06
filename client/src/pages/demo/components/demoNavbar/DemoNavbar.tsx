@@ -14,16 +14,16 @@ const ARCHIVED_LOCATIONS: readonly string[] = [
 
 const ACTIVE_NAV_LINKS = [
     { to: routes.demoDashboard, label: 'Dashboard' },
-    { to: routes.demoAddApplication, label: 'Add Job Application' },
-    { to: routes.demoViewApplications, label: 'View Job Applications' },
-    { to: routes.demoViewInterviews, label: 'View Interviews' },
+    { to: routes.demoAddApplication, label: 'New Application' },
+    { to: routes.demoViewApplications, label: 'Applications' },
+    { to: routes.demoViewInterviews, label: 'Interviews' },
     { to: routes.demoOfferDecisions, label: 'Offer Comparison' },
 ] as const;
 
 const ARCHIVED_NAV_LINKS = [
-    { to: routes.demoArchivedApplications, label: 'View Archived Applications' },
-    { to: routes.demoArchivedInterviews, label: 'View Archived Interviews' },
-    { to: routes.demoArchivedOfferDecisions, label: 'Archived Offer Comparisons' },
+    { to: routes.demoArchivedApplications, label: 'Archived Applications' },
+    { to: routes.demoArchivedInterviews, label: 'Archived Interviews' },
+    { to: routes.demoArchivedOfferDecisions, label: 'Archived Offer Comparison' },
 ] as const;
 
 const DemoNavbar = () => {

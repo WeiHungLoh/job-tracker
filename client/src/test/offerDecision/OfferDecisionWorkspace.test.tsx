@@ -387,7 +387,7 @@ describe('OfferDecisionWorkspace', () => {
                 name: 'Add Acme offer deadline to Apple Calendar or Outlook',
             })
         );
-        expect(await screen.findByText('Unable to create the calendar event. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to create the calendar event. Please try again')).toBeInTheDocument();
     });
 
     test('hides offer deadline actions while editing and outside eligible evaluated groups', () => {
@@ -1058,7 +1058,7 @@ describe('OfferDecisionWorkspace', () => {
         editOfferEvaluation('Acme');
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
 
-        expect(await screen.findByText('Change at least one evaluation field before saving.')).toBeInTheDocument();
+        expect(await screen.findByText('Change at least one evaluation field before saving')).toBeInTheDocument();
         expect(screen.getByLabelText('Acme monthly base salary')).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
     });
@@ -1072,7 +1072,7 @@ describe('OfferDecisionWorkspace', () => {
 
         expect(await screen.findByText('Decision deadline is required.')).toBeInTheDocument();
         expect(screen.getByText('Monthly base salary is required.')).toBeInTheDocument();
-        expect(screen.queryByText('Change at least one evaluation field before saving.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Change at least one evaluation field before saving')).not.toBeInTheDocument();
         expect(screen.getByLabelText('Beta Labs decision deadline')).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
     });
@@ -1723,7 +1723,7 @@ describe('OfferDecisionWorkspace', () => {
         await userEvent.click(screen.getByRole('checkbox', { name: 'Evaluated Offers' }));
 
         expect(
-            await screen.findByText('Unable to save offer comparison filters. Please try again.')
+            await screen.findByText('Unable to save offer comparison filters. Please try again')
         ).toBeInTheDocument();
         await waitFor(() => {
             expect(screen.getByRole('checkbox', { name: 'Previous Evaluations' })).toBeChecked();
@@ -2067,7 +2067,7 @@ describe('OfferDecisionWorkspace', () => {
         await userEvent.click(screen.getByRole('menuitemradio', { name: 'Vertical' }));
 
         expect(
-            await screen.findByText('Unable to save the offer comparison table layout. Please try again.')
+            await screen.findByText('Unable to save the offer comparison table layout. Please try again')
         ).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Table layout' })).toHaveTextContent('Horizontal');
         expect(

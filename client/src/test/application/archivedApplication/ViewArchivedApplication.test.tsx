@@ -661,7 +661,7 @@ describe('Archived job application viewing flow', () => {
         await userEvent.click(screen.getByRole('radio', { name: 'Company A–Z' }));
 
         expect(
-            await screen.findByText('Unable to save the archived application sorting preference. Please try again.')
+            await screen.findByText('Unable to save the archived application sorting preference. Please try again')
         ).toBeInTheDocument();
         expect(updatePreferences).toHaveBeenCalledWith({
             archived_application_list_sort_order: 'company_name_asc',
@@ -732,7 +732,7 @@ describe('Archived job application viewing flow', () => {
         await userEvent.click(within(applicationCard).getByText('Actions'));
 
         expect(
-            within(applicationCard).getByRole('link', { name: 'Click here to view job posting' })
+            within(applicationCard).getByRole('link', { name: 'View job posting' })
         ).toBeInTheDocument();
         expect(within(applicationCard).getByRole('button', { name: 'Unarchive' })).toBeInTheDocument();
         expect(within(applicationCard).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
@@ -1027,7 +1027,7 @@ describe('Archived job application viewing flow', () => {
                 expect.objectContaining({
                     title: 'Confirm Delete All',
                     description:
-                        'Delete all 1 archived job application and its 0 related archived interviews? This affects every archived application you own, including applications not visible under the current archived job-status filters. This action is permanent and cannot be undone.',
+                        'Delete all 1 archived job application? This affects every archived application you own, including applications not visible under the current archived job-status filters. This action is permanent and cannot be undone.',
                     confirmationText: 'Delete All',
                     cancellationText: 'Cancel',
                     confirmationButtonProps: expect.objectContaining({
@@ -1161,7 +1161,7 @@ describe('Archived job application viewing flow', () => {
 
         await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
 
-        expect(await screen.findByText('Unable to inspect this archived application.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to inspect this archived application')).toBeInTheDocument();
         expect(mockConfirm).not.toHaveBeenCalled();
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications/1`, {
             method: 'DELETE',

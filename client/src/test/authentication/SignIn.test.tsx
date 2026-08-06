@@ -111,7 +111,7 @@ describe('User sign in flow', () => {
             })
         );
 
-        await waitFor(() => expect(screen.getByText('Invalid email or password.')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Invalid email or password')).toBeInTheDocument());
         expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
         expect(localStorage.getItem(AUTH_FOCUSED_MODE_STORAGE_KEY)).toBe('true');
     });
@@ -143,7 +143,7 @@ describe('User sign in flow', () => {
             })
         );
 
-        await waitFor(() => expect(screen.getByText('Invalid email or password.')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Invalid email or password')).toBeInTheDocument());
     });
 
     test('links user to sign up page', async () => {
@@ -170,8 +170,9 @@ describe('User sign in flow', () => {
             screen.getByRole('img', {
                 name: /job tracker dashboard showing application, interview and priority statistics/i,
             })
-        ).toHaveAttribute('src', expect.stringContaining('light-dashboard.png'));
-        expect(screen.getByText('jobtracker.weihungloh.com/dashboard')).toBeInTheDocument();
+        ).toHaveAttribute('src', expect.stringContaining('light-dashboard.webp'));
+        expect(screen.getAllByRole('tab')).toHaveLength(4);
+        expect(screen.queryByText(/jobtracker\.weihungloh\.com/)).not.toBeInTheDocument();
         expect(screen.getAllByRole('link', { name: /explore demo/i })).toHaveLength(1);
         expect(screen.getByRole('link', { name: /explore demo/i })).toHaveAttribute(
             'href',
@@ -183,7 +184,7 @@ describe('User sign in flow', () => {
         expect(document.querySelector('#auth-account-panel')).toHaveAttribute('inert');
     });
 
-    test('cycles through product previews in route order', () => {
+    test('selects each primary product preview from the feature tabs', async () => {
         render(
             <MemoryRouter initialEntries={['/']}>
                 <SignIn />
@@ -191,46 +192,48 @@ describe('User sign in flow', () => {
         );
 
         const previews = [
-            ['application/add', 'light-add-application.png'],
-            ['application/view', 'light-list-application.png'],
-            ['application/view', 'light-board-application.png'],
-            ['interview/view', 'light-list-interview.png'],
-            ['interview/view', 'light-board-interview.png'],
-            ['offer-decisions', 'light-offer-comparison.png'],
-            ['application/archive', 'light-list-archived-application.png'],
-            ['application/archive', 'light-board-archived-application.png'],
-            ['interview/archive', 'light-list-archived-interview.png'],
-            ['interview/archive', 'light-board-archived-interview.png'],
-            ['offer-decisions/archive', 'light-archived-offer-comparison.png'],
-            ['dashboard', 'light-dashboard.png'],
+            ['Applications', 'light-list-applications.webp'],
+            ['Interviews', 'light-list-interview.webp'],
+            ['Offer Comparison', 'light-offer-comparison.webp'],
         ];
 
-        previews.forEach(([route, image]) => {
-            userEvent.click(screen.getByRole('button', { name: /next preview/i }));
-            expect(screen.getByText(`jobtracker.weihungloh.com/${route}`)).toBeInTheDocument();
-            expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining(image));
-            fireEvent.animationEnd(document.querySelector('[data-preview-track="embedded"]') as HTMLElement);
-        });
+        for (const [label, image] of previews) {
+            userEvent.click(screen.getByRole('tab', { name: label }));
+            await waitFor(() => expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining(image)));
+            await waitFor(() =>
+                expect(document.querySelector('[data-preview-layer="outgoing"]')?.className).toContain(
+                    'previewLayerOutgoing'
+                )
+            );
+            fireEvent.transitionEnd(document.querySelector('[data-preview-layer="incoming"]') as HTMLElement);
+        }
     });
 
-    test('supports left and right keyboard navigation in the product preview carousel', () => {
+    test('supports left and right keyboard navigation in the feature tabs', async () => {
         render(
             <MemoryRouter initialEntries={['/']}>
                 <SignIn />
             </MemoryRouter>
         );
 
-        const carousel = screen.getByRole('region', { name: /job tracker product preview/i });
-        carousel.focus();
-        fireEvent.keyDown(carousel, { key: 'ArrowRight' });
-        expect(screen.getByText('jobtracker.weihungloh.com/application/add')).toBeInTheDocument();
-        fireEvent.animationEnd(document.querySelector('[data-preview-track="embedded"]') as HTMLElement);
+        const dashboardTab = screen.getByRole('tab', { name: 'Dashboard' });
+        dashboardTab.focus();
+        fireEvent.keyDown(dashboardTab, { key: 'ArrowRight' });
+        await waitFor(() =>
+            expect(screen.getByRole('tab', { name: 'Applications' })).toHaveAttribute('aria-selected', 'true')
+        );
+        await waitFor(() =>
+            expect(document.querySelector('[data-preview-layer="outgoing"]')?.className).toContain(
+                'previewLayerOutgoing'
+            )
+        );
+        fireEvent.transitionEnd(document.querySelector('[data-preview-layer="incoming"]') as HTMLElement);
 
-        fireEvent.keyDown(carousel, { key: 'ArrowLeft' });
-        expect(screen.getByText('jobtracker.weihungloh.com/dashboard')).toBeInTheDocument();
+        fireEvent.keyDown(screen.getByRole('tab', { name: 'Applications' }), { key: 'ArrowLeft' });
+        await waitFor(() => expect(dashboardTab).toHaveAttribute('aria-selected', 'true'));
     });
 
-    test('uses dark preview images in dark mode', () => {
+    test('uses dark preview images in dark mode', async () => {
         localStorage.setItem('theme', 'dark');
 
         render(
@@ -243,14 +246,12 @@ describe('User sign in flow', () => {
             screen.getByRole('img', {
                 name: /job tracker dashboard showing application, interview and priority statistics/i,
             })
-        ).toHaveAttribute('src', expect.stringContaining('dark-dashboard.png'));
+        ).toHaveAttribute('src', expect.stringContaining('dark-dashboard.webp'));
 
-        userEvent.click(screen.getByRole('button', { name: /next preview/i }));
-        expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-add-application.png'));
-        fireEvent.animationEnd(document.querySelector('[data-preview-track="embedded"]') as HTMLElement);
-
-        userEvent.click(screen.getByRole('button', { name: /next preview/i }));
-        expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-list-application.png'));
+        userEvent.click(screen.getByRole('tab', { name: 'Applications' }));
+        await waitFor(() =>
+            expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-list-applications.webp'))
+        );
     });
 
     test('keeps carousel navigation available in fullscreen and supports both close methods', async () => {
@@ -269,18 +270,17 @@ describe('User sign in flow', () => {
         expect(within(dialog).getByRole('button', { name: /close fullscreen preview/i })).toHaveFocus();
 
         userEvent.click(within(dialog).getByRole('button', { name: /next screenshot/i }));
-        const addApplicationDialog = screen.getByRole('dialog', { name: /add application screenshot viewer/i });
-        expect(addApplicationDialog).toBeInTheDocument();
-        fireEvent.load(within(addApplicationDialog).getByRole('img'));
-        fireEvent.animationEnd(addApplicationDialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
+        const applicationsDialog = await screen.findByRole('dialog', { name: /applications screenshot viewer/i });
+        fireEvent.load(within(applicationsDialog).getByRole('img'));
+        fireEvent.transitionEnd(applicationsDialog.querySelector('[data-preview-track="fullscreen"]') as HTMLElement);
 
-        userEvent.click(screen.getByRole('button', { name: /show list archived interview/i }));
-        expect(screen.getByRole('dialog', { name: /list archived interview screenshot viewer/i })).toBeInTheDocument();
+        userEvent.click(screen.getByRole('button', { name: /show interviews/i }));
+        expect(await screen.findByRole('dialog', { name: /interviews screenshot viewer/i })).toBeInTheDocument();
 
         userEvent.click(screen.getByRole('button', { name: /close fullscreen preview/i }));
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         await waitFor(() => expect(imageButton).toHaveFocus());
-        expect(screen.getByRole('button', { name: /next preview/i })).toBeEnabled();
+        expect(screen.getAllByRole('tab')).toHaveLength(4);
         expect(document.body).not.toHaveStyle({ overflow: 'hidden' });
 
         userEvent.click(imageButton);

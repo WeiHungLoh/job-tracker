@@ -98,17 +98,17 @@
     }
 
     .formPage label {
-        font-size: 0.8rem;
+        font-size: 0.875rem;
     }
 
     .formPage input,
     .formPage select,
     .formPage textarea {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 
     .fieldError {
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
     }
 
     .context p {
@@ -116,9 +116,9 @@
     }
 
     .formPage button {
-        padding: 6.4px 8px;
-        border-radius: 9.6px;
-        font-size: 0.7rem;
+        padding: 8px 10px;
+        border-radius: 10px;
+        font-size: 0.875rem;
     }
 }
 

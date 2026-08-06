@@ -280,7 +280,7 @@ describe('signed-in dashboard attention navigation', () => {
         await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
 
         expect(apiMocks.updateApplicationStatus).toHaveBeenCalledWith({ jobId: 42, jobStatus: 'Ghosted' });
-        expect(await screen.findByText('Application marked as Ghosted.')).toBeInTheDocument();
+        expect(await screen.findByText('Application marked as Ghosted')).toBeInTheDocument();
         await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
         expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
         expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
@@ -311,7 +311,7 @@ describe('signed-in dashboard attention navigation', () => {
         await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
 
         expect(
-            await screen.findByText('Unable to mark the application as Ghosted. Please try again.')
+            await screen.findByText('Unable to mark the application as Ghosted. Please try again')
         ).toBeInTheDocument();
         await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
         expect(action).toBeInTheDocument();
@@ -350,7 +350,7 @@ describe('signed-in dashboard attention navigation', () => {
         await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
 
         expect(apiMocks.updateApplicationStatus).toHaveBeenCalledWith({ jobId: 42, jobStatus: 'Ghosted' });
-        expect(await screen.findByText('Application marked as Ghosted.')).toBeInTheDocument();
+        expect(await screen.findByText('Application marked as Ghosted')).toBeInTheDocument();
         await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
         expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
         expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();

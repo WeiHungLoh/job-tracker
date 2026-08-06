@@ -4,6 +4,7 @@ import {
     isInvalidDatetimeLocalInput,
     toDatetimeLocalInputValue,
 } from '../../helper/dateFormatter';
+import formatDate from '../../helper/dateFormatter';
 
 describe('datetime-local validation', () => {
     test('rejects impossible calendar dates instead of normalizing them', () => {
@@ -62,5 +63,25 @@ describe('follow-up timestamp formatting', () => {
 
         expect(formatFollowUpSentAt(timestamp)).toBe(expectedFull);
         expect(formatFollowUpCompactDate(timestamp)).toBe(expectedCompact);
+    });
+});
+
+describe('application elapsed-time formatting', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test.each([
+        [51 * 60 * 1000, '51 minutes'],
+        [60 * 60 * 1000, '1 hour'],
+        [61 * 60 * 1000, '1 hour 1 minute'],
+        [(24 * 2 + 2) * 60 * 60 * 1000 + 2 * 60 * 1000, '2 days 2 hours 2 minutes'],
+        [24 * 60 * 60 * 1000, '1 day'],
+        [0, '0 minutes'],
+    ])('omits zero units and uses singular labels for %s', (elapsedMilliseconds, expected) => {
+        const applicationDate = new Date('2026-01-01T00:00:00.000Z');
+        vi.setSystemTime(new Date(applicationDate.getTime() + elapsedMilliseconds));
+
+        expect(formatDate(applicationDate).timeSinceApplication).toBe(expected);
     });
 });

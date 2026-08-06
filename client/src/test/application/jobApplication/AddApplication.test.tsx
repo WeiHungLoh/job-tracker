@@ -100,7 +100,7 @@ describe('User add application flow', () => {
             </MemoryRouter>
         );
 
-        expect(screen.queryByRole('heading', { name: 'Add Job Application' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'New Application' })).not.toBeInTheDocument();
         userEvent.type(screen.getByLabelText(/company name/i), 'ABC Pte Ltd');
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
         userEvent.selectOptions(screen.getByLabelText(/job status/i), 'Interview');
@@ -109,7 +109,7 @@ describe('User add application flow', () => {
         });
         userEvent.type(screen.getByLabelText(/job location/i), 'Singapore');
         userEvent.type(screen.getByLabelText(/job posting url/i), 'https://example.com/jobs/1');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         const request = fetch.mock.calls[0][1] as RequestInit;
@@ -150,14 +150,14 @@ describe('User add application flow', () => {
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
     });
 
-    test('View Job Applications does not submit the form', () => {
+    test('View Applications does not submit the form', () => {
         render(
             <MemoryRouter>
                 <AddApplication />
             </MemoryRouter>
         );
 
-        const viewApplicationsButton = screen.getByRole('button', { name: 'View Job Applications' });
+        const viewApplicationsButton = screen.getByRole('button', { name: 'View Applications' });
         expect(viewApplicationsButton).toHaveAttribute('type', 'button');
         userEvent.click(viewApplicationsButton);
 
@@ -377,7 +377,7 @@ describe('User add application flow', () => {
         });
 
         renderQuickCaptureApplication(`/application/add#${fragment.toString()}`);
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         const request = fetch.mock.calls[0][1] as RequestInit;
@@ -449,7 +449,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), 'ABC Pte Ltd');
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('URL must be in a valid format.')).toBeInTheDocument());
         expect(document.activeElement).toBe(screen.getByLabelText(/job posting url/i));
@@ -466,7 +466,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), 'Example');
         userEvent.type(screen.getByLabelText(/job title/i), 'Software Engineer');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         const request = fetch.mock.calls[0][1] as RequestInit;
@@ -488,7 +488,7 @@ describe('User add application flow', () => {
         const companyNameInput = screen.getByLabelText(/company name/i);
         const scrollIntoView = vi.fn();
         companyNameInput.scrollIntoView = scrollIntoView;
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         const jobTitleInput = screen.getByLabelText(/job title/i);
         const companyNameError = await screen.findByText('Please enter a company name.');
@@ -513,7 +513,7 @@ describe('User add application flow', () => {
             </MemoryRouter>
         );
 
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
         await screen.findByText('Please enter a company name.');
 
         const companyNameInput = screen.getByLabelText(/company name/i);
@@ -535,7 +535,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), '   ');
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('Please enter a company name.')).toBeInTheDocument());
         expect(fetch).not.toHaveBeenCalled();
@@ -557,7 +557,7 @@ describe('User add application flow', () => {
             value: { badInput: true },
         });
 
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('Please enter a valid application date.')).toBeInTheDocument());
         expect(document.activeElement).toBe(applicationDateInput);
@@ -583,7 +583,7 @@ describe('User add application flow', () => {
         fireEvent.change(screen.getByLabelText(/application date/i), {
             target: { value: '1899-12-31T23:59' },
         });
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalled());
 
@@ -601,7 +601,7 @@ describe('User add application flow', () => {
         userEvent.type(screen.getByLabelText(/company name/i), 'ABC Pte Ltd');
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
         userEvent.type(screen.getByLabelText(/job posting url/i), 'not-a-valid-url');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('URL must be in a valid format.')).toBeInTheDocument());
         const jobURLInput = screen.getByLabelText(/job posting url/i);
@@ -625,7 +625,7 @@ describe('User add application flow', () => {
         userEvent.type(screen.getByLabelText(/company name/i), 'ABC Pte Ltd');
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
         userEvent.type(screen.getByLabelText(/job posting url/i), 'javascript:alert(1)');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('URL must be in a valid format.')).toBeInTheDocument());
         expect(fetch).not.toHaveBeenCalled();
@@ -641,7 +641,7 @@ describe('User add application flow', () => {
         userEvent.type(screen.getByLabelText(/company name/i), 'ABC Pte Ltd');
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
         userEvent.type(screen.getByLabelText(/job posting url/i), 'https://localhost/jobs/1');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('URL must be in a valid format.')).toBeInTheDocument());
         expect(fetch).not.toHaveBeenCalled();
@@ -659,7 +659,7 @@ describe('User add application flow', () => {
         fireEvent.change(screen.getByLabelText(/application date/i), {
             target: { value: '2999-12-31T23:59' },
         });
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('Application date cannot be in the future.')).toBeInTheDocument());
         expect(document.activeElement).toBe(screen.getByLabelText(/application date/i));
@@ -698,7 +698,7 @@ describe('User add application flow', () => {
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
         userEvent.type(screen.getByLabelText(/job location/i), '   ');
         userEvent.type(screen.getByLabelText(/job posting url/i), '   ');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalled());
 
@@ -724,7 +724,7 @@ describe('User add application flow', () => {
         userEvent.type(screen.getByLabelText(/job title/i), '  Software Engineer  ');
         userEvent.type(screen.getByLabelText(/job location/i), '  Singapore  ');
         userEvent.type(screen.getByLabelText(/job posting url/i), '  https://example.com/jobs/1  ');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalled());
 
@@ -754,7 +754,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), 'ABC Pte Ltd');
         userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('Failed to add a job application')).toBeInTheDocument());
         expect(screen.getByLabelText(/company name/i)).toHaveValue('ABC Pte Ltd');
@@ -772,7 +772,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), 'Morgan Stanley');
         userEvent.type(screen.getByLabelText(/job title/i), 'Software Engineer');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         const dialog = await screen.findByRole('dialog');
         const formattedApplicationDate = formatDate(DUPLICATE_APPLICATION.application_date).formattedDate;
@@ -798,7 +798,7 @@ describe('User add application flow', () => {
         );
 
         fillCompleteApplicationForm();
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
         userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
 
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -817,7 +817,7 @@ describe('User add application flow', () => {
         );
 
         fillCompleteApplicationForm();
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
         const dialog = await screen.findByRole('dialog');
         fireEvent.keyDown(dialog, { key: 'Escape' });
 
@@ -837,7 +837,7 @@ describe('User add application flow', () => {
         );
 
         fillCompleteApplicationForm();
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
         userEvent.click(await screen.findByRole('button', { name: 'Add Anyway' }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
@@ -854,7 +854,7 @@ describe('User add application flow', () => {
         expect(JSON.parse(firstRequest.body as string)).toEqual(expectedRequest);
         expect(JSON.parse(confirmedRequest.body as string)).toEqual({ ...expectedRequest, allowDuplicate: true });
 
-        await waitFor(() => expect(screen.getByText('Successfully added a job application!')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Successfully added a job application')).toBeInTheDocument());
         expect(screen.getAllByTestId('toast')).toHaveLength(1);
         expect(screen.getByLabelText(/company name/i)).toHaveValue('');
         expect(screen.getByLabelText(/job title/i)).toHaveValue('');
@@ -875,7 +875,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), '  Morgan Stanley  ');
         userEvent.type(screen.getByLabelText(/job title/i), '  Software Engineer  ');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         const addAnywayButton = await screen.findByRole('button', { name: 'Add Anyway' });
         await waitFor(() => expect(addAnywayButton).toHaveFocus());
@@ -908,7 +908,7 @@ describe('User add application flow', () => {
         );
 
         fillCompleteApplicationForm();
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
         userEvent.click(await screen.findByRole('button', { name: 'Add Anyway' }));
 
         await waitFor(() => expect(screen.getByText('Failed to add a job application')).toBeInTheDocument());
@@ -937,7 +937,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), 'Morgan Stanley');
         userEvent.type(screen.getByLabelText(/job title/i), 'Software Engineer');
-        userEvent.click(screen.getByRole('button', { name: /add job application/i }));
+        userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         await waitFor(() => expect(screen.getByText('Malformed duplicate response')).toBeInTheDocument());
         expect(fetch).toHaveBeenCalledTimes(1);
@@ -955,7 +955,7 @@ describe('User add application flow', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), 'Morgan Stanley');
         userEvent.type(screen.getByLabelText(/job title/i), 'Software Engineer');
-        const form = screen.getByRole('button', { name: /add job application/i }).closest('form');
+        const form = screen.getByRole('button', { name: /^add application$/i }).closest('form');
         expect(form).not.toBeNull();
 
         fireEvent.submit(form!);
@@ -969,6 +969,6 @@ describe('User add application flow', () => {
         expect(fetch).toHaveBeenCalledTimes(1);
         userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-        expect(screen.getByRole('button', { name: /add job application/i })).not.toHaveAttribute('aria-busy');
+        expect(screen.getByRole('button', { name: /^add application$/i })).not.toHaveAttribute('aria-busy');
     });
 });

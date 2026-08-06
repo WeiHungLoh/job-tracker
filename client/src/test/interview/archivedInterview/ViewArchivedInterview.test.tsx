@@ -472,7 +472,7 @@ describe('Archived job interview viewer flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Upcoming Interviews' }));
 
-        expect(await screen.findByText('Unable to filter archived interviews. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to filter archived interviews. Please try again')).toBeInTheDocument();
         expect(screen.getByRole('checkbox', { name: 'Upcoming Interviews' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Past Interviews' })).toBeChecked();
         expect(screen.getByRole('article', { name: 'ABC Pte Ltd interview' })).toBeInTheDocument();

@@ -210,12 +210,12 @@ describe('Job interview viewer flow', () => {
             'aria-pressed',
             'true'
         );
-        expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Interview pinned')).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Unpin Later Interview interview' }));
 
         await waitFor(() => expect(getCompanyOrder()).toEqual(['ABC Pte Ltd interview', 'Later Interview interview']));
-        expect(await screen.findByText('Interview unpinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Interview unpinned')).toBeInTheDocument();
         expect(
             fetch.mock.calls.filter(
                 ([url, init]) =>
@@ -323,7 +323,7 @@ describe('Job interview viewer flow', () => {
         );
 
         await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
-        expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Interview pinned')).toBeInTheDocument();
         await act(async () => {
             await new Promise((resolve) => setTimeout(resolve, 250));
         });
@@ -348,7 +348,7 @@ describe('Job interview viewer flow', () => {
 
         await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
 
-        expect(await screen.findByText('Interview pin unavailable.')).toBeInTheDocument();
+        expect(await screen.findByText('Interview pin unavailable')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Pin ABC Pte Ltd interview' })).toBeEnabled();
         expect(screen.getByRole('article', { name: 'ABC Pte Ltd interview' })).toBeInTheDocument();
     });
@@ -391,7 +391,7 @@ describe('Job interview viewer flow', () => {
         expect(
             screen.getByRole('button', { name: 'Undo follow-up for Software Engineer at Second Company' })
         ).toBeInTheDocument();
-        expect(await screen.findByText('Interview follow-up undone.')).toBeInTheDocument();
+        expect(await screen.findByText('Interview follow-up undone')).toBeInTheDocument();
     });
 
     test('highlights the exact dashboard interview in List view without resaving the view preference', async () => {
@@ -518,7 +518,7 @@ describe('Job interview viewer flow', () => {
         expect(screen.queryByRole('article', { name: 'Future Dashboard Company interview' })).not.toBeInTheDocument();
         await act(async () => rejectUpdate(new Error('save failed')));
 
-        expect(await screen.findByText('Unable to save display preferences. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to save display preferences. Please try again')).toBeInTheDocument();
         expect(await screen.findByRole('article', { name: 'Past Saved Filter Company interview' })).toBeInTheDocument();
         await waitFor(() =>
             expect(
@@ -551,7 +551,7 @@ describe('Job interview viewer flow', () => {
             }
         );
 
-        expect(await screen.findByText('Unable to load interviews. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to load interviews. Please try again')).toBeInTheDocument();
         expect(screen.getAllByRole('status', { name: 'Loading results' })).toHaveLength(2);
         await act(async () =>
             resolveUpdate({
@@ -599,7 +599,7 @@ describe('Job interview viewer flow', () => {
             { initialPreferences: { interview_view_mode: 'board' }, updatePreferences }
         );
 
-        expect(await screen.findByText('Unable to save display preferences. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to save display preferences. Please try again')).toBeInTheDocument();
         expect(screen.getByTestId('location-state')).toHaveTextContent('null');
     });
 
@@ -793,7 +793,7 @@ describe('Job interview viewer flow', () => {
         const viewToggle = screen.getByRole('group', { name: 'Interview view' });
         await userEvent.click(within(viewToggle).getByRole('button', { name: 'Board' }));
 
-        expect(await screen.findByText('Unable to save display preferences. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to save display preferences. Please try again')).toBeInTheDocument();
         expect(within(viewToggle).getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
         expect(within(viewToggle).getByRole('button', { name: 'Board' })).toHaveAttribute('aria-pressed', 'false');
     });
@@ -867,7 +867,7 @@ describe('Job interview viewer flow', () => {
 
         expect(await screen.findByRole('article', { name: 'Past Collection Company interview' })).toBeInTheDocument();
         expect(
-            await screen.findByText('Unable to load upcoming interviews for calendar export. Please try again.')
+            await screen.findByText('Unable to load upcoming interviews for calendar export. Please try again')
         ).toBeInTheDocument();
     });
 
@@ -1025,7 +1025,7 @@ describe('Job interview viewer flow', () => {
         await clickConfirmedAction(
             screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })
         );
-        expect(await screen.findByText('Unable to create the calendar event. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to create the calendar event. Please try again')).toBeInTheDocument();
 
         mockConfirm.mockResolvedValueOnce({ confirmed: false });
         await clickConfirmedAction(screen.getByRole('button', { name: 'Delete all interviews' }));
@@ -1075,7 +1075,7 @@ describe('Job interview viewer flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Upcoming Interviews' }));
 
-        expect(await screen.findByText('Unable to filter interviews. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to filter interviews. Please try again')).toBeInTheDocument();
         await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Upcoming Interviews' })).toBeChecked());
         expect(screen.getByRole('checkbox', { name: 'Past Interviews' })).toBeChecked();
         expect(screen.getByRole('article', { name: 'Ended Company interview' })).toBeInTheDocument();

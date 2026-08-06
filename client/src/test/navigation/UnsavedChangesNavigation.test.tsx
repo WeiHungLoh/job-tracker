@@ -267,7 +267,7 @@ describe('unsaved-changes route protection', () => {
     test('Add Application stays clean at its normal defaults', async () => {
         renderRouter(applicationRoutes, [routes.addApplication]);
 
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
         expect(screen.getByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
@@ -286,13 +286,13 @@ describe('unsaved-changes route protection', () => {
             const field = screen.getByLabelText(label);
 
             fireEvent.change(field, { target: { value } });
-            await click(screen.getByRole('button', { name: 'View Job Applications' }));
+            await click(screen.getByRole('button', { name: 'View Applications' }));
             const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
             await click(within(dialog).getByRole('button', { name: 'Stay' }));
 
             await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
             fireEvent.change(field, { target: { value: cleanValue } });
-            await click(screen.getByRole('button', { name: 'View Job Applications' }));
+            await click(screen.getByRole('button', { name: 'View Applications' }));
 
             expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         }
@@ -302,7 +302,7 @@ describe('unsaved-changes route protection', () => {
         renderRouter(applicationRoutes, [routes.addApplication]);
 
         enterIncompleteDate(screen.getByLabelText('Application Date (uses current date if left blank)'));
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
@@ -381,7 +381,7 @@ describe('unsaved-changes route protection', () => {
     ])('Quick Capture %s prefill blocks without manual editing', async (parameter, value) => {
         renderRouter(applicationRoutes, [`${routes.addApplication}?${parameter}=${encodeURIComponent(value)}`]);
 
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
@@ -391,7 +391,7 @@ describe('unsaved-changes route protection', () => {
             `${routes.addApplication}?companyName=Google&jobTitle=Software+Engineer&jobLocation=Singapore&jobURL=https%3A%2F%2Fjobs.example.com`,
         ]);
 
-        const viewApplicationsButton = screen.getByRole('button', { name: 'View Job Applications' });
+        const viewApplicationsButton = screen.getByRole('button', { name: 'View Applications' });
         await click(viewApplicationsButton);
 
         const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
@@ -419,7 +419,7 @@ describe('unsaved-changes route protection', () => {
         fireEvent.change(screen.getByLabelText('Job Title'), { target: { value: '' } });
         fireEvent.change(screen.getByLabelText('Job Location (optional)'), { target: { value: '' } });
         fireEvent.change(screen.getByLabelText('Job Posting URL (optional)'), { target: { value: '' } });
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
 
         expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -430,7 +430,7 @@ describe('unsaved-changes route protection', () => {
             `${routes.addApplication}?pageTitle=${encodeURIComponent('Software Engineer at Google')}`,
         ]);
 
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
         expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         unmount();
@@ -438,7 +438,7 @@ describe('unsaved-changes route protection', () => {
         renderRouter(applicationRoutes, [routes.addApplication]);
         await click(screen.getByRole('button', { name: 'Quick Capture' }));
         expect(screen.getByRole('region', { name: 'Quick Capture setup' })).toBeInTheDocument();
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
 
         expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -542,7 +542,7 @@ describe('unsaved-changes route protection', () => {
 
         await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
         await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Job Application' }));
+        await click(screen.getByRole('button', { name: 'Add Application' }));
         const duplicateDialog = await screen.findByRole('dialog', { name: 'Possible Duplicate Application' });
 
         await act(async () => {
@@ -557,7 +557,7 @@ describe('unsaved-changes route protection', () => {
         await click(within(leaveDialog).getByRole('button', { name: 'Stay' }));
 
         await waitFor(() =>
-            expect(screen.getByRole('button', { name: 'Add Job Application' })).not.toHaveAttribute('aria-busy')
+            expect(screen.getByRole('button', { name: 'Add Application' })).not.toHaveAttribute('aria-busy')
         );
         expect(screen.getByLabelText('Company Name')).toHaveValue('OpenAI');
     });
@@ -603,7 +603,7 @@ describe('unsaved-changes route protection', () => {
 
         await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
         await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Job Application' }));
+        await click(screen.getByRole('button', { name: 'Add Application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
 
         await act(async () => {
@@ -619,7 +619,7 @@ describe('unsaved-changes route protection', () => {
         await click(within(leaveDialog).getByRole('button', { name: 'Stay' }));
 
         await waitFor(() =>
-            expect(screen.getByRole('button', { name: 'Add Job Application' })).not.toHaveAttribute('aria-busy')
+            expect(screen.getByRole('button', { name: 'Add Application' })).not.toHaveAttribute('aria-busy')
         );
     });
 
@@ -634,7 +634,7 @@ describe('unsaved-changes route protection', () => {
 
         await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
         await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Job Application' }));
+        await click(screen.getByRole('button', { name: 'Add Application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         await act(async () => {
             void router.navigate(-1);
@@ -677,7 +677,7 @@ describe('unsaved-changes route protection', () => {
 
         await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
         await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Job Application' }));
+        await click(screen.getByRole('button', { name: 'Add Application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         await act(async () => {
             void router.navigate(-1);
@@ -703,7 +703,7 @@ describe('unsaved-changes route protection', () => {
 
         await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
         await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Job Application' }));
+        await click(screen.getByRole('button', { name: 'Add Application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         await act(async () => {
             void router.navigate(-1);
@@ -769,12 +769,12 @@ describe('unsaved-changes route protection', () => {
 
         await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
         await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Job Application' }));
+        await click(screen.getByRole('button', { name: 'Add Application' }));
 
         await waitFor(() => expect(screen.getByLabelText('Company Name')).toHaveValue(''));
         expect(screen.getByLabelText('Job Title')).toHaveValue('');
         await userEvent.type(screen.getByLabelText('Company Name'), 'Another company');
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
@@ -859,7 +859,7 @@ describe('unsaved-changes route protection', () => {
         );
 
         await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
         await click(screen.getByRole('button', { name: 'Stay' }));
         unmount();
@@ -895,7 +895,7 @@ describe('unsaved-changes route protection', () => {
         const { unmount } = renderRouter(demoApplicationRoutes, [routes.demoAddApplication], true);
 
         enterIncompleteDate(screen.getByLabelText('Application Date (uses current date if left blank)'));
-        await click(screen.getByRole('button', { name: 'View Job Applications' }));
+        await click(screen.getByRole('button', { name: 'View Applications' }));
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
         unmount();
 

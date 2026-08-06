@@ -238,7 +238,7 @@ describe('App routing and authentication behavior', () => {
         expect(screen.getByText(/We could not verify your session. Please try again./i)).toBeInTheDocument();
         expect(screen.queryByText(/sign in to job tracker/i)).not.toBeInTheDocument();
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-        expect(screen.getByText('Authentication is temporarily unavailable.')).toBeInTheDocument();
+        expect(screen.getByText('Authentication is temporarily unavailable')).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledTimes(4);
     });
 
@@ -399,17 +399,17 @@ describe('App routing and authentication behavior', () => {
 
         await screen.findByLabelText(/company name/i);
         expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Add Job Application' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.getByRole('link', { name: 'New Application' })).toHaveAttribute('aria-current', 'page');
 
         await userEvent.click(screen.getByRole('button', { name: 'Show Archived' }));
-        expect(await screen.findByRole('link', { name: 'View Archived Applications' })).toHaveAttribute(
+        expect(await screen.findByRole('link', { name: 'Archived Applications' })).toHaveAttribute(
             'aria-current',
             'page'
         );
-        expect(screen.queryByRole('link', { name: 'Add Job Application' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'New Application' })).not.toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
-        expect(await screen.findByRole('link', { name: 'View Job Applications' })).toHaveAttribute(
+        expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute(
             'aria-current',
             'page'
         );
@@ -451,7 +451,7 @@ describe('App routing and authentication behavior', () => {
         renderRoute('/offer-decisions/archive');
 
         expect(await screen.findByRole('heading', { name: 'No archived offer comparisons' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Archived Offer Comparisons' })).toHaveAttribute(
+        expect(screen.getByRole('link', { name: 'Archived Offer Comparison' })).toHaveAttribute(
             'aria-current',
             'page'
         );
@@ -571,16 +571,16 @@ describe('App routing and authentication behavior', () => {
         await screen.findByText(/company name/i);
         await userEvent.type(screen.getByLabelText(/company name/i), 'Demo Navigation Company');
         await userEvent.type(screen.getByLabelText(/job title/i), 'Demo Navigation Engineer');
-        await userEvent.click(screen.getByRole('button', { name: /^add job application$/i }));
+        await userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
-        expect(await screen.findByText('Successfully added a job application!')).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: /view job applications/i }));
+        expect(await screen.findByText('Successfully added a job application')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /view applications/i }));
         expect(await screen.findByText(/Demo Navigation Company/i)).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('link', { name: /view interviews/i }));
+        await userEvent.click(screen.getByRole('link', { name: /^interviews$/i }));
         expect(await screen.findByText(/Quantum Ledger/i)).toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('link', { name: /view job applications/i }));
+        await userEvent.click(screen.getByRole('link', { name: /^applications$/i }));
         expect(await screen.findByText(/Demo Navigation Company/i)).toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalled();
     });
@@ -631,13 +631,13 @@ describe('App routing and authentication behavior', () => {
         expect(await screen.findByText(/HorizonAI Labs/i)).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Show Archived' }));
 
-        expect(await screen.findByRole('link', { name: 'View Archived Applications' })).toHaveAttribute(
+        expect(await screen.findByRole('link', { name: 'Archived Applications' })).toHaveAttribute(
             'aria-current',
             'page'
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
-        expect(await screen.findByRole('link', { name: 'View Job Applications' })).toHaveAttribute(
+        expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute(
             'aria-current',
             'page'
         );
@@ -650,7 +650,7 @@ describe('App routing and authentication behavior', () => {
         expect(await screen.findByRole('link', { name: 'Offer Comparison' })).toHaveAttribute('aria-current', 'page');
         await userEvent.click(screen.getByRole('button', { name: 'Show Archived' }));
 
-        expect(await screen.findByRole('link', { name: 'Archived Offer Comparisons' })).toHaveAttribute(
+        expect(await screen.findByRole('link', { name: 'Archived Offer Comparison' })).toHaveAttribute(
             'aria-current',
             'page'
         );
@@ -735,7 +735,7 @@ describe('App routing and authentication behavior', () => {
         await screen.findByLabelText(/company name/i);
         await userEvent.click(screen.getByRole('button', { name: 'Logout' }));
 
-        expect(await screen.findByText('Sign out is temporarily unavailable.')).toBeInTheDocument();
+        expect(await screen.findByText('Sign out is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByLabelText(/company name/i)).toBeInTheDocument();
         expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
     });

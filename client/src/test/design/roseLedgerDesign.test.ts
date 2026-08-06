@@ -98,7 +98,6 @@ const expectedBoxShadowDeclarations = {
     'src/components/authProductIntro/AuthProductIntro.module.css': [
         'box-shadow: none;',
         'box-shadow: none;',
-        'box-shadow: 0 24px 80px rgb(0 0 0 / 45%);',
     ],
     'src/components/fallbackScreen/FallbackScreen.module.css': ['box-shadow: 0 0px 20px var(--colorAuthCardShadow);'],
     'src/components/formPage/FormPage.module.css': ['box-shadow: 0 0 0 3px var(--colorPrimaryFocusShadow);'],
@@ -569,7 +568,7 @@ describe('Rose Ledger visual contract', () => {
             '--fontSizeBody: 1rem;',
             '--fontSizeControl: 0.875rem;',
             '--fontSizeCompactControl: 0.8125rem;',
-            '--fontSizeMetadata: 0.75rem;',
+            '--fontSizeMetadata: 0.8125rem;',
             '--radiusControl: 10px;',
             '--radiusMenuItem: 8px;',
             '--radiusToolbar: 14px;',
@@ -653,7 +652,7 @@ describe('Rose Ledger visual contract', () => {
             '--colorUpcomingBadgeText: #ffffff;',
         ].forEach((declaration) => expect(darkCss).toContain(declaration));
 
-        expect(globalCss).toContain("--fontFamilyBase: 'Quicksand', sans-serif;");
+        expect(globalCss).toContain("--fontFamilyBase: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;");
         expect(globalCss).toContain('font-size: var(--fontSizeBody);');
     });
 
@@ -770,7 +769,7 @@ describe('Rose Ledger visual contract', () => {
         expect(desktopRules).toContain('height: 89%;');
         expect(desktopRules).toContain('width: 500px;');
         expect(desktopRules).toContain('width: 190px;');
-        expect(desktopRules).toContain('grid-template-columns: 1fr 1fr;');
+        expect(desktopRules).toMatch(/\.buttonGroup\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*1fr 1fr;/s);
         expect(desktopRules).toContain('top: 15px;');
         expect(mediumRules).toContain('flex-wrap: wrap;');
         expect(mediumRules).toContain('flex: 1 1 500px;');
@@ -906,7 +905,8 @@ describe('Rose Ledger visual contract', () => {
         expect(upcomingInterviewsCss).toMatch(/\.upcomingCard\s*\{[^}]*height:\s*auto;/s);
         expect(dashboard).toMatch(/\.interviewsSection\s*\{[^}]*display:\s*grid;/s);
         expect(formPage).toContain('@media (max-width: 1150px) and (orientation: portrait), (max-width: 600px)');
-        expect(formPage).toContain('    .fieldError {\n        font-size: 0.75rem;\n    }');
+        expect(formPage).toContain('    .fieldError {\n        font-size: 0.8125rem;\n    }');
+        expect(formPage).toMatch(/\.formPage input,[\s\S]*?font-size:\s*1rem;/s);
         expect(formPage).toContain('flex-wrap: nowrap;');
         expect(formPage).toContain('flex: 1 1 0;');
         expect(applicationsLineChart).toMatch(/\.summary span\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
@@ -946,11 +946,11 @@ describe('Rose Ledger visual contract', () => {
         expect(authProductIntro).toContain('.carouselDot:focus-visible {\n    outline-offset: 2px;\n}');
     });
 
-    it('keeps product previews compact while the fullscreen viewer scrolls on both axes', () => {
+    it('keeps the four product tabs compact while previews crossfade without a wide image track', () => {
         const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
         const productPreviewCarousel = readSource('src/components/authProductIntro/ProductPreviewCarousel.tsx');
         const previewMotionRules = authProductIntro.slice(
-            authProductIntro.indexOf('.previewTrack'),
+            authProductIntro.indexOf('.previewLayer'),
             authProductIntro.indexOf('.fullPageAffordance')
         );
         const mobilePreviewRules = authProductIntro.slice(
@@ -959,8 +959,12 @@ describe('Rose Ledger visual contract', () => {
         );
 
         expect(authProductIntro).toMatch(
-            /\.previewImageButton img\s*\{[^}]*object-fit:\s*cover;[^}]*object-position:\s*top;/s
+            /\.previewLayer\s*\{[^}]*object-fit:\s*cover;[^}]*object-position:\s*top;[^}]*opacity:\s*1;[^}]*transform:\s*translateX\(0\);/s
         );
+        expect(authProductIntro).toMatch(/\.featureTabs\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);/s);
+        expect(authProductIntro).toMatch(/\.featureTab\[aria-selected='true'\]\s*\{/s);
+        expect(authProductIntro).toMatch(/\.previewLayerOutgoing\s*\{[^}]*opacity:\s*0;[^}]*translateX\(-10px\);/s);
+        expect(authProductIntro).toMatch(/\.previewLayerIncomingInitial\s*\{[^}]*opacity:\s*0;[^}]*translateX\(10px\);/s);
         expect(authProductIntro).toMatch(
             /\.fullscreenViewer\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\) auto;/s
         );
@@ -968,56 +972,25 @@ describe('Rose Ledger visual contract', () => {
             /\.fullscreenImageViewport\s*\{[^}]*min-width:\s*0;[^}]*min-height:\s*0;[^}]*overflow:\s*auto;/s
         );
         expect(authProductIntro).toMatch(/\.fullscreenTrackSnapshot\s*\{[^}]*width:\s*100%;[^}]*height:\s*auto;/s);
-        expect(authProductIntro).toMatch(
-            /\.fullscreenPreviewTrack\[data-track-phase\]\s+\.fullscreenImageCanvas\s*\{[^}]*width:\s*100%;/s
-        );
         expect(mobilePreviewRules).not.toContain('.fullscreenImageViewport');
         expect(mobilePreviewRules).not.toContain('.fullscreenTrackSnapshot');
         expect(authProductIntro).toMatch(/\.fullscreenToolbar\s*\{[^}]*flex-wrap:\s*wrap;/s);
-        expect(authProductIntro).toContain('@keyframes previewTrackForward');
-        expect(authProductIntro).toContain('@keyframes previewTrackBackward');
+        expect(productPreviewCarousel).toContain('const PREVIEW_TRANSITION_FALLBACK_MS = 380;');
         expect(authProductIntro).toMatch(
-            /\.previewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='forward'\]\s*\{[^}]*animation:\s*previewTrackForward 480ms cubic-bezier\(0\.22, 1, 0\.36, 1\) both;/s
+            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.previewLayer,\s*\.fullscreenTrackPanel\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;[^}]*transition:\s*none;/s
         );
-        expect(authProductIntro).toMatch(
-            /\.previewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='backward'\]\s*\{[^}]*animation:\s*previewTrackBackward 480ms cubic-bezier\(0\.22, 1, 0\.36, 1\) both;/s
-        );
-        expect(authProductIntro).toMatch(
-            /\.fullscreenPreviewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='forward'\]\s*\{[^}]*animation:\s*previewTrackForward 560ms cubic-bezier\(0\.4, 0, 0\.2, 1\) both;/s
-        );
-        expect(authProductIntro).toMatch(
-            /\.fullscreenPreviewTrack\[data-track-phase='transitioning'\]\[data-motion-direction='backward'\]\s*\{[^}]*animation:\s*previewTrackBackward 560ms cubic-bezier\(0\.4, 0, 0\.2, 1\) both;/s
-        );
-        expect(authProductIntro).toMatch(
-            /\.fullscreenPreviewTrack\[data-track-phase='preparing'\]\[data-motion-direction='forward'\]\s*\{[^}]*transform:\s*translate3d\(var\(--preview-track-start-offset, 0px\), 0, 0\);/s
-        );
-        expect(authProductIntro).toMatch(
-            /\.fullscreenPreviewTrack\[data-track-phase='preparing'\]\[data-motion-direction='backward'\]\s*\{[^}]*transform:\s*translate3d\(calc\(-50% \+ var\(--preview-track-start-offset, 0px\)\), 0, 0\);/s
-        );
-        expect(productPreviewCarousel).toContain('const PREVIEW_TRANSITION_FALLBACK_MS = 680;');
-        expect(authProductIntro).toMatch(
-            /\.previewTrack\[data-track-phase='settling'\]\s*\{[^}]*transition:\s*transform 240ms cubic-bezier\(0\.22, 1, 0\.36, 1\);/s
-        );
-        expect(authProductIntro).toMatch(
-            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.previewTrack,\s*\.fullscreenPreviewTrack\s*\{[^}]*animation:\s*none;[^}]*transition:\s*none;/s
-        );
-        expect(authProductIntro).toMatch(
-            /@keyframes previewTrackForward\s*\{[\s\S]*?from\s*\{[^}]*transform:\s*translate3d\(var\(--preview-track-start-offset, 0px\), 0, 0\);[\s\S]*?to\s*\{[^}]*transform:\s*translate3d\(-50%, 0, 0\);/s
-        );
-        expect(authProductIntro).toMatch(
-            /@keyframes previewTrackBackward\s*\{[\s\S]*?from\s*\{[^}]*transform:\s*translate3d\(calc\(-50% \+ var\(--preview-track-start-offset, 0px\)\), 0, 0\);[\s\S]*?to\s*\{[^}]*transform:\s*translate3d\(0, 0, 0\);/s
-        );
-        expect(previewMotionRules).not.toContain('opacity');
+        expect(previewMotionRules).toContain('opacity');
         expect(previewMotionRules).not.toContain('rotate');
-        expect(authProductIntro).not.toContain('previewSlideIn');
-        expect(authProductIntro).not.toContain('previewSlideOut');
-        expect(authProductIntro).not.toContain('.previewOutgoingImage');
-        expect(authProductIntro).not.toContain('.fullscreenOutgoingImage');
+        expect(authProductIntro).not.toContain('@keyframes previewTrack');
+        expect(authProductIntro).not.toContain('width: 200%');
         expect(authProductIntro).not.toContain('linear-gradient');
-        expect(productPreviewCarousel).toContain('const productPreviewIndexes = productPreviews.map');
-        expect(productPreviewCarousel).toContain('void Promise.all(sources.map(preloadPreviewImage))');
-        expect(productPreviewCarousel).toContain('preloadImages(productPreviewIndexes);');
-        expect(productPreviewCarousel).not.toContain('getAdjacentPreviewIndexes');
+        expect(productPreviewCarousel).toContain("role='tablist'");
+        expect(productPreviewCarousel).toContain("role='tab'");
+        expect(productPreviewCarousel).toContain("role='tabpanel'");
+        expect(productPreviewCarousel).toContain('void loadPreviewImage(nextImage).then(() => {');
+        expect(productPreviewCarousel).toContain('void loadPreviewImage(getPreviewImage(productPreviews[nextIndex], displayedTheme));');
+        expect(productPreviewCarousel.match(/label: '/g)).toHaveLength(4);
+        expect(productPreviewCarousel).not.toContain('.png');
     });
 
     it('keeps offer filter config and demo status badge ownership with their runtime features', () => {
@@ -1065,7 +1038,7 @@ describe('Rose Ledger visual contract', () => {
         expect(applicationCard).toMatch(/\.applicationContent select\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
         expect(applicationCard).toMatch(/\.badgeGroup\s*\{[^}]*gap:\s*var\(--spaceCompact\);/s);
         expect(applicationCard).toMatch(/\.buttonGroup button\s*\{[^}]*white-space: nowrap;/s);
-        expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*grid-template-columns:\s*1fr\s+1fr;/s);
+        expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*1fr 1fr;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*flex-shrink:\s*0;/s);
         expect(interviewCard).toMatch(/\.interviewContent a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
         expect(interviewCard).toMatch(
@@ -1210,14 +1183,11 @@ describe('Rose Ledger visual contract', () => {
         expect(authIntro).not.toContain('box-shadow: 0 18px 45px var(--colorAuthCardShadow);');
     });
 
-    it('removes account drawer translation and product fading for reduced motion', () => {
+    it('removes account translation and product fading for reduced motion', () => {
         const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
 
         expect(authIntro).toMatch(
             /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.authPanel\s*\{[^}]*clip-path:\s*none;/s
-        );
-        expect(authIntro).toMatch(
-            /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.authPanel\s*\{[^}]*transform:\s*none;/s
         );
         expect(authIntro).toMatch(
             /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.focusedMode \.authPanel\s*\{[^}]*clip-path:\s*none;/s
@@ -1253,9 +1223,10 @@ describe('Rose Ledger visual contract', () => {
         expect(authIntro).toMatch(
             /@media \(max-width:\s*600px\)[\s\S]*?\.restoreOverviewButton\s*\{[^}]*justify-self:\s*start;/s
         );
-        expect(authIntro).toMatch(
-            /@media \(max-width:\s*600px\)[\s\S]*?\.authContainer\s*\{[^}]*--auth-motion-duration:\s*480ms;[^}]*--auth-return-duration:\s*560ms;/s
-        );
+        expect(authIntro).toContain('clip-path');
+        expect(authIntro).toContain('perspective(');
+        expect(authIntro).toContain('rotateX(');
+        expect(authIntro).toContain('rotateY(');
         expect(authIntro).toMatch(
             /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.authStage\s*\{[^}]*opacity:\s*1;[^}]*transform:\s*none;[^}]*transition:\s*none;/s
         );
@@ -1273,7 +1244,7 @@ describe('Rose Ledger visual contract', () => {
         );
     });
 
-    it('does not expand or remove the existing box-shadow inventory', () => {
+    it('keeps the box-shadow inventory bounded', () => {
         const globalCss = readSource('src/index.css');
         const lightCss = getThemeBlock(globalCss, 'light');
         const darkCss = getThemeBlock(globalCss, 'dark');

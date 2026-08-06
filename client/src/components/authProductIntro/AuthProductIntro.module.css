@@ -99,7 +99,7 @@
     gap: 22px;
     grid-area: story;
     grid-template-columns: minmax(0, 1fr);
-    padding-block: 10px;
+    padding-block: 0 10px;
 }
 
 .productCopy {
@@ -277,62 +277,72 @@
 }
 
 .carouselRegion {
+    display: grid;
     width: 100%;
     min-width: 0;
     max-width: none;
     box-sizing: border-box;
+    gap: 12px;
     grid-area: preview;
+}
+
+.featureTabs {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 4px;
+    border: 1px solid var(--colorCardBorder);
+    border-radius: 12px;
+    background-color: var(--colorOverlayBg);
+}
+
+.featureTab {
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background-color: transparent;
+    color: var(--colorTextSecondary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.featureTab:hover {
+    color: var(--colorText);
+}
+
+.featureTab[aria-selected='true'] {
+    border-color: var(--colorCardBorder);
+    background-color: var(--colorStatIconBg);
+    color: var(--colorPrimary);
+}
+
+.featureTab:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 3px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
+}
+
+.featureDescription {
+    min-height: 3em;
+    margin: 0;
+    color: var(--colorTextSecondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 .preview {
     width: 100%;
     max-width: none;
-    box-sizing: border-box;
-}
-
-.carouselRegion:focus-visible {
-    border-radius: 14px;
-    outline: 3px solid var(--colorPrimaryFocusOutline);
-    outline-offset: 4px;
-}
-
-.preview {
     overflow: hidden;
     border: 1px solid var(--colorCardBorder);
     border-radius: 14px;
     background-color: var(--colorAuthCardBg);
-}
-
-.browserBar {
-    display: flex;
-    height: 28px;
-    align-items: center;
-    gap: 6px;
-    padding: 0 10px;
-    border-bottom: 1px solid var(--colorCardBorder);
-    background-color: var(--colorOverlayBg);
-}
-
-.browserBar > span {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background-color: var(--colorPrimary);
-    opacity: 0.55;
-}
-
-.browserAddress {
-    max-width: 220px;
-    padding: 3px 14px;
-    margin: 0 auto;
-    overflow: hidden;
-    border-radius: var(--radiusPill);
-    background-color: var(--colorInputBg);
-    color: var(--colorTextSecondary);
-    font-size: 0.625rem;
-    line-height: 1;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .previewImageButton {
@@ -347,95 +357,36 @@
     cursor: pointer;
 }
 
-.previewImageButton img {
+.previewLayer {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: top;
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 220ms ease, transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
 }
 
-.previewTrack,
-.fullscreenPreviewTrack {
-    display: flex;
-    width: 100%;
-    min-width: 0;
-    backface-visibility: hidden;
-    transform: translate3d(0, 0, 0);
-    will-change: transform;
+.previewLayerOutgoing {
+    opacity: 0;
+    transform: translateX(-10px);
 }
 
-.previewTrack {
-    height: 100%;
+.previewLayerIncomingInitial {
+    opacity: 0;
+    transform: translateX(10px);
 }
 
-.previewTrack[data-track-phase],
-.fullscreenPreviewTrack[data-track-phase] {
-    width: 200%;
+.previewLayer[data-motion-direction='backward'].previewLayerOutgoing {
+    transform: translateX(10px);
 }
 
-.previewTrack > img {
-    width: 100%;
-    min-width: 0;
-    flex: 0 0 100%;
-}
-
-.previewTrack[data-track-phase] > img {
-    width: 50%;
-    flex-basis: 50%;
-}
-
-.previewImage,
-.previewTrackImage {
-    min-width: 0;
-}
-
-.previewTrack[data-track-phase='transitioning'][data-motion-direction='forward'] {
-    animation: previewTrackForward 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.previewTrack[data-track-phase='transitioning'][data-motion-direction='backward'] {
-    animation: previewTrackBackward 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.fullscreenPreviewTrack[data-track-phase='transitioning'][data-motion-direction='forward'] {
-    animation: previewTrackForward 560ms cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.fullscreenPreviewTrack[data-track-phase='transitioning'][data-motion-direction='backward'] {
-    animation: previewTrackBackward 560ms cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.fullscreenPreviewTrack[data-track-phase='preparing'][data-motion-direction='forward'] {
-    transform: translate3d(var(--preview-track-start-offset, 0px), 0, 0);
-}
-
-.fullscreenPreviewTrack[data-track-phase='preparing'][data-motion-direction='backward'] {
-    transform: translate3d(calc(-50% + var(--preview-track-start-offset, 0px)), 0, 0);
-}
-
-.previewTrack[data-track-phase='settling'] {
-    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes previewTrackForward {
-    from {
-        transform: translate3d(var(--preview-track-start-offset, 0px), 0, 0);
-    }
-
-    to {
-        transform: translate3d(-50%, 0, 0);
-    }
-}
-
-@keyframes previewTrackBackward {
-    from {
-        transform: translate3d(calc(-50% + var(--preview-track-start-offset, 0px)), 0, 0);
-    }
-
-    to {
-        transform: translate3d(0, 0, 0);
-    }
+.previewLayer[data-motion-direction='backward'].previewLayerIncomingInitial {
+    transform: translateX(-10px);
 }
 
 .fullPageAffordance {
@@ -484,7 +435,6 @@
     border: 1px solid rgb(255 255 255 / 24%);
     border-radius: 14px;
     background-color: #111;
-    box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
     grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
@@ -630,6 +580,9 @@
 }
 
 .fullscreenPreviewTrack {
+    position: relative;
+    width: 100%;
+    min-width: 0;
     min-height: 100%;
 }
 
@@ -637,17 +590,41 @@
     width: 100%;
     min-width: 0;
     min-height: 100%;
-    flex: 0 0 100%;
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 220ms ease, transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.fullscreenPreviewTrack[data-track-phase] > .fullscreenTrackPanel {
-    width: 50%;
+.fullscreenOutgoingPanel {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
     overflow: hidden;
-    flex-basis: 50%;
 }
 
-.fullscreenPreviewTrack[data-track-phase] .fullscreenImageCanvas {
-    width: 100%;
+.fullscreenIncomingPanel {
+    position: relative;
+    z-index: 2;
+}
+
+.fullscreenPreviewTrack[data-track-phase='preparing'] .fullscreenIncomingPanel {
+    opacity: 0;
+    transform: translateX(10px);
+}
+
+.fullscreenPreviewTrack[data-track-phase='transitioning'] .fullscreenOutgoingPanel {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.fullscreenPreviewTrack[data-motion-direction='backward'][data-track-phase='preparing']
+    .fullscreenIncomingPanel {
+    transform: translateX(-10px);
+}
+
+.fullscreenPreviewTrack[data-motion-direction='backward'][data-track-phase='transitioning']
+    .fullscreenOutgoingPanel {
+    transform: translateX(10px);
 }
 
 .fullscreenTrackSnapshot {
@@ -735,7 +712,7 @@
 }
 
 .previewImageButton:focus-visible,
-.carouselArrow:focus-visible,
+.featureTab:focus-visible,
 .carouselDot:focus-visible,
 .fullscreenTextButton:focus-visible,
 .fullscreenIconButton:focus-visible,
@@ -745,7 +722,7 @@
 }
 
 .previewImageButton:focus-visible,
-.carouselArrow:focus-visible,
+.featureTab:focus-visible,
 .carouselDot:focus-visible,
 .fullscreenClose:focus-visible,
 .fullscreenTextButton:focus-visible,
@@ -759,68 +736,8 @@
     outline-offset: 2px;
 }
 
-.carouselControls {
-    display: grid;
-    grid-template-columns: 36px 1fr 36px;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 10px;
-    border-top: 1px solid var(--colorCardBorder);
-    background-color: var(--colorOverlayBg);
-}
-
-.carouselArrow {
-    display: grid;
-    width: 36px;
-    height: 30px;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    background-color: transparent;
-    color: var(--colorPrimary);
-    cursor: pointer;
-    font: inherit;
-    line-height: 1;
-    place-items: center;
-}
-
-.carouselArrow:hover:not(:disabled) {
-    background-color: var(--colorStatIconBg);
-}
-
-.carouselArrow:disabled,
 .carouselDot:disabled {
     cursor: wait;
-}
-
-.carouselArrowIcon {
-    display: block;
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-}
-
-.carouselPosition {
-    display: grid;
-    min-width: 0;
-    gap: 4px;
-    justify-items: center;
-}
-
-.carouselDots {
-    display: flex;
-    max-width: 100%;
-    justify-content: center;
-    gap: 9px;
-}
-
-.carouselCounter {
-    color: var(--colorPrimary);
-    font-size: 0.75rem;
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
-    line-height: 1;
-    text-align: center;
 }
 
 .carouselDot {
@@ -950,24 +867,16 @@
         align-items: flex-start;
     }
 
-    .carouselControls {
-        grid-template-columns: 34px minmax(0, 1fr) 34px;
-        gap: 6px;
-        padding-right: 6px;
-        padding-left: 6px;
-    }
-
-    .carouselDots {
-        gap: 6px;
-    }
-
     .carouselRegion {
         touch-action: pan-y;
     }
 
-    .carouselDot {
-        width: 8px;
-        height: 8px;
+    .featureTabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .featureTab {
+        min-height: 44px;
     }
 
     .fullPageAffordance {
@@ -1000,15 +909,15 @@
     }
 
     .fullscreenTextButton {
-        min-height: 36px;
+        min-height: 44px;
         padding: 0 8px;
         font-size: 0.75rem;
     }
 
     .fullscreenIconButton,
     .fullscreenClose {
-        width: 38px;
-        height: 38px;
+        width: 44px;
+        height: 44px;
     }
 
     .fullscreenNavigation {
@@ -1017,7 +926,8 @@
     }
 
     .fullscreenNavigationButton {
-        min-width: 40px;
+        min-width: 44px;
+        min-height: 44px;
         padding: 0 7px;
     }
 
@@ -1067,12 +977,14 @@
         transition: none;
     }
 
-    .previewTrack,
-    .fullscreenPreviewTrack {
-        animation: none;
+    .previewLayer,
+    .fullscreenTrackPanel {
+        opacity: 1;
+        transform: none;
         transition: none;
     }
 
+    .featureTab,
     .carouselDot {
         transition: none;
     }

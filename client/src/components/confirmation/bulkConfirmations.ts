@@ -39,7 +39,7 @@ const applicationDescription = (
     if (offerEvaluationCount > 0 || counterofferPlanCount > 0) {
         const possessive = applicationCount === 1 ? 'its' : 'their';
         const relations = [
-            `${possessive} ${interviewLabel}`,
+            ...(interviewCount > 0 ? [`${possessive} ${interviewLabel}`] : []),
             ...(offerEvaluationCount > 0
                 ? [`${possessive} ${formatCountLabel(offerEvaluationCount, 'saved offer evaluation')}`]
                 : []),
@@ -48,7 +48,10 @@ const applicationDescription = (
                 : []),
         ];
         const finalRelation = relations.at(-1);
-        const relationDescription = `${relations.slice(0, -1).join(', ')}, and ${finalRelation}`;
+        const relationDescription =
+            relations.length === 1
+                ? finalRelation
+                : `${relations.slice(0, -1).join(', ')}, and ${finalRelation}`;
         const savedItemLabel =
             offerEvaluationCount > 0 && counterofferPlanCount > 0
                 ? 'Saved offer evaluations and counteroffer plans'
@@ -65,9 +68,12 @@ const applicationDescription = (
         return `${action} all ${applicationLabel}, ${relationDescription}? This affects every ${state} application you own, including applications not visible under the current ${filterLabel}.${lifecycle}`;
     }
 
-    return `${action} all ${applicationLabel} and ${
-        applicationCount === 1 ? 'its' : 'their'
-    } ${interviewLabel}? This affects every ${state} application you own, including applications not visible under the current ${filterLabel}.${permanence}`;
+    const relatedInterviews =
+        interviewCount > 0
+            ? ` and ${applicationCount === 1 ? 'its' : 'their'} ${interviewLabel}`
+            : '';
+
+    return `${action} all ${applicationLabel}${relatedInterviews}? This affects every ${state} application you own, including applications not visible under the current ${filterLabel}.${permanence}`;
 };
 
 export const createArchiveAllConfirmation = (

@@ -200,7 +200,7 @@ describe('Counteroffer plan card entry point', () => {
             target: { value: '11000' },
         });
         await click(screen.getByRole('button', { name: 'Save' }));
-        expect(await screen.findByText('Counteroffer plan saved.')).toBeInTheDocument();
+        expect(await screen.findByText('Counteroffer plan saved')).toBeInTheDocument();
         await click(screen.getByRole('button', { name: 'Close' }));
         expect(
             within(await openCardMore('Acme')).getByRole('menuitem', { name: 'View counteroffer plan for Acme' })
@@ -212,7 +212,7 @@ describe('Counteroffer plan card entry point', () => {
         );
         await screen.findByRole('heading', { name: 'Counteroffer Plan' });
         await click(within(screen.getByRole('dialog')).getByText('Delete', { selector: 'button' }));
-        expect(screen.getByText('Counteroffer plan deleted.')).toBeInTheDocument();
+        expect(screen.getByText('Counteroffer plan deleted')).toBeInTheDocument();
         expect(
             within(await openCardMore('Acme')).getByRole('menuitem', { name: 'Plan counteroffer for Acme' })
         ).toBeVisible();

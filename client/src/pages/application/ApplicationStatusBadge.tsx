@@ -23,7 +23,7 @@ type ApplicationStatusBadgeProps = {
 const ApplicationStatusBadge = ({ compact = false, jobStatus, showLabel = false }: ApplicationStatusBadgeProps) => {
     const className = compact
         ? `${boardStyles.statusBadge} ${getApplicationBoardStatusClassName(jobStatus)}`
-        : JOB_STATUS_CLASS_MAP[jobStatus];
+        : `${styles.statusBadge} ${JOB_STATUS_CLASS_MAP[jobStatus]}`;
 
     return <span className={className}>{showLabel ? `Job Status: ${jobStatus}` : jobStatus}</span>;
 };

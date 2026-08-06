@@ -361,7 +361,7 @@ Thank you for your time and consideration.
 Best regards,
 [Your name]`);
         expect(screen.getByRole('dialog', { name: 'Draft application follow-up' })).toBeInTheDocument();
-        expect(await screen.findByText('Follow-up message copied to clipboard.')).toBeInTheDocument();
+        expect(await screen.findByText('Follow-up message copied to clipboard')).toBeInTheDocument();
     });
 
     test('keeps the static draft open and reports clipboard failure', async () => {
@@ -387,7 +387,7 @@ Best regards,
         expect(screen.getByRole('dialog', { name: 'Draft application follow-up' })).toBeInTheDocument();
         expect(screen.getByText(/^Dear Hiring Team,/)).toBeInTheDocument();
         expect(
-            await screen.findByText('Unable to copy the follow-up message. Please select and copy it manually.')
+            await screen.findByText('Unable to copy the follow-up message. Please select and copy it manually')
         ).toBeInTheDocument();
     });
 
@@ -422,7 +422,7 @@ Best regards,
 
         expect(onMarkApplicationFollowUpSent).toHaveBeenCalledWith(application);
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-        expect(await screen.findByText('Follow-up marked as sent.')).toBeInTheDocument();
+        expect(await screen.findByText('Follow-up marked as sent')).toBeInTheDocument();
     });
 
     test('marks the exact selected interview and keeps the dialog open when marking fails', async () => {
@@ -452,7 +452,7 @@ Best regards,
 
         expect(onMarkInterviewFollowUpSent).toHaveBeenCalledWith(interview);
         expect(screen.getByRole('dialog', { name: 'Draft post-interview message' })).toBeInTheDocument();
-        expect(await screen.findByText('Unable to mark the follow-up as sent. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to mark the follow-up as sent. Please try again')).toBeInTheDocument();
     });
 
     test('copying the message does not mark a follow-up as sent', async () => {

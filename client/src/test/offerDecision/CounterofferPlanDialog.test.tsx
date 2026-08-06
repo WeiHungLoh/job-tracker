@@ -227,7 +227,7 @@ describe('CounterofferPlanDialog', () => {
 
         await click(screen.getByRole('button', { name: 'Save' }));
 
-        expect(await screen.findByText('Change at least one term or rating for the Ideal offer.')).toBeInTheDocument();
+        expect(await screen.findByText('Change at least one term or rating for the Ideal offer')).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
         expect(screen.queryByText('Review the highlighted Ideal offer fields before saving.')).not.toBeInTheDocument();
     });
@@ -330,7 +330,7 @@ describe('CounterofferPlanDialog', () => {
         await click(await screen.findByRole('button', { name: 'Edit' }));
         await click(screen.getByRole('button', { name: 'Save' }));
 
-        expect(await screen.findByText('Change at least one term or rating for the Ideal offer.')).toBeInTheDocument();
+        expect(await screen.findByText('Change at least one term or rating for the Ideal offer')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Edit Counteroffer Plan' })).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
     });
@@ -345,7 +345,7 @@ describe('CounterofferPlanDialog', () => {
         });
         await click(screen.getByRole('button', { name: 'Save' }));
 
-        expect(await screen.findByText('Change at least one term or rating for the Ideal offer.')).toBeInTheDocument();
+        expect(await screen.findByText('Change at least one term or rating for the Ideal offer')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Edit Counteroffer Plan' })).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
     });
@@ -399,7 +399,7 @@ describe('CounterofferPlanDialog', () => {
 
         await waitFor(() => expect(screen.getByLabelText('Acme Ideal offer Career Growth rating')).toHaveFocus());
         expect(
-            screen.getByText('The Ideal offer cannot have a lower fit rating than the current offer.')
+            screen.getByText('The Ideal offer cannot have a lower fit rating than the current offer')
         ).toBeInTheDocument();
         expect(screen.queryByText('Review the Ideal offer')).not.toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
@@ -432,7 +432,7 @@ describe('CounterofferPlanDialog', () => {
             )
         );
         expect(onPlanAvailabilityChange).toHaveBeenCalledWith(11, true);
-        expect(screen.getByText('Counteroffer plan saved.')).toBeInTheDocument();
+        expect(screen.getByText('Counteroffer plan saved')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Counteroffer Plan' })).toBeInTheDocument();
     });
 
@@ -444,7 +444,7 @@ describe('CounterofferPlanDialog', () => {
         });
         await click(screen.getByRole('button', { name: 'Save' }));
 
-        expect(await screen.findByText('Unable to save the counteroffer plan. Please try again.')).toBeInTheDocument();
+        expect(await screen.findByText('Unable to save the counteroffer plan. Please try again')).toBeInTheDocument();
         expect(screen.getByLabelText('Acme Ideal offer monthly base salary')).toHaveValue(12500);
         expect(screen.getByRole('heading', { name: 'Plan Counteroffer' })).toBeInTheDocument();
     });
@@ -469,7 +469,7 @@ describe('CounterofferPlanDialog', () => {
         expect(onDelete).toHaveBeenCalledWith(11);
         await waitFor(() => expect(onPlanAvailabilityChange).toHaveBeenCalledWith(11, false));
         expect(onClose).toHaveBeenCalled();
-        expect(screen.getByText('Counteroffer plan deleted.')).toBeInTheDocument();
+        expect(screen.getByText('Counteroffer plan deleted')).toBeInTheDocument();
     });
 
     test('dismisses meaningful unsaved changes without a confirmation', async () => {
@@ -565,7 +565,7 @@ describe('CounterofferPlanDialog', () => {
 
         await waitFor(() => expect(onPlanAvailabilityChange).toHaveBeenCalledWith(11, false));
         expect(onClose).toHaveBeenCalledOnce();
-        expect(screen.getByText('Counteroffer plan was not found.')).toBeInTheDocument();
+        expect(screen.getByText('Counteroffer plan was not found')).toBeInTheDocument();
     });
 
     test('shows a recoverable loading error without dropping the dialog', async () => {

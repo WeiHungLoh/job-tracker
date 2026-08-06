@@ -22,6 +22,8 @@ const TOAST_DURATION_MS: Record<ToastType, number | null> = {
     success: SUCCESS_TOAST_DURATION_MS,
 };
 
+const removeTrailingToastPunctuation = (message: string): string => message.replace(/[.!]+\s*$/, '');
+
 export const ToastProvider = ({ children }: PropsWithChildren) => {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const nextToastId = useRef(0);
@@ -41,8 +43,9 @@ export const ToastProvider = ({ children }: PropsWithChildren) => {
             nextToastId.current += 1;
             const id = nextToastId.current;
             const durationMs = TOAST_DURATION_MS[type];
+            const normalizedMessage = type === 'neutral' ? message : removeTrailingToastPunctuation(message);
 
-            setToasts((currentToasts) => [...currentToasts, { durationMs, id, message, type }]);
+            setToasts((currentToasts) => [...currentToasts, { durationMs, id, message: normalizedMessage, type }]);
             if (durationMs !== null) {
                 const timeout = window.setTimeout(() => dismissToast(id), durationMs);
                 toastTimeouts.current.set(id, timeout);

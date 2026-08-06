@@ -63,7 +63,7 @@ describe('Dashboard independent loading', () => {
 
         renderDashboard();
 
-        expect(await screen.findByText('Some dashboard sections could not be loaded.')).toBeInTheDocument();
+        expect(await screen.findByText('Some dashboard sections could not be loaded')).toBeInTheDocument();
         expect(screen.getByText('Applied This Week').parentElement).toHaveTextContent('3');
         expect(screen.getByRole('heading', { name: 'No upcoming interviews' })).toBeInTheDocument();
         expect(screen.getByText("You're all caught up")).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('Dashboard independent loading', () => {
         renderDashboard();
 
         await screen.findByText('Unable to load application trends.');
-        expect(screen.getAllByText('Some dashboard sections could not be loaded.')).toHaveLength(1);
+        expect(screen.getAllByText('Some dashboard sections could not be loaded')).toHaveLength(1);
         const dashboardStatistics = within(screen.getByRole('region', { name: 'Dashboard statistics' }));
         expect(dashboardStatistics.getByText('Upcoming Interviews').parentElement).toHaveTextContent('0');
         expect(screen.queryByText('0%')).not.toBeInTheDocument();

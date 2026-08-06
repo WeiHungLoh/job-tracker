@@ -57,12 +57,10 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                         />
                     )}
                 </div>
-                <p className={styles.jobTitle}>Job Title: {application.job_title}</p>
-                {application.job_location !== '' && (
-                    <p className={styles.location}>Location: {application.job_location}</p>
-                )}
-                <p className={styles.date}>Application Date: {formattedApplicationDate.formattedDate}</p>
-                <p>Time since application: {formattedApplicationDate.timeSinceApplication}</p>
+                <p className={styles.jobTitle}>{application.job_title}</p>
+                {application.job_location !== '' && <p className={styles.location}>{application.job_location}</p>}
+                <p className={styles.date}>Applied {formattedApplicationDate.formattedDate}</p>
+                <p>{formattedApplicationDate.timeSinceApplication} since application</p>
                 {variant === 'job' ? (
                     <>
                         <div className={styles.badgeGroup}>
@@ -136,7 +134,7 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                         rel='noreferrer noopener'
                         target='_blank'
                     >
-                        Click here to view job posting
+                        View job posting
                     </a>
                 )}
             </div>

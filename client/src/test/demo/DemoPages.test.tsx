@@ -330,8 +330,8 @@ describe('demo page interactions', () => {
             await userEvent.click(screen.getByRole('button', { name: 'Save evaluation for Greenhouse CloudOps' }));
         });
 
-        expect(await screen.findByText('Offer evaluation saved.')).toBeInTheDocument();
-        expect(screen.queryByText('Offer evaluation added.')).not.toBeInTheDocument();
+        expect(await screen.findByText('Offer evaluation saved')).toBeInTheDocument();
+        expect(screen.queryByText('Offer evaluation added')).not.toBeInTheDocument();
         expect(screen.queryByLabelText('Greenhouse CloudOps Company/Culture Fit rating')).not.toBeInTheDocument();
         expect(screen.getByText('SGD 10,500')).toBeInTheDocument();
         expect(
@@ -354,7 +354,7 @@ describe('demo page interactions', () => {
             })
         );
 
-        expect(await screen.findByText('Offer marked as Accepted.')).toBeInTheDocument();
+        expect(await screen.findByText('Offer marked as Accepted')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
         expect(screen.getByRole('article', { name: 'Greenhouse CloudOps DevOps UI Engineer' })).toBeInTheDocument();
 
@@ -364,7 +364,7 @@ describe('demo page interactions', () => {
             })
         );
 
-        expect(await screen.findByText('Application marked as Offer.')).toBeInTheDocument();
+        expect(await screen.findByText('Application marked as Offer')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Evaluated Offers' })).toBeInTheDocument();
         expect(screen.getByRole('article', { name: 'Greenhouse CloudOps DevOps UI Engineer' })).toBeInTheDocument();
         expect(fetchSpy).not.toHaveBeenCalled();
@@ -441,7 +441,7 @@ describe('demo page interactions', () => {
         expect(
             await screen.findByRole('button', { name: 'Add evaluation for Greenhouse CloudOps' })
         ).toBeInTheDocument();
-        expect(await screen.findByText('Offer evaluation deleted.')).toBeInTheDocument();
+        expect(await screen.findByText('Offer evaluation deleted')).toBeInTheDocument();
 
         await act(async () => {
             await userEvent.click(screen.getByRole('button', { name: 'Add evaluation for Greenhouse CloudOps' }));
@@ -454,7 +454,7 @@ describe('demo page interactions', () => {
             await userEvent.click(screen.getByRole('button', { name: 'Save evaluation for Greenhouse CloudOps' }));
         });
 
-        expect(await screen.findByText('Offer evaluation added.')).toBeInTheDocument();
+        expect(await screen.findByText('Offer evaluation added')).toBeInTheDocument();
     });
 
     test('renders archived demo offer comparisons as review-only snapshots', () => {
@@ -622,7 +622,7 @@ describe('demo page interactions', () => {
         await act(async () => {
             await userEvent.click(within(card).getByRole('button', { name: 'Pin HorizonAI Labs application' }));
         });
-        expect(await screen.findByText('Job application pinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application pinned')).toBeInTheDocument();
         await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
         expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
         expect(card).toHaveClass(boardStyles.cardHighlighted);
@@ -632,7 +632,7 @@ describe('demo page interactions', () => {
         fireEvent.change(screen.getByLabelText(/Move HorizonAI Labs to status/i), {
             target: { value: 'Rejected' },
         });
-        expect(await screen.findByText('Job application status updated.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application status updated')).toBeInTheDocument();
         await waitFor(() => expect(boardScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 0 }));
         expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 0 });
         expect(screen.getByRole('article', { name: /HorizonAI Labs/i })).toHaveClass(boardStyles.cardHighlighted);
@@ -642,7 +642,7 @@ describe('demo page interactions', () => {
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         await clickConfirmedAction(screen.getAllByRole('button', { name: 'Archive' })[0]);
-        expect(await screen.findByText('Job application archived.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application archived')).toBeInTheDocument();
     });
 
     test('unarchives an application from the archived board into active demo state without fetching', async () => {
@@ -713,12 +713,12 @@ describe('demo page interactions', () => {
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         await clickConfirmedAction(screen.getAllByRole('button', { name: 'Unarchive' })[0]);
-        expect(await screen.findByText('Job application unarchived.')).toBeInTheDocument();
+        expect(await screen.findByText('Job application unarchived')).toBeInTheDocument();
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all archived applications/i }));
-        expect(await screen.findByText('Job applications deleted.')).toBeInTheDocument();
+        expect(await screen.findByText('Job applications deleted')).toBeInTheDocument();
         expect(await screen.findByRole('heading', { name: 'No archived applications yet' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'View active applications' })).toHaveAttribute(
             'href',
@@ -805,7 +805,7 @@ describe('demo page interactions', () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
         renderDemo(<DemoAddApplication />, [routes.demoAddApplication]);
 
-        await userEvent.click(screen.getByRole('button', { name: /^add job application$/i }));
+        await userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
         const companyNameInput = screen.getByLabelText(/company name/i);
         const jobTitleInput = screen.getByLabelText(/job title/i);
@@ -836,11 +836,11 @@ describe('demo page interactions', () => {
         );
         const initialApplicationCount = Number(screen.getByTestId('demo-application-count').textContent);
 
-        expect(screen.queryByRole('heading', { name: 'Add Job Application' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'New Application' })).not.toBeInTheDocument();
         await userEvent.type(screen.getByLabelText(/company name/i), 'Demo Form Company');
         await userEvent.type(screen.getByLabelText(/job title/i), 'Demo Form Engineer');
         await userEvent.type(screen.getByLabelText(/job posting url/i), 'not-a-url');
-        await userEvent.click(screen.getByRole('button', { name: /^add job application$/i }));
+        await userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
         const jobURLInput = screen.getByLabelText(/job posting url/i);
         const jobURLError = screen.getByText('URL must be in a valid format.');
         expect(jobURLInput).toHaveAttribute('aria-invalid', 'true');
@@ -851,7 +851,7 @@ describe('demo page interactions', () => {
             target: { value: 'https://jobs.example.com/demo-form-engineer' },
         });
         await userEvent.type(screen.getByLabelText(/job title/i), '{enter}');
-        expect(screen.getByText('Successfully added a job application!')).toBeInTheDocument();
+        expect(screen.getByText('Successfully added a job application')).toBeInTheDocument();
         expect(screen.getByTestId('demo-application-count')).toHaveTextContent(String(initialApplicationCount + 1));
         expect(screen.getByLabelText(/company name/i)).toHaveValue('');
         expect(screen.getByLabelText(/job title/i)).toHaveValue('');
@@ -867,7 +867,7 @@ describe('demo page interactions', () => {
             [routes.demoAddApplication]
         );
         const initialApplicationCount = screen.getByTestId('demo-application-count').textContent;
-        const viewApplicationsButton = screen.getByRole('button', { name: 'View Job Applications' });
+        const viewApplicationsButton = screen.getByRole('button', { name: 'View Applications' });
 
         expect(viewApplicationsButton).toHaveAttribute('type', 'button');
         await userEvent.click(viewApplicationsButton);
@@ -946,7 +946,7 @@ describe('demo page interactions', () => {
         fireEvent.change(durationInput, { target: { value: '75' } });
         await userEvent.type(screen.getByLabelText(/interview location/i), '{enter}');
 
-        expect(screen.getByText('Successfully added an interview!')).toBeInTheDocument();
+        expect(screen.getByText('Successfully added an interview')).toBeInTheDocument();
         expect(screen.getByTestId('demo-interview-count')).toHaveTextContent(String(initialInterviewCount + 1));
         expect(screen.getByTestId('demo-last-interview-duration')).toHaveTextContent('75');
         expect(screen.getByLabelText(/interview location/i)).toHaveValue('');
@@ -997,7 +997,7 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('button', { name: 'More...' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all interviews/i }));
         await waitFor(() => expect(mockConfirm).toHaveBeenCalled());
-        expect(await screen.findByText('Interviews deleted.')).toBeInTheDocument();
+        expect(await screen.findByText('Interviews deleted')).toBeInTheDocument();
         expect(await screen.findByRole('heading', { name: 'No interviews yet' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'View applications' })).toHaveAttribute(
             'href',
@@ -1045,12 +1045,12 @@ describe('demo page interactions', () => {
             'aria-pressed',
             'true'
         );
-        expect(await screen.findByText('Interview pinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Interview pinned')).toBeInTheDocument();
         await waitFor(() => expect(document.getElementById('410')?.className).toContain('highlighted'));
 
         await userEvent.click(screen.getByRole('button', { name: 'Unpin Summit Talent interview' }));
 
-        expect(await screen.findByText('Interview unpinned.')).toBeInTheDocument();
+        expect(await screen.findByText('Interview unpinned')).toBeInTheDocument();
 
         await userEvent.click(
             within(screen.getByRole('group', { name: 'Interview view' })).getByRole('button', { name: 'Board' })
@@ -1142,7 +1142,7 @@ describe('demo page interactions', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
         await userEvent.click(screen.getByRole('button', { name: 'Filter active CSV to Offer' }));
-        const link = screen.getAllByRole('link', { name: /review corresponding job application/i })[0];
+        const link = screen.getAllByRole('link', { name: /view corresponding job application/i })[0];
         const targetId = link.getAttribute('href')?.split('#')[1];
         await userEvent.click(link);
 
@@ -1204,7 +1204,7 @@ describe('demo page interactions', () => {
         );
         await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
         await userEvent.click(screen.getByRole('button', { name: 'Filter archived CSV to Offer' }));
-        const link = screen.getAllByRole('link', { name: /review corresponding job application/i })[0];
+        const link = screen.getAllByRole('link', { name: /view corresponding job application/i })[0];
         const targetId = link.getAttribute('href')?.split('#')[1];
         await userEvent.click(link);
 

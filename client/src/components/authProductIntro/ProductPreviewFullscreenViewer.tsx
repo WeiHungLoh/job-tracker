@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { CSSProperties, SyntheticEvent } from 'react';
+import type { SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { MdChevronLeft, MdChevronRight, MdClose, MdFitScreen, MdZoomIn, MdZoomOut } from 'react-icons/md';
 import LoadingSpinner from '../loadingSpinner/LoadingSpinner';
@@ -32,11 +32,6 @@ type ProductPreviewFullscreenViewerProps = {
     onTransitionEnd: () => void;
     onTransitionStart: () => void;
     previousImage: string | null;
-    transitionStartOffsetPx: number;
-};
-
-type PreviewTrackStyle = CSSProperties & {
-    '--preview-track-start-offset'?: string;
 };
 
 const calculateFitWidthZoom = (viewportWidth: number, naturalWidth: number) => {
@@ -68,7 +63,6 @@ const ProductPreviewFullscreenViewer = ({
     onTransitionEnd,
     onTransitionStart,
     previousImage,
-    transitionStartOffsetPx,
 }: ProductPreviewFullscreenViewerProps) => {
     const [displayReadyImage, setDisplayReadyImage] = useState<string | null>(null);
     const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
@@ -407,11 +401,11 @@ const ProductPreviewFullscreenViewer = ({
               width: `${outgoingImageDimensions.width * outgoingFitWidthZoom}px`,
           }
         : undefined;
-    const trackStyle: PreviewTrackStyle | undefined = hasPairedTrack
-        ? { '--preview-track-start-offset': `${transitionStartOffsetPx}px` }
-        : undefined;
     const activePanel = (
-        <div key={image} className={styles.fullscreenTrackPanel}>
+        <div
+            key={image}
+            className={`${styles.fullscreenTrackPanel} ${hasPairedTrack ? styles.fullscreenIncomingPanel : ''}`}
+        >
             <div className={styles.fullscreenImageCanvas}>
                 {hasImageLoadError ? (
                     <p className={styles.fullscreenImageError}>Unable to load this preview.</p>
@@ -438,7 +432,11 @@ const ProductPreviewFullscreenViewer = ({
         </div>
     );
     const outgoingPanel = previousImage ? (
-        <div key={previousImage} className={styles.fullscreenTrackPanel} aria-hidden='true'>
+        <div
+            key={previousImage}
+            className={`${styles.fullscreenTrackPanel} ${styles.fullscreenOutgoingPanel}`}
+            aria-hidden='true'
+        >
             <div className={styles.fullscreenImageCanvas}>
                 <img
                     className={`${styles.fullscreenPreviewImage} ${styles.fullscreenTrackSnapshot}`}
@@ -530,8 +528,7 @@ const ProductPreviewFullscreenViewer = ({
                         data-motion-direction={motionDirection}
                         data-preview-track='fullscreen'
                         data-track-phase={trackPhase}
-                        onAnimationEnd={isTransitioning ? onTransitionEnd : undefined}
-                        style={trackStyle}
+                        onTransitionEnd={isTransitioning ? onTransitionEnd : undefined}
                     >
                         {trackPanels}
                     </div>

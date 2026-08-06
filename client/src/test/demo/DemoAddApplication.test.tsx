@@ -112,7 +112,7 @@ const expectCompleteDuplicateFormValues = () => {
     expect(screen.getByLabelText(/job posting url/i)).toHaveValue('  https://example.com/jobs/1  ');
 };
 
-const submitApplication = () => userEvent.click(screen.getByRole('button', { name: /^add job application$/i }));
+const submitApplication = () => userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
 const clickDialogAction = async (button: HTMLElement) => {
     await act(async () => {
@@ -143,7 +143,7 @@ describe('Demo Add Application duplicate confirmation', () => {
 
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         expect(screen.getByTestId('active-application-count')).toHaveTextContent(String(initialApplicationCount + 1));
-        expect(screen.getByText('Successfully added a job application!')).toBeInTheDocument();
+        expect(screen.getByText('Successfully added a job application')).toBeInTheDocument();
         expect(screen.getByLabelText(/company name/i)).toHaveValue('');
         expect(screen.getByLabelText(/job title/i)).toHaveValue('');
         expect(screen.getByLabelText(/job status/i)).toHaveValue('Applied');
@@ -275,7 +275,7 @@ describe('Demo Add Application duplicate confirmation', () => {
         );
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         expect(screen.getAllByTestId('toast')).toHaveLength(1);
-        expect(screen.getByText('Successfully added a job application!')).toBeInTheDocument();
+        expect(screen.getByText('Successfully added a job application')).toBeInTheDocument();
         expect(screen.getByTestId('latest-application-company')).toHaveTextContent('Morgan Stanley');
         expect(screen.getByTestId('latest-application-title')).toHaveTextContent('Software Engineer');
         expect(screen.getByLabelText(/company name/i)).toHaveValue('');
@@ -319,7 +319,7 @@ describe('Demo Add Application duplicate confirmation', () => {
 
         userEvent.type(screen.getByLabelText(/company name/i), 'Morgan Stanley');
         userEvent.type(screen.getByLabelText(/job title/i), 'Software Engineer');
-        const form = screen.getByRole('button', { name: /^add job application$/i }).closest('form');
+        const form = screen.getByRole('button', { name: /^add application$/i }).closest('form');
         expect(form).not.toBeNull();
 
         await act(async () => {

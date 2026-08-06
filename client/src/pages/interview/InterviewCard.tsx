@@ -108,9 +108,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                         />
                     )}
                 </div>
-                <p className={styles.jobTitle}>
-                    {isBoardLayout ? interview.job_title : `Job Title: ${interview.job_title}`}
-                </p>
+                <p className={styles.jobTitle}>{interview.job_title}</p>
                 {isBoardLayout ? (
                     <>
                         <p className={styles.date}>{timing.formattedRange}</p>
@@ -130,11 +128,11 @@ const InterviewCard = (props: InterviewCardProps) => {
                     </>
                 ) : (
                     <>
-                        <p className={styles.location}>Location: {interview.interview_location}</p>
+                        <p className={styles.location}>{interview.interview_location}</p>
                         {interview.interview_type !== '' && (
-                            <p className={styles.type}>Interview Type: {interview.interview_type}</p>
+                            <p className={styles.type}>{interview.interview_type}</p>
                         )}
-                        <p className={styles.date}>Interview Date: {timing.formattedRange}</p>
+                        <p className={styles.date}>Scheduled {timing.formattedRange}</p>
                     </>
                 )}
                 {!isBoardLayout && (

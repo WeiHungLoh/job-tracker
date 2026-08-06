@@ -75,7 +75,7 @@ describe('User sign up flow', () => {
         );
 
         await waitFor(() =>
-            expect(screen.getByText('Sign up successful! Redirecting you to login page')).toBeInTheDocument()
+            expect(screen.getByText('Sign up successful — redirecting you to login page')).toBeInTheDocument()
         );
 
         const redirectTimerIndex = setTimeoutSpy.mock.calls.findIndex(([, delay]) => delay === 1500);
@@ -123,7 +123,7 @@ describe('User sign up flow', () => {
             })
         );
 
-        await waitFor(() => expect(screen.getByText('An account with this email already exists.')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('An account with this email already exists')).toBeInTheDocument());
         expect(mockNavigate).not.toHaveBeenCalledWith('/');
     });
 
@@ -157,7 +157,7 @@ describe('User sign up flow', () => {
         userEvent.type(screen.getByLabelText(/^password$/i), 'short');
         userEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
-        await waitFor(() => expect(screen.getByText('Password must be at least 8 characters.')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument());
         expect(fetch.mock.calls.some(([url]) => String(url).endsWith('/authentication/users'))).toBe(false);
         expect(screen.getByRole('button', { name: /back to product/i })).toBeInTheDocument();
     });
