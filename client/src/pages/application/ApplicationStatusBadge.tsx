@@ -25,7 +25,18 @@ const ApplicationStatusBadge = ({ compact = false, jobStatus, showLabel = false 
         ? `${boardStyles.statusBadge} ${getApplicationBoardStatusClassName(jobStatus)}`
         : `${styles.statusBadge} ${JOB_STATUS_CLASS_MAP[jobStatus]}`;
 
-    return <span className={className}>{showLabel ? `Job Status: ${jobStatus}` : jobStatus}</span>;
+    return (
+        <span className={className}>
+            {showLabel ? (
+                <>
+                    <span className={styles.visuallyHidden}>Job Status: {jobStatus}</span>
+                    <span aria-hidden='true'>{jobStatus}</span>
+                </>
+            ) : (
+                jobStatus
+            )}
+        </span>
+    );
 };
 
 export default ApplicationStatusBadge;

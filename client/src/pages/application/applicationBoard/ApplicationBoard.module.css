@@ -285,18 +285,23 @@
 }
 
 .boardFollowUp {
-    font-size: var(--fontSizeMetadata);
+    font-size: 0.6875rem;
 }
 
 .statusBadge,
 .upcomingBadge {
     display: inline-flex;
     width: fit-content;
-    padding: 4px 9px;
+    min-height: var(--heightCompactPill);
+    padding: 0 9px;
+    align-items: center;
+    gap: 5px;
     border-radius: var(--radiusPill);
     font-size: 0.6875rem;
     font-weight: 600;
+    letter-spacing: 0;
     line-height: 1.2;
+    box-sizing: border-box;
 }
 
 .statusBadge {
@@ -307,56 +312,76 @@
 }
 
 .upcomingBadge {
+    --badgeAccent: var(--colorUpcomingBadge);
+
     margin-top: 8px;
-    background-color: var(--colorUpcomingBadge);
+    background-color: var(--colorUpcomingBadgeBg);
     color: var(--colorUpcomingBadgeText);
 }
 
+.statusBadge::before,
+.upcomingBadge::before {
+    width: 5px;
+    height: 5px;
+    flex: 0 0 5px;
+    border-radius: var(--radiusPill);
+    background-color: var(--badgeAccent);
+    content: '';
+}
+
 .applied {
+    --badgeAccent: var(--colorStatusApplied);
     --boardStatusColor: var(--colorStatusApplied);
-    background-color: var(--colorStatusApplied);
+    background-color: var(--colorStatusAppliedBadgeBg);
     color: var(--colorStatusAppliedText);
 }
 
 .interview {
+    --badgeAccent: var(--colorStatusInterview);
     --boardStatusColor: var(--colorStatusInterview);
-    background-color: var(--colorStatusInterview);
+    background-color: var(--colorStatusInterviewBadgeBg);
     color: var(--colorStatusInterviewText);
 }
 
 .offer {
+    --badgeAccent: var(--colorStatusOffer);
     --boardStatusColor: var(--colorStatusOffer);
-    background-color: var(--colorStatusOffer);
+    background-color: var(--colorStatusOfferBadgeBg);
     color: var(--colorStatusOfferText);
 }
 
 .accepted {
+    --badgeAccent: var(--colorStatusAccepted);
     --boardStatusColor: var(--colorStatusAccepted);
-    background-color: var(--colorStatusAccepted);
+    background-color: var(--colorStatusAcceptedBadgeBg);
     color: var(--colorStatusAcceptedText);
 }
 
 .rejected {
+    --badgeAccent: var(--colorStatusRejected);
     --boardStatusColor: var(--colorStatusRejected);
-    background-color: var(--colorStatusRejected);
+    background-color: var(--colorStatusRejectedBadgeBg);
     color: var(--colorStatusRejectedText);
 }
 
 .ghosted {
+    --badgeAccent: var(--colorStatusGhosted);
     --boardStatusColor: var(--colorStatusGhosted);
-    background-color: var(--colorStatusGhosted);
+    background-color: var(--colorStatusGhostedBadgeBg);
     color: var(--colorStatusGhostedText);
 }
 
 .declined {
+    --badgeAccent: var(--colorStatusDeclined);
     --boardStatusColor: var(--colorStatusDeclined);
-    background-color: var(--colorStatusDeclined);
+    background-color: var(--colorStatusDeclinedBadgeBg);
     color: var(--colorStatusDeclinedText);
 }
 
 .withdrawn {
+    --badgeAccent: var(--colorStatusWithdrawn);
     --boardStatusColor: var(--colorStatusWithdrawn);
-    background-color: var(--colorStatusWithdrawn);
+    background-color: var(--colorStatusWithdrawnBadgeBg);
     color: var(--colorStatusWithdrawnText);
 }
 
@@ -396,12 +421,18 @@
 
 .card a {
     width: fit-content;
-    padding: 4px 8px;
+    max-width: 100%;
+    min-height: var(--heightCompactPill);
+    padding: 0 9px;
+    align-items: center;
     border-radius: var(--radiusPill);
     background-color: var(--colorLinkBg);
     color: var(--colorLinkText);
-    font-size: 0.8125rem;
-    font-weight: 700;
+    box-sizing: border-box;
+    display: inline-flex;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.2;
     text-decoration: none;
 }
 

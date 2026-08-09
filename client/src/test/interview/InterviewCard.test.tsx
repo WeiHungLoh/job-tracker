@@ -76,7 +76,7 @@ describe('InterviewCard calendar options', () => {
                 interview_duration_minutes: 60,
             });
 
-            expect(screen.getByText('Time left: 0 days 0 hours 30 minutes')).toHaveClass(
+            expect(screen.getByText('Starts in 30 minutes')).toHaveClass(
                 applicationStyles.upcomingBadge,
                 interviewStyles.timingBadge
             );
@@ -97,8 +97,28 @@ describe('InterviewCard calendar options', () => {
             });
 
             expect(queryCalendarTrigger()).not.toBeInTheDocument();
-            expect(screen.getByText('Time left: 0 days 0 hours 30 minutes')).toHaveClass(applicationStyles.rejected);
+            expect(screen.getByText('Ends in 30 minutes')).toHaveClass(applicationStyles.rejected);
             expect(screen.getByRole('article', { name: 'Acme interview' }).className).not.toContain('overdue');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test.each([
+        ['Starts in 59 seconds', '2026-07-13T12:00:59Z', 60, applicationStyles.upcomingBadge],
+        ['Ends in 1 second', '2026-07-13T11:59:01Z', 1, applicationStyles.rejected],
+    ])('shows the sub-minute countdown as %s', (label, interviewDate, duration, expectedClass) => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-07-13T12:00:00Z'));
+
+        try {
+            renderJobCard({
+                ...futureInterview,
+                interview_date: interviewDate,
+                interview_duration_minutes: duration,
+            });
+
+            expect(screen.getByText(label)).toHaveClass(expectedClass, interviewStyles.timingBadge);
         } finally {
             vi.useRealTimers();
         }
@@ -250,12 +270,12 @@ describe('InterviewCard calendar options', () => {
         renderJobCard();
 
         const card = screen.getByRole('article', { name: 'Acme interview' });
-        const timeLeft = screen.getByText(/Time left:/);
+        const timingBadge = screen.getByText(/^Starts in /);
         const notes = screen.getByRole('textbox', { name: 'Notes for Acme' });
         const deleteButton = screen.getByRole('button', { name: 'Delete' });
 
         expect(card).toHaveClass(interviewStyles.notesVisible);
-        expect(timeLeft.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(timingBadge.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(deleteButton.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(notes).toHaveValue('Bring examples');
     });
@@ -290,7 +310,7 @@ describe('InterviewCard calendar options', () => {
         renderJobCard(interview);
 
         const listFollowUp = screen.getByRole('status');
-        const listMeetingURL = screen.getByRole('link', { name: 'Click here to enter meeting' });
+        const listMeetingURL = screen.getByRole('link', { name: 'Join meeting' });
         expect(listMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
         expect(listMeetingURL).toHaveAttribute('target', '_blank');
         expect(listFollowUp.compareDocumentPosition(listMeetingURL) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -314,13 +334,13 @@ describe('InterviewCard calendar options', () => {
 
         const boardCard = screen.getAllByRole('article', { name: 'Acme interview' })[1];
         const boardActions = within(boardCard).getByText('Actions').closest('details');
-        expect(within(boardCard).getByRole('link', { name: 'Click here to enter meeting' })).not.toBeVisible();
+        expect(within(boardCard).getByRole('link', { name: 'Join meeting' })).not.toBeVisible();
         await userEvent.click(within(boardCard).getByText('Actions'));
-        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Click here to enter meeting' });
+        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Join meeting' });
         expect(boardMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
         expect(boardMeetingURL).toHaveAttribute('target', '_blank');
         const boardApplicationLink = within(boardCard).getByRole('link', {
-            name: 'Click here to view corresponding job application',
+            name: 'View application',
         });
         expect(boardApplicationLink).toHaveAttribute('href', '/application/view#7');
         expect(boardApplicationLink).toHaveClass(interviewStyles.boardActionLink);
@@ -372,14 +392,14 @@ describe('InterviewCard calendar options', () => {
         expect(screen.queryByText(/Interview Date:/)).not.toBeInTheDocument();
         expect(screen.queryByText('Notes: Bring examples')).not.toBeInTheDocument();
         expect(screen.queryByText(/time left/i)).not.toBeInTheDocument();
-        expect(screen.getByRole('link', { name: /view corresponding job application/i })).not.toBeVisible();
+        expect(screen.getByRole('link', { name: /view application/i })).not.toBeVisible();
         const actions = screen.getByText('Actions').closest('details');
         expect(actions).not.toHaveAttribute('open');
 
         await userEvent.click(screen.getByText('Actions'));
 
         expect(actions).toHaveAttribute('open');
-        expect(screen.getByRole('link', { name: /view corresponding job application/i })).toBeVisible();
+        expect(screen.getByRole('link', { name: /view application/i })).toBeVisible();
         expect(getCalendarTrigger()).toBeInTheDocument();
         const deleteButton = screen.getByRole('button', { name: 'Delete' });
         expect(deleteButton.parentElement?.className).toContain('compactActions');

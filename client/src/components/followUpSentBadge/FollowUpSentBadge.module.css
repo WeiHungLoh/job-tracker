@@ -2,17 +2,20 @@
     display: inline-flex;
     width: fit-content;
     max-width: 100%;
+    min-height: var(--heightCompactPill);
     margin-top: var(--spaceCompact);
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-    padding: 6px var(--spaceCompact);
+    padding: 3px var(--spaceCompact);
+    box-sizing: border-box;
     border: 0;
     border-radius: var(--radiusPill);
     background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeCompactControl);
-    line-height: 1.35;
+    font-weight: 600;
+    line-height: 1.2;
     overflow-wrap: anywhere;
 }
 
@@ -32,7 +35,7 @@
 .compactLabel,
 .mobileLabel {
     color: var(--colorToastSuccessText);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .copy {
@@ -72,17 +75,20 @@
 }
 
 .compact {
-    padding: 4px 9px;
+    min-height: var(--heightCompactPill);
+    padding: 3px 9px;
     border-radius: var(--radiusPill);
     background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
-    font-weight: 700;
+    font-size: 0.6875rem;
+    font-weight: 600;
 }
 
 @media (max-width: 803px) {
     .badge {
         display: flex;
         flex-wrap: nowrap;
-        font-weight: 700;
+        font-size: 0.75rem;
+        font-weight: 600;
         overflow-wrap: normal;
     }
 

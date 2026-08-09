@@ -67,7 +67,7 @@ const InterviewCard = (props: InterviewCardProps) => {
         ? { className: applicationStyles.accepted, label: 'Completed' }
         : {
               className: timing.isInProgress ? applicationStyles.rejected : applicationStyles.upcomingBadge,
-              label: `Time left: ${formatInterviewCountdown(timing, currentTime)}`,
+              label: `${timing.isInProgress ? 'Ends' : 'Starts'} in ${formatInterviewCountdown(timing, currentTime)}`,
           };
     const cardClasses = [
         styles.interview,
@@ -129,34 +129,35 @@ const InterviewCard = (props: InterviewCardProps) => {
                 ) : (
                     <>
                         <p className={styles.location}>{interview.interview_location}</p>
-                        {interview.interview_type !== '' && (
-                            <p className={styles.type}>{interview.interview_type}</p>
-                        )}
+                        {interview.interview_type !== '' && <p className={styles.type}>{interview.interview_type}</p>}
                         <p className={styles.date}>Scheduled {timing.formattedRange}</p>
                     </>
                 )}
                 {!isBoardLayout && (
                     <>
-                        <p className={`${timingStatus.className} ${styles.timingBadge}`}>{timingStatus.label}</p>
-                        {interview.follow_up_sent_at && (
-                            <FollowUpSentBadge
-                                contextLabel={`${interview.job_title} at ${interview.company_name}`}
-                                isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
-                                onUndo={
-                                    variant === 'job' && props.onUndoFollowUp
-                                        ? () => props.onUndoFollowUp?.(interview)
-                                        : undefined
-                                }
-                                sentAt={interview.follow_up_sent_at}
-                            />
-                        )}
+                        <div className={styles.badgeGroup}>
+                            <p className={`${timingStatus.className} ${styles.timingBadge}`}>{timingStatus.label}</p>
+                            {interview.follow_up_sent_at && (
+                                <FollowUpSentBadge
+                                    className={styles.stackedBadge}
+                                    contextLabel={`${interview.job_title} at ${interview.company_name}`}
+                                    isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
+                                    onUndo={
+                                        variant === 'job' && props.onUndoFollowUp
+                                            ? () => props.onUndoFollowUp?.(interview)
+                                            : undefined
+                                    }
+                                    sentAt={interview.follow_up_sent_at}
+                                />
+                            )}
+                        </div>
                         {interview.meeting_url && (
                             <a href={interview.meeting_url} rel='noreferrer noopener' target='_blank'>
-                                Click here to enter meeting
+                                Join meeting
                             </a>
                         )}
                         <Link to={`${applicationRoute}#${applicationId}`} onClick={onViewApplicationClick}>
-                            Click here to review corresponding job application
+                            View application
                         </Link>
                     </>
                 )}
@@ -194,7 +195,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                                 rel='noreferrer noopener'
                                 target='_blank'
                             >
-                                Click here to enter meeting
+                                Join meeting
                             </a>
                         )}
                         {variant === 'job' && (
@@ -203,7 +204,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                                 to={`${applicationRoute}#${applicationId}`}
                                 onClick={onViewApplicationClick}
                             >
-                                Click here to view corresponding job application
+                                View application
                             </Link>
                         )}
                         {variant === 'job' ? (

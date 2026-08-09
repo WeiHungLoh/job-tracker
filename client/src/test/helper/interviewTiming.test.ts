@@ -129,10 +129,21 @@ describe('interview timing', () => {
         const inProgress = getInterviewTiming(interview(new Date(2026, 6, 13, 11, 30)), now);
         const invalid = getInterviewTiming({ interview_date: 'invalid', interview_duration_minutes: 60 }, now);
 
-        expect(formatInterviewCountdown(future, now)).toBe('1 days 2 hours 30 minutes');
-        expect(formatInterviewCountdown(inProgress, now)).toBe('0 days 0 hours 30 minutes');
+        expect(formatInterviewCountdown(future, now)).toBe('1 day 2 hours 30 minutes');
+        expect(formatInterviewCountdown(inProgress, now)).toBe('30 minutes');
         expect(invalid.isValid).toBe(false);
         expect(invalid.formattedRange).toBe('Invalid interview date');
+    });
+
+    test.each([
+        ['before start', new Date(2026, 6, 13, 12, 0, 59), 60, '59 seconds'],
+        ['at one minute before start', new Date(2026, 6, 13, 12, 1, 0), 60, '1 minute'],
+        ['before an in-progress interview ends', new Date(2026, 6, 13, 11, 59, 1), 1, '1 second'],
+        ['above one minute before an in-progress interview ends', new Date(2026, 6, 13, 11, 59, 1), 2, '1 minute'],
+    ])('shows seconds only below one full minute %s', (_label, start, duration, expected) => {
+        const timing = getInterviewTiming(interview(start, duration), now);
+
+        expect(formatInterviewCountdown(timing, now)).toBe(expected);
     });
 
     test.each([

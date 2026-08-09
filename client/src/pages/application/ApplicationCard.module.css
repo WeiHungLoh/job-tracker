@@ -121,31 +121,67 @@
 }
 
 .badgeGroup {
-    display: inline-flex;
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spaceCompact);
 }
 
+.statusEditRow {
+    display: flex;
+    max-width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spaceCompact);
+}
+
+.badgeGroup .stackedBadge {
+    margin-top: 0;
+}
+
 .statusBadge {
     display: inline-flex;
+    min-height: var(--heightCompactPill);
     align-self: flex-start;
+    align-items: center;
     width: fit-content;
     max-width: 100%;
     box-sizing: border-box;
     white-space: nowrap;
 }
 
+.visuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
 .upcomingBadge {
+    --statusBadgeAccent: var(--colorUpcomingBadge);
+
     color: var(--colorUpcomingBadgeText);
-    padding: 4px 20px;
+    min-height: var(--heightCompactPill);
+    padding: 0 10px;
     border-radius: var(--radiusPill);
     font-weight: 600;
-    font-size: 0.8125rem;
+    font-size: var(--fontSizeCompactControl);
     display: inline-flex;
-    letter-spacing: 0.5px;
-    background-color: var(--colorUpcomingBadge);
+    align-items: center;
+    gap: 7px;
+    letter-spacing: 0;
+    line-height: 1.2;
+    background-color: var(--colorUpcomingBadgeBg);
     width: fit-content;
+    box-sizing: border-box;
 }
 
 .applicationContent h2 {
@@ -173,15 +209,19 @@
 .url {
     background-color: var(--colorLinkBg);
     color: var(--colorLinkText);
-    padding: 4px 20px;
+    min-height: var(--heightCompactPill);
+    padding: 0 9px;
+    align-items: center;
     border-radius: var(--radiusPill);
-    font-weight: bolder;
-    font-size: 0.8125rem;
+    font-weight: 600;
+    font-size: var(--fontSizeCompactControl);
     margin-top: 10px;
-    letter-spacing: 0.5px;
-    border: none;
+    letter-spacing: 0;
+    line-height: 1.2;
+    border: 1px solid color-mix(in srgb, var(--colorLinkText) 35%, transparent);
     display: flex;
     max-width: fit-content;
+    box-sizing: border-box;
     cursor: pointer;
     text-decoration: none;
 }
@@ -189,13 +229,17 @@
 .applicationContent select {
     background: var(--colorFilterSelectBg);
     color: var(--colorFilterSelectText);
-    padding: 4px 20px;
+    height: var(--heightCompactPill);
+    max-width: 100%;
+    padding: 0 9px;
     border-radius: var(--radiusPill);
-    font-weight: bolder;
-    font-size: 0.8125rem;
-    letter-spacing: 0.5px;
-    border: none;
-    margin-left: 10px;
+    font-weight: 600;
+    font-size: var(--fontSizeCompactControl);
+    letter-spacing: 0;
+    line-height: 1.2;
+    border: 1px solid var(--colorControlBorder);
+    margin: 0;
+    box-sizing: border-box;
     text-align: center;
     text-align-last: center;
     cursor: pointer;
@@ -203,9 +247,15 @@
     appearance: none;
 }
 
+.applicationContent select:focus-visible {
+    outline: 2px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
+}
+
 .applicationContent a:hover,
 .url:hover {
     background-color: var(--colorLinkHoverBg);
+    border-color: var(--colorLinkText);
 }
 
 .applied,
@@ -216,52 +266,90 @@
 .ghosted,
 .declined,
 .withdrawn {
-    padding: 4px 20px;
+    min-height: var(--heightCompactPill);
+    padding: 0 10px;
     border-radius: var(--radiusPill);
     font-weight: 600;
-    font-size: 0.8125rem;
+    font-size: var(--fontSizeCompactControl);
     display: inline-flex;
+    align-items: center;
+    gap: 7px;
     margin: 0;
-    letter-spacing: 0.5px;
+    letter-spacing: 0;
+    line-height: 1.2;
+    box-sizing: border-box;
+}
+
+.applied::before,
+.interview::before,
+.offer::before,
+.accepted::before,
+.rejected::before,
+.ghosted::before,
+.declined::before,
+.withdrawn::before,
+.upcomingBadge::before {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: var(--radiusPill);
+    background-color: var(--statusBadgeAccent);
+    content: '';
 }
 
 .applied {
-    background-color: var(--colorStatusApplied);
+    --statusBadgeAccent: var(--colorStatusApplied);
+
+    background-color: var(--colorStatusAppliedBadgeBg);
     color: var(--colorStatusAppliedText);
 }
 
 .interview {
-    background-color: var(--colorStatusInterview);
+    --statusBadgeAccent: var(--colorStatusInterview);
+
+    background-color: var(--colorStatusInterviewBadgeBg);
     color: var(--colorStatusInterviewText);
 }
 
 .offer {
-    background-color: var(--colorStatusOffer);
+    --statusBadgeAccent: var(--colorStatusOffer);
+
+    background-color: var(--colorStatusOfferBadgeBg);
     color: var(--colorStatusOfferText);
 }
 
 .accepted {
-    background-color: var(--colorStatusAccepted);
+    --statusBadgeAccent: var(--colorStatusAccepted);
+
+    background-color: var(--colorStatusAcceptedBadgeBg);
     color: var(--colorStatusAcceptedText);
 }
 
 .rejected {
-    background-color: var(--colorStatusRejected);
+    --statusBadgeAccent: var(--colorStatusRejected);
+
+    background-color: var(--colorStatusRejectedBadgeBg);
     color: var(--colorStatusRejectedText);
 }
 
 .ghosted {
-    background-color: var(--colorStatusGhosted);
+    --statusBadgeAccent: var(--colorStatusGhosted);
+
+    background-color: var(--colorStatusGhostedBadgeBg);
     color: var(--colorStatusGhostedText);
 }
 
 .declined {
-    background-color: var(--colorStatusDeclined);
+    --statusBadgeAccent: var(--colorStatusDeclined);
+
+    background-color: var(--colorStatusDeclinedBadgeBg);
     color: var(--colorStatusDeclinedText);
 }
 
 .withdrawn {
-    background-color: var(--colorStatusWithdrawn);
+    --statusBadgeAccent: var(--colorStatusWithdrawn);
+
+    background-color: var(--colorStatusWithdrawnBadgeBg);
     color: var(--colorStatusWithdrawnText);
 }
 
@@ -311,9 +399,6 @@
     }
 
     .applicationContent select {
-        margin-left: 0;
-        margin-top: 7px;
-        display: block;
         font-size: 0.75rem;
     }
 
@@ -349,12 +434,13 @@
     .rejected,
     .ghosted,
     .declined,
+    .withdrawn,
     .upcomingBadge {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
     }
 
     .applicationContent a,
     .url {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
     }
 }

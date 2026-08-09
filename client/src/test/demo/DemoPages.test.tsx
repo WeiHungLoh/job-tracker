@@ -1025,9 +1025,7 @@ describe('demo page interactions', () => {
         ).toEqual(listOrder);
         expect(within(interviews).queryByText(/time left/i)).not.toBeInTheDocument();
         expect(within(interviews).queryByText(/notes:/i)).not.toBeInTheDocument();
-        expect(within(interviews).getAllByRole('link', { name: /view corresponding job application/i })).toHaveLength(
-            listOrder.length
-        );
+        expect(within(interviews).getAllByRole('link', { name: /view application/i })).toHaveLength(listOrder.length);
         expect(within(interviews).getAllByText('Actions').length).toBeGreaterThan(0);
     });
 
@@ -1142,7 +1140,7 @@ describe('demo page interactions', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
         await userEvent.click(screen.getByRole('button', { name: 'Filter active CSV to Offer' }));
-        const link = screen.getAllByRole('link', { name: /view corresponding job application/i })[0];
+        const link = screen.getAllByRole('link', { name: /view application/i })[0];
         const targetId = link.getAttribute('href')?.split('#')[1];
         await userEvent.click(link);
 
@@ -1195,7 +1193,7 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('region', { name: 'Archived interviews' })).toHaveAttribute('data-layout', 'board');
         expect(screen.queryByText(/time left/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/notes:/i)).not.toBeInTheDocument();
-        expect(screen.queryByRole('link', { name: /review corresponding job application/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /view application/i })).not.toBeInTheDocument();
 
         await userEvent.click(
             within(screen.getByRole('group', { name: 'Archived interview view' })).getByRole('button', {
@@ -1204,7 +1202,7 @@ describe('demo page interactions', () => {
         );
         await userEvent.click(screen.getByRole('button', { name: 'Set application Board mode' }));
         await userEvent.click(screen.getByRole('button', { name: 'Filter archived CSV to Offer' }));
-        const link = screen.getAllByRole('link', { name: /view corresponding job application/i })[0];
+        const link = screen.getAllByRole('link', { name: /view application/i })[0];
         const targetId = link.getAttribute('href')?.split('#')[1];
         await userEvent.click(link);
 

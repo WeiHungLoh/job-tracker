@@ -1,4 +1,4 @@
-import { formatLongDate } from './dateFormatter';
+import { formatCompactDuration, formatLongDate } from './dateFormatter';
 
 export const INTERVIEW_DURATION_MINUTES_MIN = 1;
 export const INTERVIEW_DURATION_MINUTES_MAX = 1440;
@@ -100,12 +100,7 @@ export const formatInterviewCountdown = (timing: InterviewTiming, now = new Date
     }
 
     const countdownTarget = timing.hasStarted ? timing.end : timing.start;
-    const remainingMinutes = Math.max(0, Math.floor((countdownTarget.getTime() - now.getTime()) / (60 * 1000)));
-    const days = Math.floor(remainingMinutes / (24 * 60));
-    const hours = Math.floor((remainingMinutes % (24 * 60)) / 60);
-    const minutes = remainingMinutes % 60;
-
-    return `${days} days ${hours} hours ${minutes} minutes`;
+    return formatCompactDuration(countdownTarget.getTime() - now.getTime());
 };
 
 export const filterAndSortInterviews = <Interview extends SortableInterviewTimingSource>(

@@ -720,7 +720,7 @@ describe('Job interview viewer flow', () => {
             { initialPreferences: { application_job_statuses: ['Offer'] } }
         );
 
-        await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
+        await userEvent.click(await screen.findByRole('link', { name: /view application/i }));
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(
             JSON.stringify({ applicationJobStatus: 'Applied', applicationTargetId: 1 })
@@ -775,7 +775,7 @@ describe('Job interview viewer flow', () => {
         ).toEqual(['ABC Pte Ltd interview', 'Second Company interview']);
         expect(within(list).queryByText(/time left/i)).not.toBeInTheDocument();
         expect(within(list).queryByText(/notes:/i)).not.toBeInTheDocument();
-        expect(within(list).getAllByRole('link', { name: /view corresponding job application/i })).toHaveLength(2);
+        expect(within(list).getAllByRole('link', { name: /view application/i })).toHaveLength(2);
         expect(within(list).getAllByText('Actions')).toHaveLength(2);
         expect(fetch).toHaveBeenCalledTimes(1);
     });
@@ -807,7 +807,7 @@ describe('Job interview viewer flow', () => {
             { initialPreferences: { application_view_mode: 'board' } }
         );
 
-        const link = await screen.findByRole('link', { name: /review corresponding job application/i });
+        const link = await screen.findByRole('link', { name: /view application/i });
         await userEvent.click(link);
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(

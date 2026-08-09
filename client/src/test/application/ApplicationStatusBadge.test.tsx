@@ -6,13 +6,15 @@ import { getApplicationBoardStatusClassName } from '../../pages/application/appl
 import { render } from '../renderWithProviders';
 
 describe('ApplicationStatusBadge', () => {
-    test('uses the View Application status style with an optional label', () => {
+    test('shows only the status while keeping the optional label available to screen readers', () => {
         render(<ApplicationStatusBadge jobStatus='Interview' showLabel />);
 
-        expect(screen.getByText('Job Status: Interview')).toHaveClass(
-            applicationStyles.statusBadge,
-            applicationStyles.interview
-        );
+        const accessibleLabel = screen.getByText('Job Status: Interview');
+        const visibleStatus = screen.getByText('Interview');
+
+        expect(accessibleLabel).toHaveClass(applicationStyles.visuallyHidden);
+        expect(visibleStatus).toHaveAttribute('aria-hidden', 'true');
+        expect(accessibleLabel.parentElement).toHaveClass(applicationStyles.statusBadge, applicationStyles.interview);
     });
 
     test('can reuse the compact Board status style without adding a dot', () => {

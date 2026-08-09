@@ -74,6 +74,14 @@
     composes: badgeGroup from '../../application/ApplicationCard.module.css';
 }
 
+.statusEditRow {
+    composes: statusEditRow from '../../application/ApplicationCard.module.css';
+}
+
+.stackedBadge {
+    composes: stackedBadge from '../../application/ApplicationCard.module.css';
+}
+
 .upcomingBadge {
     composes: upcomingBadge from '../../application/ApplicationCard.module.css';
 }

@@ -61,19 +61,10 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                 {application.job_location !== '' && <p className={styles.location}>{application.job_location}</p>}
                 <p className={styles.date}>Applied {formattedApplicationDate.formattedDate}</p>
                 <p>{formattedApplicationDate.timeSinceApplication} since application</p>
-                {variant === 'job' ? (
-                    <>
-                        <div className={styles.badgeGroup}>
-                            <ApplicationStatusBadge jobStatus={application.job_status} showLabel />
-                            {props.upcomingInterviewCount > 0 && (
-                                <span className={styles.upcomingBadge}>
-                                    {props.upcomingInterviewCount} Upcoming Interview
-                                    {props.upcomingInterviewCount > 1 ? 's' : ''}
-                                </span>
-                            )}
-                        </div>
-
-                        {props.isEditingStatus && (
+                <div className={styles.badgeGroup}>
+                    <div className={styles.statusEditRow}>
+                        <ApplicationStatusBadge jobStatus={application.job_status} showLabel />
+                        {variant === 'job' && props.isEditingStatus && (
                             <select
                                 role='listbox'
                                 value={props.editedJobStatus}
@@ -94,24 +85,28 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                                 ))}
                             </select>
                         )}
-                    </>
-                ) : (
-                    <ApplicationStatusBadge jobStatus={application.job_status} showLabel />
-                )}
-
-                {application.application_follow_up_sent_at &&
-                    (variant === 'archived' || application.job_status === 'Applied') && (
-                        <FollowUpSentBadge
-                            contextLabel={`${application.job_title} at ${application.company_name}`}
-                            isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
-                            onUndo={
-                                variant === 'job' && props.onUndoFollowUp
-                                    ? () => props.onUndoFollowUp?.(application)
-                                    : undefined
-                            }
-                            sentAt={application.application_follow_up_sent_at}
-                        />
+                    </div>
+                    {variant === 'job' && props.upcomingInterviewCount > 0 && (
+                        <span className={styles.upcomingBadge}>
+                            {props.upcomingInterviewCount} Upcoming Interview
+                            {props.upcomingInterviewCount > 1 ? 's' : ''}
+                        </span>
                     )}
+                    {application.application_follow_up_sent_at &&
+                        (variant === 'archived' || application.job_status === 'Applied') && (
+                            <FollowUpSentBadge
+                                className={styles.stackedBadge}
+                                contextLabel={`${application.job_title} at ${application.company_name}`}
+                                isUndoing={variant === 'job' ? props.isUndoingFollowUp : undefined}
+                                onUndo={
+                                    variant === 'job' && props.onUndoFollowUp
+                                        ? () => props.onUndoFollowUp?.(application)
+                                        : undefined
+                                }
+                                sentAt={application.application_follow_up_sent_at}
+                            />
+                        )}
+                </div>
 
                 {variant === 'job' && application.job_status === 'Interview' && (
                     <Link
@@ -123,7 +118,7 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                             } satisfies AddInterviewNavigationState
                         }
                     >
-                        Click here to add an interview
+                        Add interview
                     </Link>
                 )}
 

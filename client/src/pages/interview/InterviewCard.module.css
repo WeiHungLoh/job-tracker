@@ -143,32 +143,73 @@
 }
 
 .timeLeft {
-    font-weight: bold;
-    color: var(--colorTimeLeft);
+    --statusBadgeAccent: var(--colorTimeLeft);
+
+    background-color: var(--colorStatusRejectedBadgeBg);
+    color: var(--colorStatusRejectedText);
+}
+
+.badgeGroup {
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spaceCompact);
+}
+
+.badgeGroup .stackedBadge {
+    margin-top: 0;
 }
 
 .interviewContent .timingBadge {
+    display: inline-flex;
+    width: fit-content;
+    min-height: var(--heightCompactPill);
     margin: 0;
+    padding: 0 10px;
+    align-items: center;
+    gap: 7px;
+    border-radius: var(--radiusPill);
+    font-size: var(--fontSizeCompactControl);
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.2;
+    box-sizing: border-box;
+}
+
+.timeLeft::before {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: var(--radiusPill);
+    background-color: var(--statusBadgeAccent);
+    content: '';
 }
 
 .interviewContent a {
     background-color: var(--colorLinkBg);
     color: var(--colorLinkText);
-    padding: 4px 20px;
+    min-height: var(--heightCompactPill);
+    padding: 0 9px;
+    align-items: center;
     border-radius: var(--radiusPill);
-    font-weight: bolder;
+    font-weight: 600;
     font-size: var(--fontSizeCompactControl);
     margin-top: var(--spaceCompact);
-    letter-spacing: 0.5px;
-    border: none;
+    letter-spacing: 0;
+    line-height: 1.2;
+    border: 1px solid color-mix(in srgb, var(--colorLinkText) 35%, transparent);
     display: flex;
     max-width: fit-content;
+    box-sizing: border-box;
     cursor: pointer;
     text-decoration: none;
 }
 
 .interviewContent a:hover {
     background-color: var(--colorLinkHoverBg);
+    border-color: var(--colorLinkText);
 }
 
 .interviewContent a:focus-visible {
@@ -273,12 +314,18 @@
 
 .boardActionLink {
     width: fit-content;
-    padding: 4px 8px;
+    max-width: 100%;
+    min-height: var(--heightCompactPill);
+    padding: 0 9px;
+    align-items: center;
     border-radius: var(--radiusPill);
     background-color: var(--colorLinkBg);
     color: var(--colorLinkText);
-    font-size: 0.8125rem;
-    font-weight: 700;
+    box-sizing: border-box;
+    display: inline-flex;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.2;
     text-decoration: none;
 }
 
@@ -334,10 +381,6 @@
         font-size: 0.8rem;
     }
 
-    .interviewContent a {
-        font-size: 0.7rem;
-    }
-
     .board {
         overflow: visible;
         padding-right: var(--spaceCard);
@@ -351,7 +394,9 @@
         margin-right: 0;
     }
 
+    .timingBadge,
+    .interviewContent a,
     .boardActionLink {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
     }
 }

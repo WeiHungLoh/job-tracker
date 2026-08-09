@@ -290,7 +290,7 @@ describe('Archived job interview viewer flow', () => {
             { initialPreferences: { archived_application_job_statuses: ['Offer'] } }
         );
 
-        await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
+        await userEvent.click(await screen.findByRole('link', { name: /view application/i }));
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(
             JSON.stringify({ applicationJobStatus: 'Applied', applicationTargetId: 1 })
@@ -331,9 +331,7 @@ describe('Archived job interview viewer flow', () => {
         await waitFor(() => expect(interviews).toHaveAttribute('data-layout', 'board'));
         expect(within(interviews).queryByText(/time left/i)).not.toBeInTheDocument();
         expect(within(interviews).queryByText(/notes:/i)).not.toBeInTheDocument();
-        expect(
-            within(interviews).queryByRole('link', { name: /review corresponding job application/i })
-        ).not.toBeInTheDocument();
+        expect(within(interviews).queryByRole('link', { name: /view application/i })).not.toBeInTheDocument();
         const actions = within(interviews).getByText('Actions').closest('details');
         expect(actions).not.toHaveAttribute('open');
 
@@ -358,7 +356,7 @@ describe('Archived job interview viewer flow', () => {
             }
         );
 
-        await userEvent.click(await screen.findByRole('link', { name: /review corresponding job application/i }));
+        await userEvent.click(await screen.findByRole('link', { name: /view application/i }));
 
         expect(screen.getByTestId('location-state')).toHaveTextContent(
             JSON.stringify({ applicationJobStatus: 'Applied', applicationTargetId: 1 })

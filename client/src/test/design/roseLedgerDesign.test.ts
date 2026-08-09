@@ -472,7 +472,10 @@ describe('Rose Ledger visual contract', () => {
             /\.reviewSection h4\s*\{[^}]*color:\s*var\(--colorPrimary\);[^}]*font-size:\s*var\(--fontSizeMetadata\);[^}]*text-transform:\s*uppercase;/s
         );
         expect(offerEvaluationCss).toMatch(
-            /\.expiredBadge\s*\{[^}]*padding:\s*4px 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
+            /\.expiredBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*5px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(offerEvaluationCss).toMatch(
+            /\.expiredBadge::before\s*\{[^}]*width:\s*5px;[^}]*height:\s*5px;[^}]*flex:\s*0 0 5px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorToastErrorAccent\);[^}]*content:\s*'';/s
         );
         expect(offerDecisionWorkspaceCss).toMatch(/\.sectionHeading h2\s*\{[^}]*font-size:\s*1\.5rem;/s);
         expect(offerEvaluationCss).toMatch(/\.cardHeader h3\s*\{[^}]*font-size:\s*1\.5rem;/s);
@@ -569,6 +572,7 @@ describe('Rose Ledger visual contract', () => {
             '--fontSizeControl: 0.875rem;',
             '--fontSizeCompactControl: 0.8125rem;',
             '--fontSizeMetadata: 0.8125rem;',
+            '--heightCompactPill: 26px;',
             '--radiusControl: 10px;',
             '--radiusMenuItem: 8px;',
             '--radiusToolbar: 14px;',
@@ -605,19 +609,28 @@ describe('Rose Ledger visual contract', () => {
             '--colorBtnDestructiveFilledText: #ffffff;',
             '--colorStatusApplied: #17a2b8;',
             '--colorStatusOffer: #ffc107;',
-            '--colorStatusOfferText: #ffffff;',
-            '--colorStatusAppliedText: #ffffff;',
-            '--colorStatusInterviewText: #ffffff;',
-            '--colorStatusAcceptedText: #ffffff;',
-            '--colorStatusRejectedText: #ffffff;',
-            '--colorStatusGhostedText: #ffffff;',
-            '--colorStatusDeclinedText: #ffffff;',
+            '--colorStatusAppliedBadgeBg: #d7f1f4;',
+            '--colorStatusInterviewBadgeBg: #e1ebff;',
+            '--colorStatusOfferBadgeBg: #fff0bd;',
+            '--colorStatusAcceptedBadgeBg: #ddefe5;',
+            '--colorStatusRejectedBadgeBg: #f8dfe2;',
+            '--colorStatusGhostedBadgeBg: #e5e7ea;',
+            '--colorStatusDeclinedBadgeBg: #ece3f5;',
+            '--colorStatusWithdrawnBadgeBg: #eee3da;',
+            '--colorStatusAppliedText: #075c66;',
+            '--colorStatusInterviewText: #174c9e;',
+            '--colorStatusOfferText: #664d03;',
+            '--colorStatusAcceptedText: #146c43;',
+            '--colorStatusRejectedText: #9f2632;',
+            '--colorStatusGhostedText: #4e555b;',
+            '--colorStatusDeclinedText: #573080;',
             '--colorStatusWithdrawn: #8b5e3c;',
-            '--colorStatusWithdrawnText: #ffffff;',
+            '--colorStatusWithdrawnText: #6d452b;',
             '--colorLocationText: #005f56;',
             '--colorInterviewType: #6d28d9;',
             '--colorUpcomingBadge: #f57c00;',
-            '--colorUpcomingBadgeText: #ffffff;',
+            '--colorUpcomingBadgeBg: #fff1dc;',
+            '--colorUpcomingBadgeText: #7a4800;',
         ].forEach((declaration) => expect(lightCss).toContain(declaration));
 
         [
@@ -637,19 +650,28 @@ describe('Rose Ledger visual contract', () => {
             '--colorNoteErrorText: #ff7b86;',
             '--colorStatusApplied: #148f9e;',
             '--colorStatusOffer: #d39e00;',
-            '--colorStatusOfferText: #ffffff;',
-            '--colorStatusAppliedText: #ffffff;',
-            '--colorStatusInterviewText: #ffffff;',
-            '--colorStatusAcceptedText: #ffffff;',
-            '--colorStatusRejectedText: #ffffff;',
-            '--colorStatusGhostedText: #ffffff;',
-            '--colorStatusDeclinedText: #ffffff;',
+            '--colorStatusAppliedBadgeBg: #163b40;',
+            '--colorStatusInterviewBadgeBg: #1d3154;',
+            '--colorStatusOfferBadgeBg: #493c17;',
+            '--colorStatusAcceptedBadgeBg: #183c2c;',
+            '--colorStatusRejectedBadgeBg: #482429;',
+            '--colorStatusGhostedBadgeBg: #34383c;',
+            '--colorStatusDeclinedBadgeBg: #352743;',
+            '--colorStatusWithdrawnBadgeBg: #412d23;',
+            '--colorStatusAppliedText: #7edce5;',
+            '--colorStatusInterviewText: #9fc0ff;',
+            '--colorStatusOfferText: #f5d56b;',
+            '--colorStatusAcceptedText: #8dd5ae;',
+            '--colorStatusRejectedText: #ff9ba5;',
+            '--colorStatusGhostedText: #d0d4d7;',
+            '--colorStatusDeclinedText: #d1afe9;',
             '--colorStatusWithdrawn: #7a4a2e;',
-            '--colorStatusWithdrawnText: #ffffff;',
+            '--colorStatusWithdrawnText: #e2b99b;',
             '--colorLocationText: #5eead4;',
             '--colorInterviewType: #c4b5fd;',
             '--colorUpcomingBadge: #f57c00;',
-            '--colorUpcomingBadgeText: #ffffff;',
+            '--colorUpcomingBadgeBg: #3f2d1b;',
+            '--colorUpcomingBadgeText: #ffc47d;',
         ].forEach((declaration) => expect(darkCss).toContain(declaration));
 
         expect(globalCss).toContain("--fontFamilyBase: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;");
@@ -682,12 +704,15 @@ describe('Rose Ledger visual contract', () => {
             ['NoteSavingText', 'NotesBg', 4.5],
             ['NoteSavedText', 'NotesBg', 4.5],
             ['NoteErrorText', 'NotesBg', 4.5],
-            ['StatusInterviewText', 'StatusInterview', 4.5],
-            ['StatusAcceptedText', 'StatusAccepted', 4.5],
-            ['StatusRejectedText', 'StatusRejected', 4.5],
-            ['StatusGhostedText', 'StatusGhosted', 4.5],
-            ['StatusDeclinedText', 'StatusDeclined', 4.5],
-            ['StatusWithdrawnText', 'StatusWithdrawn', 4.5],
+            ['StatusAppliedText', 'StatusAppliedBadgeBg', 4.5],
+            ['StatusInterviewText', 'StatusInterviewBadgeBg', 4.5],
+            ['StatusOfferText', 'StatusOfferBadgeBg', 4.5],
+            ['StatusAcceptedText', 'StatusAcceptedBadgeBg', 4.5],
+            ['StatusRejectedText', 'StatusRejectedBadgeBg', 4.5],
+            ['StatusGhostedText', 'StatusGhostedBadgeBg', 4.5],
+            ['StatusDeclinedText', 'StatusDeclinedBadgeBg', 4.5],
+            ['StatusWithdrawnText', 'StatusWithdrawnBadgeBg', 4.5],
+            ['UpcomingBadgeText', 'UpcomingBadgeBg', 4.5],
         ];
 
         if (theme === 'light') {
@@ -961,10 +986,14 @@ describe('Rose Ledger visual contract', () => {
         expect(authProductIntro).toMatch(
             /\.previewLayer\s*\{[^}]*object-fit:\s*cover;[^}]*object-position:\s*top;[^}]*opacity:\s*1;[^}]*transform:\s*translateX\(0\);/s
         );
-        expect(authProductIntro).toMatch(/\.featureTabs\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);/s);
+        expect(authProductIntro).toMatch(
+            /\.featureTabs\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\);/s
+        );
         expect(authProductIntro).toMatch(/\.featureTab\[aria-selected='true'\]\s*\{/s);
         expect(authProductIntro).toMatch(/\.previewLayerOutgoing\s*\{[^}]*opacity:\s*0;[^}]*translateX\(-10px\);/s);
-        expect(authProductIntro).toMatch(/\.previewLayerIncomingInitial\s*\{[^}]*opacity:\s*0;[^}]*translateX\(10px\);/s);
+        expect(authProductIntro).toMatch(
+            /\.previewLayerIncomingInitial\s*\{[^}]*opacity:\s*0;[^}]*translateX\(10px\);/s
+        );
         expect(authProductIntro).toMatch(
             /\.fullscreenViewer\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\) auto;/s
         );
@@ -988,7 +1017,9 @@ describe('Rose Ledger visual contract', () => {
         expect(productPreviewCarousel).toContain("role='tab'");
         expect(productPreviewCarousel).toContain("role='tabpanel'");
         expect(productPreviewCarousel).toContain('void loadPreviewImage(nextImage).then(() => {');
-        expect(productPreviewCarousel).toContain('void loadPreviewImage(getPreviewImage(productPreviews[nextIndex], displayedTheme));');
+        expect(productPreviewCarousel).toContain(
+            'void loadPreviewImage(getPreviewImage(productPreviews[nextIndex], displayedTheme));'
+        );
         expect(productPreviewCarousel.match(/label: '/g)).toHaveLength(4);
         expect(productPreviewCarousel).not.toContain('.png');
     });
@@ -1057,7 +1088,7 @@ describe('Rose Ledger visual contract', () => {
         expect(calendarOptions).toMatch(/\.trigger\s*\{[^}]*width:\s*100%;/s);
         expect(applicationBoard).toContain('border-radius: var(--radiusPill);');
         expect(applicationBoard).toMatch(/\.card a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
-        expect(applicationBoard).toMatch(/\.boardFollowUp\s*\{[^}]*font-size:\s*var\(--fontSizeMetadata\);/s);
+        expect(applicationBoard).toMatch(/\.boardFollowUp\s*\{[^}]*font-size:\s*0\.6875rem;/s);
         expect(applicationBoardCard).toContain('className={styles.boardFollowUp}');
         expect(applicationBoardCard).toContain('<BoardCardActions');
         expect(applicationBoardCard).toContain('compactSizing');
@@ -1071,16 +1102,16 @@ describe('Rose Ledger visual contract', () => {
         expect(followUpSentBadge).toMatch(/\.badge\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusPill\);/s);
         expect(followUpSentBadge).toMatch(/\.badge\s*\{[^}]*margin-top:\s*var\(--spaceCompact\);/s);
         expect(followUpSentBadge).toMatch(
-            /\.compact\s*\{[^}]*padding:\s*4px 9px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:/s
+            /\.compact\s*\{[^}]*padding:\s*3px 9px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:/s
         );
         expect(followUpSentBadge).toMatch(/\.mobileLabel\s*\{[^}]*display:\s*none;/s);
         expect(followUpSentBadge).toMatch(
-            /\.copy,\s*\.compactLabel,\s*\.mobileLabel\s*\{[^}]*color:\s*var\(--colorToastSuccessText\);[^}]*font-weight:\s*700;/s
+            /\.copy,\s*\.compactLabel,\s*\.mobileLabel\s*\{[^}]*color:\s*var\(--colorToastSuccessText\);[^}]*font-weight:\s*600;/s
         );
         expect(followUpSentBadge).not.toContain('.mobileTime');
         expect(followUpSentBadge).not.toContain('::after');
         expect(followUpSentBadge).toMatch(
-            /@media \(max-width:\s*803px\)[\s\S]*?\.badge\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[^}]*font-weight:\s*700;[^}]*\}[\s\S]*?\.copy\s*\{[^}]*display:\s*none;/s
+            /@media \(max-width:\s*803px\)[\s\S]*?\.badge\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[^}]*font-size:\s*0\.75rem;[^}]*font-weight:\s*600;[^}]*\}[\s\S]*?\.copy\s*\{[^}]*display:\s*none;/s
         );
         expect(followUpSentBadgeComponent).toContain("from '../tooltip/Tooltip'");
         expect(followUpSentBadgeComponent).toContain('<Tooltip mobileOnly');
@@ -1101,6 +1132,124 @@ describe('Rose Ledger visual contract', () => {
             '--colorScrollbarTrack',
             '--colorScrollbarThumb',
         ].forEach((customScrollbarColor) => expect(allCss).not.toContain(customScrollbarColor));
+    });
+
+    it('uses one calm badge rhythm across application and interview cards', () => {
+        const applicationCard = readSource('src/pages/application/ApplicationCard.module.css');
+        const applicationBoard = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');
+        const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
+        const followUpSentBadge = readSource('src/components/followUpSentBadge/FollowUpSentBadge.module.css');
+
+        expect(applicationCard).toMatch(
+            /\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*background-color:\s*var\(--colorUpcomingBadgeBg\);[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(applicationCard).toMatch(
+            /\.applicationContent a,\s*\.url\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid color-mix\(in srgb, var\(--colorLinkText\) 35%, transparent\);[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(applicationCard).toMatch(
+            /\.applicationContent select\s*\{[^}]*height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid var\(--colorControlBorder\);[^}]*margin:\s*0;[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(applicationCard).toMatch(
+            /\.applicationContent select:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorPrimaryFocusOutline\);[^}]*outline-offset:\s*2px;/s
+        );
+        expect(applicationCard).toMatch(
+            /\.applied,\s*\.interview,\s*\.offer,\s*\.accepted,\s*\.rejected,\s*\.ghosted,\s*\.declined,\s*\.withdrawn\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(applicationCard).toMatch(
+            /\.applied::before,[\s\S]*?\.upcomingBadge::before\s*\{[^}]*width:\s*6px;[^}]*height:\s*6px;[^}]*background-color:\s*var\(--statusBadgeAccent\);[^}]*content:\s*'';/s
+        );
+
+        const statusNames = [
+            'Applied',
+            'Interview',
+            'Offer',
+            'Accepted',
+            'Rejected',
+            'Ghosted',
+            'Declined',
+            'Withdrawn',
+        ];
+        statusNames.forEach((status) => {
+            expect(applicationCard).toContain(`--statusBadgeAccent: var(--colorStatus${status});`);
+            expect(applicationCard).toContain(`background-color: var(--colorStatus${status}BadgeBg);`);
+            expect(applicationBoard).toContain(`--badgeAccent: var(--colorStatus${status});`);
+            expect(applicationBoard).toContain(`background-color: var(--colorStatus${status}BadgeBg);`);
+        });
+
+        expect(applicationBoard).toMatch(
+            /\.statusBadge,\s*\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*5px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(applicationBoard).toMatch(
+            /\.upcomingBadge\s*\{[^}]*--badgeAccent:\s*var\(--colorUpcomingBadge\);[^}]*background-color:\s*var\(--colorUpcomingBadgeBg\);/s
+        );
+        expect(applicationBoard).toMatch(
+            /\.statusBadge::before,\s*\.upcomingBadge::before\s*\{[^}]*width:\s*5px;[^}]*height:\s*5px;[^}]*background-color:\s*var\(--badgeAccent\);/s
+        );
+        expect(applicationBoard).toMatch(
+            /\.card a\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
+        );
+
+        expect(interviewCard).toMatch(
+            /\.interviewContent \.timingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*600;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(interviewCard).toMatch(
+            /\.timeLeft\s*\{[^}]*--statusBadgeAccent:\s*var\(--colorTimeLeft\);[^}]*background-color:\s*var\(--colorStatusRejectedBadgeBg\);[^}]*color:\s*var\(--colorStatusRejectedText\);/s
+        );
+        expect(interviewCard).toMatch(
+            /\.interviewContent a\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid color-mix\(in srgb, var\(--colorLinkText\) 35%, transparent\);[^}]*box-sizing:\s*border-box;/s
+        );
+        expect(interviewCard).toMatch(
+            /\.boardActionLink\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
+        );
+
+        expect(followUpSentBadge).toMatch(
+            /\.badge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*3px var\(--spaceCompact\);[^}]*box-sizing:\s*border-box;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
+        );
+        expect(followUpSentBadge).toMatch(
+            /\.compact\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*3px 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;/s
+        );
+
+        expect(applicationCard).toMatch(
+            /@media \(max-width: 803px\)[\s\S]*?\.withdrawn,[\s\S]*?\.upcomingBadge\s*\{[^}]*font-size:\s*0\.75rem;/s
+        );
+        expect(applicationCard).toMatch(
+            /@media \(max-width: 803px\)[\s\S]*?\.applicationContent a,\s*\.url\s*\{[^}]*font-size:\s*0\.75rem;/s
+        );
+        expect(interviewCard).toMatch(
+            /@media \(max-width: 803px\)[\s\S]*?\.timingBadge,[\s\S]*?\.interviewContent a,[\s\S]*?\.boardActionLink\s*\{[^}]*font-size:\s*0\.75rem;/s
+        );
+    });
+
+    it('preserves the original stacked layout for card action links without changing the badge gap', () => {
+        const applicationCard = readSource('src/pages/application/ApplicationCard.module.css');
+        const applicationCardComponent = readSource('src/pages/application/ApplicationCard.tsx');
+        const demoApplicationCard = readSource('src/pages/demo/application/DemoApplicationCard.tsx');
+        const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
+        const interviewCardComponent = readSource('src/pages/interview/InterviewCard.tsx');
+
+        expect(applicationCard).toMatch(
+            /\.badgeGroup\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*align-items:\s*flex-start;[^}]*gap:\s*var\(--spaceCompact\);/s
+        );
+        expect(applicationCard).toMatch(
+            /\.statusEditRow\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--spaceCompact\);/s
+        );
+        expect(applicationCard).toMatch(/\.badgeGroup\s+\.stackedBadge\s*\{[^}]*margin-top:\s*0;/s);
+        [applicationCardComponent, demoApplicationCard].forEach((component) => {
+            expect(component).toContain('<div className={styles.statusEditRow}>');
+            expect(component).toContain('className={styles.stackedBadge}');
+        });
+        expect(interviewCard).toMatch(
+            /\.badgeGroup\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*align-items:\s*flex-start;[^}]*gap:\s*var\(--spaceCompact\);/s
+        );
+        expect(interviewCard).toMatch(/\.badgeGroup\s+\.stackedBadge\s*\{[^}]*margin-top:\s*0;/s);
+        expect(interviewCardComponent).toContain('<div className={styles.badgeGroup}>');
+        expect(interviewCardComponent).toContain('className={styles.stackedBadge}');
+        expect(applicationCard).toMatch(
+            /\.applicationContent a,\s*\.url\s*\{[^}]*display:\s*flex;[^}]*max-width:\s*fit-content;/s
+        );
+        expect(applicationCard).not.toMatch(/\.applicationContent a,\s*\.url\s*\{[^}]*display:\s*inline-flex/s);
+        expect(interviewCard).toMatch(/\.interviewContent a\s*\{[^}]*display:\s*flex;[^}]*max-width:\s*fit-content;/s);
+        expect(interviewCard).not.toMatch(/\.interviewContent a\s*\{[^}]*display:\s*inline-flex/s);
     });
 
     it('does not expand the existing linear-gradient inventory', () => {
@@ -1346,7 +1495,7 @@ describe('Rose Ledger visual contract', () => {
             /@media \(max-width: 803px\)\s*\{[\s\S]*?\.interviewContent\s*\{[^}]*font-size:\s*0\.9rem;[\s\S]*?\.interviewContent h2\s*\{[^}]*font-size:\s*1\.2rem;/
         );
         expect(applicationBoard).toMatch(
-            /\.statusBadge,\s*\.upcomingBadge\s*\{[^}]*padding:\s*4px 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;/s
+            /\.statusBadge,\s*\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;/s
         );
         expect(attentionCenter).not.toMatch(
             /border-top|gradient\(|box-shadow|background:\s*color-mix|\.status\s*\{|colorBtnDestructive|colorError/i

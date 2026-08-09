@@ -592,7 +592,7 @@ describe('App routing and authentication behavior', () => {
 
         await userEvent.click(
             within(atlasCard).getByRole('link', {
-                name: /click here to review corresponding job application/i,
+                name: /view application/i,
             })
         );
 
