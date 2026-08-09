@@ -36,6 +36,7 @@ import {
     findInterviewOfferDeadlineWarnings,
 } from '../../../../interview/interviewOfferDeadlineWarning';
 import { useUnsavedChangesBlocker } from '../../../../../hooks/useUnsavedChangesBlocker';
+import useScrollToTopOnMount from '../../../../../hooks/useScrollToTopOnMount';
 import { hasUnsavedInterviewFormChanges } from '../../../../interview/interviewFormChanges';
 import type { ApplicationCollectionNavigationState } from '../../../../application/applicationNavigation';
 import { getAddInterviewOrigin, type AddInterviewNavigationState } from '../../../../interview/addInterviewNavigation';
@@ -66,6 +67,7 @@ const DemoAddInterview = () => {
     const confirm = useConfirm();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { showErrorToast, showSuccessToast } = useToast();
+    useScrollToTopOnMount();
     useUnsavedChangesBlocker(
         hasInvalidInterviewDateInput ||
             hasUnsavedInterviewFormChanges({

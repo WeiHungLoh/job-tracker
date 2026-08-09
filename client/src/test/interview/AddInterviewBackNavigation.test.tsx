@@ -87,6 +87,33 @@ const renderRoutes = (children: ReactNode, initialEntry: { pathname: string; sta
 };
 
 describe('Add Interview origin-aware navigation', () => {
+    beforeEach(() => {
+        vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test.each([
+        ['production', routes.addInterview, false, AddInterview],
+        ['demo', routes.demoAddInterview, true, DemoAddInterview],
+    ] as const)(
+        '%s Add Interview resets a carried page scroll position on mount',
+        (_label, addRoute, demo, Component) => {
+            renderRoutes(
+                <Component />,
+                {
+                    pathname: addRoute,
+                    state: { app: application, origin: { kind: 'application-collection' } },
+                },
+                demo
+            );
+
+            expect(window.scrollTo).toHaveBeenCalledWith({ behavior: 'auto', left: 0, top: 0 });
+        }
+    );
+
     test('production and demo application cards identify the application collection origin', async () => {
         const production = renderRoutes(<ApplicationCard {...applicationCardProps} />, {
             pathname: routes.viewApplications,

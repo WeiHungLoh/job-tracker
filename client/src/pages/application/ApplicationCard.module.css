@@ -205,25 +205,53 @@
     color: var(--colorText);
 }
 
-.applicationContent a,
-.url {
-    background-color: var(--colorLinkBg);
-    color: var(--colorLinkText);
-    min-height: var(--heightCompactPill);
+.navigationLink {
+    min-height: var(--heightCompactNavigationControl);
     padding: 0 9px;
     align-items: center;
-    border-radius: var(--radiusPill);
-    font-weight: 600;
-    font-size: var(--fontSizeCompactControl);
-    margin-top: 10px;
-    letter-spacing: 0;
-    line-height: 1.2;
-    border: 1px solid color-mix(in srgb, var(--colorLinkText) 35%, transparent);
+    gap: 6px;
+    border: 0;
+    border-radius: var(--radiusMenuItem);
+    background-color: var(--colorLinkBg);
+    color: var(--colorLinkText);
     display: flex;
+    width: fit-content;
     max-width: fit-content;
+    margin-top: 10px;
     box-sizing: border-box;
     cursor: pointer;
+    font-size: var(--fontSizeCompactControl);
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.2;
     text-decoration: none;
+    transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.linkIcon {
+    flex: 0 0 auto;
+    transition: transform 160ms ease;
+}
+
+.navigationLink:hover {
+    background-color: var(--colorLinkHoverBg);
+}
+
+.navigationLink:hover .linkIcon {
+    transform: translateX(2px);
+}
+
+.externalLink:hover .linkIcon {
+    transform: translate(1px, -1px);
+}
+
+.navigationLink:active {
+    transform: scale(0.98);
+}
+
+.navigationLink:focus-visible {
+    outline: 2px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
 }
 
 .applicationContent select {
@@ -248,14 +276,8 @@
 }
 
 .applicationContent select:focus-visible {
-    outline: 2px solid var(--colorPrimaryFocusOutline);
+    outline: 2px solid var(--colorFilterSelectText);
     outline-offset: 2px;
-}
-
-.applicationContent a:hover,
-.url:hover {
-    background-color: var(--colorLinkHoverBg);
-    border-color: var(--colorLinkText);
 }
 
 .applied,
@@ -439,8 +461,20 @@
         font-size: 0.75rem;
     }
 
-    .applicationContent a,
-    .url {
+    .navigationLink {
         font-size: 0.75rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navigationLink,
+    .linkIcon {
+        transition: none;
+    }
+
+    .navigationLink:active,
+    .navigationLink:hover .linkIcon,
+    .externalLink:hover .linkIcon {
+        transform: none;
     }
 }

@@ -167,8 +167,14 @@ const ApplicationBoardCard = ({
                 }
             >
                 {application.job_posting_url !== '' && (
-                    <a href={application.job_posting_url} rel='noreferrer noopener' target='_blank'>
-                        View job posting
+                    <a
+                        className={`${styles.navigationLink} ${styles.externalLink}`}
+                        href={application.job_posting_url}
+                        rel='noreferrer noopener'
+                        target='_blank'
+                    >
+                        <span>View job posting</span>
+                        <Icon className={styles.linkIcon} name='externalLink' size={14} />
                     </a>
                 )}
                 <div className={styles.notesField}>

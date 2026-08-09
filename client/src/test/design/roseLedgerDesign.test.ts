@@ -95,10 +95,7 @@ const expectedBoxShadowDeclarations = {
         'box-shadow: inset 0 0 0 1px var(--colorControlShadow);',
         'box-shadow: 0 1px 5px var(--colorControlShadow);',
     ],
-    'src/components/authProductIntro/AuthProductIntro.module.css': [
-        'box-shadow: none;',
-        'box-shadow: none;',
-    ],
+    'src/components/authProductIntro/AuthProductIntro.module.css': ['box-shadow: none;', 'box-shadow: none;'],
     'src/components/fallbackScreen/FallbackScreen.module.css': ['box-shadow: 0 0px 20px var(--colorAuthCardShadow);'],
     'src/components/formPage/FormPage.module.css': ['box-shadow: 0 0 0 3px var(--colorPrimaryFocusShadow);'],
     'src/components/navbar/Navbar.module.css': [
@@ -460,7 +457,7 @@ describe('Rose Ledger visual contract', () => {
             /\.detailsReview dt,\s*\.reviewValue dt\s*\{[^}]*color:\s*var\(--colorLabel\);[^}]*font-size:\s*var\(--fontSizeBody\);[^}]*font-weight:\s*500;/s
         );
         expect(offerEvaluationCss).toMatch(
-            /\.detailsReview dd\s*\{[^}]*color:\s*var\(--colorText\);[^}]*font-size:\s*var\(--fontSizeBody\);[^}]*font-weight:\s*400;/s
+            /\.detailsReview dd\s*\{[^}]*color:\s*var\(--colorTextSecondary\);[^}]*font-size:\s*var\(--fontSizeBody\);[^}]*font-weight:\s*400;/s
         );
         expect(offerEvaluationCss).toMatch(
             /\.detailsReview,\s*\.reviewValues\s*\{[^}]*padding:\s*var\(--spaceCompact\);[^}]*background-color:\s*var\(--colorControlMutedSurface\);/s
@@ -573,6 +570,7 @@ describe('Rose Ledger visual contract', () => {
             '--fontSizeCompactControl: 0.8125rem;',
             '--fontSizeMetadata: 0.8125rem;',
             '--heightCompactPill: 26px;',
+            '--heightCompactNavigationControl: 32px;',
             '--radiusControl: 10px;',
             '--radiusMenuItem: 8px;',
             '--radiusToolbar: 14px;',
@@ -683,6 +681,7 @@ describe('Rose Ledger visual contract', () => {
         const pairs: Array<[string, string, number]> = [
             ['Text', 'PageBg', 4.5],
             ['TextSecondary', 'PageBg', 4.5],
+            ['TextSecondary', 'ControlMutedSurface', 4.5],
             ['TooltipText', 'TooltipBg', 4.5],
             ['TextSecondary', 'OverlayBg', 3],
             ['Primary', 'OverlayBg', 3],
@@ -1063,15 +1062,15 @@ describe('Rose Ledger visual contract', () => {
         expect(interviewCard).toMatch(/\.interview\s*\{[^}]*overflow-anchor:\s*none;/s);
         expect(applicationCard).toMatch(/\.applicationContent\s*\{[^}]*padding-right:\s*60px;/s);
         expect(applicationCard).toContain('border-radius: var(--radiusPill);');
-        expect(applicationCard).toMatch(
-            /\.applicationContent a,\s*\.url\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s
-        );
+        expect(applicationCard).toMatch(/\.navigationLink\s*\{[^}]*border-radius:\s*var\(--radiusMenuItem\);/s);
         expect(applicationCard).toMatch(/\.applicationContent select\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
         expect(applicationCard).toMatch(/\.badgeGroup\s*\{[^}]*gap:\s*var\(--spaceCompact\);/s);
         expect(applicationCard).toMatch(/\.buttonGroup button\s*\{[^}]*white-space: nowrap;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*1fr 1fr;/s);
         expect(interviewCard).toMatch(/\.buttonGroup\s*\{[^}]*flex-shrink:\s*0;/s);
-        expect(interviewCard).toMatch(/\.interviewContent a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(interviewCard).toMatch(
+            /\.navigationLink,\s*\.boardActionLink\s*\{[^}]*border-radius:\s*var\(--radiusMenuItem\);/s
+        );
         expect(interviewCard).toMatch(
             /\.board \.interviewContent \.headingRow\s*\{[^}]*align-items:\s*center;[^}]*\}/s
         );
@@ -1087,7 +1086,7 @@ describe('Rose Ledger visual contract', () => {
         expect(interviewCard).toMatch(/@media \(max-width: 803px\)\s*\{\s*\.interview\s*\{[^}]*padding-right:\s*0;/s);
         expect(calendarOptions).toMatch(/\.trigger\s*\{[^}]*width:\s*100%;/s);
         expect(applicationBoard).toContain('border-radius: var(--radiusPill);');
-        expect(applicationBoard).toMatch(/\.card a\s*\{[^}]*border-radius:\s*var\(--radiusPill\);/s);
+        expect(applicationBoard).toMatch(/\.navigationLink\s*\{[^}]*border-radius:\s*var\(--radiusMenuItem\);/s);
         expect(applicationBoard).toMatch(/\.boardFollowUp\s*\{[^}]*font-size:\s*0\.6875rem;/s);
         expect(applicationBoardCard).toContain('className={styles.boardFollowUp}');
         expect(applicationBoardCard).toContain('<BoardCardActions');
@@ -1144,13 +1143,13 @@ describe('Rose Ledger visual contract', () => {
             /\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*background-color:\s*var\(--colorUpcomingBadgeBg\);[^}]*box-sizing:\s*border-box;/s
         );
         expect(applicationCard).toMatch(
-            /\.applicationContent a,\s*\.url\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid color-mix\(in srgb, var\(--colorLinkText\) 35%, transparent\);[^}]*box-sizing:\s*border-box;/s
-        );
-        expect(applicationCard).toMatch(
             /\.applicationContent select\s*\{[^}]*height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid var\(--colorControlBorder\);[^}]*margin:\s*0;[^}]*box-sizing:\s*border-box;/s
         );
         expect(applicationCard).toMatch(
-            /\.applicationContent select:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorPrimaryFocusOutline\);[^}]*outline-offset:\s*2px;/s
+            /\.applicationContent select:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorFilterSelectText\);[^}]*outline-offset:\s*2px;/s
+        );
+        expect(applicationCard).not.toMatch(
+            /\.applicationContent select:focus-visible\s*\{[^}]*var\(--colorPrimaryFocusOutline\)/s
         );
         expect(applicationCard).toMatch(
             /\.applied,\s*\.interview,\s*\.offer,\s*\.accepted,\s*\.rejected,\s*\.ghosted,\s*\.declined,\s*\.withdrawn\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
@@ -1185,23 +1184,12 @@ describe('Rose Ledger visual contract', () => {
         expect(applicationBoard).toMatch(
             /\.statusBadge::before,\s*\.upcomingBadge::before\s*\{[^}]*width:\s*5px;[^}]*height:\s*5px;[^}]*background-color:\s*var\(--badgeAccent\);/s
         );
-        expect(applicationBoard).toMatch(
-            /\.card a\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
-        );
-
         expect(interviewCard).toMatch(
             /\.interviewContent \.timingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*600;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
         );
         expect(interviewCard).toMatch(
             /\.timeLeft\s*\{[^}]*--statusBadgeAccent:\s*var\(--colorTimeLeft\);[^}]*background-color:\s*var\(--colorStatusRejectedBadgeBg\);[^}]*color:\s*var\(--colorStatusRejectedText\);/s
         );
-        expect(interviewCard).toMatch(
-            /\.interviewContent a\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid color-mix\(in srgb, var\(--colorLinkText\) 35%, transparent\);[^}]*box-sizing:\s*border-box;/s
-        );
-        expect(interviewCard).toMatch(
-            /\.boardActionLink\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
-        );
-
         expect(followUpSentBadge).toMatch(
             /\.badge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*3px var\(--spaceCompact\);[^}]*box-sizing:\s*border-box;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
         );
@@ -1213,11 +1201,92 @@ describe('Rose Ledger visual contract', () => {
             /@media \(max-width: 803px\)[\s\S]*?\.withdrawn,[\s\S]*?\.upcomingBadge\s*\{[^}]*font-size:\s*0\.75rem;/s
         );
         expect(applicationCard).toMatch(
-            /@media \(max-width: 803px\)[\s\S]*?\.applicationContent a,\s*\.url\s*\{[^}]*font-size:\s*0\.75rem;/s
+            /@media \(max-width: 803px\)[\s\S]*?\.navigationLink\s*\{[^}]*font-size:\s*0\.75rem;/s
         );
         expect(interviewCard).toMatch(
-            /@media \(max-width: 803px\)[\s\S]*?\.timingBadge,[\s\S]*?\.interviewContent a,[\s\S]*?\.boardActionLink\s*\{[^}]*font-size:\s*0\.75rem;/s
+            /@media \(max-width: 803px\)[\s\S]*?\.timingBadge,[\s\S]*?\.navigationLink,[\s\S]*?\.boardActionLink\s*\{[^}]*font-size:\s*0\.75rem;/s
         );
+    });
+
+    it('uses tinted navigation controls that remain distinct from passive badges and command buttons', () => {
+        const applicationCard = readSource('src/pages/application/ApplicationCard.module.css');
+        const applicationCardComponent = readSource('src/pages/application/ApplicationCard.tsx');
+        const demoApplicationCard = readSource('src/pages/demo/application/DemoApplicationCard.tsx');
+        const applicationBoard = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');
+        const applicationBoardCard = readSource(
+            'src/pages/application/jobApplication/applicationBoard/ApplicationBoardCard.tsx'
+        );
+        const archivedApplicationBoardCard = readSource(
+            'src/pages/application/archivedApplication/archivedApplicationBoard/ArchivedApplicationBoardCard.tsx'
+        );
+        const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
+        const interviewCardComponent = readSource('src/pages/interview/InterviewCard.tsx');
+        const iconComponent = readSource('src/components/icon/Icon.tsx');
+        const iconModels = readSource('src/components/icon/models.ts');
+
+        expect(applicationCard).toMatch(
+            /\.navigationLink\s*\{[^}]*min-height:\s*var\(--heightCompactNavigationControl\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*6px;[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusMenuItem\);[^}]*background-color:\s*var\(--colorLinkBg\);[^}]*color:\s*var\(--colorLinkText\);[^}]*display:\s*flex;[^}]*font-weight:\s*600;[^}]*text-decoration:\s*none;/s
+        );
+        expect(applicationCard).toMatch(
+            /\.navigationLink:hover\s*\{[^}]*background-color:\s*var\(--colorLinkHoverBg\);/s
+        );
+        expect(applicationCard).toMatch(/\.navigationLink:active\s*\{[^}]*transform:\s*scale\(0\.98\);/s);
+        expect(applicationCard).toMatch(
+            /\.navigationLink:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorPrimaryFocusOutline\);/s
+        );
+        expect(applicationCard).not.toMatch(/\.navigationLink\s*\{[^}]*var\(--radiusPill\)/s);
+        expect(applicationCard).not.toMatch(/\.navigationLink\s*\{[^}]*var\(--heightCompactPill\)/s);
+        expect(applicationCard).not.toMatch(/\.navigationLink\s*\{[^}]*background:\s*transparent/s);
+
+        expect(applicationBoard).toMatch(
+            /\.navigationLink\s*\{[^}]*min-height:\s*var\(--heightCompactNavigationControl\);[^}]*padding:\s*0 9px;[^}]*gap:\s*6px;[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusMenuItem\);[^}]*background-color:\s*var\(--colorLinkBg\);[^}]*display:\s*inline-flex;/s
+        );
+        expect(applicationBoard).toMatch(
+            /\.navigationLink:hover\s*\{[^}]*background-color:\s*var\(--colorLinkHoverBg\);/s
+        );
+        expect(applicationBoard).toMatch(/\.navigationLink:active\s*\{[^}]*transform:\s*scale\(0\.98\);/s);
+        expect(interviewCard).toMatch(
+            /\.navigationLink,\s*\.boardActionLink\s*\{[^}]*min-height:\s*var\(--heightCompactNavigationControl\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*6px;[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusMenuItem\);[^}]*background-color:\s*var\(--colorLinkBg\);[^}]*color:\s*var\(--colorLinkText\);/s
+        );
+        expect(interviewCard).toMatch(
+            /\.navigationLink:hover,\s*\.boardActionLink:hover\s*\{[^}]*background-color:\s*var\(--colorLinkHoverBg\);/s
+        );
+        expect(interviewCard).toMatch(
+            /\.navigationLink:active,\s*\.boardActionLink:active\s*\{[^}]*transform:\s*scale\(0\.98\);/s
+        );
+        expect(interviewCard).not.toMatch(/\.navigationLink,\s*\.boardActionLink\s*\{[^}]*var\(--radiusPill\)/s);
+        expect(interviewCard).not.toMatch(/\.navigationLink,\s*\.boardActionLink\s*\{[^}]*var\(--heightCompactPill\)/s);
+        expect(interviewCard).not.toMatch(/\.navigationLink,\s*\.boardActionLink\s*\{[^}]*background:\s*transparent/s);
+
+        [applicationCardComponent, demoApplicationCard].forEach((component) => {
+            expect(component).toContain('className={styles.navigationLink}');
+            expect(component).toContain('className={`${styles.navigationLink} ${styles.externalLink}`}');
+            expect(component).not.toContain('styles.linkLabel');
+            expect(component).toContain("name='chevronRight'");
+            expect(component).toContain("name='externalLink'");
+        });
+        [applicationBoardCard, archivedApplicationBoardCard].forEach((component) => {
+            expect(component).toContain('className={`${styles.navigationLink} ${styles.externalLink}`}');
+            expect(component).toContain("name='externalLink'");
+        });
+        expect(interviewCardComponent).toContain('className={styles.navigationLink}');
+        expect(interviewCardComponent).toContain('className={`${styles.navigationLink} ${styles.externalLink}`}');
+        expect(interviewCardComponent).toContain('className={`${styles.boardActionLink} ${styles.externalLink}`}');
+        expect(interviewCardComponent).not.toContain('styles.linkLabel');
+        expect(interviewCardComponent).toContain("name='chevronRight'");
+        expect(interviewCardComponent).toContain("name='externalLink'");
+        expect(iconComponent).toContain('MdChevronRight');
+        expect(iconComponent).toContain('MdOpenInNew');
+        expect(iconModels).toContain("| 'chevronRight'");
+        expect(iconModels).toContain("| 'externalLink'");
+
+        expect(applicationCardComponent).toContain("variant='secondary'");
+        expect(applicationCardComponent).toContain("variant='destructive'");
+        expect(interviewCardComponent).toContain("variant='destructive'");
+        [applicationCard, applicationBoard, interviewCard].forEach((stylesheet) => {
+            expect(stylesheet).not.toContain('.linkLabel');
+            expect(stylesheet).not.toContain('text-decoration: underline;');
+        });
     });
 
     it('preserves the original stacked layout for card action links without changing the badge gap', () => {
@@ -1244,12 +1313,10 @@ describe('Rose Ledger visual contract', () => {
         expect(interviewCard).toMatch(/\.badgeGroup\s+\.stackedBadge\s*\{[^}]*margin-top:\s*0;/s);
         expect(interviewCardComponent).toContain('<div className={styles.badgeGroup}>');
         expect(interviewCardComponent).toContain('className={styles.stackedBadge}');
-        expect(applicationCard).toMatch(
-            /\.applicationContent a,\s*\.url\s*\{[^}]*display:\s*flex;[^}]*max-width:\s*fit-content;/s
-        );
-        expect(applicationCard).not.toMatch(/\.applicationContent a,\s*\.url\s*\{[^}]*display:\s*inline-flex/s);
-        expect(interviewCard).toMatch(/\.interviewContent a\s*\{[^}]*display:\s*flex;[^}]*max-width:\s*fit-content;/s);
-        expect(interviewCard).not.toMatch(/\.interviewContent a\s*\{[^}]*display:\s*inline-flex/s);
+        expect(applicationCard).toMatch(/\.navigationLink\s*\{[^}]*display:\s*flex;[^}]*max-width:\s*fit-content;/s);
+        expect(applicationCard).not.toMatch(/\.navigationLink\s*\{[^}]*display:\s*inline-flex/s);
+        expect(interviewCard).toMatch(/\.navigationLink\s*\{[^}]*display:\s*flex;[^}]*max-width:\s*fit-content;/s);
+        expect(interviewCard).not.toMatch(/\.navigationLink\s*\{[^}]*display:\s*inline-flex/s);
     });
 
     it('does not expand the existing linear-gradient inventory', () => {

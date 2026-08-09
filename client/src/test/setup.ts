@@ -21,3 +21,12 @@ Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
     value: localStorageMock,
 });
+
+// jsdom does not implement scrolling, but components should still exercise the
+// same browser API they use in production. Individual tests can spy on this
+// configurable default when they need to assert a scroll interaction.
+Object.defineProperty(window, 'scrollTo', {
+    configurable: true,
+    value: () => undefined,
+    writable: true,
+});

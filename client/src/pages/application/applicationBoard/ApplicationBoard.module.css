@@ -419,13 +419,15 @@
     text-align-last: center;
 }
 
-.card a {
+.navigationLink {
     width: fit-content;
     max-width: 100%;
-    min-height: var(--heightCompactPill);
+    min-height: var(--heightCompactNavigationControl);
     padding: 0 9px;
     align-items: center;
-    border-radius: var(--radiusPill);
+    gap: 6px;
+    border: 0;
+    border-radius: var(--radiusMenuItem);
     background-color: var(--colorLinkBg);
     color: var(--colorLinkText);
     box-sizing: border-box;
@@ -434,10 +436,29 @@
     font-weight: 600;
     line-height: 1.2;
     text-decoration: none;
+    transition: background-color 160ms ease, transform 160ms ease;
 }
 
-.card a:hover {
+.linkIcon {
+    flex: 0 0 auto;
+    transition: transform 160ms ease;
+}
+
+.navigationLink:hover {
     background-color: var(--colorLinkHoverBg);
+}
+
+.externalLink:hover .linkIcon {
+    transform: translate(1px, -1px);
+}
+
+.navigationLink:active {
+    transform: scale(0.98);
+}
+
+.navigationLink:focus-visible {
+    outline: 2px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
 }
 
 .notesField textarea {
@@ -471,5 +492,17 @@
 @media (max-width: 803px) {
     .column {
         min-height: 300px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navigationLink,
+    .linkIcon {
+        transition: none;
+    }
+
+    .navigationLink:active,
+    .externalLink:hover .linkIcon {
+        transform: none;
     }
 }

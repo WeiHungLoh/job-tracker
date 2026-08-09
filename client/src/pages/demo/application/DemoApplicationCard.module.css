@@ -90,6 +90,14 @@
     composes: date from '../../application/ApplicationCard.module.css';
 }
 
-.url {
-    composes: url from '../../application/ApplicationCard.module.css';
+.navigationLink {
+    composes: navigationLink from '../../application/ApplicationCard.module.css';
+}
+
+.externalLink {
+    composes: externalLink from '../../application/ApplicationCard.module.css';
+}
+
+.linkIcon {
+    composes: linkIcon from '../../application/ApplicationCard.module.css';
 }

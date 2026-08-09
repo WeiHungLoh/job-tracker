@@ -6,6 +6,7 @@ import styles from '../../applicationBoard/ApplicationBoard.module.css';
 import BoardCardActions from '../../../../components/boardCardActions/BoardCardActions';
 import FollowUpSentBadge from '../../../../components/followUpSentBadge/FollowUpSentBadge';
 import PinControl from '../../../../components/pinControl/PinControl';
+import Icon from '../../../../components/icon/Icon';
 
 const EMPTY_NOTES_MESSAGE = 'You do not have any notes here';
 
@@ -90,8 +91,14 @@ const ArchivedApplicationBoardCard = ({
                 {hasActions && (
                     <>
                         {application.job_posting_url !== '' && (
-                            <a href={application.job_posting_url} rel='noreferrer noopener' target='_blank'>
-                                View job posting
+                            <a
+                                className={`${styles.navigationLink} ${styles.externalLink}`}
+                                href={application.job_posting_url}
+                                rel='noreferrer noopener'
+                                target='_blank'
+                            >
+                                <span>View job posting</span>
+                                <Icon className={styles.linkIcon} name='externalLink' size={14} />
                             </a>
                         )}
                         {showNotes && (

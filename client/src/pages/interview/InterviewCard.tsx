@@ -10,6 +10,7 @@ import FollowUpSentBadge from '../../components/followUpSentBadge/FollowUpSentBa
 import PinControl from '../../components/pinControl/PinControl';
 import NoteSaveStatus from '../../components/noteSaveStatus/NoteSaveStatus';
 import { FIELD_MAX_LENGTHS } from '../../helper/formValidation';
+import Icon from '../../components/icon/Icon';
 
 const EMPTY_NOTES_MESSAGE = 'You do not have any notes here';
 
@@ -152,12 +153,23 @@ const InterviewCard = (props: InterviewCardProps) => {
                             )}
                         </div>
                         {interview.meeting_url && (
-                            <a href={interview.meeting_url} rel='noreferrer noopener' target='_blank'>
-                                Join meeting
+                            <a
+                                className={`${styles.navigationLink} ${styles.externalLink}`}
+                                href={interview.meeting_url}
+                                rel='noreferrer noopener'
+                                target='_blank'
+                            >
+                                <span>Join meeting</span>
+                                <Icon className={styles.linkIcon} name='externalLink' size={15} />
                             </a>
                         )}
-                        <Link to={`${applicationRoute}#${applicationId}`} onClick={onViewApplicationClick}>
-                            View application
+                        <Link
+                            className={styles.navigationLink}
+                            to={`${applicationRoute}#${applicationId}`}
+                            onClick={onViewApplicationClick}
+                        >
+                            <span>View application</span>
+                            <Icon className={styles.linkIcon} name='chevronRight' size={16} />
                         </Link>
                     </>
                 )}
@@ -190,12 +202,13 @@ const InterviewCard = (props: InterviewCardProps) => {
                     >
                         {interview.meeting_url && (
                             <a
-                                className={styles.boardActionLink}
+                                className={`${styles.boardActionLink} ${styles.externalLink}`}
                                 href={interview.meeting_url}
                                 rel='noreferrer noopener'
                                 target='_blank'
                             >
-                                Join meeting
+                                <span>Join meeting</span>
+                                <Icon className={styles.linkIcon} name='externalLink' size={14} />
                             </a>
                         )}
                         {variant === 'job' && (
@@ -204,7 +217,8 @@ const InterviewCard = (props: InterviewCardProps) => {
                                 to={`${applicationRoute}#${applicationId}`}
                                 onClick={onViewApplicationClick}
                             >
-                                View application
+                                <span>View application</span>
+                                <Icon className={styles.linkIcon} name='chevronRight' size={15} />
                             </Link>
                         )}
                         {variant === 'job' ? (

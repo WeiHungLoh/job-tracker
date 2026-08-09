@@ -29,6 +29,7 @@ import {
     isInterviewOfferDeadlineWarningError,
 } from '../../interviewOfferDeadlineWarning';
 import { useUnsavedChangesBlocker } from '../../../../hooks/useUnsavedChangesBlocker';
+import useScrollToTopOnMount from '../../../../hooks/useScrollToTopOnMount';
 import { hasUnsavedInterviewFormChanges } from '../../interviewFormChanges';
 import type { ApplicationCollectionNavigationState } from '../../../application/applicationNavigation';
 import { getAddInterviewOrigin, type AddInterviewNavigationState } from '../../addInterviewNavigation';
@@ -59,6 +60,7 @@ const AddInterview = () => {
     const api = useJobTrackerAPI();
     const confirm = useConfirm();
     const { showErrorToast, showSuccessToast } = useToast();
+    useScrollToTopOnMount();
     useUnsavedChangesBlocker(
         hasInvalidInterviewDateInput ||
             hasUnsavedInterviewFormChanges({

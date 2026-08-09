@@ -12,6 +12,7 @@ import { isApplicationStatusDisabled } from '../../application/applicationStatus
 import FollowUpSentBadge from '../../../components/followUpSentBadge/FollowUpSentBadge';
 import PinControl from '../../../components/pinControl/PinControl';
 import type { AddInterviewNavigationState } from '../../interview/addInterviewNavigation';
+import Icon from '../../../components/icon/Icon';
 
 const JOB_STATUS_CARD_CLASS_MAP: Record<JobStatus, string> = {
     Accepted: styles.statusAccepted,
@@ -110,6 +111,7 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
 
                 {variant === 'job' && application.job_status === 'Interview' && (
                     <Link
+                        className={styles.navigationLink}
                         to={routes.demoAddInterview}
                         state={
                             {
@@ -118,18 +120,20 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                             } satisfies AddInterviewNavigationState
                         }
                     >
-                        Add interview
+                        <span>Add interview</span>
+                        <Icon className={styles.linkIcon} name='chevronRight' size={16} />
                     </Link>
                 )}
 
                 {application.job_posting_url !== '' && (
                     <a
-                        className={styles.url}
+                        className={`${styles.navigationLink} ${styles.externalLink}`}
                         href={application.job_posting_url}
                         rel='noreferrer noopener'
                         target='_blank'
                     >
-                        View job posting
+                        <span>View job posting</span>
+                        <Icon className={styles.linkIcon} name='externalLink' size={15} />
                     </a>
                 )}
             </div>

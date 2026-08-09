@@ -321,7 +321,7 @@
 
 .detailsReview dd {
     margin: 0;
-    color: var(--colorText);
+    color: var(--colorTextSecondary);
     font-size: var(--fontSizeBody);
     font-weight: 400;
     line-height: 1.4;
