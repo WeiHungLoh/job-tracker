@@ -27,6 +27,7 @@ import { useConfirm } from 'material-ui-confirm';
 import { getErrorToastMessage } from '../../../../../helper/getErrorToastMessage';
 import { useUnsavedChangesBlocker } from '../../../../../hooks/useUnsavedChangesBlocker';
 import { hasUnsavedApplicationFormChanges } from '../../../../application/applicationFormChanges';
+import Icon from '../../../../../components/icon/Icon';
 
 const DemoAddApplication = () => {
     const [companyName, setCompanyName] = useState<string>('');
@@ -155,95 +156,123 @@ const DemoAddApplication = () => {
 
     return (
         <form className={styles.addApplication} noValidate onSubmit={handleAdd}>
-            <label htmlFor='company-name'>Company Name</label>
-            <input
-                ref={companyNameInputRef}
-                aria-describedby={errors.companyName ? 'company-name-error' : undefined}
-                aria-invalid={errors.companyName ? true : undefined}
-                id='company-name'
-                maxLength={FIELD_MAX_LENGTHS.companyName}
-                value={companyName}
-                onChange={(e) => {
-                    setCompanyName(e.target.value);
-                    clearFieldError('companyName');
-                }}
-                required
-            />
-            <FormFieldError id='company-name-error' message={errors.companyName} />
+            <div className={styles.field}>
+                <label htmlFor='company-name'>Company Name</label>
+                <input
+                    ref={companyNameInputRef}
+                    aria-describedby={errors.companyName ? 'company-name-error' : undefined}
+                    aria-invalid={errors.companyName ? true : undefined}
+                    id='company-name'
+                    maxLength={FIELD_MAX_LENGTHS.companyName}
+                    value={companyName}
+                    onChange={(e) => {
+                        setCompanyName(e.target.value);
+                        clearFieldError('companyName');
+                    }}
+                    required
+                />
+                <FormFieldError id='company-name-error' message={errors.companyName} />
+            </div>
 
-            <label htmlFor='job-title'>Job Title</label>
-            <input
-                ref={jobTitleInputRef}
-                aria-describedby={errors.jobTitle ? 'job-title-error' : undefined}
-                aria-invalid={errors.jobTitle ? true : undefined}
-                id='job-title'
-                maxLength={FIELD_MAX_LENGTHS.jobTitle}
-                value={jobTitle}
-                onChange={(e) => {
-                    setJobTitle(e.target.value);
-                    clearFieldError('jobTitle');
-                }}
-                required
-            />
-            <FormFieldError id='job-title-error' message={errors.jobTitle} />
+            <div className={styles.field}>
+                <label htmlFor='job-title'>Job Title</label>
+                <input
+                    ref={jobTitleInputRef}
+                    aria-describedby={errors.jobTitle ? 'job-title-error' : undefined}
+                    aria-invalid={errors.jobTitle ? true : undefined}
+                    id='job-title'
+                    maxLength={FIELD_MAX_LENGTHS.jobTitle}
+                    value={jobTitle}
+                    onChange={(e) => {
+                        setJobTitle(e.target.value);
+                        clearFieldError('jobTitle');
+                    }}
+                    required
+                />
+                <FormFieldError id='job-title-error' message={errors.jobTitle} />
+            </div>
 
-            <label htmlFor='job-status'>Job Status</label>
-            <select id='job-status' value={jobStatus} onChange={(e) => setJobStatus(e.target.value as JobStatus)}>
-                {JOB_STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                        {status}
-                    </option>
-                ))}
-            </select>
+            <div className={styles.field}>
+                <label htmlFor='job-status'>Job Status</label>
+                <div className={styles.selectControl}>
+                    <select
+                        id='job-status'
+                        value={jobStatus}
+                        onChange={(e) => setJobStatus(e.target.value as JobStatus)}
+                    >
+                        {JOB_STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                                {status}
+                            </option>
+                        ))}
+                    </select>
+                    <Icon
+                        className={styles.selectChevron}
+                        data-testid='job-status-chevron'
+                        name='chevronDown'
+                        size={20}
+                    />
+                </div>
+            </div>
 
-            <label htmlFor='app-date'>Application Date (uses current date if left blank)</label>
-            <input
-                ref={applicationDateInputRef}
-                aria-describedby={errors.applicationDate ? 'app-date-error' : undefined}
-                aria-invalid={errors.applicationDate ? true : undefined}
-                id='app-date'
-                max={MAX_DATETIME_LOCAL}
-                min={MIN_DATETIME_LOCAL}
-                value={applicationDate}
-                onChange={(e) => {
-                    setApplicationDate(e.target.value);
-                    clearFieldError('applicationDate');
-                }}
-                onBlur={handleApplicationDateInput}
-                onInput={handleApplicationDateInput}
-                type='datetime-local'
-            />
-            <FormFieldError id='app-date-error' message={errors.applicationDate} />
+            <div className={styles.field}>
+                <label htmlFor='app-date'>Application date</label>
+                <input
+                    ref={applicationDateInputRef}
+                    aria-describedby={errors.applicationDate ? 'app-date-error' : undefined}
+                    aria-invalid={errors.applicationDate ? true : undefined}
+                    id='app-date'
+                    max={MAX_DATETIME_LOCAL}
+                    min={MIN_DATETIME_LOCAL}
+                    value={applicationDate}
+                    onChange={(e) => {
+                        setApplicationDate(e.target.value);
+                        clearFieldError('applicationDate');
+                    }}
+                    onBlur={handleApplicationDateInput}
+                    onInput={handleApplicationDateInput}
+                    type='datetime-local'
+                />
+                <FormFieldError id='app-date-error' message={errors.applicationDate} />
+            </div>
 
-            <label htmlFor='job-location'>Job Location (optional)</label>
-            <input
-                ref={jobLocationInputRef}
-                aria-describedby={errors.jobLocation ? 'job-location-error' : undefined}
-                aria-invalid={errors.jobLocation ? true : undefined}
-                id='job-location'
-                maxLength={FIELD_MAX_LENGTHS.location}
-                value={jobLocation}
-                onChange={(e) => {
-                    setJobLocation(e.target.value);
-                    clearFieldError('jobLocation');
-                }}
-            />
-            <FormFieldError id='job-location-error' message={errors.jobLocation} />
+            <div className={styles.field}>
+                <label htmlFor='job-location'>
+                    Job Location<span className={styles.optionalLabel}> (optional)</span>
+                </label>
+                <input
+                    ref={jobLocationInputRef}
+                    aria-describedby={errors.jobLocation ? 'job-location-error' : undefined}
+                    aria-invalid={errors.jobLocation ? true : undefined}
+                    id='job-location'
+                    maxLength={FIELD_MAX_LENGTHS.location}
+                    value={jobLocation}
+                    onChange={(e) => {
+                        setJobLocation(e.target.value);
+                        clearFieldError('jobLocation');
+                    }}
+                />
+                <FormFieldError id='job-location-error' message={errors.jobLocation} />
+            </div>
 
-            <label htmlFor='job-url'>Job Posting URL (optional)</label>
-            <input
-                ref={jobURLInputRef}
-                aria-describedby={errors.jobURL ? 'job-url-error' : undefined}
-                aria-invalid={errors.jobURL ? true : undefined}
-                id='job-url'
-                maxLength={FIELD_MAX_LENGTHS.jobURL}
-                value={jobURL}
-                onChange={(e) => {
-                    setJobURL(e.target.value);
-                    clearFieldError('jobURL');
-                }}
-            />
-            <FormFieldError id='job-url-error' message={errors.jobURL} />
+            <div className={styles.field}>
+                <label htmlFor='job-url'>
+                    Job Posting URL<span className={styles.optionalLabel}> (optional)</span>
+                </label>
+                <input
+                    ref={jobURLInputRef}
+                    aria-describedby={errors.jobURL ? 'job-url-error' : undefined}
+                    aria-invalid={errors.jobURL ? true : undefined}
+                    id='job-url'
+                    maxLength={FIELD_MAX_LENGTHS.jobURL}
+                    value={jobURL}
+                    onChange={(e) => {
+                        setJobURL(e.target.value);
+                        clearFieldError('jobURL');
+                    }}
+                />
+                <FormFieldError id='job-url-error' message={errors.jobURL} />
+            </div>
 
             <div className={styles.submitButton}>
                 <PrimaryButton isLoading={isSubmissionPending} type='submit' variant='compact'>

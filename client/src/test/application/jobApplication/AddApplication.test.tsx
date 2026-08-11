@@ -164,6 +164,16 @@ describe('User add application flow', () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
+    test('shows a decorative chevron for the job status select', () => {
+        render(
+            <MemoryRouter>
+                <AddApplication />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByTestId('job-status-chevron')).toHaveAttribute('aria-hidden', 'true');
+    });
+
     test('shows a collapsed Quick Capture disclosure only on normal Add Application navigation', () => {
         renderQuickCaptureApplication('/application/add');
 

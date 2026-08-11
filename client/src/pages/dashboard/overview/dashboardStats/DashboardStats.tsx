@@ -1,7 +1,6 @@
 import Icon from '../../../../components/icon/Icon';
 import LoadingSpinner from '../../../../components/loadingSpinner/LoadingSpinner';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import styles from './DashboardStats.module.css';
 import type { DashboardStatsProps } from '../../dashboardTypes';
 import { getStatusCountMap, getTotalStatusCount, getUpcomingInterviews } from '../../dashboardSelectors';
@@ -94,43 +93,51 @@ const DashboardStats = ({
             {cards.map((card) => {
                 const isRevealed = revealedRate === card.label;
                 const displayedValue = card.error ? '—' : card.isLoading ? <LoadingSpinner size='sm' /> : card.value;
-                const ariaValue = card.error ? 'unavailable' : card.isLoading ? 'loading' : card.value;
-                const renderContent = (children: ReactNode) => (
-                    <>
+                const explanationId = `dashboard-stat-${card.label.toLowerCase().replaceAll(' ', '-')}-explanation`;
+
+                return card.explanation ? (
+                    <div className={`${styles.card} ${styles.rateCard}`} key={card.label}>
+                        <button
+                            aria-controls={explanationId}
+                            aria-expanded={isRevealed}
+                            aria-label={`About ${card.label}`}
+                            className={styles.infoButton}
+                            onClick={() => setRevealedRate((current) => (current === card.label ? null : card.label))}
+                            title={`About ${card.label}`}
+                            type='button'
+                        >
+                            <Icon name='info' size={18} />
+                        </button>
                         <div className={styles.icon}>
                             <Icon name={card.icon} size={24} />
                         </div>
-                        <div className={styles.statContent}>{children}</div>
-                    </>
-                );
-                const frontContent = renderContent(
-                    <>
-                        <div className={styles.value}>{displayedValue}</div>
-                        <div className={styles.label}>{card.label}</div>
-                    </>
-                );
-
-                return card.explanation ? (
-                    <button
-                        aria-label={`${card.label}: ${isRevealed ? card.explanation : ariaValue}`}
-                        aria-pressed={isRevealed}
-                        className={`${styles.card} ${styles.interactiveCard}`}
-                        key={card.label}
-                        onClick={() => setRevealedRate((current) => (current === card.label ? null : card.label))}
-                        type='button'
-                    >
-                        <div className={`${styles.flipInner} ${isRevealed ? styles.flipped : ''}`}>
-                            <div aria-hidden={isRevealed} className={styles.flipFace}>
-                                {frontContent}
+                        <div className={`${styles.statContent} ${styles.rateContent}`}>
+                            <div
+                                aria-hidden={isRevealed}
+                                className={`${styles.crossfadePanel} ${!isRevealed ? styles.crossfadeVisible : ''}`}
+                            >
+                                <div className={styles.value}>{displayedValue}</div>
+                                <div className={styles.label}>{card.label}</div>
                             </div>
-                            <div aria-hidden={!isRevealed} className={`${styles.flipFace} ${styles.flipBack}`}>
-                                {renderContent(<p className={styles.explanation}>{card.explanation}</p>)}
+                            <div
+                                aria-hidden={!isRevealed}
+                                className={`${styles.crossfadePanel} ${isRevealed ? styles.crossfadeVisible : ''}`}
+                                id={explanationId}
+                            >
+                                <div className={styles.label}>{card.label} formula</div>
+                                <p className={styles.explanation}>{card.explanation}</p>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 ) : (
                     <div className={styles.card} key={card.label}>
-                        {frontContent}
+                        <div className={styles.icon}>
+                            <Icon name={card.icon} size={24} />
+                        </div>
+                        <div className={styles.statContent}>
+                            <div className={styles.value}>{displayedValue}</div>
+                            <div className={styles.label}>{card.label}</div>
+                        </div>
                     </div>
                 );
             })}

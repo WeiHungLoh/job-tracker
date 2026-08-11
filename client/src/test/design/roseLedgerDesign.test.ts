@@ -1600,6 +1600,15 @@ describe('Rose Ledger visual contract', () => {
         expect(button).toContain('--colorSpinnerLight: var(--colorBtnDestructiveFilledText);');
         expect(button).toContain('line-height: normal;');
         expect(form).toContain('font-weight: 600;');
+        expect(form).toContain('min-height: 44px;');
+        expect(form).toMatch(/\.field\s*\{[^}]*gap:\s*var\(--spaceControl\);/s);
+        expect(form).toMatch(/\.field \+ \.field\s*\{[^}]*margin-top:\s*var\(--spaceCard\);/s);
+        expect(form).toMatch(/\.optionalLabel\s*\{[^}]*color:\s*var\(--colorTextSecondary\);[^}]*font-weight:\s*400;/s);
+        expect(form).toMatch(/\.selectControl\s*\{[^}]*position:\s*relative;/s);
+        expect(form).toMatch(/\.selectChevron\s*\{[^}]*pointer-events:\s*none;/s);
+        expect(form).toMatch(/\.context\s*\{[^}]*margin-bottom:\s*var\(--spaceCompact\);/s);
+        expect(form).toMatch(/\.context h2\s*\{[^}]*margin:\s*0 0 calc\(var\(--spaceControl\) \/ 2\);/s);
+        expect(form).toMatch(/\.context p\s*\{[^}]*margin:\s*0;/s);
         expect(form).not.toContain('appearance: auto;');
         [activityControls, controlDropdown, viewToggle, navbar].forEach((source) =>
             expect(source).toContain('var(--colorInteractiveBorder)')

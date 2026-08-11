@@ -2,6 +2,22 @@
     composes: addApplication from '../../../../application/jobApplication/addApplication/AddApplication.module.css';
 }
 
+.field {
+    composes: field from '../../../../application/jobApplication/addApplication/AddApplication.module.css';
+}
+
+.optionalLabel {
+    composes: optionalLabel from '../../../../application/jobApplication/addApplication/AddApplication.module.css';
+}
+
+.selectControl {
+    composes: selectControl from '../../../../application/jobApplication/addApplication/AddApplication.module.css';
+}
+
+.selectChevron {
+    composes: selectChevron from '../../../../application/jobApplication/addApplication/AddApplication.module.css';
+}
+
 .submitButton {
     composes: submitButton from '../../../../application/jobApplication/addApplication/AddApplication.module.css';
 }

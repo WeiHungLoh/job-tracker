@@ -2,6 +2,22 @@
     composes: formPage from '../../../../components/formPage/FormPage.module.css';
 }
 
+.field {
+    composes: field from '../../../../components/formPage/FormPage.module.css';
+}
+
+.optionalLabel {
+    composes: optionalLabel from '../../../../components/formPage/FormPage.module.css';
+}
+
+.selectControl {
+    composes: selectControl from '../../../../components/formPage/FormPage.module.css';
+}
+
+.selectChevron {
+    composes: selectChevron from '../../../../components/formPage/FormPage.module.css';
+}
+
 .quickCaptureReference {
     min-width: 0;
     padding: var(--spaceCompact) var(--spaceCard);

@@ -134,6 +134,8 @@ describe('Demo Add Application duplicate confirmation', () => {
         renderDemoAddApplication();
         const initialApplicationCount = getActiveApplicationCount();
 
+        expect(screen.getByTestId('job-status-chevron')).toHaveAttribute('aria-hidden', 'true');
+
         userEvent.type(screen.getByLabelText(/company name/i), '  Demo Form Company  ');
         userEvent.type(screen.getByLabelText(/job title/i), '  Demo Form Engineer  ');
         userEvent.selectOptions(screen.getByLabelText(/job status/i), 'Interview');

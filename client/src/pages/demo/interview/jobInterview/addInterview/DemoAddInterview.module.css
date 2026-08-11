@@ -2,6 +2,14 @@
     composes: addInterview from '../../../../interview/jobInterview/addInterview/AddInterview.module.css';
 }
 
+.field {
+    composes: field from '../../../../interview/jobInterview/addInterview/AddInterview.module.css';
+}
+
+.optionalLabel {
+    composes: optionalLabel from '../../../../interview/jobInterview/addInterview/AddInterview.module.css';
+}
+
 .context {
     composes: context from '../../../../interview/jobInterview/addInterview/AddInterview.module.css';
 }

@@ -6,7 +6,6 @@ import ApplicationsLineChart from '../../pages/dashboard/charts/applicationsTren
 import ClosedOutcomesChart from '../../pages/dashboard/charts/closedOutcomes/ClosedOutcomesChart';
 import DashboardContent from '../../pages/dashboard/DashboardContent';
 import DashboardStats from '../../pages/dashboard/overview/dashboardStats/DashboardStats';
-import dashboardStatsStyles from '../../pages/dashboard/overview/dashboardStats/DashboardStats.module.css';
 import statusLegendStyles from '../../pages/dashboard/charts/shared/StatusLegend.module.css';
 import UpcomingInterviews from '../../pages/dashboard/overview/upcomingInterviews/UpcomingInterviews';
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../../pages/application/models';
@@ -723,7 +722,7 @@ describe('Dashboard V2', () => {
         expect(screen.getByText('Offer Rate').parentElement).toHaveTextContent('40%');
     });
 
-    test('reveals and restores only the Interview Rate and Offer Rate calculations', async () => {
+    test('uses explicit information controls to reveal the Interview Rate and Offer Rate calculations', async () => {
         render(
             <DashboardStats
                 interviewedApplicationCount={2}
@@ -734,46 +733,39 @@ describe('Dashboard V2', () => {
             />
         );
 
-        const interviewRate = screen.getByRole('button', { name: /Interview Rate/i });
-        const offerRate = screen.getByRole('button', { name: /Offer Rate/i });
+        const interviewInfo = screen.getByRole('button', { name: 'About Interview Rate' });
+        const offerInfo = screen.getByRole('button', { name: 'About Offer Rate' });
         const interviewExplanation =
             'Applications with a recorded interview or later-stage status ÷ active applications.';
         const offerExplanation = 'Offer, Accepted or Declined applications ÷ total active applications.';
-        const interviewFront = within(interviewRate).getByText('50%').closest(`.${dashboardStatsStyles.flipFace}`);
-        const interviewBack = within(interviewRate)
-            .getByText(interviewExplanation)
-            .closest(`.${dashboardStatsStyles.flipFace}`);
-        const interviewFlipInner = interviewFront?.parentElement;
+        const interviewValue = screen.getByText('50%').closest('[aria-hidden]');
+        const interviewDetails = screen.getByText(interviewExplanation).closest('[aria-hidden]');
 
-        expect(interviewRate).toHaveAttribute('aria-pressed', 'false');
-        expect(interviewFront).toHaveAttribute('aria-hidden', 'false');
-        expect(interviewBack).toHaveAttribute('aria-hidden', 'true');
-        expect(interviewFlipInner).not.toHaveClass(dashboardStatsStyles.flipped);
+        expect(interviewInfo).toHaveAttribute('aria-expanded', 'false');
+        expect(interviewInfo).toHaveAttribute('aria-controls', interviewDetails?.id);
+        expect(interviewValue).toHaveAttribute('aria-hidden', 'false');
+        expect(interviewDetails).toHaveAttribute('aria-hidden', 'true');
         expect(screen.queryByRole('button', { name: /Total Active Applications/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Interview Rate: 50%/i })).not.toBeInTheDocument();
 
-        interviewRate.focus();
+        interviewInfo.focus();
         await userEvent.keyboard('{Enter}');
-        expect(interviewFront).toHaveAttribute('aria-hidden', 'true');
-        expect(interviewBack).toHaveAttribute('aria-hidden', 'false');
-        expect(interviewFlipInner).toHaveClass(dashboardStatsStyles.flipped);
-        expect(interviewRate).toHaveAttribute('aria-pressed', 'true');
+        expect(interviewValue).toHaveAttribute('aria-hidden', 'true');
+        expect(interviewDetails).toHaveAttribute('aria-hidden', 'false');
+        expect(interviewInfo).toHaveAttribute('aria-expanded', 'true');
 
         await userEvent.keyboard(' ');
-        expect(interviewFront).toHaveAttribute('aria-hidden', 'false');
-        expect(interviewBack).toHaveAttribute('aria-hidden', 'true');
-        expect(interviewFlipInner).not.toHaveClass(dashboardStatsStyles.flipped);
-        expect(interviewRate).toHaveAttribute('aria-pressed', 'false');
+        expect(interviewValue).toHaveAttribute('aria-hidden', 'false');
+        expect(interviewDetails).toHaveAttribute('aria-hidden', 'true');
+        expect(interviewInfo).toHaveAttribute('aria-expanded', 'false');
 
-        offerRate.focus();
+        offerInfo.focus();
         await userEvent.keyboard('{Enter}');
-        expect(
-            within(offerRate).getByText(offerExplanation).closest(`.${dashboardStatsStyles.flipFace}`)
-        ).toHaveAttribute('aria-hidden', 'false');
-        await userEvent.click(offerRate);
-        expect(within(offerRate).getByText('Offer Rate').closest(`.${dashboardStatsStyles.flipFace}`)).toHaveAttribute(
-            'aria-hidden',
-            'false'
-        );
+        expect(screen.getByText(offerExplanation).closest('[aria-hidden]')).toHaveAttribute('aria-hidden', 'false');
+        expect(offerInfo).toHaveAttribute('aria-expanded', 'true');
+        await userEvent.click(offerInfo);
+        expect(screen.getByText(offerExplanation).closest('[aria-hidden]')).toHaveAttribute('aria-hidden', 'true');
+        expect(offerInfo).toHaveAttribute('aria-expanded', 'false');
     });
 
     test('shows unavailable rates when there are no applications', () => {

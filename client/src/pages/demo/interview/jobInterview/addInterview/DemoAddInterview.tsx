@@ -245,115 +245,128 @@ const DemoAddInterview = () => {
     return (
         <form className={styles.addInterview} noValidate onKeyDown={handleFormKeyDown} onSubmit={handleAdd}>
             <div className={styles.context}>
-                <h2>You are adding an interview for:</h2>
-                <p>
-                    Company: <em>{app.company_name}</em>
-                </p>
-                <p>
-                    Position: <em>{app.job_title}</em>
-                </p>
+                <h2>{app.company_name}</h2>
+                <p>{app.job_title}</p>
             </div>
 
-            <label htmlFor='date'>Interview Date</label>
-            <input
-                ref={interviewDateInputRef}
-                aria-describedby={errors.interviewDate ? 'interview-date-error' : undefined}
-                aria-invalid={errors.interviewDate ? true : undefined}
-                id='date'
-                max={MAX_DATETIME_LOCAL}
-                min={MIN_DATETIME_LOCAL}
-                value={interviewDate}
-                onChange={(e) => {
-                    setInterviewDate(e.target.value);
-                    clearFieldError('interviewDate');
-                }}
-                onBlur={handleInterviewDateInput}
-                onInput={handleInterviewDateInput}
-                type='datetime-local'
-                required
-            />
-            <FormFieldError id='interview-date-error' message={errors.interviewDate} />
+            <div className={styles.field}>
+                <label htmlFor='date'>Interview Date</label>
+                <input
+                    ref={interviewDateInputRef}
+                    aria-describedby={errors.interviewDate ? 'interview-date-error' : undefined}
+                    aria-invalid={errors.interviewDate ? true : undefined}
+                    id='date'
+                    max={MAX_DATETIME_LOCAL}
+                    min={MIN_DATETIME_LOCAL}
+                    value={interviewDate}
+                    onChange={(e) => {
+                        setInterviewDate(e.target.value);
+                        clearFieldError('interviewDate');
+                    }}
+                    onBlur={handleInterviewDateInput}
+                    onInput={handleInterviewDateInput}
+                    type='datetime-local'
+                    required
+                />
+                <FormFieldError id='interview-date-error' message={errors.interviewDate} />
+            </div>
 
-            <label htmlFor='location'>Interview Location</label>
-            <input
-                ref={interviewLocationInputRef}
-                aria-describedby={errors.interviewLocation ? 'interview-location-error' : undefined}
-                aria-invalid={errors.interviewLocation ? true : undefined}
-                id='location'
-                maxLength={FIELD_MAX_LENGTHS.location}
-                value={interviewLocation}
-                onChange={(e) => {
-                    setInterviewLocation(e.target.value);
-                    clearFieldError('interviewLocation');
-                }}
-                required
-                placeholder='E.g. Zoom'
-            />
-            <FormFieldError id='interview-location-error' message={errors.interviewLocation} />
+            <div className={styles.field}>
+                <label htmlFor='location'>Interview Location</label>
+                <input
+                    ref={interviewLocationInputRef}
+                    aria-describedby={errors.interviewLocation ? 'interview-location-error' : undefined}
+                    aria-invalid={errors.interviewLocation ? true : undefined}
+                    id='location'
+                    maxLength={FIELD_MAX_LENGTHS.location}
+                    value={interviewLocation}
+                    onChange={(e) => {
+                        setInterviewLocation(e.target.value);
+                        clearFieldError('interviewLocation');
+                    }}
+                    required
+                    placeholder='E.g. Zoom'
+                />
+                <FormFieldError id='interview-location-error' message={errors.interviewLocation} />
+            </div>
 
-            <label htmlFor='duration'>Duration (minutes)</label>
-            <input
-                ref={interviewDurationInputRef}
-                aria-describedby={errors.interviewDurationMinutes ? 'interview-duration-error' : undefined}
-                aria-invalid={errors.interviewDurationMinutes ? true : undefined}
-                id='duration'
-                max={INTERVIEW_DURATION_MINUTES_MAX}
-                min={INTERVIEW_DURATION_MINUTES_MIN}
-                step='1'
-                type='number'
-                value={interviewDurationMinutes}
-                onChange={(event) => {
-                    setInterviewDurationMinutes(event.target.value);
-                    clearFieldError('interviewDurationMinutes');
-                }}
-                required
-            />
-            <FormFieldError id='interview-duration-error' message={errors.interviewDurationMinutes} />
+            <div className={styles.field}>
+                <label htmlFor='duration'>Duration (minutes)</label>
+                <input
+                    ref={interviewDurationInputRef}
+                    aria-describedby={errors.interviewDurationMinutes ? 'interview-duration-error' : undefined}
+                    aria-invalid={errors.interviewDurationMinutes ? true : undefined}
+                    id='duration'
+                    max={INTERVIEW_DURATION_MINUTES_MAX}
+                    min={INTERVIEW_DURATION_MINUTES_MIN}
+                    step='1'
+                    type='number'
+                    value={interviewDurationMinutes}
+                    onChange={(event) => {
+                        setInterviewDurationMinutes(event.target.value);
+                        clearFieldError('interviewDurationMinutes');
+                    }}
+                    required
+                />
+                <FormFieldError id='interview-duration-error' message={errors.interviewDurationMinutes} />
+            </div>
 
-            <label htmlFor='type'>Interview Type (optional)</label>
-            <input
-                ref={interviewTypeInputRef}
-                aria-describedby={errors.interviewType ? 'interview-type-error' : undefined}
-                aria-invalid={errors.interviewType ? true : undefined}
-                id='type'
-                maxLength={FIELD_MAX_LENGTHS.interviewType}
-                value={interviewType}
-                onChange={(e) => {
-                    setInterviewType(e.target.value);
-                    clearFieldError('interviewType');
-                }}
-            />
-            <FormFieldError id='interview-type-error' message={errors.interviewType} />
+            <div className={styles.field}>
+                <label htmlFor='type'>
+                    Interview Type<span className={styles.optionalLabel}> (optional)</span>
+                </label>
+                <input
+                    ref={interviewTypeInputRef}
+                    aria-describedby={errors.interviewType ? 'interview-type-error' : undefined}
+                    aria-invalid={errors.interviewType ? true : undefined}
+                    id='type'
+                    maxLength={FIELD_MAX_LENGTHS.interviewType}
+                    value={interviewType}
+                    onChange={(e) => {
+                        setInterviewType(e.target.value);
+                        clearFieldError('interviewType');
+                    }}
+                />
+                <FormFieldError id='interview-type-error' message={errors.interviewType} />
+            </div>
 
-            <label htmlFor='meeting-url'>Meeting URL (optional)</label>
-            <input
-                ref={meetingURLInputRef}
-                aria-describedby={errors.meetingURL ? 'meeting-url-error' : undefined}
-                aria-invalid={errors.meetingURL ? true : undefined}
-                id='meeting-url'
-                maxLength={FIELD_MAX_LENGTHS.meetingURL}
-                value={meetingURL}
-                onChange={(event) => {
-                    setMeetingURL(event.target.value);
-                    clearFieldError('meetingURL');
-                }}
-            />
-            <FormFieldError id='meeting-url-error' message={errors.meetingURL} />
+            <div className={styles.field}>
+                <label htmlFor='meeting-url'>
+                    Meeting URL<span className={styles.optionalLabel}> (optional)</span>
+                </label>
+                <input
+                    ref={meetingURLInputRef}
+                    aria-describedby={errors.meetingURL ? 'meeting-url-error' : undefined}
+                    aria-invalid={errors.meetingURL ? true : undefined}
+                    id='meeting-url'
+                    maxLength={FIELD_MAX_LENGTHS.meetingURL}
+                    value={meetingURL}
+                    onChange={(event) => {
+                        setMeetingURL(event.target.value);
+                        clearFieldError('meetingURL');
+                    }}
+                />
+                <FormFieldError id='meeting-url-error' message={errors.meetingURL} />
+            </div>
 
-            <label htmlFor='notes'>Additional Notes (optional)</label>
-            <textarea
-                ref={notesInputRef}
-                aria-describedby={errors.notes ? 'interview-notes-error' : undefined}
-                aria-invalid={errors.notes ? true : undefined}
-                id='notes'
-                maxLength={FIELD_MAX_LENGTHS.notes}
-                value={notes}
-                onChange={(e) => {
-                    setNotes(e.target.value);
-                    clearFieldError('notes');
-                }}
-            />
-            <FormFieldError id='interview-notes-error' message={errors.notes} />
+            <div className={styles.field}>
+                <label htmlFor='notes'>
+                    Additional Notes<span className={styles.optionalLabel}> (optional)</span>
+                </label>
+                <textarea
+                    ref={notesInputRef}
+                    aria-describedby={errors.notes ? 'interview-notes-error' : undefined}
+                    aria-invalid={errors.notes ? true : undefined}
+                    id='notes'
+                    maxLength={FIELD_MAX_LENGTHS.notes}
+                    value={notes}
+                    onChange={(e) => {
+                        setNotes(e.target.value);
+                        clearFieldError('notes');
+                    }}
+                />
+                <FormFieldError id='interview-notes-error' message={errors.notes} />
+            </div>
 
             <div className={styles.submitButton}>
                 <PrimaryButton isLoading={isLoading} type='submit' variant='compact' data-testid='add-interview'>

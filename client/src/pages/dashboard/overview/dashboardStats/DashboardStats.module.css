@@ -24,49 +24,36 @@
     font: inherit;
 }
 
-.interactiveCard {
-    cursor: pointer;
-    padding: 0;
-    perspective: 800px;
-}
-
-.interactiveCard:hover {
-    border-color: color-mix(in srgb, var(--colorPrimary) 32%, var(--colorCardBorder));
-}
-
-.interactiveCard:focus-visible {
-    outline: 3px solid var(--colorPrimaryFocusOutline);
-    outline-offset: 3px;
-}
-
-.flipInner {
+.rateCard {
     position: relative;
-    width: 100%;
-    min-height: 144px;
-    transform-style: preserve-3d;
-    transition: transform 400ms ease;
 }
 
-.flipped {
-    transform: rotateY(180deg);
-}
-
-.flipFace {
+.infoButton {
     position: absolute;
-    inset: 0;
+    top: 8px;
+    right: 8px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--spaceControl);
-    padding: 20px 12px;
-    box-sizing: border-box;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--colorTextSecondary);
+    cursor: pointer;
 }
 
-.flipBack {
-    transform: rotateY(180deg);
+.infoButton:hover,
+.infoButton[aria-expanded='true'] {
+    background: var(--colorBtnSecondaryHoverBg);
+    color: var(--colorPrimary);
+}
+
+.infoButton:focus-visible {
+    outline: 3px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
 }
 
 .icon {
@@ -94,6 +81,31 @@
     justify-content: center;
     flex-direction: column;
     gap: var(--spaceControl);
+}
+
+.rateContent {
+    position: relative;
+    width: 100%;
+    height: 62px;
+}
+
+.crossfadePanel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 180ms ease, visibility 0s linear 180ms;
+}
+
+.crossfadeVisible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
 }
 
 .explanation {
@@ -150,8 +162,8 @@
         gap: 6px;
     }
 
-    .flipInner {
-        min-height: 120px;
+    .rateContent {
+        height: 68px;
     }
 
     .explanation {
@@ -166,7 +178,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .flipInner {
+    .crossfadePanel {
         transition: none;
     }
 }

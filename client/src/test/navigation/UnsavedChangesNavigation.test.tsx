@@ -276,7 +276,7 @@ describe('unsaved-changes route protection', () => {
         ['Company Name', 'OpenAI', ''],
         ['Job Title', 'Software Engineer', ''],
         ['Job Status', 'Interview', 'Applied'],
-        ['Application Date (uses current date if left blank)', '2026-07-02T10:30', ''],
+        ['Application date', '2026-07-02T10:30', ''],
         ['Job Location (optional)', 'Singapore', ''],
         ['Job Posting URL (optional)', 'https://jobs.example.com/role', ''],
     ])(
@@ -301,7 +301,7 @@ describe('unsaved-changes route protection', () => {
     test('an incomplete Add Application date activates the blocker', async () => {
         renderRouter(applicationRoutes, [routes.addApplication]);
 
-        enterIncompleteDate(screen.getByLabelText('Application Date (uses current date if left blank)'));
+        enterIncompleteDate(screen.getByLabelText('Application date'));
         await click(screen.getByRole('button', { name: 'View Applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
@@ -894,7 +894,7 @@ describe('unsaved-changes route protection', () => {
         ];
         const { unmount } = renderRouter(demoApplicationRoutes, [routes.demoAddApplication], true);
 
-        enterIncompleteDate(screen.getByLabelText('Application Date (uses current date if left blank)'));
+        enterIncompleteDate(screen.getByLabelText('Application date'));
         await click(screen.getByRole('button', { name: 'View Applications' }));
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
         unmount();

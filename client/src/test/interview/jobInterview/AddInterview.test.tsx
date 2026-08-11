@@ -107,8 +107,8 @@ describe('AddInterview page', () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByText(/you are adding an interview for/i)).toBeInTheDocument();
-        expect(screen.getByText(/iras/i)).toBeInTheDocument();
+        expect(screen.queryByText(/you are adding an interview for/i)).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'IRAS' })).toBeInTheDocument();
         expect(screen.getByText(/data engineer/i)).toBeInTheDocument();
         expect(screen.getByLabelText('Duration (minutes)')).toHaveValue(60);
         expect(screen.getByLabelText('Duration (minutes)')).toHaveAttribute('min', '1');

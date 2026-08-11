@@ -2,6 +2,14 @@
     composes: formPage from '../../../../components/formPage/FormPage.module.css';
 }
 
+.field {
+    composes: field from '../../../../components/formPage/FormPage.module.css';
+}
+
+.optionalLabel {
+    composes: optionalLabel from '../../../../components/formPage/FormPage.module.css';
+}
+
 .context {
     composes: context from '../../../../components/formPage/FormPage.module.css';
 }

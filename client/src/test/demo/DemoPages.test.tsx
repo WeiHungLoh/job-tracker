@@ -1421,8 +1421,9 @@ describe('demo page interactions', () => {
             })
         );
 
-        expect(await screen.findByRole('heading', { name: 'You are adding an interview for:' })).toBeInTheDocument();
-        expect(screen.getByText('ByteForge Systems')).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'ByteForge Systems' })).toBeInTheDocument();
+        expect(screen.getByText('Full Stack Developer')).toBeInTheDocument();
+        expect(screen.queryByText(/you are adding an interview for/i)).not.toBeInTheDocument();
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });
