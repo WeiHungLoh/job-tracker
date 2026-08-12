@@ -37,7 +37,10 @@
 }
 
 .sectionHeading h2 {
-    font-size: 1.5rem;
+    font-size: var(--fontSizePageTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .sectionHeading > p {
@@ -89,7 +92,7 @@
     }
 
     .sectionHeading h2 {
-        font-size: 1.2rem;
+        font-size: var(--fontSizeCardTitle);
     }
 }
 

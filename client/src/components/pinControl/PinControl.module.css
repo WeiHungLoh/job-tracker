@@ -4,7 +4,7 @@
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
 }
 
 .button {
@@ -13,7 +13,10 @@
     border-radius: 8px;
     background: transparent;
     cursor: pointer;
-    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
+    transition: background-color var(--motionDurationFast) var(--motionEasingStandard),
+        border-color var(--motionDurationFast) var(--motionEasingStandard),
+        color var(--motionDurationFast) var(--motionEasingStandard),
+        opacity var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .list {
@@ -46,7 +49,7 @@
 .pinned:hover,
 .pinned:focus-visible {
     border-color: var(--colorCardBorder);
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
 }
 
 .button:focus-visible {
@@ -57,4 +60,10 @@
 .button:disabled {
     cursor: wait;
     opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .button {
+        transition: none;
+    }
 }

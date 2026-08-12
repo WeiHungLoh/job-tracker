@@ -23,9 +23,9 @@
     padding: var(--spaceCompact) var(--spaceCard);
     margin: 0 0 var(--spaceCard);
     border: 1px solid var(--colorCardBorder);
-    border-left: 4px solid var(--colorPrimary);
+    border-left: 4px solid var(--colorTintBorder);
     border-radius: var(--radiusControl);
-    background-color: var(--colorControlMutedSurface);
+    background-color: var(--colorTintSurface);
     overflow-wrap: anywhere;
 }
 
@@ -34,15 +34,15 @@
     align-items: center;
     gap: var(--spaceControl);
     margin: 0;
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .capturedPageTitle {
     margin: var(--spaceControl) 0 0;
     color: var(--colorText);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.45;
     overflow-wrap: anywhere;
 }
@@ -72,9 +72,9 @@
     border: 0;
     border-radius: var(--radiusControl);
     background: transparent;
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.4;
 }
 
@@ -85,7 +85,7 @@
 
 .quickCaptureChevron {
     flex: 0 0 auto;
-    transition: transform 0.15s ease;
+    transition: transform var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .quickCaptureChevronOpen {
@@ -105,7 +105,7 @@
 .quickCaptureSetupTitle {
     margin: 0;
     color: var(--colorText);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     line-height: 1.4;
 }
 

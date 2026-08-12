@@ -1,6 +1,10 @@
 .button {
     border: 0;
     cursor: pointer;
+    transition: transform var(--motionDurationFast) var(--motionEasingStandard),
+        background-color var(--motionDurationFast) var(--motionEasingStandard),
+        border-color var(--motionDurationFast) var(--motionEasingStandard),
+        color var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .button:disabled {
@@ -14,6 +18,10 @@
 .button:focus-visible {
     outline: 2px solid var(--colorPrimaryFocusOutline);
     outline-offset: 2px;
+}
+
+.button:not(:disabled):active {
+    transform: scale(0.98);
 }
 
 .loading {
@@ -44,7 +52,7 @@
     border-radius: var(--radiusControl);
     background-color: var(--colorPrimary);
     color: var(--colorBtnPrimaryText);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: normal;
 }
 
@@ -62,8 +70,7 @@
     width: 100%;
     place-items: center;
     padding: var(--spaceCompact);
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
+    font-size: var(--fontSizeBody);
 }
 
 .navigation {
@@ -79,9 +86,8 @@
     border-radius: var(--radiusControl);
     background: transparent;
     color: var(--colorPrimary);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: normal;
-    transition: background-color 0.2s ease;
 }
 
 .secondary:not(:disabled):hover {
@@ -96,9 +102,8 @@
     border-radius: var(--radiusControl);
     background-color: var(--colorBtnDestructiveBg);
     color: var(--colorBtnDestructiveFilledText);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: normal;
-    transition: background-color 0.2s ease;
 }
 
 .destructive:not(:disabled):hover {
@@ -109,6 +114,16 @@
     padding: 0;
     background: transparent;
     color: inherit;
-    font-size: 1.25rem;
+    font-size: var(--fontSizeSectionTitle);
     line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .button {
+        transition: none;
+    }
+
+    .button:active {
+        transform: none;
+    }
 }

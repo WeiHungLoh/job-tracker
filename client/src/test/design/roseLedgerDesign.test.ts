@@ -231,8 +231,8 @@ describe('Rose Ledger visual contract', () => {
 
         expect(addApplicationCss).not.toContain('linear-gradient');
         expect(addApplicationCss).not.toContain('box-shadow');
-        expect(addApplicationCss).toContain('background-color: var(--colorControlMutedSurface);');
-        expect(addApplicationCss).toContain('border-left: 4px solid var(--colorPrimary);');
+        expect(addApplicationCss).toContain('background-color: var(--colorTintSurface);');
+        expect(addApplicationCss).toContain('border-left: 4px solid var(--colorTintBorder);');
         expect(addApplicationCss).toMatch(/\.quickCaptureSetupTriggerRow\s*\{[^}]*justify-content:\s*flex-end;/s);
         expect(addApplicationCss).toMatch(
             /\.quickCaptureSetupTrigger\s*\{[^}]*border:\s*0;[^}]*background:\s*transparent;/s
@@ -293,6 +293,7 @@ describe('Rose Ledger visual contract', () => {
         const robustnessCss = readSource('src/pages/offerDecision/robustness/OfferDecisionRobustnessLab.module.css');
         const counterofferCss = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.module.css');
         const counterofferDialog = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.tsx');
+        const muiTheme = readSource('src/components/theme/muiTheme.ts');
         const followUpDialog = readSource('src/pages/dashboard/attentionCenter/FollowUpDraftDialog.tsx');
         const needsAttentionSettingsCss = readSource(
             'src/pages/dashboard/attentionCenter/NeedsAttentionSettingsDialog.module.css'
@@ -323,16 +324,24 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(robustnessCss).toMatch(/\.ranking li\s*\{[^}]*border-bottom:\s*1px solid var\(--colorControlBorder\);/s);
         expect(robustnessCss).toMatch(
-            /\.importanceHeader output\s*\{[^}]*border:\s*1px solid var\(--colorPrimary\);[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorStatIconBg\);/s
+            /\.importanceHeader output\s*\{[^}]*border:\s*1px solid var\(--colorTintBorder\);[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorTintSurface\);/s
         );
         expect(robustnessCss).toMatch(/\.fitResult\s*\{[^}]*display:\s*grid;[^}]*justify-items:\s*end;/s);
         expect(robustnessCss).toMatch(
-            /\.newFitRating\s*\{[^}]*color:\s*var\(--colorPrimary\);[^}]*font-size:\s*1rem;/s
+            /\.newFitRating\s*\{[^}]*color:\s*var\(--colorText\);[^}]*font-size:\s*var\(--fontSizeBody\);/s
         );
         expect(robustnessCss).toContain('.header > button {\n        align-self: flex-end;');
         expect(counterofferCss).not.toContain('linear-gradient');
         expect(counterofferCss).not.toContain('box-shadow');
         expect(counterofferCss).not.toMatch(/\.tabs\s*\{/);
+        expect(muiTheme).toMatch(/MuiDialog:\s*\{[\s\S]*?paper:\s*\{[^}]*backgroundColor:\s*'var\(--colorCardBg\)'/s);
+        expect(muiTheme).toMatch(
+            /MuiDialogActions:\s*\{[\s\S]*?root:\s*\{[^}]*backgroundColor:\s*'var\(--colorCardBg\)'/s
+        );
+        expect(counterofferCss).toMatch(/\.currentOffer,[\s\S]*?background-color:\s*var\(--colorCardBg\);/s);
+        expect(counterofferCss).toMatch(
+            /\.idealOffer\s*\{[^}]*border-color:\s*var\(--colorTintBorder\);[^}]*background-color:\s*var\(--colorTintSurface\);/s
+        );
         expect(counterofferDialog).not.toContain('dividers');
         expect(followUpDialog).not.toContain('dividers');
         expect(counterofferCss).toMatch(
@@ -351,7 +360,9 @@ describe('Rose Ledger visual contract', () => {
         expect(counterofferCss).not.toMatch(/\.scenarioResult > p\s*\{[^}]*border-top:/s);
         expect(counterofferCss).not.toMatch(/\.requestedChanges\s*\{[^}]*border-top:/s);
         expect(counterofferCss).not.toMatch(/\.scenarioResult\s*\{[^}]*background-color:\s*var\(--colorStatIconBg\);/s);
-        expect(counterofferCss).toMatch(/\.applicationContext span\s*\{[^}]*font-weight:\s*600;[^}]*\}/s);
+        expect(counterofferCss).toMatch(
+            /\.applicationContext span\s*\{[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*\}/s
+        );
         expect(counterofferCss).toMatch(
             /\.description\s*\{[^}]*margin:\s*var\(--spaceControl\) 0 var\(--spaceSection\);[^}]*\}/s
         );
@@ -387,7 +398,7 @@ describe('Rose Ledger visual contract', () => {
             /\.option\s*\{[^}]*border:\s*1px solid var\(--colorCardBorder\);[^}]*border-radius:\s*var\(--radiusCard\);[^}]*background-color:\s*var\(--colorCardBg\);/s
         );
         expect(needsAttentionSettingsCss).toMatch(
-            /\.priority\s*\{[^}]*border:\s*1px solid var\(--colorPrimary\);[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorStatIconBg\);/s
+            /\.priority\s*\{[^}]*border:\s*1px solid var\(--colorTintBorder\);[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorTintSurface\);/s
         );
         expect(needsAttentionSettingsCss).toMatch(
             /\.optionDetails\s*\{[^}]*border-top:\s*1px solid var\(--colorControlBorder\);/s
@@ -466,16 +477,18 @@ describe('Rose Ledger visual contract', () => {
             /\.comparisonSection\s*\+\s*\.comparisonSection\s*\{[^}]*padding-top:\s*var\(--spacePageGrid\);[^}]*border-top:\s*1px solid var\(--colorCardBorder\);/s
         );
         expect(offerEvaluationCss).toMatch(
-            /\.reviewSection h4\s*\{[^}]*color:\s*var\(--colorPrimary\);[^}]*font-size:\s*var\(--fontSizeMetadata\);[^}]*text-transform:\s*uppercase;/s
+            /\.reviewSection h4\s*\{[^}]*color:\s*var\(--colorText\);[^}]*font-size:\s*var\(--fontSizeMetadata\);[^}]*font-weight:\s*var\(--fontWeightEmphasis\);/s
         );
         expect(offerEvaluationCss).toMatch(
-            /\.expiredBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*5px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+            /\.expiredBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*5px;[^}]*font-size:\s*var\(--fontSizeMicro\);[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
         );
         expect(offerEvaluationCss).toMatch(
             /\.expiredBadge::before\s*\{[^}]*width:\s*5px;[^}]*height:\s*5px;[^}]*flex:\s*0 0 5px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background-color:\s*var\(--colorToastErrorAccent\);[^}]*content:\s*'';/s
         );
-        expect(offerDecisionWorkspaceCss).toMatch(/\.sectionHeading h2\s*\{[^}]*font-size:\s*1\.5rem;/s);
-        expect(offerEvaluationCss).toMatch(/\.cardHeader h3\s*\{[^}]*font-size:\s*1\.5rem;/s);
+        expect(offerDecisionWorkspaceCss).toMatch(
+            /\.sectionHeading h2\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s
+        );
+        expect(offerEvaluationCss).toMatch(/\.cardHeader h3\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s);
         expect(offerDecisionWorkspaceCss).toContain('@media (max-width: 768px)');
         expect(offerEvaluationCss).toContain('@media (max-width: 768px)');
         expect(offerEvaluationCss).not.toMatch(/\.cardActions\s*\{[^}]*flex-direction:\s*column;/s);
@@ -529,19 +542,19 @@ describe('Rose Ledger visual contract', () => {
         const attentionCenterDesktopCss = attentionCenterCss.slice(0, attentionCenterCss.indexOf('@media'));
         const followUpDialogCss = readSource('src/pages/dashboard/attentionCenter/FollowUpDraftDialog.module.css');
 
-        expect(dashboardCardCss).toMatch(/\.header h2\s*\{[^}]*font-size:\s*1\.3rem;/s);
+        expect(dashboardCardCss).toMatch(/\.header h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s);
         expect(dashboardCardCss).toMatch(/\.header p\s*\{[^}]*font-size:\s*var\(--fontSizeBody\);/s);
         expect(dashboardCardCss).toMatch(
-            /@media \(max-width: 768px\)[\s\S]*?\.header h2\s*\{[^}]*font-size:\s*1\.1rem;/s
+            /@media \(max-width: 768px\)[\s\S]*?\.header h2\s*\{[^}]*font-size:\s*var\(--fontSizeCardTitle\);/s
         );
         expect(dashboardCardCss).toMatch(
-            /@media \(max-width: 768px\)[\s\S]*?\.header p\s*\{[^}]*font-size:\s*0\.9rem;/s
+            /@media \(max-width: 768px\)[\s\S]*?\.header p\s*\{[^}]*font-size:\s*var\(--fontSizeBodyCompact\);/s
         );
         expect(attentionCenterDesktopCss).toMatch(
-            /\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1\.2rem;/s
+            /\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*var\(--fontSizeCardTitle\);/s
         );
         expect(attentionCenterCss).toMatch(
-            /@media \(max-width: 803px\)[\s\S]*?\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1rem;/s
+            /@media \(max-width: 803px\)[\s\S]*?\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*var\(--fontSizeBody\);/s
         );
         expect(attentionCenterCss).toMatch(
             /\.actionRow\s*\{[^}]*justify-content:\s*flex-end;[^}]*margin-top:\s*auto;/s
@@ -683,6 +696,113 @@ describe('Rose Ledger visual contract', () => {
 
         expect(globalCss).toContain("--fontFamilyBase: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;");
         expect(globalCss).toContain('font-size: var(--fontSizeBody);');
+    });
+
+    it('uses one restrained typography, tint, and continuity system across every major surface', () => {
+        const globalCss = readSource('src/index.css');
+        const lightCss = getThemeBlock(globalCss, 'light');
+        const darkCss = getThemeBlock(globalCss, 'dark');
+        const buttonCss = readSource('src/components/button/PrimaryButton.module.css');
+        const dropdownCss = readSource('src/components/activityControls/ControlDropdown.module.css');
+        const navbarCss = readSource('src/components/navbar/Navbar.module.css');
+        const formCss = readSource('src/components/formPage/FormPage.module.css');
+        const emptyStateCss = readSource('src/components/emptyState/EmptyState.module.css');
+        const fallbackCss = readSource('src/components/fallbackScreen/FallbackScreen.module.css');
+        const authCss = readSource('src/pages/authentication/Authentication.module.css');
+        const userGuideCss = readSource('src/pages/userGuide/UserGuide.module.css');
+        const dashboardCardCss = readSource('src/pages/dashboard/shared/dashboardCard/DashboardCard.module.css');
+        const attentionCss = readSource('src/pages/dashboard/attentionCenter/AttentionCenter.module.css');
+        const applicationCss = readSource('src/pages/application/ApplicationCard.module.css');
+        const interviewCss = readSource('src/pages/interview/InterviewCard.module.css');
+        const offerWorkspaceCss = readSource('src/pages/offerDecision/OfferDecisionWorkspace.module.css');
+        const offerEvaluationCss = readSource('src/pages/offerDecision/OfferEvaluation.module.css');
+        const robustnessCss = readSource('src/pages/offerDecision/robustness/OfferDecisionRobustnessLab.module.css');
+        const attentionSettingsCss = readSource(
+            'src/pages/dashboard/attentionCenter/NeedsAttentionSettingsDialog.module.css'
+        );
+        const muiTheme = readSource('src/components/theme/muiTheme.ts');
+
+        [
+            '--fontSizeHero: clamp(2.75rem, 4.25vw, 3.75rem);',
+            '--fontSizePageTitle: 1.5rem;',
+            '--fontSizeSectionTitle: 1.25rem;',
+            '--fontSizeCardTitle: 1.125rem;',
+            '--fontSizeBodyCompact: 0.9375rem;',
+            '--fontSizeMicro: 0.75rem;',
+            '--lineHeightHeading: 1.25;',
+            '--lineHeightBody: 1.5;',
+            '--letterSpacingHeading: -0.02em;',
+            '--fontWeightHeading: 700;',
+            '--fontWeightEmphasis: 600;',
+            '--motionDurationFast: 160ms;',
+            '--motionDurationStandard: 200ms;',
+            '--motionEasingStandard: cubic-bezier(0.25, 0.1, 0.25, 1);',
+            '--motionEasingEmphasized: cubic-bezier(0.22, 1, 0.36, 1);',
+        ].forEach((declaration) => expect(globalCss).toContain(declaration));
+
+        [lightCss, darkCss].forEach((themeCss) => {
+            expect(themeCss).toContain('--colorTintSurface:');
+            expect(themeCss).toContain('--colorTintSurfaceStrong:');
+            expect(themeCss).toContain('--colorTintBorder:');
+            expect(themeCss).toContain('--colorTintText:');
+            expect(themeCss).toContain('--colorNavHoverBg: var(--colorTintSurface);');
+            expect(themeCss).toContain('--colorNavActiveBg: var(--colorTintSurfaceStrong);');
+            expect(themeCss).toContain('--colorNavActiveText: var(--colorTintText);');
+            expect(themeCss).toContain('--colorBtnSecondaryHoverBg: var(--colorTintSurface);');
+            expect(themeCss).toContain('--colorStatIconBg: var(--colorTintSurfaceStrong);');
+        });
+
+        [
+            [formCss, /\.formPage h2\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
+            [emptyStateCss, /\.emptyState h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
+            [fallbackCss, /\.content h2\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
+            [authCss, /\.title\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
+            [userGuideCss, /\.header h1\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
+            [dashboardCardCss, /\.header h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
+            [attentionCss, /\.applicationDetails h3,[^}]*font-size:\s*var\(--fontSizeCardTitle\);/s],
+            [applicationCss, /\.applicationContent h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
+            [interviewCss, /\.interviewContent h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
+            [offerWorkspaceCss, /\.sectionHeading h2\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
+            [offerEvaluationCss, /\.cardHeader h3\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
+        ].forEach(([source, pattern]) => expect(source as string).toMatch(pattern as RegExp));
+
+        expect(buttonCss).toMatch(
+            /\.secondary\s*\{[^}]*border:\s*1\.5px solid var\(--colorPrimary\);[^}]*background:\s*transparent;[^}]*color:\s*var\(--colorPrimary\);/s
+        );
+        expect(buttonCss).toMatch(
+            /\.secondary:not\(:disabled\):hover\s*\{[^}]*background-color:\s*var\(--colorBtnSecondaryHoverBg\);/s
+        );
+        expect(offerEvaluationCss).toMatch(
+            /\.deadlineSummary\s*\{[^}]*border:\s*1px solid var\(--colorTintBorder\);[^}]*background-color:\s*var\(--colorTintSurface\);/s
+        );
+        expect(robustnessCss).toMatch(
+            /\.importanceHeader output\s*\{[^}]*border:\s*1px solid var\(--colorTintBorder\);[^}]*background-color:\s*var\(--colorTintSurface\);/s
+        );
+        expect(attentionSettingsCss).toMatch(
+            /\.priority\s*\{[^}]*border:\s*1px solid var\(--colorTintBorder\);[^}]*background-color:\s*var\(--colorTintSurface\);/s
+        );
+
+        expect(buttonCss).toContain('transition: transform var(--motionDurationFast) var(--motionEasingStandard)');
+        expect(buttonCss).toContain('transform: scale(0.98);');
+        expect(dropdownCss).toContain(
+            'animation: dropdownEnter var(--motionDurationStandard) var(--motionEasingEmphasized);'
+        );
+        expect(navbarCss).toContain('var(--motionDurationFast) var(--motionEasingStandard)');
+        expect(buttonCss).toMatch(
+            /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.button\s*\{[^}]*transition:\s*none;/s
+        );
+        expect(buttonCss).toMatch(
+            /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.button:active\s*\{[^}]*transform:\s*none;/s
+        );
+        expect(dropdownCss).toMatch(
+            /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.dropdown\s*\{[^}]*animation:\s*none;/s
+        );
+        expect(muiTheme).toContain("fontSize: 'var(--fontSizePageTitle)'");
+        expect(muiTheme).toContain("fontWeight: 'var(--fontWeightHeading)'");
+        expect(muiTheme).toContain("border: '1.5px solid var(--colorPrimary)'");
+        expect(muiTheme).toContain("backgroundColor: 'transparent'");
+        expect(muiTheme).toContain("color: 'var(--colorPrimary)'");
+        expect(muiTheme).toContain("backgroundColor: 'var(--colorBtnSecondaryHoverBg)'");
     });
 
     it.each(['light', 'dark'] as const)('%s theme meets the planned contrast floors', (theme) => {
@@ -938,8 +1058,8 @@ describe('Rose Ledger visual contract', () => {
         expect(upcomingInterviewsCss).toMatch(/\.upcomingCard\s*\{[^}]*height:\s*auto;/s);
         expect(dashboard).toMatch(/\.interviewsSection\s*\{[^}]*display:\s*grid;/s);
         expect(formPage).toContain('@media (max-width: 1150px) and (orientation: portrait), (max-width: 600px)');
-        expect(formPage).toContain('    .fieldError {\n        font-size: 0.8125rem;\n    }');
-        expect(formPage).toMatch(/\.formPage input,[\s\S]*?font-size:\s*1rem;/s);
+        expect(formPage).toContain('    .fieldError {\n        font-size: var(--fontSizeCompactControl);\n    }');
+        expect(formPage).toMatch(/\.formPage input,[\s\S]*?font-size:\s*var\(--fontSizeBody\);/s);
         expect(formPage).toContain('flex-wrap: nowrap;');
         expect(formPage).toContain('flex: 1 1 0;');
         expect(applicationsLineChart).toMatch(/\.summary span\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
@@ -1114,12 +1234,12 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(followUpSentBadge).toMatch(/\.mobileLabel\s*\{[^}]*display:\s*none;/s);
         expect(followUpSentBadge).toMatch(
-            /\.copy,\s*\.compactLabel,\s*\.mobileLabel\s*\{[^}]*color:\s*var\(--colorToastSuccessText\);[^}]*font-weight:\s*600;/s
+            /\.copy,\s*\.compactLabel,\s*\.mobileLabel\s*\{[^}]*color:\s*var\(--colorToastSuccessText\);[^}]*font-weight:\s*var\(--fontWeightEmphasis\);/s
         );
         expect(followUpSentBadge).not.toContain('.mobileTime');
         expect(followUpSentBadge).not.toContain('::after');
         expect(followUpSentBadge).toMatch(
-            /@media \(max-width:\s*803px\)[\s\S]*?\.badge\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[^}]*font-size:\s*0\.75rem;[^}]*font-weight:\s*600;[^}]*\}[\s\S]*?\.copy\s*\{[^}]*display:\s*none;/s
+            /@media \(max-width:\s*803px\)[\s\S]*?\.badge\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;[^}]*font-size:\s*var\(--fontSizeMicro\);[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*\}[\s\S]*?\.copy\s*\{[^}]*display:\s*none;/s
         );
         expect(followUpSentBadgeComponent).toContain("from '../tooltip/Tooltip'");
         expect(followUpSentBadgeComponent).toContain('<Tooltip mobileOnly');
@@ -1149,10 +1269,10 @@ describe('Rose Ledger visual contract', () => {
         const followUpSentBadge = readSource('src/components/followUpSentBadge/FollowUpSentBadge.module.css');
 
         expect(applicationCard).toMatch(
-            /\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*background-color:\s*var\(--colorUpcomingBadgeBg\);[^}]*box-sizing:\s*border-box;/s
+            /\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*background-color:\s*var\(--colorUpcomingBadgeBg\);[^}]*box-sizing:\s*border-box;/s
         );
         expect(applicationCard).toMatch(
-            /\.applicationContent select\s*\{[^}]*height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid var\(--colorControlBorder\);[^}]*margin:\s*0;[^}]*box-sizing:\s*border-box;/s
+            /\.applicationContent select\s*\{[^}]*height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*border:\s*1px solid var\(--colorControlBorder\);[^}]*margin:\s*0;[^}]*box-sizing:\s*border-box;/s
         );
         expect(applicationCard).toMatch(
             /\.applicationContent select:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorFilterSelectText\);[^}]*outline-offset:\s*2px;/s
@@ -1161,7 +1281,7 @@ describe('Rose Ledger visual contract', () => {
             /\.applicationContent select:focus-visible\s*\{[^}]*var\(--colorPrimaryFocusOutline\)/s
         );
         expect(applicationCard).toMatch(
-            /\.applied,\s*\.interview,\s*\.offer,\s*\.accepted,\s*\.rejected,\s*\.ghosted,\s*\.declined,\s*\.withdrawn\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*600;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+            /\.applied,\s*\.interview,\s*\.offer,\s*\.accepted,\s*\.rejected,\s*\.ghosted,\s*\.declined,\s*\.withdrawn\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
         );
         expect(applicationCard).toMatch(
             /\.applied::before,[\s\S]*?\.upcomingBadge::before\s*\{[^}]*width:\s*6px;[^}]*height:\s*6px;[^}]*background-color:\s*var\(--statusBadgeAccent\);[^}]*content:\s*'';/s
@@ -1185,7 +1305,7 @@ describe('Rose Ledger visual contract', () => {
         });
 
         expect(applicationBoard).toMatch(
-            /\.statusBadge,\s*\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*5px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+            /\.statusBadge,\s*\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*5px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
         );
         expect(applicationBoard).toMatch(
             /\.upcomingBadge\s*\{[^}]*--badgeAccent:\s*var\(--colorUpcomingBadge\);[^}]*background-color:\s*var\(--colorUpcomingBadgeBg\);/s
@@ -1194,26 +1314,26 @@ describe('Rose Ledger visual contract', () => {
             /\.statusBadge::before,\s*\.upcomingBadge::before\s*\{[^}]*width:\s*5px;[^}]*height:\s*5px;[^}]*background-color:\s*var\(--badgeAccent\);/s
         );
         expect(interviewCard).toMatch(
-            /\.interviewContent \.timingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*600;[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
+            /\.interviewContent \.timingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 10px;[^}]*align-items:\s*center;[^}]*gap:\s*7px;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*letter-spacing:\s*0;[^}]*line-height:\s*1\.2;[^}]*box-sizing:\s*border-box;/s
         );
         expect(interviewCard).toMatch(
             /\.timeLeft\s*\{[^}]*--statusBadgeAccent:\s*var\(--colorTimeLeft\);[^}]*background-color:\s*var\(--colorStatusRejectedBadgeBg\);[^}]*color:\s*var\(--colorStatusRejectedText\);/s
         );
         expect(followUpSentBadge).toMatch(
-            /\.badge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*3px var\(--spaceCompact\);[^}]*box-sizing:\s*border-box;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*600;[^}]*line-height:\s*1\.2;/s
+            /\.badge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*3px var\(--spaceCompact\);[^}]*box-sizing:\s*border-box;[^}]*font-size:\s*var\(--fontSizeCompactControl\);[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*line-height:\s*1\.2;/s
         );
         expect(followUpSentBadge).toMatch(
-            /\.compact\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*3px 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;/s
+            /\.compact\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*3px 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*var\(--fontWeightEmphasis\);/s
         );
 
         expect(applicationCard).toMatch(
-            /@media \(max-width: 803px\)[\s\S]*?\.withdrawn,[\s\S]*?\.upcomingBadge\s*\{[^}]*font-size:\s*0\.75rem;/s
+            /@media \(max-width: 803px\)[\s\S]*?\.withdrawn,[\s\S]*?\.upcomingBadge\s*\{[^}]*font-size:\s*var\(--fontSizeMicro\);/s
         );
         expect(applicationCard).toMatch(
-            /@media \(max-width: 803px\)[\s\S]*?\.navigationLink\s*\{[^}]*font-size:\s*0\.75rem;/s
+            /@media \(max-width: 803px\)[\s\S]*?\.navigationLink\s*\{[^}]*font-size:\s*var\(--fontSizeMicro\);/s
         );
         expect(interviewCard).toMatch(
-            /@media \(max-width: 803px\)[\s\S]*?\.timingBadge,[\s\S]*?\.navigationLink,[\s\S]*?\.boardActionLink\s*\{[^}]*font-size:\s*0\.75rem;/s
+            /@media \(max-width: 803px\)[\s\S]*?\.timingBadge,[\s\S]*?\.navigationLink,[\s\S]*?\.boardActionLink\s*\{[^}]*font-size:\s*var\(--fontSizeMicro\);/s
         );
     });
 
@@ -1234,7 +1354,7 @@ describe('Rose Ledger visual contract', () => {
         const iconModels = readSource('src/components/icon/models.ts');
 
         expect(applicationCard).toMatch(
-            /\.navigationLink\s*\{[^}]*min-height:\s*var\(--heightCompactNavigationControl\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*6px;[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusMenuItem\);[^}]*background-color:\s*var\(--colorLinkBg\);[^}]*color:\s*var\(--colorLinkText\);[^}]*display:\s*flex;[^}]*font-weight:\s*600;[^}]*text-decoration:\s*none;/s
+            /\.navigationLink\s*\{[^}]*min-height:\s*var\(--heightCompactNavigationControl\);[^}]*padding:\s*0 9px;[^}]*align-items:\s*center;[^}]*gap:\s*6px;[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusMenuItem\);[^}]*background-color:\s*var\(--colorLinkBg\);[^}]*color:\s*var\(--colorLinkText\);[^}]*display:\s*flex;[^}]*font-weight:\s*var\(--fontWeightEmphasis\);[^}]*text-decoration:\s*none;/s
         );
         expect(applicationCard).toMatch(
             /\.navigationLink:hover\s*\{[^}]*background-color:\s*var\(--colorLinkHoverBg\);/s
@@ -1355,6 +1475,8 @@ describe('Rose Ledger visual contract', () => {
 
         expect(authLayout).toMatch(/\.authPage\s*\{[^}]*background:\s*var\(--colorPublicPageBg\);/s);
         expect(authIntro).toMatch(/\.authPanel\s*\{[^}]*background:\s*var\(--colorPublicPageBg\);/s);
+        expect(authIntro).toMatch(/\.productBrand\s*\{[^}]*color:\s*var\(--colorText\);/s);
+        expect(authIntro).toMatch(/\.heroRow h1\s*\{[^}]*color:\s*var\(--colorText\);/s);
         expect(authIntro).not.toContain('box-shadow: 0 18px 45px var(--colorAuthCardShadow);');
     });
 
@@ -1484,7 +1606,7 @@ describe('Rose Ledger visual contract', () => {
             '--colorOfflineBannerShadow: rgb(0 64 133 / 16%);',
             '--colorGuideHeaderShadow: rgb(91 42 59 / 8%);',
             '--colorGuideTipShadow: rgb(91 42 59 / 6%);',
-            '--colorStatIconBg: rgb(241 53 109 / 10%);',
+            '--colorStatIconBg: var(--colorTintSurfaceStrong);',
         ].forEach((declaration) => expect(lightCss).toContain(declaration));
 
         [
@@ -1497,7 +1619,7 @@ describe('Rose Ledger visual contract', () => {
             '--colorOfflineBannerShadow: rgb(0 0 0 / 28%);',
             '--colorGuideHeaderShadow: rgb(0 0 0 / 20%);',
             '--colorGuideTipShadow: rgb(0 0 0 / 20%);',
-            '--colorStatIconBg: rgb(244 80 126 / 16%);',
+            '--colorStatIconBg: var(--colorTintSurfaceStrong);',
         ].forEach((declaration) => expect(darkCss).toContain(declaration));
 
         expect(declarationsByFile(/^\s*(?:-webkit-)?box-shadow\s*:[^;]+;/gm)).toEqual(expectedBoxShadowDeclarations);
@@ -1539,11 +1661,9 @@ describe('Rose Ledger visual contract', () => {
             /\.attentionTitle\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--spaceControl\);/s
         );
         expect(attentionCenter).toMatch(
-            /\.attentionCount\s*\{[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:\s*var\(--colorStatIconBg\);[^}]*color:\s*var\(--colorPrimary\);/s
+            /\.attentionCount\s*\{[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:\s*var\(--colorStatIconBg\);[^}]*color:\s*var\(--colorTintText\);/s
         );
-        expect(attentionCenter).toMatch(
-            /\.actionButton\.draftActionButton\s*\{[^}]*border-color:\s*transparent;[^}]*background:\s*transparent;/s
-        );
+        expect(attentionCenter).not.toContain('.draftActionButton');
         expect(attentionCenter).toMatch(
             /\.attentionItem\s*\{[^}]*border-inline-start:\s*4px solid var\(--attentionStatusColor\);/s
         );
@@ -1554,7 +1674,7 @@ describe('Rose Ledger visual contract', () => {
         expect(attentionCenter).toMatch(/\.attentionItem\s*\{[^}]*min-width:\s*0;/s);
         expect(attentionCenter).toMatch(/\.applicationDetails\s*\{[^}]*min-width:\s*0;/s);
         expect(attentionCenter).toMatch(
-            /\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1\.2rem;[^}]*overflow-wrap:\s*anywhere;/s
+            /\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*var\(--fontSizeCardTitle\);[^}]*overflow-wrap:\s*anywhere;/s
         );
         expect(attentionCenter).toMatch(
             /\.applicationDetails p,\s*\.reason,\s*\.centered p\s*\{[^}]*font-size:\s*var\(--fontSizeBody\);/s
@@ -1563,21 +1683,23 @@ describe('Rose Ledger visual contract', () => {
             /\.itemHeading\s*>\s*span\s*\{[^}]*font-size:\s*var\(--fontSizeCompactControl\);/s
         );
         expect(attentionCenter).toMatch(
-            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*1rem;[\s\S]*?\.applicationDetails p,\s*\.reason,\s*\.centered p\s*\{[^}]*font-size:\s*0\.9rem;[\s\S]*?\.itemHeading\s*>\s*span\s*\{[^}]*font-size:\s*0\.7rem;/
+            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.applicationDetails h3,\s*\.centered h3\s*\{[^}]*font-size:\s*var\(--fontSizeBody\);[\s\S]*?\.applicationDetails p,\s*\.reason,\s*\.centered p\s*\{[^}]*font-size:\s*var\(--fontSizeBodyCompact\);[\s\S]*?\.itemHeading\s*>\s*span\s*\{[^}]*font-size:\s*var\(--fontSizeMicro\);/
         );
         expect(attentionCenter).toMatch(
             /@media \(max-width: 768px\)\s*\{[^}]*\.attentionList\s*\{[^}]*grid-template-columns:\s*1fr;/s
         );
-        expect(applicationCard).toMatch(/\.applicationContent h2\s*\{[^}]*font-size:\s*1\.5rem;/s);
-        expect(interviewCard).toMatch(/\.interviewContent h2\s*\{[^}]*font-size:\s*1\.5rem;/s);
         expect(applicationCard).toMatch(
-            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.applicationContent\s*\{[^}]*font-size:\s*0\.9rem;[\s\S]*?\.applicationContent h2\s*\{[^}]*font-size:\s*1\.2rem;/
+            /\.applicationContent h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s
+        );
+        expect(interviewCard).toMatch(/\.interviewContent h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s);
+        expect(applicationCard).toMatch(
+            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.applicationContent\s*\{[^}]*font-size:\s*var\(--fontSizeBodyCompact\);[\s\S]*?\.applicationContent h2\s*\{[^}]*font-size:\s*var\(--fontSizeCardTitle\);/
         );
         expect(interviewCard).toMatch(
-            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.interviewContent\s*\{[^}]*font-size:\s*0\.9rem;[\s\S]*?\.interviewContent h2\s*\{[^}]*font-size:\s*1\.2rem;/
+            /@media \(max-width: 803px\)\s*\{[\s\S]*?\.interviewContent\s*\{[^}]*font-size:\s*var\(--fontSizeBodyCompact\);[\s\S]*?\.interviewContent h2\s*\{[^}]*font-size:\s*var\(--fontSizeCardTitle\);/
         );
         expect(applicationBoard).toMatch(
-            /\.statusBadge,\s*\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*600;/s
+            /\.statusBadge,\s*\.upcomingBadge\s*\{[^}]*min-height:\s*var\(--heightCompactPill\);[^}]*padding:\s*0 9px;[^}]*font-size:\s*0\.6875rem;[^}]*font-weight:\s*var\(--fontWeightEmphasis\);/s
         );
         expect(attentionCenter).not.toMatch(
             /border-top|gradient\(|box-shadow|background:\s*color-mix|\.status\s*\{|colorBtnDestructive|colorError/i
@@ -1590,6 +1712,16 @@ describe('Rose Ledger visual contract', () => {
         expect(authProductIntro).toMatch(
             /@media \(max-width: 600px\)\s*\{[\s\S]*?\.fullscreenDots\s*\{[^}]*justify-content:\s*center;/s
         );
+    });
+
+    it('keeps the Job Tracker wordmark and page messaging neutral while reserving rose for the brand mark', () => {
+        const navbar = readSource('src/components/navbar/Navbar.module.css');
+        const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(navbar).toMatch(/\.brand\s*\{[^}]*color:\s*var\(--colorText\);/s);
+        expect(authProductIntro).toMatch(/\.productBrand\s*\{[^}]*color:\s*var\(--colorText\);/s);
+        expect(authProductIntro).toMatch(/\.heroRow h1\s*\{[^}]*color:\s*var\(--colorText\);/s);
+        expect(authProductIntro).toMatch(/\.productBrandIcon\s*\{[^}]*background-color:\s*var\(--colorPrimary\);/s);
     });
 
     it('completes the shared button, form, and menu visual contracts', () => {
@@ -1614,7 +1746,7 @@ describe('Rose Ledger visual contract', () => {
         expect(button).toContain('--colorSpinnerLight: var(--colorBtnPrimaryText);');
         expect(button).toContain('--colorSpinnerLight: var(--colorBtnDestructiveFilledText);');
         expect(button).toContain('line-height: normal;');
-        expect(form).toContain('font-weight: 600;');
+        expect(form).toContain('font-weight: var(--fontWeightEmphasis);');
         expect(form).toContain('min-height: 44px;');
         expect(form).toContain('width: clamp(560px, 42vw, 680px);');
         expect(form).toMatch(/\.field\s*\{[^}]*gap:\s*var\(--spaceControl\);/s);

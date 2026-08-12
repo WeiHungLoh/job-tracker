@@ -16,7 +16,7 @@
     color: var(--colorBtnPrimaryText);
     cursor: grab;
     font-size: var(--fontSizeControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: normal;
     text-align: center;
     text-decoration: none;

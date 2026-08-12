@@ -10,7 +10,9 @@
     color: var(--colorPrimary);
     cursor: pointer;
     opacity: 0.52;
-    transition: opacity 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    transition: opacity var(--motionDurationFast) var(--motionEasingStandard),
+        border-color var(--motionDurationFast) var(--motionEasingStandard),
+        background-color var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .scrollButton:hover {

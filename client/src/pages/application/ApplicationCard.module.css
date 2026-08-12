@@ -82,7 +82,7 @@
     min-height: 0;
     width: 100%;
     padding: 14px;
-    font-size: 0.9375rem;
+    font-size: var(--fontSizeBodyCompact);
     border-radius: 10px;
     border: 2px solid var(--colorNotesBorder);
     background-color: var(--colorNotesBg);
@@ -172,7 +172,7 @@
     min-height: var(--heightCompactPill);
     padding: 0 10px;
     border-radius: var(--radiusPill);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     font-size: var(--fontSizeCompactControl);
     display: inline-flex;
     align-items: center;
@@ -186,8 +186,11 @@
 
 .applicationContent h2 {
     margin-top: 0;
-    font-size: 1.5rem;
     color: var(--colorText);
+    font-size: var(--fontSizeSectionTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .headingRow {
@@ -201,7 +204,7 @@
 }
 
 .date {
-    font-weight: bold;
+    font-weight: var(--fontWeightEmphasis);
     color: var(--colorText);
 }
 
@@ -221,16 +224,17 @@
     box-sizing: border-box;
     cursor: pointer;
     font-size: var(--fontSizeCompactControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     letter-spacing: 0;
     line-height: 1.2;
     text-decoration: none;
-    transition: background-color 160ms ease, transform 160ms ease;
+    transition: background-color var(--motionDurationFast) var(--motionEasingStandard),
+        transform var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .linkIcon {
     flex: 0 0 auto;
-    transition: transform 160ms ease;
+    transition: transform var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .navigationLink:hover {
@@ -261,7 +265,7 @@
     max-width: 100%;
     padding: 0 9px;
     border-radius: var(--radiusPill);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     font-size: var(--fontSizeCompactControl);
     letter-spacing: 0;
     line-height: 1.2;
@@ -291,7 +295,7 @@
     min-height: var(--heightCompactPill);
     padding: 0 10px;
     border-radius: var(--radiusPill);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     font-size: var(--fontSizeCompactControl);
     display: inline-flex;
     align-items: center;
@@ -412,16 +416,16 @@
     }
 
     .applicationContent {
-        font-size: 0.9rem;
+        font-size: var(--fontSizeBodyCompact);
         padding-right: 0;
     }
 
     .applicationContent h2 {
-        font-size: 1.2rem;
+        font-size: var(--fontSizeCardTitle);
     }
 
     .applicationContent select {
-        font-size: 0.75rem;
+        font-size: var(--fontSizeMicro);
     }
 
     .buttonGroup {
@@ -432,7 +436,7 @@
     }
 
     .buttonGroup button {
-        font-size: 0.8rem;
+        font-size: var(--fontSizeCompactControl);
     }
 
     .notes {
@@ -446,7 +450,7 @@
         box-shadow: none;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
-        font-size: 0.875rem;
+        font-size: var(--fontSizeControl);
     }
 
     .applied,
@@ -458,11 +462,11 @@
     .declined,
     .withdrawn,
     .upcomingBadge {
-        font-size: 0.75rem;
+        font-size: var(--fontSizeMicro);
     }
 
     .navigationLink {
-        font-size: 0.75rem;
+        font-size: var(--fontSizeMicro);
     }
 }
 

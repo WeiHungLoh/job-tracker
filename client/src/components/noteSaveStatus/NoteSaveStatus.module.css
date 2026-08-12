@@ -11,7 +11,7 @@
     background-color: var(--colorNotesBg);
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     line-height: 1.25;
     pointer-events: none;
     white-space: nowrap;
@@ -36,7 +36,7 @@
     color: inherit;
     cursor: pointer;
     font-size: inherit;
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     pointer-events: auto;
     text-decoration: underline;
 }

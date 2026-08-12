@@ -8,7 +8,7 @@
     border: 1px solid var(--colorAuthCardBorder);
     border-radius: var(--radiusCard);
     box-shadow: 0 20px 48px var(--colorAuthCardShadow);
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeIn var(--motionDurationStandard) var(--motionEasingEmphasized);
 }
 
 .signUpCard {
@@ -19,7 +19,7 @@
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(24px);
+        transform: translateY(8px);
     }
 
     to {
@@ -43,10 +43,11 @@
 
 .title {
     margin: 16px 0 28px;
-    color: var(--colorPrimary);
-    font-size: 1.625rem;
-    line-height: 1.2;
-    letter-spacing: -0.025em;
+    color: var(--colorText);
+    font-size: var(--fontSizePageTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
     text-align: center;
 }
 
@@ -58,15 +59,15 @@
     max-width: 310px;
     margin: 0 auto 26px;
     color: var(--colorTextSecondary);
-    font-size: 0.875rem;
-    line-height: 1.55;
+    font-size: var(--fontSizeControl);
+    line-height: var(--lineHeightBody);
     text-align: center;
 }
 
 .card label {
     color: var(--colorLabel);
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: var(--fontSizeBody);
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .inputBox,
@@ -78,7 +79,8 @@
     background: var(--colorInputBg);
     border: 1px solid var(--colorInputBorder);
     border-radius: var(--radiusControl);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color var(--motionDurationFast) var(--motionEasingStandard),
+        box-shadow var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .inputBox:focus-within,
@@ -109,7 +111,7 @@
 }
 
 .toggleVisibility:hover {
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
 }
 
 .passwordRequirements {
@@ -124,7 +126,7 @@
     margin-top: var(--spaceSection);
     color: var(--colorAuthLink);
     font-size: var(--fontSizeControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     text-align: center;
     text-decoration: none;
 }

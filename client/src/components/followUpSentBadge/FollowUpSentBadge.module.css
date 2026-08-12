@@ -14,7 +14,7 @@
     background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.2;
     overflow-wrap: anywhere;
 }
@@ -35,7 +35,7 @@
 .compactLabel,
 .mobileLabel {
     color: var(--colorToastSuccessText);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .copy {
@@ -80,15 +80,15 @@
     border-radius: var(--radiusPill);
     background: color-mix(in srgb, var(--colorStatusAccepted) 10%, var(--colorCardBg));
     font-size: 0.6875rem;
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
 }
 
 @media (max-width: 803px) {
     .badge {
         display: flex;
         flex-wrap: nowrap;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: var(--fontSizeMicro);
+        font-weight: var(--fontWeightEmphasis);
         overflow-wrap: normal;
     }
 

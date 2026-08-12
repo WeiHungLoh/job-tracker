@@ -19,7 +19,7 @@
     margin: var(--spaceControl) 0 var(--spaceSection);
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeControl);
-    line-height: 1.5;
+    line-height: var(--lineHeightBody);
 }
 
 .applicationContext {
@@ -32,15 +32,17 @@
 
 .applicationContext strong {
     color: var(--colorText);
-    font-size: 1.5rem;
-    line-height: 1.35;
+    font-size: var(--fontSizePageTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .applicationContext span {
     color: var(--colorTextSecondary);
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.4;
+    font-size: var(--fontSizeBody);
+    font-weight: var(--fontWeightEmphasis);
+    line-height: var(--lineHeightBody);
 }
 
 .planFlow,
@@ -64,7 +66,8 @@
 }
 
 .idealOffer {
-    border-color: var(--colorPrimary);
+    border-color: var(--colorTintBorder);
+    background-color: var(--colorTintSurface);
 }
 
 .sectionHeading {
@@ -78,7 +81,10 @@
 .sectionHeading h3 {
     margin: 2px 0 0;
     color: var(--colorText);
-    font-size: 1.2rem;
+    font-size: var(--fontSizeCardTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .sectionHeading p {
@@ -89,9 +95,9 @@
 }
 
 .sectionEyebrow {
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
     font-size: var(--fontSizeMetadata);
-    font-weight: 800;
+    font-weight: var(--fontWeightHeading);
     letter-spacing: 0.05em;
     text-transform: uppercase;
 }
@@ -115,7 +121,7 @@
 .detailCard h4,
 .scenarioResult h4 {
     margin: 0 0 var(--spaceCompact);
-    color: var(--colorPrimary);
+    color: var(--colorText);
     font-size: var(--fontSizeControl);
     line-height: 1.35;
 }
@@ -141,7 +147,7 @@
 .currentRatings dt {
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .reviewGrid dd,
@@ -149,13 +155,13 @@
     margin: 4px 0 0;
     color: var(--colorText);
     font-size: var(--fontSizeControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     overflow-wrap: anywhere;
 }
 
 .currentRatings dd {
-    color: var(--colorPrimary);
-    font-size: 1rem;
+    color: var(--colorTintText);
+    font-size: var(--fontSizeBody);
 }
 
 .formGrid {
@@ -169,7 +175,7 @@
     gap: 6px;
     color: var(--colorLabel);
     font-size: var(--fontSizeControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .field input,
@@ -212,7 +218,7 @@
     display: block;
     color: var(--colorToastErrorText);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.4;
 }
 
@@ -246,20 +252,20 @@
     min-width: 0;
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     overflow-wrap: anywhere;
 }
 
 .idealRatingValue {
-    color: var(--colorPrimary);
-    font-size: 1rem;
-    font-weight: 800;
+    color: var(--colorTintText);
+    font-size: var(--fontSizeBody);
+    font-weight: var(--fontWeightHeading);
 }
 
 .ratingChange {
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .ratingChange[data-direction='positive'],
@@ -316,14 +322,14 @@
 .resultValues dt {
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .resultValues dd {
     margin: 4px 0 0;
     color: var(--colorText);
-    font-size: 1.125rem;
-    font-weight: 800;
+    font-size: var(--fontSizeCardTitle);
+    font-weight: var(--fontWeightHeading);
     overflow-wrap: anywhere;
 }
 
@@ -405,7 +411,7 @@
     align-items: center;
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .requestedChangeLabel::before {
@@ -443,7 +449,7 @@
     background-color: var(--colorControlMutedSurface);
     color: var(--colorText);
     font-size: var(--fontSizeControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     line-height: 1.45;
     overflow-wrap: anywhere;
 }
@@ -508,15 +514,15 @@
     }
 
     .description {
-        font-size: 0.9rem;
+        font-size: var(--fontSizeBodyCompact);
     }
 
     .applicationContext strong {
-        font-size: 1.2rem;
+        font-size: var(--fontSizeCardTitle);
     }
 
     .applicationContext span {
-        font-size: 0.9rem;
+        font-size: var(--fontSizeBodyCompact);
     }
 
     .currentOffer,

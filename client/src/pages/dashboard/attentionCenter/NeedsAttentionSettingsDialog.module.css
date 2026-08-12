@@ -51,7 +51,8 @@
     border-radius: var(--radiusCard);
     background-color: var(--colorCardBg);
     cursor: pointer;
-    transition: border-color 160ms ease, background-color 160ms ease;
+    transition: border-color var(--motionDurationFast) var(--motionEasingStandard),
+        background-color var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .optionSelected {
@@ -62,7 +63,9 @@
 .sectionHeading h3 {
     margin: 0;
     color: var(--colorText);
-    font-size: 1rem;
+    font-size: var(--fontSizeBody);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
 }
 
 .sectionHeading p {
@@ -81,12 +84,12 @@
     display: inline-grid;
     width: 28px;
     height: 28px;
-    border: 1px solid var(--colorPrimary);
+    border: 1px solid var(--colorTintBorder);
     border-radius: var(--radiusPill);
-    background-color: var(--colorStatIconBg);
-    color: var(--colorPrimary);
-    font-size: var(--fontSizeCompact);
-    font-weight: 800;
+    background-color: var(--colorTintSurface);
+    color: var(--colorTintText);
+    font-size: var(--fontSizeCompactControl);
+    font-weight: var(--fontWeightHeading);
     line-height: 1;
     place-items: center;
     box-sizing: border-box;
@@ -175,7 +178,7 @@
     max-width: none;
     margin: 0;
     color: var(--colorText);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .actions {
@@ -217,5 +220,11 @@
 
     .timingLabel {
         max-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .option {
+        transition: none;
     }
 }

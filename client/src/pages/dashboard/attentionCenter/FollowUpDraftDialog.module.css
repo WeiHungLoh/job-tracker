@@ -14,7 +14,7 @@
     margin: 0;
     color: var(--colorText);
     font-size: var(--fontSizeControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .text {
@@ -79,6 +79,6 @@
     }
 
     .text {
-        font-size: 0.9rem;
+        font-size: var(--fontSizeBodyCompact);
     }
 }

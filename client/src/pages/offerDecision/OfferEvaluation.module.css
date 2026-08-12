@@ -30,14 +30,18 @@
 .cardHeader h3 {
     margin: 0;
     color: var(--colorText);
-    font-size: 1.5rem;
+    font-size: var(--fontSizeSectionTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
     overflow-wrap: anywhere;
 }
 
 .cardHeader p {
     margin: 4px 0 0;
     color: var(--colorTextSecondary);
-    font-size: 1rem;
+    font-size: var(--fontSizeBody);
+    line-height: var(--lineHeightBody);
     overflow-wrap: anywhere;
 }
 
@@ -60,8 +64,8 @@
     border-radius: var(--radiusPill);
     background-color: var(--colorToastErrorBg);
     color: var(--colorToastErrorText);
-    font-size: 0.6875rem;
-    font-weight: 600;
+    font-size: var(--fontSizeMicro);
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.2;
     box-sizing: border-box;
 }
@@ -80,17 +84,15 @@
     gap: 4px;
     margin-top: var(--spaceCard);
     padding: var(--spaceCompact);
-    border: 1px solid var(--colorPrimary);
+    border: 1px solid var(--colorTintBorder);
     border-radius: var(--radiusControl);
-    background-color: var(--colorStatIconBg);
+    background-color: var(--colorTintSurface);
 }
 
 .deadlineSummary span {
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .deadlineSummary strong {
@@ -114,8 +116,8 @@
 }
 
 .scoreHeader strong {
-    color: var(--colorPrimary);
-    font-size: 1rem;
+    color: var(--colorTintText);
+    font-size: var(--fontSizeBody);
 }
 
 .score progress {
@@ -155,7 +157,7 @@
     padding: 0;
     color: var(--colorText);
     font-size: var(--fontSizeControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .ratingFields legend {
@@ -168,7 +170,7 @@
     gap: 6px;
     color: var(--colorLabel);
     font-size: var(--fontSizeControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .textField input,
@@ -248,12 +250,12 @@
 .ratingHeader output {
     min-width: 42px;
     padding: 3px 8px;
-    border: 1px solid var(--colorPrimary);
+    border: 1px solid var(--colorTintBorder);
     border-radius: var(--radiusPill);
-    background-color: var(--colorStatIconBg);
-    color: var(--colorPrimary);
+    background-color: var(--colorTintSurface);
+    color: var(--colorTintText);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     text-align: center;
 }
 
@@ -287,11 +289,9 @@
 
 .reviewSection h4 {
     margin: 0 0 var(--spaceControl);
-    color: var(--colorPrimary);
+    color: var(--colorText);
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .detailsReview > div {
@@ -351,12 +351,12 @@
     min-width: 42px;
     margin: 0;
     padding: 3px 8px;
-    border: 1px solid var(--colorPrimary);
+    border: 1px solid var(--colorTintBorder);
     border-radius: var(--radiusPill);
-    background-color: var(--colorStatIconBg);
-    color: var(--colorPrimary);
+    background-color: var(--colorTintSurface);
+    color: var(--colorTintText);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     text-align: center;
 }
 
@@ -426,17 +426,23 @@
 
 @media (max-width: 768px) {
     .cardHeader h3 {
-        font-size: 1.2rem;
+        font-size: var(--fontSizeCardTitle);
     }
 
     .cardHeader p,
     .detailsReview dt,
     .detailsReview dd,
     .reviewValue dt {
-        font-size: 0.9rem;
+        font-size: var(--fontSizeBodyCompact);
     }
 
     .cardActionOptions .cardActionOption {
         min-height: 42px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .highlighted {
+        animation: none;
     }
 }

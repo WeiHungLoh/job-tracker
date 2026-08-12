@@ -18,6 +18,7 @@
     font-size: var(--fontSizeControl);
     text-align: left;
     box-sizing: border-box;
+    transition: background-color var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .row:hover {
@@ -45,8 +46,8 @@
     background-color: var(--colorSwitchOff);
     box-sizing: border-box;
     flex-shrink: 0;
-    transition: background-color 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),
-        border-color 0.18s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: background-color var(--motionDurationFast) var(--motionEasingStandard),
+        border-color var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .thumb {
@@ -60,7 +61,8 @@
     box-shadow: 0 1px 3px rgb(0 0 0 / 24%);
     transform: translate3d(0, -50%, 0) scaleX(1);
     transform-origin: left center;
-    transition: transform 0.18s cubic-bezier(0.34, 1.28, 0.64, 1), box-shadow 0.18s ease;
+    transition: transform var(--motionDurationFast) var(--motionEasingEmphasized),
+        box-shadow var(--motionDurationFast) var(--motionEasingStandard);
     will-change: transform;
 }
 
@@ -87,8 +89,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .row,
     .switch,
     .thumb {
         transition: none;
+    }
+
+    .row:active .thumb {
+        transform: translate3d(0, -50%, 0);
+    }
+
+    .row:active .switch.toggled .thumb {
+        transform: translate3d(var(--switch-thumb-translate), -50%, 0);
     }
 }

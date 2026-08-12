@@ -43,7 +43,7 @@
     align-items: center;
     gap: 10px;
     color: var(--colorText);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     letter-spacing: -0.015em;
 }
 
@@ -72,7 +72,11 @@
     cursor: pointer;
     font: inherit;
     font-size: var(--fontSizeControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightEmphasis);
+    transition: border-color var(--motionDurationFast) var(--motionEasingStandard),
+        background-color var(--motionDurationFast) var(--motionEasingStandard),
+        color var(--motionDurationFast) var(--motionEasingStandard),
+        transform var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .accountTrigger span,
@@ -109,8 +113,9 @@
 .heroRow h1 {
     max-width: 500px;
     margin: 0;
-    color: var(--colorPrimary);
-    font-size: clamp(2.75rem, 4.25vw, 3.75rem);
+    color: var(--colorText);
+    font-size: var(--fontSizeHero);
+    font-weight: var(--fontWeightHeading);
     line-height: 1;
     letter-spacing: -0.045em;
 }
@@ -126,8 +131,8 @@
     max-width: 560px;
     margin: 0;
     color: var(--colorTextSecondary);
-    font-size: 1.05rem;
-    line-height: 1.65;
+    font-size: var(--fontSizeBody);
+    line-height: var(--lineHeightBody);
     text-align: left;
 }
 
@@ -156,11 +161,12 @@
     border-radius: 10px;
     background-color: var(--colorPrimary);
     color: var(--colorBtnPrimaryText);
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-size: var(--fontSizeBodyCompact);
+    font-weight: var(--fontWeightHeading);
     text-decoration: none;
     box-shadow: none;
-    transition: background-color 180ms ease, transform 180ms ease;
+    transition: background-color var(--motionDurationFast) var(--motionEasingStandard),
+        transform var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .demoLink:hover {
@@ -176,8 +182,8 @@
     gap: 6px;
     padding: 0 2px;
     color: var(--colorGuideAccentDark);
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: var(--fontSizeBodyCompact);
+    font-weight: var(--fontWeightEmphasis);
     text-decoration: none;
 }
 
@@ -196,7 +202,7 @@
 .demoCopy {
     margin: 0;
     color: var(--colorTextSecondary);
-    font-size: 0.875rem;
+    font-size: var(--fontSizeControl);
     font-weight: 500;
     line-height: 1.45;
 }
@@ -305,8 +311,8 @@
     color: var(--colorTextSecondary);
     cursor: pointer;
     font: inherit;
-    font-size: 0.8125rem;
-    font-weight: 600;
+    font-size: var(--fontSizeCompactControl);
+    font-weight: var(--fontWeightEmphasis);
     transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
@@ -331,7 +337,7 @@
     min-height: 3em;
     margin: 0;
     color: var(--colorTextSecondary);
-    font-size: 0.875rem;
+    font-size: var(--fontSizeControl);
     line-height: 1.5;
 }
 
@@ -403,8 +409,8 @@
     border-radius: var(--radiusPill);
     background-color: rgb(0 0 0 / 76%);
     color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: var(--fontSizeMicro);
+    font-weight: var(--fontWeightHeading);
     line-height: 1;
     pointer-events: none;
 }
@@ -465,7 +471,7 @@
     margin: 0;
     overflow: hidden;
     color: #fff;
-    font-size: 1rem;
+    font-size: var(--fontSizeBody);
     line-height: 1.3;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -474,8 +480,8 @@
 .fullscreenTitleGroup span {
     flex: 0 0 auto;
     color: rgb(255 255 255 / 72%);
-    font-size: 0.8125rem;
-    font-weight: 600;
+    font-size: var(--fontSizeCompactControl);
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .fullscreenZoomControls {
@@ -505,8 +511,8 @@
     gap: 6px;
     padding: 0 10px;
     border-radius: 8px;
-    font-size: 0.8125rem;
-    font-weight: 700;
+    font-size: var(--fontSizeCompactControl);
+    font-weight: var(--fontWeightHeading);
 }
 
 .fullscreenTextButton[aria-pressed='true'] {
@@ -541,9 +547,9 @@
 .fullscreenZoomPercentage {
     width: 48px;
     color: #fff;
-    font-size: 0.8125rem;
+    font-size: var(--fontSizeCompactControl);
     font-variant-numeric: tabular-nums;
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     text-align: center;
 }
 
@@ -617,13 +623,11 @@
     transform: translateX(-10px);
 }
 
-.fullscreenPreviewTrack[data-motion-direction='backward'][data-track-phase='preparing']
-    .fullscreenIncomingPanel {
+.fullscreenPreviewTrack[data-motion-direction='backward'][data-track-phase='preparing'] .fullscreenIncomingPanel {
     transform: translateX(-10px);
 }
 
-.fullscreenPreviewTrack[data-motion-direction='backward'][data-track-phase='transitioning']
-    .fullscreenOutgoingPanel {
+.fullscreenPreviewTrack[data-motion-direction='backward'][data-track-phase='transitioning'] .fullscreenOutgoingPanel {
     transform: translateX(10px);
 }
 
@@ -659,7 +663,7 @@
     padding: 24px;
     margin: 0 auto;
     color: #fff;
-    font-size: 0.9375rem;
+    font-size: var(--fontSizeBodyCompact);
     text-align: center;
 }
 
@@ -698,8 +702,8 @@
     justify-content: center;
     padding: 0 10px;
     border-radius: 8px;
-    font-size: 0.8125rem;
-    font-weight: 700;
+    font-size: var(--fontSizeCompactControl);
+    font-weight: var(--fontWeightHeading);
 }
 
 .fullscreenDots {
@@ -911,7 +915,7 @@
     .fullscreenTextButton {
         min-height: 44px;
         padding: 0 8px;
-        font-size: 0.75rem;
+        font-size: var(--fontSizeMicro);
     }
 
     .fullscreenIconButton,

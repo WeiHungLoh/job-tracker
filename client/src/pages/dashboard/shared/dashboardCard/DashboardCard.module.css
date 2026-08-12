@@ -26,14 +26,17 @@
 .header h2 {
     margin: 0;
     color: var(--colorText);
-    font-size: 1.3rem;
+    font-size: var(--fontSizeSectionTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .header p {
     margin: 6px 0 0;
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeBody);
-    line-height: 1.4;
+    line-height: var(--lineHeightBody);
 }
 
 .content {
@@ -50,10 +53,10 @@
     }
 
     .header h2 {
-        font-size: 1.1rem;
+        font-size: var(--fontSizeCardTitle);
     }
 
     .header p {
-        font-size: 0.9rem;
+        font-size: var(--fontSizeBodyCompact);
     }
 }

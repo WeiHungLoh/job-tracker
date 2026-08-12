@@ -23,7 +23,10 @@
 }
 
 .header h3 {
-    font-size: 1.1rem;
+    font-size: var(--fontSizeCardTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .header p,
@@ -74,7 +77,7 @@
     margin-bottom: var(--spaceControl);
     color: var(--colorText);
     font-size: var(--fontSizeControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .importanceField {
@@ -97,12 +100,12 @@
 .importanceHeader output {
     min-width: 42px;
     padding: 3px 8px;
-    border: 1px solid var(--colorPrimary);
+    border: 1px solid var(--colorTintBorder);
     border-radius: var(--radiusPill);
-    background-color: var(--colorStatIconBg);
-    color: var(--colorPrimary);
+    background-color: var(--colorTintSurface);
+    color: var(--colorTintText);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
     text-align: center;
 }
 
@@ -119,7 +122,9 @@
 }
 
 .results h4 {
-    font-size: 1.1rem;
+    font-size: var(--fontSizeCardTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
 }
 
 .ranking {
@@ -158,15 +163,15 @@
 }
 
 .newFitRating {
-    color: var(--colorPrimary);
-    font-size: 1rem;
-    font-weight: 700;
+    color: var(--colorText);
+    font-size: var(--fontSizeBody);
+    font-weight: var(--fontWeightHeading);
     line-height: 1.2;
 }
 
 .fitChange {
     font-size: var(--fontSizeMetadata);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .increasedFit {
@@ -190,8 +195,8 @@
 .explanation summary {
     width: fit-content;
     cursor: pointer;
-    color: var(--colorPrimary);
-    font-weight: 700;
+    color: var(--colorTintText);
+    font-weight: var(--fontWeightHeading);
 }
 
 .explanation summary:focus-visible {

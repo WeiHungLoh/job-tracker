@@ -28,7 +28,7 @@
     border-radius: 7px;
     background: transparent;
     color: var(--colorText);
-    font-size: 0.875rem;
+    font-size: var(--fontSizeControl);
     line-height: 1.35;
     text-align: left;
     white-space: normal;
@@ -38,7 +38,7 @@
 .menuItem:hover,
 .menuItem:focus-visible {
     background: var(--colorBtnSecondaryHoverBg);
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
 }
 
 .menuItem:focus-visible {

@@ -52,10 +52,11 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: var(--colorPrimary);
-    color: var(--colorBtnPrimaryText);
-    font-size: 0.8rem;
-    font-weight: 700;
+    border: 1px solid var(--colorTintBorder);
+    background: var(--colorTintSurfaceStrong);
+    color: var(--colorTintText);
+    font-size: var(--fontSizeCompactControl);
+    font-weight: var(--fontWeightHeading);
 }
 
 .interviewDetails {
@@ -66,8 +67,9 @@
 .centered h3 {
     margin: 0;
     color: var(--colorText);
-    font-size: 0.95rem;
-    line-height: 1.35;
+    font-size: var(--fontSizeBodyCompact);
+    font-weight: var(--fontWeightEmphasis);
+    line-height: var(--lineHeightHeading);
     overflow-wrap: anywhere;
 }
 
@@ -75,8 +77,8 @@
 .interviewList time,
 .centered p {
     color: var(--colorTextSecondary);
-    font-size: 0.8rem;
-    line-height: 1.4;
+    font-size: var(--fontSizeCompactControl);
+    line-height: var(--lineHeightBody);
 }
 
 .jobTitle {
@@ -87,7 +89,7 @@
 .interviewList time {
     display: block;
     color: var(--colorText);
-    font-weight: 700;
+    font-weight: var(--fontWeightHeading);
 }
 
 .details {

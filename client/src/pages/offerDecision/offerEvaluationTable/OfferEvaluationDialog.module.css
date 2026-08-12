@@ -22,7 +22,10 @@
 .editor h2 {
     margin: 0;
     color: var(--colorText);
-    font-size: 1.5rem;
+    font-size: var(--fontSizePageTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
     overflow-wrap: anywhere;
 }
 
@@ -50,6 +53,6 @@
     }
 
     .editor h2 {
-        font-size: 1.2rem;
+        font-size: var(--fontSizeCardTitle);
     }
 }

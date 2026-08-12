@@ -14,7 +14,7 @@
     color: var(--colorTooltipText) !important;
     font-family: var(--fontFamilyBase) !important;
     font-size: var(--fontSizeCompactControl) !important;
-    font-weight: 700 !important;
+    font-weight: var(--fontWeightHeading) !important;
     line-height: 1.35 !important;
 }
 

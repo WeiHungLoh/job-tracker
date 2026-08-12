@@ -17,7 +17,7 @@
 .trustMessage svg {
     flex: 0 0 auto;
     margin-top: 2px;
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
 }
 
 .notice {

@@ -24,22 +24,24 @@
     margin-bottom: 12px;
     border-radius: 12px;
     background: var(--colorStatIconBg);
-    color: var(--colorPrimary);
-    font-size: 1.25rem;
+    color: var(--colorTintText);
+    font-size: var(--fontSizeSectionTitle);
     place-items: center;
 }
 
 .emptyState h2 {
     margin: 0;
-    font-size: clamp(1.1rem, 3vw, 1.25rem);
-    line-height: 1.35;
+    font-size: var(--fontSizeSectionTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .emptyState p {
     max-width: 500px;
     margin: 8px 0 0;
     color: var(--colorTextSecondary);
-    line-height: 1.55;
+    line-height: var(--lineHeightBody);
 }
 
 .actions {
@@ -56,10 +58,14 @@
     border-radius: var(--radiusControl);
     cursor: pointer;
     font: inherit;
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.25;
     text-decoration: none;
     box-sizing: border-box;
+    transition: transform var(--motionDurationFast) var(--motionEasingStandard),
+        background-color var(--motionDurationFast) var(--motionEasingStandard),
+        border-color var(--motionDurationFast) var(--motionEasingStandard),
+        color var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .primary {
@@ -85,6 +91,10 @@
     color: var(--colorPrimary);
 }
 
+.action:active {
+    transform: scale(0.98);
+}
+
 .action:focus-visible {
     outline: 3px solid var(--colorPrimaryFocusOutline);
     outline-offset: 3px;
@@ -102,5 +112,15 @@
 
     .action {
         width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .action {
+        transition: none;
+    }
+
+    .action:active {
+        transform: none;
     }
 }

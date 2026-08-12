@@ -6,10 +6,10 @@
     display: flex;
     min-height: 32px;
     align-items: center;
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
     cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 700;
+    font-size: var(--fontSizeControl);
+    font-weight: var(--fontWeightHeading);
 }
 
 .actions summary:focus-visible {

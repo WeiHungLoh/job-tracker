@@ -48,7 +48,7 @@
 .infoButton:hover,
 .infoButton[aria-expanded='true'] {
     background: var(--colorBtnSecondaryHoverBg);
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
 }
 
 .infoButton:focus-visible {
@@ -64,12 +64,14 @@
     height: 44px;
     border-radius: var(--radiusControl);
     background: var(--colorStatIconBg);
-    color: var(--colorPrimary);
+    color: var(--colorTintText);
 }
 
 .value {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: var(--fontSizePageTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
     color: var(--colorText);
 }
 
@@ -99,7 +101,8 @@
     gap: 6px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 180ms ease, visibility 0s linear 180ms;
+    transition: opacity var(--motionDurationFast) var(--motionEasingStandard),
+        visibility 0s linear var(--motionDurationFast);
 }
 
 .crossfadeVisible {
@@ -112,14 +115,14 @@
     margin: 0;
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeMetadata);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.3;
 }
 
 .label {
     font-size: var(--fontSizeMetadata);
     color: var(--colorTextSecondary);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.35;
 }
 
@@ -168,8 +171,8 @@
     }
 
     .value {
-        font-size: 1.3rem;
-        line-height: 1.2;
+        font-size: var(--fontSizeSectionTitle);
+        line-height: var(--lineHeightHeading);
     }
 
     .statContent {
@@ -182,11 +185,11 @@
     }
 
     .explanation {
-        font-size: 0.6875rem;
+        font-size: var(--fontSizeMicro);
     }
 
     .label {
-        font-size: 0.6875rem;
+        font-size: var(--fontSizeMicro);
         line-height: 1.35;
     }
 }

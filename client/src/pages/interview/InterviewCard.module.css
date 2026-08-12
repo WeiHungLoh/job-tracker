@@ -76,7 +76,7 @@
     min-height: 0;
     width: 100%;
     padding: 14px;
-    font-size: 0.9375rem;
+    font-size: var(--fontSizeBodyCompact);
     border-radius: 10px;
     border: 2px solid var(--colorNotesBorder);
     background-color: var(--colorNotesBg);
@@ -104,8 +104,8 @@
     flex-direction: column;
     gap: 6px;
     color: var(--colorText);
-    font-size: 0.8125rem;
-    font-weight: 600;
+    font-size: var(--fontSizeCompactControl);
+    font-weight: var(--fontWeightEmphasis);
 }
 
 .boardNotesField textarea {
@@ -133,12 +133,15 @@
 
 .interviewContent h2 {
     margin: 0 0 14px;
-    font-size: 1.5rem;
     color: var(--colorText);
+    font-size: var(--fontSizeSectionTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .date {
-    font-weight: bold;
+    font-weight: var(--fontWeightEmphasis);
     color: var(--colorText);
 }
 
@@ -172,7 +175,7 @@
     gap: 7px;
     border-radius: var(--radiusPill);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     letter-spacing: 0;
     line-height: 1.2;
     box-sizing: border-box;
@@ -199,10 +202,11 @@
     color: var(--colorLinkText);
     box-sizing: border-box;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1.2;
     text-decoration: none;
-    transition: background-color 160ms ease, transform 160ms ease;
+    transition: background-color var(--motionDurationFast) var(--motionEasingStandard),
+        transform var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .navigationLink {
@@ -223,7 +227,7 @@
 
 .linkIcon {
     flex: 0 0 auto;
-    transition: transform 160ms ease;
+    transition: transform var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .navigationLink:hover,
@@ -323,22 +327,22 @@
 .board .jobTitle {
     margin: 8px 0 6px;
     color: var(--colorTextSecondary);
-    font-size: 1rem;
+    font-size: var(--fontSizeBody);
     font-weight: 400;
     line-height: 1.35;
 }
 
 .board .interviewContent h2 {
     margin-bottom: 0;
-    font-size: 1.2rem;
-    line-height: 1.35;
+    font-size: var(--fontSizeCardTitle);
+    line-height: var(--lineHeightHeading);
 }
 
 .board .date {
     margin-top: 12px;
     color: var(--colorText);
-    font-size: 0.875rem;
-    font-weight: 700;
+    font-size: var(--fontSizeControl);
+    font-weight: var(--fontWeightHeading);
 }
 
 .board.archived .interviewContent {
@@ -365,12 +369,12 @@
         box-shadow: none;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
-        font-size: 0.875rem;
+        font-size: var(--fontSizeControl);
     }
 
     .interviewContent {
         min-width: 0;
-        font-size: 0.9rem;
+        font-size: var(--fontSizeBodyCompact);
     }
 
     .buttonGroup {
@@ -382,11 +386,11 @@
     }
 
     .interviewContent h2 {
-        font-size: 1.2rem;
+        font-size: var(--fontSizeCardTitle);
     }
 
     .buttonGroup button {
-        font-size: 0.8rem;
+        font-size: var(--fontSizeCompactControl);
     }
 
     .board {
@@ -405,7 +409,7 @@
     .timingBadge,
     .navigationLink,
     .boardActionLink {
-        font-size: 0.75rem;
+        font-size: var(--fontSizeMicro);
     }
 }
 

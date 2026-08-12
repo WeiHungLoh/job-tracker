@@ -30,14 +30,15 @@
 .content h2 {
     margin: 0;
     color: var(--colorText);
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 1.3;
+    font-size: var(--fontSizePageTitle);
+    font-weight: var(--fontWeightHeading);
+    line-height: var(--lineHeightHeading);
+    letter-spacing: var(--letterSpacingHeading);
 }
 
 .content p {
     margin: 0;
     color: var(--colorTextSecondary);
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: var(--fontSizeBody);
+    line-height: var(--lineHeightBody);
 }

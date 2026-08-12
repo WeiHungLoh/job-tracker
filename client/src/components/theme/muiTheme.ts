@@ -16,7 +16,7 @@ export const createMuiTheme = (theme: Theme) => {
             MuiDialog: {
                 styleOverrides: {
                     paper: {
-                        borderRadius: '16px',
+                        borderRadius: 'var(--radiusCard)',
                         backgroundColor: 'var(--colorCardBg)',
                         backgroundImage: 'none',
                     },
@@ -24,12 +24,22 @@ export const createMuiTheme = (theme: Theme) => {
             },
             MuiDialogTitle: {
                 styleOverrides: {
-                    root: theme === 'dark' ? { color: '#fff', fontWeight: 700, opacity: 1 } : {},
+                    root: {
+                        color: 'var(--colorText)',
+                        fontSize: 'var(--fontSizePageTitle)',
+                        fontWeight: 'var(--fontWeightHeading)',
+                        lineHeight: 'var(--lineHeightHeading)',
+                        letterSpacing: 'var(--letterSpacingHeading)',
+                    },
                 },
             },
             MuiDialogContentText: {
                 styleOverrides: {
-                    root: theme === 'dark' ? { color: '#fff', opacity: 0.6 } : {},
+                    root: {
+                        color: 'var(--colorTextSecondary)',
+                        fontSize: 'var(--fontSizeBody)',
+                        lineHeight: 'var(--lineHeightBody)',
+                    },
                 },
             },
             MuiDialogActions: {
@@ -45,7 +55,19 @@ export const createMuiTheme = (theme: Theme) => {
                         padding: 'var(--spaceControl) var(--spaceCompact)',
                         borderRadius: 'var(--radiusControl)',
                         boxShadow: 'none',
+                        fontWeight: 'var(--fontWeightEmphasis)',
                         textTransform: 'none',
+                        transition:
+                            'transform var(--motionDurationFast) var(--motionEasingStandard), background-color var(--motionDurationFast) var(--motionEasingStandard), border-color var(--motionDurationFast) var(--motionEasingStandard), color var(--motionDurationFast) var(--motionEasingStandard)',
+                        '&:not(:disabled):active': {
+                            transform: 'scale(0.98)',
+                        },
+                        '@media (prefers-reduced-motion: reduce)': {
+                            transition: 'none',
+                            '&:active': {
+                                transform: 'none',
+                            },
+                        },
                     },
                     containedPrimary: {
                         backgroundColor: 'var(--colorPrimary)',
@@ -57,6 +79,7 @@ export const createMuiTheme = (theme: Theme) => {
                     },
                     outlinedPrimary: {
                         border: '1.5px solid var(--colorPrimary)',
+                        backgroundColor: 'transparent',
                         color: 'var(--colorPrimary)',
                         '&:hover': {
                             border: '1.5px solid var(--colorPrimary)',

@@ -325,9 +325,6 @@ const AttentionCenter = ({
                             const actionLabel = ACTION_LABELS[category];
                             const isDraftAction = category === 'application-follow-up' || category === 'post-interview';
                             const visibleActionLabel = isDraftAction ? 'Draft message' : actionLabel;
-                            const actionClassName = [styles.actionButton, isDraftAction ? styles.draftActionButton : '']
-                                .filter(Boolean)
-                                .join(' ');
 
                             return (
                                 <li
@@ -356,7 +353,7 @@ const AttentionCenter = ({
                                         ) : (
                                             <PrimaryButton
                                                 aria-label={`${actionLabel} for ${application.job_title} at ${application.company_name}`}
-                                                className={actionClassName}
+                                                className={styles.actionButton}
                                                 type='button'
                                                 variant='secondary'
                                                 onClick={() => handleAttentionAction(item)}

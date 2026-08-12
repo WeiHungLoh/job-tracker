@@ -25,11 +25,14 @@
     background: var(--colorControlMutedSurface);
     color: var(--colorText);
     font-size: var(--fontSizeCompactControl);
-    font-weight: 600;
+    font-weight: var(--fontWeightEmphasis);
     line-height: 1;
     white-space: nowrap;
     box-shadow: 0 1px 2px var(--colorControlShadow);
-    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    transition: border-color var(--motionDurationFast) var(--motionEasingStandard),
+        background-color var(--motionDurationFast) var(--motionEasingStandard),
+        color var(--motionDurationFast) var(--motionEasingStandard),
+        box-shadow var(--motionDurationFast) var(--motionEasingStandard);
 }
 
 .activityTrigger:not(:disabled):hover,
@@ -64,7 +67,7 @@
 .chevron {
     display: block;
     flex-shrink: 0;
-    transition: transform 0.2s ease;
+    transition: transform var(--motionDurationStandard) var(--motionEasingStandard);
 }
 
 .chevronOpen {
@@ -86,11 +89,26 @@
     background: var(--colorCardBg);
     box-shadow: 0 6px 18px var(--colorAuthCardShadow);
     box-sizing: border-box;
+    transform-origin: center top;
+    animation: dropdownEnter var(--motionDurationStandard) var(--motionEasingEmphasized);
 }
 
 .openAbove .dropdown {
     top: auto;
     bottom: calc(100% + 6px);
+    transform-origin: center bottom;
+}
+
+@keyframes dropdownEnter {
+    from {
+        opacity: 0;
+        transform: translateY(-3px) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .activityDropdown {
@@ -117,7 +135,7 @@
         height: 37px;
         padding: 0 9px;
         gap: 3px;
-        font-size: 0.75rem;
+        font-size: var(--fontSizeMicro);
     }
 
     .activityTrigger .chevron {
@@ -130,5 +148,9 @@
     .activityTrigger,
     .chevron {
         transition: none;
+    }
+
+    .dropdown {
+        animation: none;
     }
 }
