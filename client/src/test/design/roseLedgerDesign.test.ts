@@ -521,6 +521,7 @@ describe('Rose Ledger visual contract', () => {
 
     it('uses the established application and Offer Comparison typography hierarchy on dashboard cards', () => {
         const dashboardCardCss = readSource('src/pages/dashboard/shared/dashboardCard/DashboardCard.module.css');
+        const dashboardStatsCss = readSource('src/pages/dashboard/overview/dashboardStats/DashboardStats.module.css');
         const attentionCenterCss = readSource('src/pages/dashboard/attentionCenter/AttentionCenter.module.css');
         const attentionSettingsCss = readSource(
             'src/pages/dashboard/attentionCenter/NeedsAttentionSettingsDialog.module.css'
@@ -548,6 +549,14 @@ describe('Rose Ledger visual contract', () => {
         expect(attentionCenterCss).toMatch(
             /@media \(max-width: 550px\)[\s\S]*?\.actionButton\s*\{[^}]*width:\s*100%;/s
         );
+        expect(dashboardStatsCss).toMatch(
+            /@media \(min-width: 551px\) and \(max-width: 900px\)[\s\S]*?\.statsRow\s*\{[^}]*grid-template-columns:\s*repeat\(6, minmax\(0, 1fr\)\);/s
+        );
+        expect(dashboardStatsCss).toMatch(
+            /@media \(max-width: 550px\)[\s\S]*?\.card:first-child\s*\{[^}]*grid-column:\s*1 \/ -1;/s
+        );
+        expect(dashboardStatsCss).not.toContain('text-transform: uppercase;');
+        expect(dashboardStatsCss).not.toContain('letter-spacing: 0.5px;');
         expect(followUpDialogCss).not.toContain('linear-gradient');
         expect(followUpDialogCss).not.toContain('box-shadow');
         expect(followUpDialogCss).toContain('white-space: pre-wrap;');
@@ -1524,10 +1533,16 @@ describe('Rose Ledger visual contract', () => {
         const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
 
         expect(attentionCenter).toMatch(
-            /\.attentionCard\s*>\s*header\s+h2\s*\{[^}]*width:\s*fit-content;[^}]*padding:\s*5px 10px;[^}]*border-radius:\s*var\(--radiusControl\);[^}]*background-color:\s*var\(--colorPrimary\);[^}]*color:\s*var\(--colorBtnPrimaryText\);/s
+            /\.attentionCard\s*>\s*header\s*\{[^}]*padding-bottom:\s*14px;[^}]*border-bottom:\s*1px solid var\(--colorCardBorder\);/s
         );
         expect(attentionCenter).toMatch(
-            /\.attentionCard\s*>\s*header\s*\{[^}]*padding-bottom:\s*14px;[^}]*border-bottom:\s*1px solid color-mix\(in srgb, var\(--colorPrimary\) 40%, var\(--colorCardBorder\)\);/s
+            /\.attentionTitle\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--spaceControl\);/s
+        );
+        expect(attentionCenter).toMatch(
+            /\.attentionCount\s*\{[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:\s*var\(--colorStatIconBg\);[^}]*color:\s*var\(--colorPrimary\);/s
+        );
+        expect(attentionCenter).toMatch(
+            /\.actionButton\.draftActionButton\s*\{[^}]*border-color:\s*transparent;[^}]*background:\s*transparent;/s
         );
         expect(attentionCenter).toMatch(
             /\.attentionItem\s*\{[^}]*border-inline-start:\s*4px solid var\(--attentionStatusColor\);/s
@@ -1601,6 +1616,7 @@ describe('Rose Ledger visual contract', () => {
         expect(button).toContain('line-height: normal;');
         expect(form).toContain('font-weight: 600;');
         expect(form).toContain('min-height: 44px;');
+        expect(form).toContain('width: clamp(560px, 42vw, 680px);');
         expect(form).toMatch(/\.field\s*\{[^}]*gap:\s*var\(--spaceControl\);/s);
         expect(form).toMatch(/\.field \+ \.field\s*\{[^}]*margin-top:\s*var\(--spaceCard\);/s);
         expect(form).toMatch(/\.optionalLabel\s*\{[^}]*color:\s*var\(--colorTextSecondary\);[^}]*font-weight:\s*400;/s);

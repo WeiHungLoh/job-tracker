@@ -1,5 +1,5 @@
 .formPage {
-    width: clamp(600px, 45vw, 760px);
+    width: clamp(560px, 42vw, 680px);
     max-width: calc(100% - 32px);
     margin: 16px auto 30px;
     padding: 18px clamp(18px, 2.2vw, 28px);

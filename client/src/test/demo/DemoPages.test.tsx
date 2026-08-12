@@ -1330,7 +1330,7 @@ describe('demo page interactions', () => {
     test('renders dashboard from demo selectors', () => {
         renderDemo(<DemoDashboard />, [routes.demoDashboard]);
 
-        expect(screen.getByText('Total Active Applications')).toBeInTheDocument();
+        expect(screen.getByText('Total active applications')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Needs Attention' })).toBeInTheDocument();
         expect(
             within(screen.getByRole('list', { name: 'Applications needing attention' })).getAllByRole('listitem')

@@ -53,21 +53,21 @@ const DashboardStats = ({
             error: statusError,
             icon: 'briefcase' as const,
             isLoading: statusIsLoading,
-            label: 'Total Active Applications',
+            label: 'Total active applications',
             value: total,
         },
         {
             error: weeklyError,
             icon: 'activeApplications' as const,
             isLoading: weeklyIsLoading,
-            label: 'Applied This Week',
+            label: 'Applied this week',
             value: applicationsThisWeek,
         },
         {
             error: interviewError,
             icon: 'interview' as const,
             isLoading: interviewIsLoading,
-            label: 'Upcoming Interviews',
+            label: 'Upcoming interviews',
             value: upcomingInterviews,
         },
         {
@@ -75,7 +75,7 @@ const DashboardStats = ({
             explanation: INTERVIEW_RATE_EXPLANATION,
             icon: 'highlight' as const,
             isLoading: statusIsLoading,
-            label: 'Interview Rate',
+            label: 'Interview rate',
             value: interviewRate,
         },
         {
@@ -83,7 +83,7 @@ const DashboardStats = ({
             explanation: OFFER_RATE_EXPLANATION,
             icon: 'success' as const,
             isLoading: statusIsLoading,
-            label: 'Offer Rate',
+            label: 'Offer rate',
             value: offerRate,
         },
     ];

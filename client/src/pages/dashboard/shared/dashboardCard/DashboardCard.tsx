@@ -2,7 +2,7 @@ import { useId, type ReactNode } from 'react';
 import styles from './DashboardCard.module.css';
 
 type DashboardCardProps = {
-    title: string;
+    title: ReactNode;
     description?: string;
     children: ReactNode;
     className?: string;

@@ -130,7 +130,7 @@ describe('Dashboard V2', () => {
             />
         );
 
-        expect(screen.getByText('Total Active Applications')).toBeInTheDocument();
+        expect(screen.getByText('Total active applications')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Needs Attention' })).toBeInTheDocument();
         expect(screen.getByText('Application Company 1')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Job Search Activity' })).toBeInTheDocument();
@@ -655,14 +655,14 @@ describe('Dashboard V2', () => {
 
         const dashboardStatistics = within(screen.getByRole('region', { name: 'Dashboard statistics' }));
         expect(screen.getByRole('heading', { name: 'Ending Company' })).toBeInTheDocument();
-        expect(dashboardStatistics.getByText('Upcoming Interviews').parentElement).toHaveTextContent('1');
+        expect(dashboardStatistics.getByText('Upcoming interviews').parentElement).toHaveTextContent('1');
 
         act(() => {
             vi.advanceTimersByTime(60 * 1000);
         });
 
         expect(screen.queryByRole('heading', { name: 'Ending Company' })).not.toBeInTheDocument();
-        expect(dashboardStatistics.getByText('Upcoming Interviews').parentElement).toHaveTextContent('0');
+        expect(dashboardStatistics.getByText('Upcoming interviews').parentElement).toHaveTextContent('0');
     });
 
     test('selects the exact upcoming interview from its accessible preview', async () => {
@@ -715,11 +715,11 @@ describe('Dashboard V2', () => {
             />
         );
 
-        expect(screen.getByText('Total Active Applications').parentElement).toHaveTextContent('10');
-        expect(screen.getByText('Applied This Week').parentElement).toHaveTextContent('4');
-        expect(screen.getByText('Upcoming Interviews').parentElement).toHaveTextContent('1');
-        expect(screen.getByText('Interview Rate').parentElement).toHaveTextContent('70%');
-        expect(screen.getByText('Offer Rate').parentElement).toHaveTextContent('40%');
+        expect(screen.getByText('Total active applications').parentElement).toHaveTextContent('10');
+        expect(screen.getByText('Applied this week').parentElement).toHaveTextContent('4');
+        expect(screen.getByText('Upcoming interviews').parentElement).toHaveTextContent('1');
+        expect(screen.getByText('Interview rate').parentElement).toHaveTextContent('70%');
+        expect(screen.getByText('Offer rate').parentElement).toHaveTextContent('40%');
     });
 
     test('uses explicit information controls to reveal the Interview Rate and Offer Rate calculations', async () => {
@@ -733,8 +733,8 @@ describe('Dashboard V2', () => {
             />
         );
 
-        const interviewInfo = screen.getByRole('button', { name: 'About Interview Rate' });
-        const offerInfo = screen.getByRole('button', { name: 'About Offer Rate' });
+        const interviewInfo = screen.getByRole('button', { name: 'About Interview rate' });
+        const offerInfo = screen.getByRole('button', { name: 'About Offer rate' });
         const interviewExplanation =
             'Applications with a recorded interview or later-stage status ÷ active applications.';
         const offerExplanation = 'Offer, Accepted or Declined applications ÷ total active applications.';
@@ -745,8 +745,8 @@ describe('Dashboard V2', () => {
         expect(interviewInfo).toHaveAttribute('aria-controls', interviewDetails?.id);
         expect(interviewValue).toHaveAttribute('aria-hidden', 'false');
         expect(interviewDetails).toHaveAttribute('aria-hidden', 'true');
-        expect(screen.queryByRole('button', { name: /Total Active Applications/i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: /Interview Rate: 50%/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Total active applications/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Interview rate: 50%/i })).not.toBeInTheDocument();
 
         interviewInfo.focus();
         await userEvent.keyboard('{Enter}');

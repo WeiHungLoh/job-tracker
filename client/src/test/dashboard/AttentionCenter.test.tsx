@@ -145,8 +145,9 @@ describe('AttentionCenter', () => {
             within(list).getByText('Applied on 20 June 2026 (20 days ago). No interview has been recorded.')
         ).toBeInTheDocument();
         expect(screen.getByText('Your highest-priority follow-ups, with suggested next steps.')).toBeInTheDocument();
-        expect(within(list).getByText('Draft application follow-up')).toBeInTheDocument();
-        expect(within(list).getByText('Draft post-interview message')).toBeInTheDocument();
+        const attentionHeading = screen.getByRole('heading', { name: 'Needs Attention' });
+        expect(within(attentionHeading).getByText('5')).toHaveAttribute('aria-hidden', 'true');
+        expect(within(list).getAllByText('Draft message')).toHaveLength(2);
         expect(within(list).getByText('Add interview')).toBeInTheDocument();
         expect(within(list).getByText('Evaluate offer')).toBeInTheDocument();
         expect(within(list).getByText('Record offer decision')).toBeInTheDocument();

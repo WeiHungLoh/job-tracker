@@ -131,6 +131,7 @@ const AttentionCenter = ({
         () => getAttentionItems(applications, interviews, currentTime, offerEvaluations, settings),
         [applications, currentTime, interviews, offerEvaluations, settings]
     );
+    const attentionCount = !isLoading && !hasError ? items.length : null;
     const isAttentionListScrollable = items.length > VISIBLE_ATTENTION_ITEMS;
 
     useEffect(
@@ -259,7 +260,16 @@ const AttentionCenter = ({
         <>
             <DashboardCard
                 className={styles.attentionCard}
-                title='Needs Attention'
+                title={
+                    <span className={styles.attentionTitle}>
+                        Needs Attention
+                        {attentionCount !== null && (
+                            <span aria-hidden='true' className={styles.attentionCount}>
+                                {attentionCount}
+                            </span>
+                        )}
+                    </span>
+                }
                 description='Your highest-priority follow-ups, with suggested next steps.'
                 headerAction={
                     <PrimaryButton
@@ -313,6 +323,11 @@ const AttentionCenter = ({
                         {items.map((item) => {
                             const { application, category, message } = item;
                             const actionLabel = ACTION_LABELS[category];
+                            const isDraftAction = category === 'application-follow-up' || category === 'post-interview';
+                            const visibleActionLabel = isDraftAction ? 'Draft message' : actionLabel;
+                            const actionClassName = [styles.actionButton, isDraftAction ? styles.draftActionButton : '']
+                                .filter(Boolean)
+                                .join(' ');
 
                             return (
                                 <li
@@ -341,12 +356,12 @@ const AttentionCenter = ({
                                         ) : (
                                             <PrimaryButton
                                                 aria-label={`${actionLabel} for ${application.job_title} at ${application.company_name}`}
-                                                className={styles.actionButton}
+                                                className={actionClassName}
                                                 type='button'
                                                 variant='secondary'
                                                 onClick={() => handleAttentionAction(item)}
                                             >
-                                                {actionLabel}
+                                                {visibleActionLabel}
                                             </PrimaryButton>
                                         )}
                                     </div>

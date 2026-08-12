@@ -4,15 +4,29 @@
 
 .attentionCard > header {
     padding-bottom: 14px;
-    border-bottom: 1px solid color-mix(in srgb, var(--colorPrimary) 40%, var(--colorCardBorder));
+    border-bottom: 1px solid var(--colorCardBorder);
 }
 
-.attentionCard > header h2 {
-    width: fit-content;
-    padding: 5px 10px;
-    border-radius: var(--radiusControl);
-    background-color: var(--colorPrimary);
-    color: var(--colorBtnPrimaryText);
+.attentionTitle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spaceControl);
+}
+
+.attentionCount {
+    display: inline-flex;
+    min-width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 7px;
+    border-radius: var(--radiusPill);
+    background: var(--colorStatIconBg);
+    color: var(--colorPrimary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    box-sizing: border-box;
 }
 
 .attentionList {
@@ -116,6 +130,17 @@
     max-width: 100%;
     font-size: var(--fontSizeControl);
     overflow-wrap: anywhere;
+}
+
+.actionButton.draftActionButton {
+    padding-inline: var(--spaceControl);
+    border-color: transparent;
+    background: transparent;
+}
+
+.actionButton.draftActionButton:not(:disabled):hover {
+    border-color: transparent;
+    background: var(--colorBtnSecondaryHoverBg);
 }
 
 .centered {
