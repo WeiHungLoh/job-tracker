@@ -87,7 +87,7 @@ const InterviewCard = (props: InterviewCardProps) => {
             id={variant === 'job' ? String(interview.interview_id) : undefined}
         >
             <div className={styles.interviewContent}>
-                <div className={applicationStyles.headingRow}>
+                <div className={`${applicationStyles.headingRow} ${styles.headingRow}`}>
                     <h2>
                         {index + 1}. {interview.company_name}
                     </h2>

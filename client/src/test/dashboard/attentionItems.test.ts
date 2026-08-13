@@ -3,8 +3,6 @@ import type { JobInterview } from '../../pages/interview/models';
 import type { OfferEvaluation } from '../../pages/offerDecision/models';
 import {
     ATTENTION_APPLICATION_STATUSES,
-    FOLLOW_UP_AFTER_DAYS,
-    MAX_ATTENTION_ITEMS,
     getAttentionItems,
 } from '../../pages/dashboard/attentionCenter/attentionItems';
 import { DEFAULT_NEEDS_ATTENTION_SETTINGS } from '../../pages/dashboard/attentionCenter/needsAttentionSettings';
@@ -76,8 +74,6 @@ const createInterviewEndingDaysAgo = (
 describe('getAttentionItems', () => {
     test('uses only the three active statuses needed by the dashboard request', () => {
         expect(ATTENTION_APPLICATION_STATUSES).toEqual(['Applied', 'Interview', 'Offer']);
-        expect(FOLLOW_UP_AFTER_DAYS).toBe(7);
-        expect(MAX_ATTENTION_ITEMS).toBe(10);
     });
 
     test('uses custom timing values independently at their exact boundaries', () => {

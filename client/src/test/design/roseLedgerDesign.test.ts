@@ -290,6 +290,9 @@ describe('Rose Ledger visual contract', () => {
         const offerDecisionWorkspaceCss = readSource('src/pages/offerDecision/OfferDecisionWorkspace.module.css');
         const offerEvaluationCss = readSource('src/pages/offerDecision/OfferEvaluation.module.css');
         const offerDecisionSkeletonCss = readSource('src/pages/offerDecision/OfferDecisionSkeleton.module.css');
+        const offerComparisonTableSkeletonCss = readSource(
+            'src/components/skeletonLoader/skeletonOfferComparisonTable/SkeletonOfferComparisonTable.module.css'
+        );
         const robustnessCss = readSource('src/pages/offerDecision/robustness/OfferDecisionRobustnessLab.module.css');
         const counterofferCss = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.module.css');
         const counterofferDialog = readSource('src/pages/offerDecision/counteroffer/CounterofferPlanDialog.tsx');
@@ -497,6 +500,11 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(offerDecisionSkeletonCss).not.toContain('linear-gradient');
         expect(offerDecisionSkeletonCss).not.toContain('box-shadow');
+        expect(offerComparisonTableSkeletonCss).toContain(
+            "composes: skeletonLine from '../skeletonCard/SkeletonCard.module.css';"
+        );
+        expect(offerComparisonTableSkeletonCss).not.toContain('linear-gradient');
+        expect(offerComparisonTableSkeletonCss).not.toContain('box-shadow');
     });
 
     it('groups the cohesive counteroffer implementation without generic nesting', () => {
@@ -755,7 +763,7 @@ describe('Rose Ledger visual contract', () => {
         [
             [formCss, /\.formPage h2\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
             [emptyStateCss, /\.emptyState h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
-            [fallbackCss, /\.content h2\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
+            [fallbackCss, /\.content h1\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
             [authCss, /\.title\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
             [userGuideCss, /\.header h1\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
             [dashboardCardCss, /\.header h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
@@ -863,7 +871,7 @@ describe('Rose Ledger visual contract', () => {
         expect(muiTheme).toContain("color: 'var(--colorBtnPrimaryText)'");
         expect(muiTheme).toContain("padding: 'var(--spaceControl) var(--spaceCompact)'");
         expect(muiTheme).toContain("borderRadius: 'var(--radiusControl)'");
-        expect(countMatches(muiTheme, /boxShadow:/g)).toBe(2);
+        expect(countMatches(muiTheme, /boxShadow:/g)).toBe(3);
     });
 
     it('freezes the connected view toggle, dropdown caret, checkbox, and switch semantics', () => {
@@ -1081,7 +1089,7 @@ describe('Rose Ledger visual contract', () => {
         const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
         const inactiveDotStart = authProductIntro.indexOf('.carouselDot {');
         const activeDotStart = authProductIntro.indexOf('.activeCarouselDot {');
-        const activeDotEnd = authProductIntro.indexOf('.visuallyHidden {', activeDotStart);
+        const activeDotEnd = authProductIntro.indexOf('@media (max-width: 1100px) {', activeDotStart);
         const inactiveDotRules = authProductIntro.slice(inactiveDotStart, activeDotStart);
         const activeDotRules = authProductIntro.slice(activeDotStart, activeDotEnd);
 
@@ -1225,7 +1233,7 @@ describe('Rose Ledger visual contract', () => {
             /\.compactSizing summary\s*\{[^}]*min-height:\s*28px;[^}]*font-size:\s*var\(--fontSizeCompactControl\);/s
         );
         expect(boardCardActions).toMatch(
-            /\.compactSizing \.actionButtons button\s*\{[^}]*min-height:\s*28px;[^}]*padding:\s*6px 8px;[^}]*border-radius:\s*8px;[^}]*font-size:\s*var\(--fontSizeMetadata\);/s
+            /\.compactSizing \.actionButtons button\s*\{[^}]*min-height:\s*28px;[^}]*padding:\s*6px 8px;[^}]*border-radius:\s*var\(--radiusMenuItem\);[^}]*font-size:\s*var\(--fontSizeMetadata\);/s
         );
         expect(followUpSentBadge).toMatch(/\.badge\s*\{[^}]*border:\s*0;[^}]*border-radius:\s*var\(--radiusPill\);/s);
         expect(followUpSentBadge).toMatch(/\.badge\s*\{[^}]*margin-top:\s*var\(--spaceCompact\);/s);
@@ -1408,6 +1416,7 @@ describe('Rose Ledger visual contract', () => {
         expect(iconComponent).toContain('MdOpenInNew');
         expect(iconModels).toContain("| 'chevronRight'");
         expect(iconModels).toContain("| 'externalLink'");
+        expect(iconModels).not.toContain('(typeof ICON_NAMES)[number]');
 
         expect(applicationCardComponent).toContain("variant='secondary'");
         expect(applicationCardComponent).toContain("variant='destructive'");
@@ -1765,5 +1774,53 @@ describe('Rose Ledger visual contract', () => {
         expect(sortOptions).toContain('border-radius: var(--radiusMenuItem);');
         expect(moreOptions).toContain('border-radius: var(--radiusMenuItem);');
         expect(moreOptions).toMatch(/\.options\s+\.action\s*\{[^}]*font-weight:\s*400;/s);
+    });
+
+    it('keeps navbar hierarchy and destructive dialog styling under shared owners', () => {
+        const navbar = readSource('src/components/navbar/Navbar.tsx');
+        const demoNavbar = readSource('src/pages/demo/components/demoNavbar/DemoNavbar.tsx');
+        const fallback = readSource('src/components/fallbackScreen/FallbackScreen.tsx');
+        const muiTheme = readSource('src/components/theme/muiTheme.ts');
+
+        expect(navbar).toContain('<h1>Job Tracker</h1>');
+        expect(demoNavbar).toContain('<h1>Demo</h1>');
+        expect(fallback).toContain('<h1>{content.title}</h1>');
+        expect(muiTheme).toContain('containedError:');
+        expect(muiTheme).toContain("backgroundColor: 'var(--colorBtnDestructiveBg)'");
+        expect(muiTheme).toContain("backgroundColor: 'var(--colorBtnDestructiveHoverBg)'");
+    });
+
+    it('uses role-based radius tokens across shared app surfaces', () => {
+        const indexCss = readSource('src/index.css');
+        const tokenizedRadiusFiles = [
+            'src/components/activityControls/ControlDropdown.module.css',
+            'src/components/activityControls/checkboxFilter/CheckboxFilter.module.css',
+            'src/components/authRequestInfo/AuthRequestInfo.module.css',
+            'src/components/boardCardActions/BoardCardActions.module.css',
+            'src/components/emptyState/EmptyState.module.css',
+            'src/components/formPage/FormPage.module.css',
+            'src/components/navbar/Navbar.module.css',
+            'src/components/offlineBanner/OfflineBanner.module.css',
+            'src/components/pinControl/PinControl.module.css',
+            'src/components/skeletonLoader/skeletonBoard/SkeletonBoard.module.css',
+            'src/components/skeletonLoader/skeletonCard/SkeletonCard.module.css',
+            'src/components/skeletonLoader/skeletonOfferComparisonTable/SkeletonOfferComparisonTable.module.css',
+            'src/components/toast/ToastContainer.module.css',
+            'src/components/toggleButton/ToggleButton.module.css',
+            'src/pages/application/ApplicationCard.module.css',
+            'src/pages/application/applicationBoard/ApplicationBoard.module.css',
+            'src/pages/authentication/Authentication.module.css',
+            'src/pages/dashboard/attentionCenter/AttentionCenter.module.css',
+            'src/pages/dashboard/charts/applicationsTrend/ApplicationsLineChart.module.css',
+            'src/pages/dashboard/overview/dashboardStats/DashboardStats.module.css',
+            'src/pages/dashboard/overview/upcomingInterviews/UpcomingInterviews.module.css',
+            'src/pages/interview/InterviewCard.module.css',
+            'src/pages/interview/calendarOptions/CalendarOptions.module.css',
+        ];
+
+        expect(indexCss).toContain('--radiusIndicator: 4px;');
+        expect(indexCss).toContain('--radiusCompact: 6px;');
+        expect(indexCss).toContain('--radiusInset: 12px;');
+        tokenizedRadiusFiles.forEach((path) => expect(readSource(path), path).not.toMatch(/border-radius:\s*\d+px;/));
     });
 });

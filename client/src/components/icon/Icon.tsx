@@ -1,8 +1,7 @@
 import type { IconName, IconProps } from './models';
-import { IoEye, IoNewspaperOutline } from 'react-icons/io5';
-import { IoMdArchive, IoMdEyeOff } from 'react-icons/io';
 import {
     MdArrowBack,
+    MdArchive,
     MdAutoAwesome,
     MdCalendarToday,
     MdCancel,
@@ -20,22 +19,25 @@ import {
     MdLightMode,
     MdLock,
     MdMenuBook,
+    MdOutlineArticle,
     MdOutlineStickyNote2,
+    MdOutlineWork,
     MdOpenInNew,
     MdPushPin,
+    MdVisibility,
+    MdVisibilityOff,
+    MdWarning,
     MdWifiOff,
     MdUndo,
 } from 'react-icons/md';
-import { FaBriefcase } from 'react-icons/fa';
-import { GoAlertFill } from 'react-icons/go';
 import type { IconType } from 'react-icons';
 
 const icons: Record<IconName, IconType> = {
-    activeApplications: IoNewspaperOutline,
-    alert: GoAlertFill,
+    activeApplications: MdOutlineArticle,
+    alert: MdWarning,
     arrowBack: MdArrowBack,
-    archive: IoMdArchive,
-    briefcase: FaBriefcase,
+    archive: MdArchive,
+    briefcase: MdOutlineWork,
     calendar: MdCalendarToday,
     chevronDown: MdExpandMore,
     chevronRight: MdChevronRight,
@@ -56,8 +58,8 @@ const icons: Record<IconName, IconType> = {
     darkMode: MdDarkMode,
     lightMode: MdLightMode,
     success: MdCheckCircle,
-    visibility: IoEye,
-    visibilityOff: IoMdEyeOff,
+    visibility: MdVisibility,
+    visibilityOff: MdVisibilityOff,
     wifiOff: MdWifiOff,
     undo: MdUndo,
 };

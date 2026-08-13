@@ -9,27 +9,27 @@ export type IconName =
     | 'calendar'
     | 'chevronDown'
     | 'chevronRight'
-    | 'error'
+    | 'darkMode'
     | 'dashboard'
     | 'delete'
     | 'dragHandle'
     | 'email'
+    | 'error'
     | 'export'
     | 'externalLink'
     | 'guide'
     | 'highlight'
     | 'info'
     | 'interview'
+    | 'lightMode'
     | 'lock'
     | 'notes'
     | 'pin'
     | 'success'
+    | 'undo'
     | 'visibility'
     | 'visibilityOff'
-    | 'wifiOff'
-    | 'undo'
-    | 'darkMode'
-    | 'lightMode';
+    | 'wifiOff';
 
 export type IconProps = HTMLAttributes<SVGElement> & {
     name: IconName;

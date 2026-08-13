@@ -463,7 +463,7 @@ describe('CounterofferPlanDialog', () => {
                 title: 'Delete counteroffer plan?',
                 description: 'This removes the Ideal offer. The original offer evaluation will not be changed.',
                 confirmationText: 'Delete',
-                confirmationButtonProps: { autoFocus: true },
+                confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
             })
         );
         expect(onDelete).toHaveBeenCalledWith(11);

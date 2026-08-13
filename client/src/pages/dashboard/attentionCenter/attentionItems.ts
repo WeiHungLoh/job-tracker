@@ -6,11 +6,6 @@ import { formatLongDate } from '../../../helper/dateFormatter';
 import type { NeedsAttentionCategory } from '../../../components/userPreferences/models';
 import { DEFAULT_NEEDS_ATTENTION_SETTINGS, type NeedsAttentionSettings } from './needsAttentionSettings';
 
-export const FOLLOW_UP_AFTER_DAYS = 7;
-export const STALE_FOLLOW_UP_AFTER_DAYS = 14;
-export const OFFER_DECISION_ATTENTION_HOURS = 72;
-export const OFFER_DECISION_OVERDUE_DAYS = 14;
-export const MAX_ATTENTION_ITEMS = 10;
 export const ATTENTION_APPLICATION_STATUSES = ['Applied', 'Interview', 'Offer'] as const satisfies readonly JobStatus[];
 
 export type AttentionItemCategory = NeedsAttentionCategory;

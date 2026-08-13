@@ -77,7 +77,7 @@
     width: 100%;
     padding: 14px;
     font-size: var(--fontSizeBodyCompact);
-    border-radius: 10px;
+    border-radius: var(--radiusControl);
     border: 2px solid var(--colorNotesBorder);
     background-color: var(--colorNotesBg);
     color: var(--colorNotesText);
@@ -113,7 +113,7 @@
     width: 100%;
     padding: 10px;
     border: 1px solid var(--colorNotesBorder);
-    border-radius: 10px;
+    border-radius: var(--radiusControl);
     background: var(--colorNotesBg);
     color: var(--colorNotesText);
     box-sizing: border-box;

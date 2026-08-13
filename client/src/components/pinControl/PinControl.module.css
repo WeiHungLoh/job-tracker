@@ -10,7 +10,7 @@
 .button {
     padding: 0;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: var(--radiusMenuItem);
     background: transparent;
     cursor: pointer;
     transition: background-color var(--motionDurationFast) var(--motionEasingStandard),

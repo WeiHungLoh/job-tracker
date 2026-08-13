@@ -184,7 +184,7 @@ describe('Archived job interview viewer flow', () => {
                     'Are you sure you want to delete this archived job interview? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
                 cancellationText: 'Cancel',
-                confirmationButtonProps: { autoFocus: true },
+                confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
             })
         );
 

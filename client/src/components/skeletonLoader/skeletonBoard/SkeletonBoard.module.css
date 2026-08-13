@@ -17,7 +17,7 @@
     min-height: 320px;
     padding: 12px;
     border: 1px solid var(--colorCardBorder);
-    border-radius: 16px;
+    border-radius: var(--radiusCard);
     background: var(--colorCardBg);
     background: linear-gradient(180deg, color-mix(in srgb, var(--colorPrimary) 9%, transparent), transparent 120px),
         var(--colorCardBg);
@@ -37,13 +37,13 @@
     gap: 12px;
     padding: 13px;
     border: 1px solid var(--colorCardBorder);
-    border-radius: 14px;
+    border-radius: var(--radiusToolbar);
     background: var(--colorPageBg);
 }
 
 .skeletonLine {
     height: 16px;
-    border-radius: 8px;
+    border-radius: var(--radiusMenuItem);
     background: linear-gradient(
         90deg,
         var(--colorSkeletonBase) 25%,

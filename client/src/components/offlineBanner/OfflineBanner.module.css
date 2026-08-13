@@ -21,7 +21,7 @@
     width: 42px;
     height: 42px;
     place-items: center;
-    border-radius: 13px;
+    border-radius: var(--radiusToolbar);
     background-color: var(--colorOfflineBannerIconBg);
     color: var(--colorOfflineBannerAccent);
     font-size: var(--fontSizeSectionTitle);

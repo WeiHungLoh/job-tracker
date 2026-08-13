@@ -97,7 +97,7 @@ const getErrorMessage = (data: unknown, fallback: string): string => {
         return errorBody.detail;
     }
 
-    return JSON.stringify(data);
+    return fallback;
 };
 
 const isRetryableResponseStatus = (status: number): boolean => {

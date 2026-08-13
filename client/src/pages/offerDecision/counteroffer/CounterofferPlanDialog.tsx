@@ -8,6 +8,7 @@ import { useConfirm } from 'material-ui-confirm';
 import { JobTrackerAPIError } from '../../../api/models';
 import PrimaryButton from '../../../components/button/PrimaryButton';
 import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
+import { createDestructiveConfirmationButtonProps } from '../../../components/confirmation/destructiveConfirmationButtonProps';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { getErrorToastMessage } from '../../../helper/getErrorToastMessage';
 import CounterofferCurrentOffer from './CounterofferCurrentOffer';
@@ -269,7 +270,7 @@ const CounterofferPlanDialog = ({
             description: 'This removes the Ideal offer. The original offer evaluation will not be changed.',
             confirmationText: 'Delete',
             cancellationText: 'Cancel',
-            confirmationButtonProps: { autoFocus: true },
+            confirmationButtonProps: createDestructiveConfirmationButtonProps(),
         });
         if (!confirmed) {
             return;

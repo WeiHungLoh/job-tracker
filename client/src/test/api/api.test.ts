@@ -412,6 +412,24 @@ describe('makeJobTrackerAPIRequest', () => {
         );
     });
 
+    test('uses the response fallback instead of serializing an unrecognized error body', async () => {
+        const errorBody = { code: 'INVALID_UPSTREAM_RESPONSE', internal: { requestId: 'private-id' } };
+        fetch.mockResolvedValueOnce(response(errorBody, false, 400));
+
+        await expect(
+            makeJobTrackerAPIRequest<null, typeof errorBody>(null, {
+                url: '/applications',
+                verb: 'GET',
+            })
+        ).rejects.toEqual(
+            expect.objectContaining<JobTrackerAPIError>({
+                data: errorBody,
+                message: 'Bad Request',
+                status: 400,
+            })
+        );
+    });
+
     test('refreshes authentication and retries an authenticated request after a 401 response', async () => {
         fetch
             .mockResolvedValueOnce(response({ message: 'Access token expired.' }, false, 401))

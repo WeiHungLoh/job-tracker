@@ -1110,7 +1110,7 @@ describe('OfferDecisionWorkspace', () => {
                     title: 'Delete counteroffer plan?',
                     confirmationText: 'Delete and Save',
                     description: expect.stringContaining('higher fit rating than your saved counteroffer plan'),
-                    confirmationButtonProps: { autoFocus: true },
+                    confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
                 })
             )
         );
@@ -1991,6 +1991,39 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getAllByTestId('offer-decision-skeleton')).toHaveLength(3);
         expect(screen.getByRole('status', { name: 'Loading offer comparisons' })).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'No offers to compare' })).not.toBeInTheDocument();
+    });
+
+    test('renders a horizontal table skeleton while loading in Table mode', () => {
+        render(<OfferDecisionWorkspace data={{ applications: [] }} isLoading readOnly={false} />, {
+            initialPreferences: {
+                ...testPreferences,
+                offer_decision_view_mode: 'table',
+                offer_decision_table_orientation: 'horizontal',
+            },
+        });
+
+        const skeleton = screen.getByRole('status', { name: 'Loading offer comparison table' });
+        expect(skeleton).toHaveAttribute('data-orientation', 'horizontal');
+        expect(screen.getByRole('region', { name: 'Offer comparison controls' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Table layout' })).toHaveTextContent('Horizontal');
+        expect(screen.getByRole('button', { name: 'Filter by' })).toBeDisabled();
+        expect(screen.queryByTestId('offer-decision-skeleton')).not.toBeInTheDocument();
+    });
+
+    test('renders a vertical table skeleton without disabling filters while refiltering', () => {
+        render(<OfferDecisionWorkspace data={activeData} isFiltering readOnly={false} />, {
+            initialPreferences: {
+                ...testPreferences,
+                offer_decision_view_mode: 'table',
+                offer_decision_table_orientation: 'vertical',
+            },
+        });
+
+        const skeleton = screen.getByRole('status', { name: 'Loading offer comparison table' });
+        expect(skeleton).toHaveAttribute('data-orientation', 'vertical');
+        expect(screen.getByRole('button', { name: 'Table layout' })).toHaveTextContent('Vertical');
+        expect(screen.getByRole('button', { name: 'Filter by' })).toBeEnabled();
+        expect(screen.queryByTestId('offer-decision-skeleton')).not.toBeInTheDocument();
     });
 
     test('defaults to Cards and places the Cards/Table selector before Filter by', () => {

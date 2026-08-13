@@ -4,6 +4,7 @@ import {
     PERMANENT_DELETION_WARNING,
     type CollectionState,
 } from '../../components/confirmation/bulkConfirmations';
+import { createDestructiveConfirmationButtonProps } from '../../components/confirmation/destructiveConfirmationButtonProps';
 
 export type ApplicationRelationAction = 'archive' | 'delete' | 'unarchive';
 
@@ -30,6 +31,8 @@ export const createApplicationRelationConfirmation = (
     const relatedInterviewLabel = formatCountLabel(relatedInterviewCount, `related ${state} interview`);
     const relatedInterviews = relatedInterviewCount > 0 ? ` and its ${relatedInterviewLabel}` : '';
     const permanence = action === 'delete' ? ` ${PERMANENT_DELETION_WARNING}` : '';
+    const confirmationButtonProps =
+        action === 'delete' ? createDestructiveConfirmationButtonProps() : { autoFocus: true };
 
     if (offerEvaluationCount > 0 || counterofferPlanCount > 0) {
         const evaluationLabel =
@@ -69,7 +72,7 @@ export const createApplicationRelationConfirmation = (
             description: `${actionLabel} this ${state} job application${relationDescription}?${lifecycle}`,
             confirmationText: actionLabel,
             cancellationText: 'Cancel',
-            confirmationButtonProps: { autoFocus: true },
+            confirmationButtonProps,
         };
     }
 
@@ -78,6 +81,6 @@ export const createApplicationRelationConfirmation = (
         description: `${actionLabel} this ${state} job application${relatedInterviews}?${permanence}`,
         confirmationText: actionLabel,
         cancellationText: 'Cancel',
-        confirmationButtonProps: { autoFocus: true },
+        confirmationButtonProps,
     };
 };

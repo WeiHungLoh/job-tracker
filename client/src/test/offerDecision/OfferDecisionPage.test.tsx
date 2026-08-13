@@ -821,7 +821,7 @@ describe('OfferDecisionPage', () => {
                 expect.objectContaining({
                     title: 'Delete counteroffer plan?',
                     confirmationText: 'Delete and Save',
-                    confirmationButtonProps: { autoFocus: true },
+                    confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
                 })
             )
         );

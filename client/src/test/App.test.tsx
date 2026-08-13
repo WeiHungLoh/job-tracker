@@ -124,6 +124,8 @@ describe('App routing and authentication behavior', () => {
         renderRoute('/application/add');
 
         await waitFor(() => expect(screen.getByText(/company name/i)).toBeInTheDocument());
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(screen.getByRole('heading', { level: 1, name: 'Job Tracker' })).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/refresh`, {
             method: 'POST',
         });
@@ -409,10 +411,7 @@ describe('App routing and authentication behavior', () => {
         expect(screen.queryByRole('link', { name: 'New Application' })).not.toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
-        expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute(
-            'aria-current',
-            'page'
-        );
+        expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute('aria-current', 'page');
     });
 
     test('renders active Offer Comparison from the permanent active navbar entry', async () => {
@@ -451,10 +450,7 @@ describe('App routing and authentication behavior', () => {
         renderRoute('/offer-decisions/archive');
 
         expect(await screen.findByRole('heading', { name: 'No archived offer comparisons' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Archived Offer Comparison' })).toHaveAttribute(
-            'aria-current',
-            'page'
-        );
+        expect(screen.getByRole('link', { name: 'Archived Offer Comparison' })).toHaveAttribute('aria-current', 'page');
         expect(screen.queryByRole('button', { name: /save evaluation/i })).not.toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
@@ -532,6 +528,8 @@ describe('App routing and authentication behavior', () => {
         renderRoute(routes.demoRoot);
 
         expect(await screen.findByText(/HorizonAI Labs/i, {}, { timeout: 5000 })).toBeInTheDocument();
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(screen.getByRole('heading', { level: 1, name: 'Demo' })).toBeInTheDocument();
         expect(screen.getByRole('navigation')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /demo guide/i })).not.toBeInTheDocument();
         expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();
@@ -551,6 +549,8 @@ describe('App routing and authentication behavior', () => {
         renderRoute(route);
 
         expect(await screen.findByText(expectedText, {}, { timeout: 5000 })).toBeInTheDocument();
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(screen.getByRole('heading', { level: 1, name: 'Demo' })).toBeInTheDocument();
         expect(screen.getByRole('navigation')).toBeInTheDocument();
         expect(screen.queryByRole('region', { name: 'Device time and timezone' })).not.toBeInTheDocument();
         expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();
@@ -637,10 +637,7 @@ describe('App routing and authentication behavior', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
-        expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute(
-            'aria-current',
-            'page'
-        );
+        expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute('aria-current', 'page');
         expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -696,6 +693,8 @@ describe('App routing and authentication behavior', () => {
     test('displays active navigation bar when on dashboard page', async () => {
         renderRoute('/dashboard');
         await waitFor(() => expect(screen.getByRole('navigation')).toBeInTheDocument());
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(screen.getByRole('heading', { level: 1, name: 'Job Tracker' })).toBeInTheDocument();
 
         await waitFor(() => {
             const requestedUrls = fetch.mock.calls.map(([url]) => String(url));

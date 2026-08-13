@@ -8,18 +8,8 @@ import { JOB_STATUSES } from '../../application/models';
 import { sortApplications } from '../../application/applicationSorting';
 import type { DemoState } from '../models';
 import { startOfLocalWeek, toDateString } from './demoDates';
-import { filterAndSortInterviews, getInterviewTiming } from '../../../helper/interviewTiming';
+import { getInterviewTiming } from '../../../helper/interviewTiming';
 import type { OfferDecisionApplication, OfferDecisionWorkspaceData } from '../../offerDecision/models';
-
-type InterviewWithDate = {
-    interview_date: string;
-    interview_duration_minutes: number;
-};
-
-export const sortInterviews = <Interview extends InterviewWithDate>(
-    interviews: readonly Interview[],
-    now = Date.now()
-): Interview[] => filterAndSortInterviews(interviews, [], new Date(now));
 
 export const selectApplications = (state: DemoState): JobApplication[] => {
     const selectedStatuses = state.preferences.application_job_statuses;
@@ -45,17 +35,6 @@ export const selectArchivedApplications = (state: DemoState): ArchivedJobApplica
         state.archivedApplications.filter((application) => selectedStatuses.includes(application.job_status)),
         sortOrder
     );
-};
-
-export const selectApplicationById = (state: DemoState, jobId: number): JobApplication | undefined => {
-    return state.applications.find((application) => application.job_id === jobId);
-};
-
-export const selectArchivedApplicationById = (
-    state: DemoState,
-    archivedJobId: number
-): ArchivedJobApplication | undefined => {
-    return state.archivedApplications.find((application) => application.archived_job_id === archivedJobId);
 };
 
 export const selectInterviewJobIdSet = (state: DemoState): Set<number> => {

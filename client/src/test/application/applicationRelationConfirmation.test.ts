@@ -112,7 +112,10 @@ describe('single-application relation confirmations', () => {
                 description,
                 confirmationText,
                 cancellationText: 'Cancel',
-                confirmationButtonProps: { autoFocus: true },
+                confirmationButtonProps:
+                    action === 'delete'
+                        ? { autoFocus: true, color: 'error', variant: 'contained' }
+                        : { autoFocus: true },
             });
         }
     );

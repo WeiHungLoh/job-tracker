@@ -150,8 +150,10 @@ describe('InterviewCard calendar options', () => {
         );
 
         const card = screen.getByRole('article', { name: 'Acme interview' });
+        const headingRow = screen.getByRole('heading', { level: 2, name: '1. Acme' }).parentElement;
         expect(card.className).toContain('board');
         expect(card.className).toContain('overdue');
+        expect(headingRow).toHaveClass(applicationStyles.headingRow, interviewStyles.headingRow);
     });
 
     test('does not show Add to calendar for an archived interview', () => {

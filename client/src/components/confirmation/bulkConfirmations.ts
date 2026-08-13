@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from 'react';
 import type { ConfirmOptions } from 'material-ui-confirm';
+import { createDestructiveConfirmationButtonProps } from './destructiveConfirmationButtonProps';
 
 export const formatCountLabel = (count: number, singular: string, plural = `${singular}s`) =>
     `${count} ${count === 1 ? singular : plural}`;
@@ -15,12 +16,19 @@ const preventEnterConfirmation = (event: KeyboardEvent<HTMLButtonElement>) => {
     }
 };
 
-const bulkOptions = (title: string, description: string, confirmationText: string): ConfirmOptions => ({
+const bulkOptions = (
+    title: string,
+    description: string,
+    confirmationText: string,
+    destructive = false
+): ConfirmOptions => ({
     title,
     description,
     confirmationText,
     cancellationText: 'Cancel',
-    confirmationButtonProps: { autoFocus: false, onKeyDown: preventEnterConfirmation },
+    confirmationButtonProps: destructive
+        ? createDestructiveConfirmationButtonProps({ autoFocus: false, onKeyDown: preventEnterConfirmation })
+        : { autoFocus: false, onKeyDown: preventEnterConfirmation },
 });
 
 const applicationDescription = (
@@ -49,9 +57,7 @@ const applicationDescription = (
         ];
         const finalRelation = relations.at(-1);
         const relationDescription =
-            relations.length === 1
-                ? finalRelation
-                : `${relations.slice(0, -1).join(', ')}, and ${finalRelation}`;
+            relations.length === 1 ? finalRelation : `${relations.slice(0, -1).join(', ')}, and ${finalRelation}`;
         const savedItemLabel =
             offerEvaluationCount > 0 && counterofferPlanCount > 0
                 ? 'Saved offer evaluations and counteroffer plans'
@@ -69,9 +75,7 @@ const applicationDescription = (
     }
 
     const relatedInterviews =
-        interviewCount > 0
-            ? ` and ${applicationCount === 1 ? 'its' : 'their'} ${interviewLabel}`
-            : '';
+        interviewCount > 0 ? ` and ${applicationCount === 1 ? 'its' : 'their'} ${interviewLabel}` : '';
 
     return `${action} all ${applicationLabel}${relatedInterviews}? This affects every ${state} application you own, including applications not visible under the current ${filterLabel}.${permanence}`;
 };
@@ -131,7 +135,8 @@ export const createDeleteAllApplicationsConfirmation = (
             counterofferPlanCount,
             state
         ),
-        'Delete All'
+        'Delete All',
+        true
     );
 
 export const createDeleteAllInterviewsConfirmation = (
@@ -143,7 +148,8 @@ export const createDeleteAllInterviewsConfirmation = (
     return bulkOptions(
         'Confirm Delete All',
         `Delete all ${interviewLabel} you own? This affects every ${state} interview in your account. ${PERMANENT_DELETION_WARNING}`,
-        'Delete All'
+        'Delete All',
+        true
     );
 };
 
@@ -161,7 +167,8 @@ export const createDeleteAllOfferEvaluationsConfirmation = (
     return bulkOptions(
         'Confirm Delete All',
         `Delete all ${evaluationLabel} you own? This removes only saved evaluations for ${state} applications.${counterofferDescription} Offers without evaluations are not deleted. ${PERMANENT_DELETION_WARNING}`,
-        'Delete All'
+        'Delete All',
+        true
     );
 };
 

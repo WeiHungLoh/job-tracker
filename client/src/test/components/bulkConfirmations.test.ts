@@ -3,6 +3,7 @@ import {
     createBulkCalendarExportConfirmation,
     createDeleteAllApplicationsConfirmation,
     createDeleteAllInterviewsConfirmation,
+    createDeleteAllOfferEvaluationsConfirmation,
     createUnarchiveAllConfirmation,
 } from '../../components/confirmation/bulkConfirmations';
 import { defaultConfirmOptions } from '../../components/confirmation/defaultConfirmOptions';
@@ -71,6 +72,25 @@ describe('bulk confirmations', () => {
         expect(createDeleteAllInterviewsConfirmation(3, 'archived').description).toBe(
             'Delete all 3 archived interviews you own? This affects every archived interview in your account. This action is permanent and cannot be undone.'
         );
+    });
+
+    test('marks every permanent bulk deletion as destructive without changing reversible actions', () => {
+        const destructiveButton = expect.objectContaining({
+            autoFocus: false,
+            color: 'error',
+            variant: 'contained',
+        });
+
+        expect(createDeleteAllApplicationsConfirmation(2, 1, 0, 'active').confirmationButtonProps).toEqual(
+            destructiveButton
+        );
+        expect(createDeleteAllInterviewsConfirmation(2, 'active').confirmationButtonProps).toEqual(destructiveButton);
+        expect(createDeleteAllOfferEvaluationsConfirmation(2, 'active').confirmationButtonProps).toEqual(
+            destructiveButton
+        );
+        expect(createArchiveAllConfirmation(2, 1).confirmationButtonProps?.color).not.toBe('error');
+        expect(createUnarchiveAllConfirmation(2, 1).confirmationButtonProps?.color).not.toBe('error');
+        expect(createBulkCalendarExportConfirmation(2).confirmationButtonProps?.color).not.toBe('error');
     });
 
     test('prevents Enter confirmation without changing explicit click behavior', () => {

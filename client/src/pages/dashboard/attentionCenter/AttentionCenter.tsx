@@ -17,6 +17,7 @@ import { useUserPreferences } from '../../../components/userPreferences/UserPref
 import { getNeedsAttentionSettings } from './needsAttentionSettings';
 import type { DashboardAttentionTarget } from '../dashboardNavigation';
 import { scrollAndHighlight } from '../../../helper/highlightElement';
+import { createDestructiveConfirmationButtonProps } from '../../../components/confirmation/destructiveConfirmationButtonProps';
 
 type AttentionCenterProps = {
     applications: readonly JobApplication[];
@@ -68,7 +69,7 @@ const MarkApplicationGhostedAction = ({ application, onMarkApplicationGhosted }:
             description: `${application.company_name} — ${application.job_title} will be marked as Ghosted.`,
             confirmationText: 'Mark as Ghosted',
             cancellationText: 'Cancel',
-            confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
+            confirmationButtonProps: createDestructiveConfirmationButtonProps(),
         };
 
         pendingRef.current = true;
@@ -118,7 +119,7 @@ const AttentionCenter = ({
     onRetry,
 }: AttentionCenterProps) => {
     const { preferences } = useUserPreferences();
-    const settings = getNeedsAttentionSettings(preferences);
+    const settings = useMemo(() => getNeedsAttentionSettings(preferences), [preferences]);
     const attentionListRef = useRef<HTMLUListElement>(null);
     const navigationHighlightTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
     const handledNavigationTargetRef = useRef<string | null>(null);

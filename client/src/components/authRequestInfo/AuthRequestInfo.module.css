@@ -19,31 +19,3 @@
     margin-top: 2px;
     color: var(--colorTintText);
 }
-
-.notice {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spaceCompact);
-    padding: 11px 12px;
-    border: 1px solid var(--colorNoticeBorder);
-    border-radius: var(--radiusControl);
-    margin: 16px 0 0;
-    background-color: var(--colorNoticeBg);
-    color: var(--colorNoticeText);
-    font-size: var(--fontSizeMetadata);
-    line-height: 1.45;
-}
-
-.noticeIcon {
-    display: grid;
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
-    border-radius: 7px;
-    background-color: var(--colorAuthCardBg);
-    place-items: center;
-}
-
-.noticeIcon svg {
-    font-size: var(--fontSizeMetadata);
-}

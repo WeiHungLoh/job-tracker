@@ -8,6 +8,9 @@ export const createMuiTheme = (theme: Theme) => {
             primary: {
                 main: theme === 'dark' ? '#ff779b' : '#a81f4c',
             },
+            error: {
+                main: theme === 'dark' ? '#c43d4b' : '#dc3545',
+            },
         },
         typography: {
             fontFamily: 'var(--fontFamilyBase)',
@@ -77,6 +80,14 @@ export const createMuiTheme = (theme: Theme) => {
                             boxShadow: 'none',
                         },
                     },
+                    containedError: {
+                        backgroundColor: 'var(--colorBtnDestructiveBg)',
+                        color: 'var(--colorBtnDestructiveFilledText)',
+                        '&:hover': {
+                            backgroundColor: 'var(--colorBtnDestructiveHoverBg)',
+                            boxShadow: 'none',
+                        },
+                    },
                     outlinedPrimary: {
                         border: '1.5px solid var(--colorPrimary)',
                         backgroundColor: 'transparent',
@@ -84,6 +95,15 @@ export const createMuiTheme = (theme: Theme) => {
                         '&:hover': {
                             border: '1.5px solid var(--colorPrimary)',
                             backgroundColor: 'var(--colorBtnSecondaryHoverBg)',
+                        },
+                    },
+                    outlinedError: {
+                        border: '1.5px solid var(--colorBtnDestructiveText)',
+                        backgroundColor: 'transparent',
+                        color: 'var(--colorBtnDestructiveText)',
+                        '&:hover': {
+                            border: '1.5px solid var(--colorBtnDestructiveText)',
+                            backgroundColor: 'color-mix(in srgb, var(--colorBtnDestructiveBg) 10%, transparent)',
                         },
                     },
                 },

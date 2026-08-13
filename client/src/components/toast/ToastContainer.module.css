@@ -97,7 +97,7 @@
     width: 30px;
     height: 30px;
     place-items: center;
-    border-radius: 9px;
+    border-radius: var(--radiusControl);
     color: var(--toastAccent);
     transition: background-color var(--motionDurationStandard) var(--motionEasingStandard),
         color var(--motionDurationStandard) var(--motionEasingStandard);

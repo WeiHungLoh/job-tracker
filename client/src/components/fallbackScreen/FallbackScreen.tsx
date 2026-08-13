@@ -39,7 +39,7 @@ const FallbackScreen = ({ variant = 'loading', onAction }: FallbackScreenProps) 
         <main className={styles.fallback} aria-live='polite' aria-busy={isLoading}>
             <div className={styles.content}>
                 {isLoading && <LoadingSpinner />}
-                <h2>{content.title}</h2>
+                <h1>{content.title}</h1>
                 <p>{content.message}</p>
                 {content.actionLabel && onAction && (
                     <PrimaryButton onClick={onAction} type='button'>

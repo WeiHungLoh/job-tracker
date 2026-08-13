@@ -12,7 +12,8 @@ import DemoViewArchivedInterview from '../../pages/demo/interview/archivedInterv
 import DemoOfferDecisionPage from '../../pages/demo/offerDecision/DemoOfferDecisionPage';
 import { UserPreferencesProvider } from '../../components/userPreferences/UserPreferencesProvider';
 import { createDemoInitialState } from '../../pages/demo/state/demoInitialState';
-import { daysFromNow, toDateTimeString } from '../../pages/demo/state/demoDates';
+import { daysFromNow } from '../../pages/demo/state/demoDates';
+import { toDatetimeLocalInputValue } from '../../helper/dateFormatter';
 import { render } from '../renderWithProviders';
 import { routes } from '../../routes';
 import userEvent from '@testing-library/user-event';
@@ -900,7 +901,7 @@ describe('demo page interactions', () => {
         expect(document.activeElement).toBe(dateInput);
 
         fireEvent.change(dateInput, {
-            target: { value: toDateTimeString(daysFromNow(new Date(), 4, 10)) },
+            target: { value: toDatetimeLocalInputValue(daysFromNow(new Date(), 4, 10).toISOString()) },
         });
         expect(screen.queryByText('Please enter an interview date.')).not.toBeInTheDocument();
         expect(screen.getByText('Please enter an interview location.')).toBeInTheDocument();
@@ -930,7 +931,7 @@ describe('demo page interactions', () => {
         expect(screen.getByText('Please enter an interview location.')).toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText(/interview date/i), {
-            target: { value: toDateTimeString(daysFromNow(new Date(), 4, 10)) },
+            target: { value: toDatetimeLocalInputValue(daysFromNow(new Date(), 4, 10).toISOString()) },
         });
         await userEvent.type(screen.getByLabelText(/interview location/i), 'Zoom');
         await userEvent.type(screen.getByLabelText(/interview type/i), 'Technical interview');

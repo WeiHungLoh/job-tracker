@@ -2233,7 +2233,7 @@ describe('Job application viewing flow', () => {
                     'Delete this active job application and its 2 related active interviews? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
                 cancellationText: 'Cancel',
-                confirmationButtonProps: { autoFocus: true },
+                confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
             })
         );
 

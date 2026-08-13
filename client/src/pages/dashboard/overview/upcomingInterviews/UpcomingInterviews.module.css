@@ -20,7 +20,7 @@
     min-width: 0;
     padding: var(--spaceCompact);
     border: 1px solid var(--colorCardBorder);
-    border-radius: 12px;
+    border-radius: var(--radiusInset);
     background: var(--colorOverlayBg);
 }
 
@@ -97,7 +97,7 @@
     max-width: 100%;
     margin: 6px 0 0;
     padding: 3px 7px;
-    border-radius: 6px;
+    border-radius: var(--radiusCompact);
     background: var(--colorStatIconBg);
     overflow-wrap: anywhere;
 }

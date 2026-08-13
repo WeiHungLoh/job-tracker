@@ -25,7 +25,7 @@
     width: 100%;
     padding: 9px 10px;
     border: 0;
-    border-radius: 7px;
+    border-radius: var(--radiusMenuItem);
     background: transparent;
     color: var(--colorText);
     font-size: var(--fontSizeControl);

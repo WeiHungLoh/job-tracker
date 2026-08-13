@@ -32,8 +32,11 @@
     --motionEasingStandard: cubic-bezier(0.25, 0.1, 0.25, 1);
     --motionEasingEmphasized: cubic-bezier(0.22, 1, 0.36, 1);
 
-    --radiusControl: 10px;
+    --radiusIndicator: 4px;
+    --radiusCompact: 6px;
     --radiusMenuItem: 8px;
+    --radiusControl: 10px;
+    --radiusInset: 12px;
     --radiusToolbar: 14px;
     --radiusPanel: 15px;
     --radiusCard: 16px;

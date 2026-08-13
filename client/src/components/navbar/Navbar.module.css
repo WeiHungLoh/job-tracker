@@ -76,7 +76,7 @@
     padding: 0 11px;
     flex: 0 0 auto;
     align-items: center;
-    border-radius: 9px;
+    border-radius: var(--radiusControl);
     color: var(--colorNavInactiveText);
     font-size: var(--fontSizeControl);
     font-weight: var(--fontWeightEmphasis);
@@ -196,7 +196,7 @@
         width: 30px;
         height: 30px;
         flex-basis: 30px;
-        border-radius: 9px;
+        border-radius: var(--radiusControl);
     }
 
     .brand h1 {

@@ -118,7 +118,7 @@
     width: 9px;
     height: 9px;
     flex: 0 0 9px;
-    border-radius: 999px;
+    border-radius: var(--radiusPill);
     background: var(--boardStatusColor);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--boardStatusColor) 15%, transparent);
     content: '';
@@ -132,7 +132,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid color-mix(in srgb, var(--boardStatusColor) 58%, var(--colorCardBorder));
-    border-radius: 999px;
+    border-radius: var(--radiusPill);
     background: linear-gradient(
         180deg,
         color-mix(in srgb, var(--boardStatusColor) 30%, var(--colorCardBg)),
@@ -155,7 +155,7 @@
     margin: 0;
     padding: 18px 10px;
     border: 1px dashed color-mix(in srgb, var(--boardStatusColor) 22%, var(--colorCardBorder));
-    border-radius: 12px;
+    border-radius: var(--radiusInset);
     background: color-mix(in srgb, var(--boardStatusColor) 5%, transparent);
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeControl);
@@ -166,7 +166,7 @@
     position: relative;
     padding: 13px;
     border: 1px solid var(--colorCardBorder);
-    border-radius: 14px;
+    border-radius: var(--radiusToolbar);
     background: var(--colorPageBg);
     color: var(--colorTextSecondary);
     box-shadow: 0 8px 20px var(--colorAuthCardShadow);
@@ -250,7 +250,7 @@
     justify-content: center;
     flex: 0 0 30px;
     border: 1px solid var(--colorCardBorder);
-    border-radius: 8px;
+    border-radius: var(--radiusMenuItem);
     background: var(--colorInputBg);
     color: var(--colorTextSecondary);
     cursor: grab;
@@ -417,7 +417,7 @@
     min-height: 28px;
     padding: 3px 7px;
     border: 1px solid var(--colorInputBorder);
-    border-radius: 8px;
+    border-radius: var(--radiusMenuItem);
     background: var(--colorInputBg);
     color: var(--colorInputText);
     font-size: var(--fontSizeMicro);
@@ -473,7 +473,7 @@
     min-height: 92px;
     padding: 10px;
     border: 1px solid var(--colorNotesBorder);
-    border-radius: 10px;
+    border-radius: var(--radiusControl);
     background: var(--colorNotesBg);
     color: var(--colorNotesText);
     outline: none;

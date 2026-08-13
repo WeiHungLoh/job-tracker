@@ -8,10 +8,20 @@ import {
     selectJobStatusCounts,
     selectOfferDecisionWorkspace,
     selectWeeklyApplications,
-    sortInterviews,
 } from '../../pages/demo/state/demoSelectors';
 import { createInterviewCsvData } from '../../helper/csvExport';
 import type { OfferDecisionValues } from '../../pages/offerDecision/models';
+import { filterAndSortInterviews } from '../../helper/interviewTiming';
+
+type InterviewWithDate = {
+    interview_date: string;
+    interview_duration_minutes: number;
+};
+
+const sortInterviews = <Interview extends InterviewWithDate>(
+    interviews: readonly Interview[],
+    now = Date.now()
+): Interview[] => filterAndSortInterviews(interviews, [], new Date(now));
 
 const fixedNow = new Date(2026, 6, 7, 12, 0, 0, 0);
 const fixedNowMs = fixedNow.getTime();

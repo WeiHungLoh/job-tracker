@@ -731,9 +731,7 @@ describe('Archived job application viewing flow', () => {
 
         await userEvent.click(within(applicationCard).getByText('Actions'));
 
-        expect(
-            within(applicationCard).getByRole('link', { name: 'View job posting' })
-        ).toBeInTheDocument();
+        expect(within(applicationCard).getByRole('link', { name: 'View job posting' })).toBeInTheDocument();
         expect(within(applicationCard).getByRole('button', { name: 'Unarchive' })).toBeInTheDocument();
         expect(within(applicationCard).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
     });
@@ -988,7 +986,7 @@ describe('Archived job application viewing flow', () => {
                     'Delete this archived job application and its 1 related archived interview? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
                 cancellationText: 'Cancel',
-                confirmationButtonProps: { autoFocus: true },
+                confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
             })
         );
 

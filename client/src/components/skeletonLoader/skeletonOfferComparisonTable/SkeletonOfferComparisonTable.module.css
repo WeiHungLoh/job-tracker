@@ -1,0 +1,93 @@
+.skeleton {
+    width: 100%;
+    min-width: 0;
+}
+
+.tableScroll {
+    width: 100%;
+    max-height: min(70vh, 720px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--colorCardBorder);
+    border-radius: var(--radiusControl);
+    background-color: var(--colorCardBg);
+    box-sizing: border-box;
+    isolation: isolate;
+}
+
+.verticalScroll {
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.table {
+    width: 100%;
+    min-width: 2295px;
+    border-spacing: 0;
+    border-collapse: separate;
+    table-layout: fixed;
+}
+
+.verticalTable {
+    width: max-content;
+    min-width: 100%;
+}
+
+.fieldColumn {
+    width: 220px;
+}
+
+.recordColumn {
+    width: 280px;
+    min-width: 280px;
+}
+
+.table th,
+.table td {
+    height: 52px;
+    padding: 12px 16px;
+    border-right: 1px solid var(--colorCardBorder);
+    border-bottom: 1px solid var(--colorCardBorder);
+    box-sizing: border-box;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.table th:last-child,
+.table td:last-child {
+    border-right: 0;
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table thead th,
+.verticalTable tbody th {
+    background-color: var(--colorControlMutedSurface);
+}
+
+.skeletonLine {
+    composes: skeletonLine from '../skeletonCard/SkeletonCard.module.css';
+    display: block;
+    height: 14px;
+    border-radius: var(--radiusPill);
+}
+
+.horizontalTable thead .skeletonLine {
+    height: 16px;
+}
+
+.short {
+    width: 48%;
+}
+
+.medium {
+    width: 68%;
+}
+
+.long {
+    width: 86%;
+}

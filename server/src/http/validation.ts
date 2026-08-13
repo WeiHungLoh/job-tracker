@@ -65,8 +65,6 @@ const hasValidCalendarDate = (value: string): boolean => {
 export const isNonEmptyString = (value: unknown): value is string =>
     typeof value === 'string' && value.trim().length > 0;
 
-export const isString = (value: unknown): value is string => typeof value === 'string';
-
 export const normalizeEmail = (value: unknown): string | undefined =>
     typeof value === 'string' ? value.trim().toLowerCase() : undefined;
 

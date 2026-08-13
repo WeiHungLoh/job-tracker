@@ -4,7 +4,7 @@
     padding: 20px;
     background: var(--colorCardBg);
     border: 1px solid var(--colorCardBorder);
-    border-radius: 15px;
+    border-radius: var(--radiusPanel);
     box-sizing: border-box;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -22,7 +22,7 @@
 
 .skeletonLine {
     height: 16px;
-    border-radius: 8px;
+    border-radius: var(--radiusMenuItem);
     background: linear-gradient(
         90deg,
         var(--colorSkeletonBase) 25%,
@@ -68,7 +68,7 @@
 .button {
     width: 90px;
     height: 38px;
-    border-radius: 8px;
+    border-radius: var(--radiusMenuItem);
 }
 
 .board {

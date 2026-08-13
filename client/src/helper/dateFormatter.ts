@@ -74,12 +74,6 @@ export const formatFollowUpSentAt = (value: string | Date): string =>
         .replace(',', ' at')
         .replace(/\b(am|pm)\b/i, (period) => period.toUpperCase());
 
-export const formatFollowUpCompactDate = (value: string | Date): string =>
-    new Date(value).toLocaleString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-    });
-
 export const toDatetimeLocalInputValue = (value: string): string => {
     if (!value) {
         return '';

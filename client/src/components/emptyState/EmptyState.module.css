@@ -22,7 +22,7 @@
     width: 42px;
     height: 42px;
     margin-bottom: 12px;
-    border-radius: 12px;
+    border-radius: var(--radiusInset);
     background: var(--colorStatIconBg);
     color: var(--colorTintText);
     font-size: var(--fontSizeSectionTitle);

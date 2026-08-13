@@ -8,8 +8,10 @@ import MoreOptions from '../../components/activityControls/moreOptions/MoreOptio
 import PrimaryButton from '../../components/button/PrimaryButton';
 import EmptyState from '../../components/emptyState/EmptyState';
 import { focusFirstInvalidField } from '../../components/formPage/focusFirstInvalidField';
+import SkeletonOfferComparisonTable from '../../components/skeletonLoader/skeletonOfferComparisonTable/SkeletonOfferComparisonTable';
 import { createDeleteAllOfferEvaluationsConfirmation } from '../../components/confirmation/bulkConfirmations';
 import { createDeleteConfirmation } from '../../components/confirmation/deleteConfirmation';
+import { createDestructiveConfirmationButtonProps } from '../../components/confirmation/destructiveConfirmationButtonProps';
 import { toDatetimeLocalInputValue } from '../../helper/dateFormatter';
 import {
     ACTIVE_OFFER_DECISION_FILTERS,
@@ -131,7 +133,7 @@ const createCounterofferDeletionConfirmation = (companyName: string): ConfirmOpt
     description: `The edited evaluation for ${companyName} has a higher fit rating than your saved counteroffer plan. Delete the counteroffer plan and save this evaluation?`,
     confirmationText: 'Delete and Save',
     cancellationText: 'Cancel',
-    confirmationButtonProps: { autoFocus: true },
+    confirmationButtonProps: createDestructiveConfirmationButtonProps(),
 });
 
 const createOfferOutcomeConfirmation = (
@@ -154,9 +156,7 @@ const createOfferOutcomeConfirmation = (
         description: `${application.company_name} — ${application.job_title} will be marked as ${status}.`,
         confirmationText: isAccepting ? 'Accept Offer' : 'Decline Offer',
         cancellationText: 'Cancel',
-        confirmationButtonProps: isAccepting
-            ? { autoFocus: true }
-            : { autoFocus: true, color: 'error', variant: 'contained' },
+        confirmationButtonProps: isAccepting ? { autoFocus: true } : createDestructiveConfirmationButtonProps(),
     };
 };
 
@@ -997,11 +997,15 @@ const OfferDecisionWorkspace = ({
             </div>
 
             {isLoading || isFiltering ? (
-                <EvaluationGrid count={3}>
-                    <OfferDecisionSkeleton />
-                    <OfferDecisionSkeleton announceLoading={false} />
-                    <OfferDecisionSkeleton announceLoading={false} />
-                </EvaluationGrid>
+                viewMode === 'table' ? (
+                    <SkeletonOfferComparisonTable orientation={tableOrientation} />
+                ) : (
+                    <EvaluationGrid count={3}>
+                        <OfferDecisionSkeleton />
+                        <OfferDecisionSkeleton announceLoading={false} />
+                        <OfferDecisionSkeleton announceLoading={false} />
+                    </EvaluationGrid>
+                )
             ) : displayedApplicationCount === 0 ? (
                 <EmptyState {...emptyState} />
             ) : viewMode === 'table' ? (

@@ -1,17 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useConfirm } from 'material-ui-confirm';
 import { type Blocker, useBlocker } from 'react-router-dom';
+import { createDestructiveConfirmationButtonProps } from '../components/confirmation/destructiveConfirmationButtonProps';
 
 const leavePageConfirmation = {
     title: 'Leave this page?',
     description: 'You have unsaved changes. If you leave now, your changes will be lost.',
     confirmationText: 'Leave Page',
     cancellationText: 'Stay',
-    confirmationButtonProps: {
-        autoFocus: true,
-        color: 'error' as const,
-        variant: 'contained' as const,
-    },
+    confirmationButtonProps: createDestructiveConfirmationButtonProps(),
 };
 
 export const useUnsavedChangesBlocker = (hasUnsavedChanges: boolean, isSubmissionPending = false) => {
