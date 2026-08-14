@@ -1,5 +1,19 @@
 .controls {
+    --activityGlassBaseStart: color-mix(in srgb, var(--colorPrimary) 7%, transparent);
+    --activityGlassBaseEnd: color-mix(in srgb, var(--colorPrimary) 3%, transparent);
+    --activityGlassFillOpacity: 74%;
+    --activityGlassBorder: color-mix(in srgb, var(--colorInteractiveBorder) 58%, transparent);
+    --activityGlassRim: transparent;
+    --activityGlassTopEdge: rgb(255 255 255 / 62%);
+    --activityGlassInnerEdge: color-mix(in srgb, var(--colorPrimary) 6%, transparent);
+    --activityGlassSheenCore: rgb(255 255 255 / 42%);
+    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 8%, transparent);
+    --activityGlassSheenHoverOpacity: 0.36;
+    --activityGlassSheenPulseOpacity: 0.46;
+    --activityGlassSheenDuration: 760ms;
+
     position: relative;
+    z-index: 20;
     display: flex;
     width: fit-content;
     max-width: 100%;
@@ -8,13 +22,82 @@
     align-items: center;
     gap: var(--spaceControl);
     overflow: visible;
-    border: 1px solid var(--colorInteractiveBorder);
+    border: 1px solid var(--activityGlassBorder);
     border-radius: var(--radiusToolbar);
+    background: linear-gradient(135deg, var(--activityGlassBaseStart), transparent 46%, var(--activityGlassBaseEnd)),
+        color-mix(in srgb, var(--colorCardBg) var(--activityGlassFillOpacity), transparent);
+    box-shadow: 0 12px 28px var(--colorControlShadow), inset 0 0 0 1px var(--activityGlassRim),
+        inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);
     box-sizing: border-box;
+    -webkit-backdrop-filter: blur(20px) saturate(135%) contrast(1.03);
+    backdrop-filter: url('#activity-control-refraction') blur(20px) saturate(135%) contrast(1.03);
+    animation: activityGlassSettle 360ms var(--motionEasingEmphasized);
+}
+
+:global([data-theme='light']) .controls {
+    --colorInteractiveBorder: color-mix(in srgb, var(--colorText) 24%, transparent);
+    --activityGlassFillOpacity: 46%;
+    --activityGlassBorder: rgb(255 255 255 / 88%);
+    --activityGlassRim: rgb(255 255 255 / 58%);
+    --activityGlassTopEdge: rgb(255 255 255 / 100%);
+    --activityGlassInnerEdge: color-mix(in srgb, var(--colorText) 10%, transparent);
+    --activityGlassSheenCore: rgb(255 255 255 / 70%);
+    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 6%, transparent);
+    --activityGlassSheenHoverOpacity: 0.54;
+    --activityGlassSheenPulseOpacity: 0.5;
+    --activityGlassSheenDuration: 620ms;
+
+    background: color-mix(
+        in srgb,
+        color-mix(in srgb, var(--colorCardBg) 94%, var(--colorText)) var(--activityGlassFillOpacity),
+        transparent
+    );
+    box-shadow: 0 12px 28px rgb(56 50 53 / 14%), 0 2px 6px rgb(56 50 53 / 8%), inset 0 0 0 1px var(--activityGlassRim),
+        inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);
+}
+
+:global([data-theme='light']) .controls:hover {
+    --activityGlassBorder: rgb(255 255 255 / 96%);
+    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 10%, transparent);
+}
+
+.controls:has([aria-expanded='true']) {
+    z-index: 40;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.controls::after {
+    position: absolute;
+    inset: 1px;
+    z-index: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+        110deg,
+        transparent 18%,
+        var(--activityGlassSheenCore) 46%,
+        var(--activityGlassSheenTint) 55%,
+        transparent 72%
+    );
+    background-position: 130% 0;
+    background-size: 230% 100%;
+    content: '';
+    opacity: 0;
+    pointer-events: none;
+    transition: background-position var(--activityGlassSheenDuration) cubic-bezier(0.2, 0.72, 0.22, 1),
+        opacity var(--motionDurationFast) var(--motionEasingStandard);
+    animation: activityToolbarSheen 900ms 90ms cubic-bezier(0.2, 0.72, 0.22, 1);
+}
+
+.controls:hover::after {
+    background-position: -70% 0;
+    opacity: var(--activityGlassSheenHoverOpacity);
 }
 
 .primaryControls,
 .actions {
+    position: relative;
+    z-index: 1;
     display: flex;
     min-width: 0;
     align-items: center;
@@ -35,6 +118,60 @@
 
 .secondaryControls {
     gap: var(--spaceControl);
+}
+
+@keyframes activityGlassSettle {
+    from {
+        opacity: 0.76;
+        transform: translateY(-3px) scale(0.992);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes activityToolbarSheen {
+    0% {
+        background-position: 130% 0;
+        opacity: 0;
+    }
+
+    32% {
+        opacity: var(--activityGlassSheenPulseOpacity);
+    }
+
+    100% {
+        background-position: -70% 0;
+        opacity: 0;
+    }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .controls {
+        background: var(--colorCardBg);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .controls {
+        background: var(--colorCardBg);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .controls::after {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .controls,
+    .controls::after {
+        transition: none;
+        animation: none;
+    }
 }
 
 .applicationWithDisplay .primaryControls > *,

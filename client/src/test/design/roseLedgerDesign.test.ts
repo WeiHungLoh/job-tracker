@@ -43,6 +43,8 @@ const declarationsByFile = (pattern: RegExp) =>
     );
 
 const expectedLinearGradientCounts = {
+    'src/components/activityControls/ActivityControls.module.css': 2,
+    'src/components/activityControls/ControlDropdown.module.css': 2,
     'src/components/skeletonLoader/skeletonBoard/SkeletonBoard.module.css': 2,
     'src/components/skeletonLoader/skeletonCard/SkeletonCard.module.css': 1,
     'src/pages/application/applicationBoard/ApplicationBoard.module.css': 6,
@@ -58,6 +60,14 @@ const expectedConicGradientCounts = {
 };
 
 const expectedGradientDeclarations = {
+    'src/components/activityControls/ActivityControls.module.css': [
+        'background: linear-gradient(135deg, var(--activityGlassBaseStart), transparent 46%, var(--activityGlassBaseEnd)), color-mix(in srgb, var(--colorCardBg) var(--activityGlassFillOpacity), transparent);',
+        'background: linear-gradient( 110deg, transparent 18%, var(--activityGlassSheenCore) 46%, var(--activityGlassSheenTint) 55%, transparent 72% );',
+    ],
+    'src/components/activityControls/ControlDropdown.module.css': [
+        'background: linear-gradient(135deg, var(--activityGlassBaseStart), transparent 52%, var(--activityGlassBaseEnd)), color-mix(in srgb, var(--colorCardBg) var(--activityGlassFillOpacity), transparent);',
+        'background: linear-gradient( 110deg, transparent 16%, var(--activityGlassSheenCore) 45%, var(--activityGlassSheenTint) 56%, transparent 74% );',
+    ],
     'src/components/loadingSpinner/LoadingSpinner.module.css': [
         'background: conic-gradient( transparent 0 4%, var(--spinnerColor) 4.2% 54%, transparent 54.2% 58%, var(--spinnerTrackColor) 58.2% 100% );',
         '-webkit-mask: radial-gradient( farthest-side, transparent calc(70% - 1px), #000 70%, #000 calc(100% - 1px), transparent 100% );',
@@ -84,16 +94,19 @@ const expectedGradientDeclarations = {
 };
 
 const expectedBoxShadowDeclarations = {
+    'src/components/activityControls/ActivityControls.module.css': [
+        'box-shadow: 0 12px 28px var(--colorControlShadow), inset 0 0 0 1px var(--activityGlassRim), inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);',
+        'box-shadow: 0 12px 28px rgb(56 50 53 / 14%), 0 2px 6px rgb(56 50 53 / 8%), inset 0 0 0 1px var(--activityGlassRim), inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);',
+    ],
     'src/components/activityControls/ControlDropdown.module.css': [
-        'box-shadow: 0 1px 2px var(--colorControlShadow);',
+        'box-shadow: 0 1px 2px var(--colorControlShadow), inset 0 1px 0 rgb(255 255 255 / 24%);',
         'box-shadow: 0 3px 8px var(--colorControlShadow);',
         'box-shadow: none;',
         'box-shadow: 0 6px 18px var(--colorAuthCardShadow);',
-        'box-shadow: 0 14px 32px var(--colorControlShadow);',
+        'box-shadow: 0 18px 38px var(--colorControlShadow), inset 0 0 0 1px var(--activityGlassRim), inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);',
     ],
     'src/components/activityControls/collectionViewToggle/CollectionViewToggle.module.css': [
-        'box-shadow: inset 0 0 0 1px var(--colorControlShadow);',
-        'box-shadow: 0 1px 5px var(--colorControlShadow);',
+        'box-shadow: 0 8px 18px var(--colorControlShadow), inset 0 1px 0 rgb(255 255 255 / 36%);',
     ],
     'src/components/authProductIntro/AuthProductIntro.module.css': ['box-shadow: none;', 'box-shadow: none;'],
     'src/components/fallbackScreen/FallbackScreen.module.css': ['box-shadow: 0 0px 20px var(--colorAuthCardShadow);'],
@@ -1457,7 +1470,7 @@ describe('Rose Ledger visual contract', () => {
         expect(interviewCard).not.toMatch(/\.navigationLink\s*\{[^}]*display:\s*inline-flex/s);
     });
 
-    it('does not expand the existing linear-gradient inventory', () => {
+    it('keeps the approved linear-gradient inventory bounded', () => {
         expect(countsByFile(/linear-gradient\(/g)).toEqual(expectedLinearGradientCounts);
     });
 
@@ -1474,7 +1487,7 @@ describe('Rose Ledger visual contract', () => {
         ).toBe(2);
     });
 
-    it('preserves every existing gradient declaration and stop', () => {
+    it('preserves every approved gradient declaration and stop', () => {
         expect(declarationsByFile(/^\s*[-\w]+:\s*[^;]*gradient\([^;]+;/gm)).toEqual(expectedGradientDeclarations);
     });
 
@@ -1731,6 +1744,76 @@ describe('Rose Ledger visual contract', () => {
         expect(authProductIntro).toMatch(/\.productBrand\s*\{[^}]*color:\s*var\(--colorText\);/s);
         expect(authProductIntro).toMatch(/\.heroRow h1\s*\{[^}]*color:\s*var\(--colorText\);/s);
         expect(authProductIntro).toMatch(/\.productBrandIcon\s*\{[^}]*background-color:\s*var\(--colorPrimary\);/s);
+    });
+
+    it('confines Pearl Blush Liquid Glass to the shared Activity-control owners', () => {
+        const indexHtml = readSource('index.html');
+        const activityControls = readSource('src/components/activityControls/ActivityControls.module.css');
+        const controlDropdown = readSource('src/components/activityControls/ControlDropdown.module.css');
+        const viewToggle = readSource(
+            'src/components/activityControls/collectionViewToggle/CollectionViewToggle.module.css'
+        );
+        const unrelatedSurfaces = [
+            readSource('src/index.css'),
+            readSource('src/components/navbar/Navbar.module.css'),
+            readSource('src/pages/application/ApplicationCard.module.css'),
+            readSource('src/pages/interview/InterviewCard.module.css'),
+        ];
+
+        expect(indexHtml).toContain('id="activity-control-refraction"');
+        expect(indexHtml).toMatch(
+            /<filter[^>]*id="activity-menu-refraction"[\s\S]*?<feDisplacementMap[\s\S]*?scale="11"/
+        );
+        expect(indexHtml).toContain('<feDisplacementMap');
+        expect(activityControls).toMatch(
+            /\.controls\s*\{[^}]*--activityGlassBaseStart:\s*color-mix\(in srgb, var\(--colorPrimary\) 7%, transparent\);[^}]*--activityGlassFillOpacity:\s*74%;[^}]*background:\s*linear-gradient\(\s*135deg,\s*var\(--activityGlassBaseStart\),[^;]*var\(--activityGlassBaseEnd\)[^;]*var\(--activityGlassFillOpacity\)/s
+        );
+        expect(activityControls).toContain(
+            "backdrop-filter: url('#activity-control-refraction') blur(20px) saturate(135%) contrast(1.03);"
+        );
+        expect(activityControls).toMatch(
+            /\.controls:has\(\[aria-expanded='true'\]\)\s*\{[^}]*z-index:\s*40;[^}]*-webkit-backdrop-filter:\s*none;[^}]*backdrop-filter:\s*none;/s
+        );
+        expect(activityControls).toMatch(/\.controls\s*\{[^}]*z-index:\s*20;/s);
+        expect(activityControls).toContain('@keyframes activityGlassSettle');
+        expect(activityControls).toContain('@keyframes activityToolbarSheen');
+        expect(activityControls).toMatch(
+            /:global\(\[data-theme='light'\]\) \.controls\s*\{[^}]*--colorInteractiveBorder:\s*color-mix\(in srgb, var\(--colorText\) 24%, transparent\);[^}]*--activityGlassFillOpacity:\s*46%;[^}]*--activityGlassBorder:\s*rgb\(255 255 255 \/ 88%\);[^}]*--activityGlassRim:\s*rgb\(255 255 255 \/ 58%\);[^}]*--activityGlassTopEdge:\s*rgb\(255 255 255 \/ 100%\);[^}]*--activityGlassInnerEdge:\s*color-mix\(in srgb, var\(--colorText\) 10%, transparent\);[^}]*--activityGlassSheenCore:\s*rgb\(255 255 255 \/ 70%\);[^}]*--activityGlassSheenTint:\s*color-mix\(in srgb, var\(--colorPrimary\) 6%, transparent\);[^}]*background:\s*color-mix\(\s*in srgb,\s*color-mix\(in srgb, var\(--colorCardBg\) 94%, var\(--colorText\)\) var\(--activityGlassFillOpacity\),\s*transparent\s*\);[^}]*box-shadow:\s*0 12px 28px rgb\(56 50 53 \/ 14%\),\s*0 2px 6px rgb\(56 50 53 \/ 8%\),/s
+        );
+        expect(activityControls).toMatch(
+            /:global\(\[data-theme='light'\]\) \.controls:hover\s*\{[^}]*--activityGlassBorder:\s*rgb\(255 255 255 \/ 96%\);[^}]*--activityGlassSheenTint:\s*color-mix\(in srgb, var\(--colorPrimary\) 10%, transparent\);/s
+        );
+        expect(activityControls).not.toContain(":global([data-theme='light']) .controls::after");
+        expect(activityControls).not.toContain('.controls:focus-within::after');
+        expect(controlDropdown).toMatch(
+            /\.activityTrigger\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--colorControlMutedSurface\) 38%, transparent\);/s
+        );
+        expect(controlDropdown).toMatch(
+            /\.activityDropdown\s*\{[^}]*--activityGlassBaseStart:\s*color-mix\(in srgb, var\(--colorPrimary\) 8%, transparent\);[^}]*--activityGlassFillOpacity:\s*86%;[^}]*background:\s*linear-gradient\(\s*135deg,\s*var\(--activityGlassBaseStart\),[^;]*var\(--activityGlassBaseEnd\)[^;]*var\(--activityGlassFillOpacity\)/s
+        );
+        expect(controlDropdown).toContain(
+            "backdrop-filter: url('#activity-menu-refraction') blur(12px) saturate(140%) contrast(1.03);"
+        );
+        expect(controlDropdown).toContain('@keyframes activityGlassMenuEnter');
+        expect(controlDropdown).toContain('@keyframes activityDropdownSheen');
+        expect(controlDropdown).toMatch(
+            /:global\(\[data-theme='light'\]\) \.activityDropdown\s*\{[^}]*--activityGlassFillOpacity:\s*46%;[^}]*--activityGlassBorder:\s*rgb\(255 255 255 \/ 88%\);[^}]*--activityGlassRim:\s*rgb\(255 255 255 \/ 58%\);[^}]*--activityGlassTopEdge:\s*rgb\(255 255 255 \/ 100%\);[^}]*--activityGlassInnerEdge:\s*color-mix\(in srgb, var\(--colorText\) 10%, transparent\);[^}]*--activityGlassSheenCore:\s*rgb\(255 255 255 \/ 70%\);[^}]*--activityGlassSheenTint:\s*color-mix\(in srgb, var\(--colorPrimary\) 6%, transparent\);[^}]*--activityGlassSheenHoverOpacity:\s*0\.58;[^}]*--activityGlassSheenDuration:\s*620ms;[^}]*background:\s*color-mix\(\s*in srgb,\s*color-mix\(in srgb, var\(--colorCardBg\) 94%, var\(--colorText\)\) var\(--activityGlassFillOpacity\),\s*transparent\s*\);/s
+        );
+        expect(controlDropdown).not.toContain('.activityDropdown:hover');
+        expect(controlDropdown).not.toContain('.activityDropdown:hover::after');
+        expect(controlDropdown).not.toContain('.activityDropdown:focus-within::after');
+        expect(viewToggle).toMatch(
+            /\.toggle\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--colorControlMutedSurface\) 38%, transparent\);/s
+        );
+        expect(viewToggle).toMatch(/\.option\.active\s*\{[^}]*background:\s*var\(--colorSelectedControlBg\);/s);
+        expect(viewToggle).not.toMatch(/\.toggle\s*\{[^}]*box-shadow:/s);
+        expect(viewToggle).not.toMatch(/\.option\.active\s*\{[^}]*box-shadow:/s);
+        expect(viewToggle).toMatch(/\.toggle:hover\s*\{[^}]*box-shadow:/s);
+        [activityControls, controlDropdown, viewToggle].forEach((source) => {
+            expect(source).toContain('@media (prefers-reduced-motion: reduce)');
+            expect(source).toContain('@media (prefers-reduced-transparency: reduce)');
+        });
+        unrelatedSurfaces.forEach((source) => expect(source).not.toContain('activity-control-refraction'));
     });
 
     it('completes the shared button, form, and menu visual contracts', () => {

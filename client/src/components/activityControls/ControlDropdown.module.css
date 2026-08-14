@@ -12,6 +12,7 @@
 }
 
 .activityTrigger {
+    position: relative;
     display: inline-flex;
     width: 100%;
     min-width: 0;
@@ -22,14 +23,15 @@
     gap: 4px;
     border: 1px solid var(--colorInteractiveBorder);
     border-radius: var(--radiusControl);
-    background: var(--colorControlMutedSurface);
+    background: color-mix(in srgb, var(--colorControlMutedSurface) 38%, transparent);
     color: var(--colorText);
     font-size: var(--fontSizeCompactControl);
     font-weight: var(--fontWeightEmphasis);
     line-height: 1;
     white-space: nowrap;
-    box-shadow: 0 1px 2px var(--colorControlShadow);
-    transition: border-color var(--motionDurationFast) var(--motionEasingStandard),
+    box-shadow: 0 1px 2px var(--colorControlShadow), inset 0 1px 0 rgb(255 255 255 / 24%);
+    transition: transform var(--motionDurationFast) var(--motionEasingStandard),
+        border-color var(--motionDurationFast) var(--motionEasingStandard),
         background-color var(--motionDurationFast) var(--motionEasingStandard),
         color var(--motionDurationFast) var(--motionEasingStandard),
         box-shadow var(--motionDurationFast) var(--motionEasingStandard);
@@ -41,6 +43,12 @@
     background: var(--colorNavHoverBg);
     color: var(--colorNavActiveText);
     box-shadow: 0 3px 8px var(--colorControlShadow);
+    transform: translateY(-1px);
+}
+
+.activityTrigger:not(:disabled):active {
+    transform: translateY(0) scale(0.975);
+    transition-duration: 90ms;
 }
 
 .activityTrigger:focus-visible {
@@ -112,18 +120,134 @@
 }
 
 .activityDropdown {
+    --activityGlassBaseStart: color-mix(in srgb, var(--colorPrimary) 8%, transparent);
+    --activityGlassBaseEnd: color-mix(in srgb, var(--colorPrimary) 3%, transparent);
+    --activityGlassFillOpacity: 86%;
+    --activityGlassBorder: color-mix(in srgb, var(--colorInteractiveBorder) 58%, transparent);
+    --activityGlassRim: transparent;
+    --activityGlassTopEdge: rgb(255 255 255 / 64%);
+    --activityGlassInnerEdge: color-mix(in srgb, var(--colorPrimary) 7%, transparent);
+    --activityGlassSheenCore: rgb(255 255 255 / 46%);
+    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 9%, transparent);
+    --activityGlassSheenHoverOpacity: 0.42;
+    --activityGlassSheenPulseOpacity: 0.5;
+    --activityGlassSheenDuration: 760ms;
+
+    isolation: isolate;
     top: calc(100% + 8px);
     max-height: min(360px, var(--dropdown-max-height, calc(100vh - 96px)));
     padding: var(--spaceControl);
     overflow-y: auto;
-    border-color: var(--colorInteractiveBorder);
+    border-color: var(--activityGlassBorder);
     border-radius: var(--radiusInset);
-    box-shadow: 0 14px 32px var(--colorControlShadow);
+    background: linear-gradient(135deg, var(--activityGlassBaseStart), transparent 52%, var(--activityGlassBaseEnd)),
+        color-mix(in srgb, var(--colorCardBg) var(--activityGlassFillOpacity), transparent);
+    box-shadow: 0 18px 38px var(--colorControlShadow), inset 0 0 0 1px var(--activityGlassRim),
+        inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);
+    -webkit-backdrop-filter: blur(12px) saturate(140%) contrast(1.03);
+    backdrop-filter: url('#activity-menu-refraction') blur(12px) saturate(140%) contrast(1.03);
+    animation: activityGlassMenuEnter 240ms cubic-bezier(0.2, 0.78, 0.22, 1);
+}
+
+:global([data-theme='light']) .activityDropdown {
+    --activityGlassFillOpacity: 46%;
+    --activityGlassBorder: rgb(255 255 255 / 88%);
+    --activityGlassRim: rgb(255 255 255 / 58%);
+    --activityGlassTopEdge: rgb(255 255 255 / 100%);
+    --activityGlassInnerEdge: color-mix(in srgb, var(--colorText) 10%, transparent);
+    --activityGlassSheenCore: rgb(255 255 255 / 70%);
+    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 6%, transparent);
+    --activityGlassSheenHoverOpacity: 0.58;
+    --activityGlassSheenPulseOpacity: 0.54;
+    --activityGlassSheenDuration: 620ms;
+
+    background: color-mix(
+        in srgb,
+        color-mix(in srgb, var(--colorCardBg) 94%, var(--colorText)) var(--activityGlassFillOpacity),
+        transparent
+    );
+}
+
+.activityDropdown::after {
+    position: absolute;
+    inset: 1px;
+    z-index: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+        110deg,
+        transparent 16%,
+        var(--activityGlassSheenCore) 45%,
+        var(--activityGlassSheenTint) 56%,
+        transparent 74%
+    );
+    background-position: 130% 0;
+    background-size: 230% 100%;
+    content: '';
+    opacity: 0;
+    pointer-events: none;
+    transition: background-position var(--activityGlassSheenDuration) cubic-bezier(0.2, 0.72, 0.22, 1),
+        opacity var(--motionDurationFast) var(--motionEasingStandard);
+    animation: activityDropdownSheen 900ms 70ms cubic-bezier(0.2, 0.72, 0.22, 1);
+}
+
+.activityDropdown > * {
+    position: relative;
+    z-index: 1;
 }
 
 .openAbove .activityDropdown {
     top: auto;
     bottom: calc(100% + 8px);
+}
+
+@keyframes activityGlassMenuEnter {
+    from {
+        opacity: 0;
+        transform: translateY(-7px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes activityDropdownSheen {
+    0% {
+        background-position: 130% 0;
+        opacity: 0;
+    }
+
+    32% {
+        opacity: var(--activityGlassSheenPulseOpacity);
+    }
+
+    100% {
+        background-position: -70% 0;
+        opacity: 0;
+    }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .activityDropdown {
+        background: var(--colorCardBg);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .activityTrigger {
+        background: var(--colorControlMutedSurface);
+    }
+
+    .activityDropdown {
+        background: var(--colorCardBg);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .activityDropdown::after {
+        display: none;
+    }
 }
 
 @media (max-width: 600px) {
@@ -150,7 +274,18 @@
         transition: none;
     }
 
+    .activityTrigger:not(:disabled):hover,
+    .activityTrigger:not(:disabled):active,
+    .open .activityTrigger {
+        transform: none;
+    }
+
     .dropdown {
+        animation: none;
+    }
+
+    .activityDropdown::after {
+        transition: none;
         animation: none;
     }
 }
