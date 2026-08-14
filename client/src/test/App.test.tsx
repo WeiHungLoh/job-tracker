@@ -83,6 +83,7 @@ describe('App routing and authentication behavior', () => {
         fetch.mockReset();
         localStorage.removeItem(AUTH_FOCUSED_MODE_STORAGE_KEY);
         localStorage.removeItem('theme');
+        localStorage.removeItem('activity-controls-effect');
         localStorage.removeItem(DEVICE_TIMEZONE_STORAGE_KEY);
         fetch.mockImplementation(async (url: string) => {
             if (url.endsWith('/user-preferences')) {
@@ -96,6 +97,7 @@ describe('App routing and authentication behavior', () => {
         vi.useRealTimers();
         localStorage.removeItem(AUTH_FOCUSED_MODE_STORAGE_KEY);
         localStorage.removeItem('theme');
+        localStorage.removeItem('activity-controls-effect');
         localStorage.removeItem(DEVICE_TIMEZONE_STORAGE_KEY);
     });
 
@@ -467,6 +469,25 @@ describe('App routing and authentication behavior', () => {
         expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
         expect(screen.getByRole('button', { name: 'Switch to light mode' })).toBeInTheDocument();
         expect(localStorage.getItem('theme')).toBe('dark');
+    });
+
+    test('switches Activity Controls between glass and normal treatments', async () => {
+        renderRoute(routes.viewApplications);
+
+        await screen.findByRole('region', { name: 'Application view and management controls' });
+
+        const switchToNormal = screen.getByRole('button', { name: 'Switch to normal activity controls' });
+        expect(document.documentElement).toHaveAttribute('data-activity-controls-effect', 'glass');
+        expect(switchToNormal).toHaveAttribute('aria-pressed', 'true');
+
+        await userEvent.click(switchToNormal);
+
+        expect(document.documentElement).toHaveAttribute('data-activity-controls-effect', 'normal');
+        expect(screen.getByRole('button', { name: 'Switch to glass activity controls' })).toHaveAttribute(
+            'aria-pressed',
+            'false'
+        );
+        expect(localStorage.getItem('activity-controls-effect')).toBe('normal');
     });
 
     test('hides navigation bar on public routes like "/sign-up"', async () => {

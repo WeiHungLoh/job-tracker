@@ -2,7 +2,7 @@
     text-align: center;
 }
 
-.checkboxFilter .dropdown {
+.dropdown.dropdown {
     min-width: min(168px, calc(100vw - 16px));
     max-height: min(250px, var(--dropdown-max-height, 250px));
     overflow-y: auto;

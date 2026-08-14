@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { RenderOptions } from '@testing-library/react';
 import { ThemeProvider } from '../components/theme/ThemeContext';
+import { ActivityControlsEffectProvider } from '../components/activityControls/ActivityControlsEffectContext';
 import { ToastProvider } from '../components/toast/ToastProvider';
 import { UserPreferencesProvider } from '../components/userPreferences/UserPreferencesProvider';
 import type { UpdateUserPreferencesRequest, UserPreferences } from '../components/userPreferences/models';
@@ -80,11 +81,13 @@ const createTestProviders = (
         };
         return (
             <ThemeProvider>
-                <ToastProvider>
-                    <UserPreferencesProvider preferences={preferences} updatePreferences={updatePreferences}>
-                        {children}
-                    </UserPreferencesProvider>
-                </ToastProvider>
+                <ActivityControlsEffectProvider>
+                    <ToastProvider>
+                        <UserPreferencesProvider preferences={preferences} updatePreferences={updatePreferences}>
+                            {children}
+                        </UserPreferencesProvider>
+                    </ToastProvider>
+                </ActivityControlsEffectProvider>
             </ThemeProvider>
         );
     };

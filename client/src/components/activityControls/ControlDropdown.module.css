@@ -37,13 +37,122 @@
         box-shadow var(--motionDurationFast) var(--motionEasingStandard);
 }
 
+:global([data-theme='light']) .activityTrigger {
+    border-color: rgb(255 255 255 / 60%);
+    background: color-mix(in srgb, var(--colorCardBg) 18%, transparent);
+    box-shadow: 0 2px 5px rgb(70 48 58 / 10%), 0 0 0 1px rgb(39 39 42 / 12%),
+        inset 0 0 0 2px rgb(255 255 255 / 66%), inset 0 1px 0 rgb(255 255 255 / 76%),
+        inset 0 -1px 0 rgb(70 48 58 / 8%);
+}
+
+:global([data-theme='dark']) .activityTrigger {
+    border-color: rgb(255 255 255 / 22%);
+    background: color-mix(in srgb, var(--colorControlMutedSurface) 52%, transparent);
+    box-shadow: 0 2px 5px rgb(0 0 0 / 24%), inset 0 0 0 2px rgb(255 255 255 / 24%),
+        inset 0 1px 0 rgb(255 255 255 / 28%), inset 0 -1px 0 rgb(0 0 0 / 18%);
+}
+
+:global([data-activity-controls-effect='glass']) .activityTrigger {
+    --activityTriggerGlassTint: transparent;
+
+    isolation: isolate;
+    overflow: hidden;
+}
+
+:global([data-activity-controls-effect='glass']) .activityTrigger::before {
+    position: absolute;
+    inset: 1px;
+    z-index: 0;
+    border-radius: calc(var(--radiusControl) - 1px);
+    background: linear-gradient(145deg, rgb(255 255 255 / 38%), transparent 58%), var(--activityTriggerGlassTint),
+        color-mix(in srgb, var(--colorCardBg) 8%, transparent);
+    background-position: 120% 0;
+    background-size: 220% 100%;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -1px 0 rgb(70 48 58 / 8%);
+    content: '';
+    pointer-events: none;
+    transition: background-position var(--motionDurationStandard) cubic-bezier(0.2, 0.72, 0.22, 1);
+}
+
+:global([data-theme='dark'][data-activity-controls-effect='glass']) .activityTrigger::before {
+    background: linear-gradient(145deg, rgb(255 255 255 / 14%), transparent 58%),
+        var(--activityTriggerGlassTint),
+        color-mix(in srgb, var(--colorCardBg) 7%, transparent);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 26%), inset 0 -1px 0 rgb(0 0 0 / 18%);
+}
+
+:global([data-theme='light'][data-activity-controls-effect='glass']) .activityTrigger::before {
+    background: linear-gradient(145deg, rgb(255 255 255 / 58%), transparent 58%), var(--activityTriggerGlassTint),
+        color-mix(in srgb, var(--colorCardBg) 8%, transparent);
+}
+
+:global([data-activity-controls-effect='glass']) .activityTrigger .label,
+:global([data-activity-controls-effect='glass']) .activityTrigger > svg {
+    position: relative;
+    z-index: 1;
+}
+
 .activityTrigger:not(:disabled):hover,
 .open .activityTrigger {
-    border-color: color-mix(in srgb, var(--colorPrimary) 46%, var(--colorInteractiveBorder));
-    background: color-mix(in srgb, var(--colorPrimary) 12%, transparent);
+    border-color: color-mix(in srgb, var(--colorPrimary) 18%, var(--colorInteractiveBorder));
+    background: color-mix(in srgb, var(--colorPrimary) 8%, transparent);
     color: var(--colorText);
     box-shadow: 0 3px 8px var(--colorControlShadow), inset 0 1px 0 rgb(255 255 255 / 38%);
     transform: translateY(-1px);
+}
+
+:global([data-theme='light']) .activityTrigger:not(:disabled):hover,
+:global([data-theme='light']) .open .activityTrigger {
+    border-color: color-mix(in srgb, var(--colorPrimary) 18%, rgb(255 255 255 / 50%));
+}
+
+:global([data-activity-controls-effect='glass']) .activityTrigger:not(:disabled):hover,
+:global([data-activity-controls-effect='glass']) .open .activityTrigger {
+    border-color: color-mix(in srgb, var(--colorPrimary) 22%, rgb(255 255 255 / 42%));
+}
+
+:global([data-activity-controls-effect='glass']) .activityTrigger:not(:disabled):hover {
+    --activityTriggerGlassTint: color-mix(in srgb, var(--colorPrimary) 7%, transparent);
+
+    background: color-mix(in srgb, var(--colorPrimary) 7%, transparent);
+}
+
+:global([data-activity-controls-effect='glass']) .open .activityTrigger {
+    --activityTriggerGlassTint: color-mix(in srgb, var(--colorPrimary) 14%, transparent);
+
+    background: color-mix(in srgb, var(--colorPrimary) 14%, transparent);
+}
+
+:global([data-activity-controls-effect='glass']) .activityTrigger:not(:disabled):hover::before,
+:global([data-activity-controls-effect='glass']) .open .activityTrigger::before {
+    background-position: -80% 0;
+}
+
+:global([data-theme='light'][data-activity-controls-effect='glass']) .activityTrigger:not(:disabled):hover,
+:global([data-theme='light'][data-activity-controls-effect='glass']) .open .activityTrigger {
+    border-color: color-mix(in srgb, var(--colorPrimary) 22%, rgb(255 255 255 / 74%));
+}
+
+:global([data-theme='light'][data-activity-controls-effect='glass']) .activityTrigger:not(:disabled):hover {
+    --activityTriggerGlassTint: color-mix(in srgb, var(--colorPrimary) 7%, rgb(255 255 255 / 22%));
+
+    background: color-mix(in srgb, var(--colorPrimary) 7%, rgb(255 255 255 / 22%));
+}
+
+:global([data-theme='light'][data-activity-controls-effect='glass']) .open .activityTrigger {
+    border-color: color-mix(in srgb, var(--colorPrimary) 34%, rgb(255 255 255 / 66%));
+    --activityTriggerGlassTint: color-mix(in srgb, var(--colorPrimary) 14%, rgb(255 255 255 / 18%));
+
+    background: color-mix(in srgb, var(--colorPrimary) 14%, rgb(255 255 255 / 18%));
+}
+
+:global([data-theme='dark'][data-activity-controls-effect='glass']) .activityTrigger:not(:disabled):hover,
+:global([data-theme='dark'][data-activity-controls-effect='glass']) .open .activityTrigger {
+    border-color: color-mix(in srgb, var(--colorPrimary) 22%, rgb(255 255 255 / 30%));
+}
+
+:global([data-theme='dark'][data-activity-controls-effect='glass']) .open .activityTrigger {
+    border-color: color-mix(in srgb, var(--colorPrimary) 34%, rgb(255 255 255 / 30%));
 }
 
 .activityTrigger:not(:disabled):active {
@@ -120,15 +229,15 @@
 }
 
 .activityDropdown {
-    --activityGlassBaseStart: color-mix(in srgb, var(--colorPrimary) 8%, transparent);
-    --activityGlassBaseEnd: color-mix(in srgb, var(--colorPrimary) 3%, transparent);
-    --activityGlassFillOpacity: 86%;
-    --activityGlassBorder: color-mix(in srgb, var(--colorInteractiveBorder) 58%, transparent);
-    --activityGlassRim: transparent;
-    --activityGlassTopEdge: rgb(255 255 255 / 64%);
-    --activityGlassInnerEdge: color-mix(in srgb, var(--colorPrimary) 7%, transparent);
+    --activityGlassBaseStart: rgb(255 255 255 / 8%);
+    --activityGlassBaseEnd: transparent;
+    --activityGlassFillOpacity: var(--activityGlassSurfaceFill);
+    --activityGlassBorder: var(--activityGlassSurfaceBorder);
+    --activityGlassRim: var(--activityGlassSurfaceRim);
+    --activityGlassTopEdge: var(--activityGlassSurfaceTopEdge);
+    --activityGlassInnerEdge: var(--activityGlassSurfaceInnerEdge);
     --activityGlassSheenCore: rgb(255 255 255 / 46%);
-    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 9%, transparent);
+    --activityGlassSheenTint: rgb(255 255 255 / 18%);
     --activityGlassSheenHoverOpacity: 0.42;
     --activityGlassSheenPulseOpacity: 0.5;
     --activityGlassSheenDuration: 760ms;
@@ -141,31 +250,37 @@
     border-color: var(--activityGlassBorder);
     border-radius: var(--radiusInset);
     background: linear-gradient(135deg, var(--activityGlassBaseStart), transparent 52%, var(--activityGlassBaseEnd)),
-        color-mix(in srgb, var(--colorCardBg) var(--activityGlassFillOpacity), transparent);
-    box-shadow: 0 18px 38px var(--colorControlShadow), inset 0 0 0 1px var(--activityGlassRim),
+        color-mix(in srgb, var(--colorActivityGlassBase) var(--activityGlassFillOpacity), transparent);
+    box-shadow: 0 18px 38px var(--colorControlShadow), inset 0 0 0 2px var(--activityGlassRim),
         inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);
-    -webkit-backdrop-filter: blur(12px) saturate(140%) contrast(1.03);
-    backdrop-filter: url('#activity-menu-refraction') blur(12px) saturate(140%) contrast(1.03);
+    -webkit-backdrop-filter: blur(9px) saturate(140%) contrast(1.03);
+    backdrop-filter: url('#activity-menu-refraction') blur(9px) saturate(140%) contrast(1.03);
     animation: activityGlassMenuEnter 240ms cubic-bezier(0.2, 0.78, 0.22, 1);
 }
 
 :global([data-theme='light']) .activityDropdown {
-    --activityGlassFillOpacity: 46%;
-    --activityGlassBorder: rgb(255 255 255 / 88%);
-    --activityGlassRim: rgb(255 255 255 / 58%);
-    --activityGlassTopEdge: rgb(255 255 255 / 100%);
-    --activityGlassInnerEdge: color-mix(in srgb, var(--colorText) 10%, transparent);
+    --activityGlassFillOpacity: var(--activityGlassSurfaceFill);
+    --activityGlassBorder: var(--activityGlassSurfaceBorder);
+    --activityGlassRim: var(--activityGlassSurfaceRim);
+    --activityGlassTopEdge: var(--activityGlassSurfaceTopEdge);
+    --activityGlassInnerEdge: var(--activityGlassSurfaceInnerEdge);
     --activityGlassSheenCore: rgb(255 255 255 / 70%);
-    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 6%, transparent);
-    --activityGlassSheenHoverOpacity: 0.58;
+    --activityGlassSheenTint: rgb(255 255 255 / 38%);
+    --activityGlassSheenHoverOpacity: 0.76;
     --activityGlassSheenPulseOpacity: 0.54;
     --activityGlassSheenDuration: 620ms;
 
-    background: color-mix(
-        in srgb,
-        color-mix(in srgb, var(--colorCardBg) 94%, var(--colorText)) var(--activityGlassFillOpacity),
-        transparent
-    );
+    background: linear-gradient(
+            135deg,
+            rgb(255 255 255 / 24%),
+            transparent 38%,
+            rgb(255 255 255 / 16%) 78%,
+            rgb(255 255 255 / 10%)
+        ),
+        color-mix(in srgb, var(--colorActivityGlassBase) var(--activityGlassFillOpacity), transparent);
+    box-shadow: 0 18px 38px var(--colorControlShadow), 0 0 0 1px rgb(39 39 42 / 14%),
+        inset 0 0 0 2px var(--activityGlassRim), inset 0 1px 0 var(--activityGlassTopEdge),
+        inset 0 -1px 0 var(--activityGlassInnerEdge);
 }
 
 .activityDropdown::after {
@@ -190,9 +305,66 @@
     animation: activityDropdownSheen 900ms 70ms cubic-bezier(0.2, 0.72, 0.22, 1);
 }
 
+.activityDropdown:hover::after {
+    background-position: -70% 0;
+    opacity: var(--activityGlassSheenHoverOpacity);
+}
+
 .activityDropdown > * {
     position: relative;
     z-index: 1;
+}
+
+:global([data-activity-controls-effect='normal']) .activityTrigger {
+    position: static;
+    border-color: var(--colorInteractiveBorder);
+    background: var(--colorControlMutedSurface);
+    box-shadow: 0 1px 2px var(--colorControlShadow);
+    transition: border-color var(--motionDurationFast) var(--motionEasingStandard),
+        background-color var(--motionDurationFast) var(--motionEasingStandard),
+        color var(--motionDurationFast) var(--motionEasingStandard),
+        box-shadow var(--motionDurationFast) var(--motionEasingStandard);
+}
+
+:global([data-activity-controls-effect='normal']) .activityTrigger::before {
+    display: none;
+}
+
+:global([data-activity-controls-effect='normal']) .activityTrigger:not(:disabled):hover,
+:global([data-activity-controls-effect='normal']) .open .activityTrigger {
+    border-color: var(--colorPrimary);
+    background: var(--colorNavHoverBg);
+    color: var(--colorNavActiveText);
+    box-shadow: 0 3px 8px var(--colorControlShadow);
+    transform: none;
+}
+
+:global([data-activity-controls-effect='normal']) .activityTrigger:not(:disabled):active {
+    transform: none;
+}
+
+:global([data-activity-controls-effect='normal']) .activityDropdown {
+    isolation: auto;
+    top: calc(100% + 8px);
+    max-height: min(360px, var(--dropdown-max-height, calc(100vh - 96px)));
+    padding: var(--spaceControl);
+    overflow-y: auto;
+    border-color: var(--colorInteractiveBorder);
+    border-radius: var(--radiusInset);
+    background: var(--colorCardBg);
+    box-shadow: 0 14px 32px var(--colorControlShadow);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: dropdownEnter var(--motionDurationStandard) var(--motionEasingEmphasized);
+}
+
+:global([data-activity-controls-effect='normal']) .activityDropdown::after {
+    display: none;
+}
+
+:global([data-activity-controls-effect='normal']) .activityDropdown > * {
+    position: static;
+    z-index: auto;
 }
 
 .openAbove .activityDropdown {

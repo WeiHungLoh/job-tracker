@@ -267,6 +267,46 @@ describe('ActivityControls', () => {
         expect(screen.getByRole('menu', { name: 'Overflow-safe options' }).parentElement).toBe(document.body);
     });
 
+    test('keeps a portal dropdown within the same scrolling boundary geometry as main', async () => {
+        vi.stubGlobal('innerHeight', 900);
+        vi.stubGlobal('innerWidth', 1200);
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+            if (this.id === 'portal-bounded-options') {
+                return createRect({ height: 250, left: 0, width: 220 });
+            }
+            if (this.dataset.testid === 'portal-bounds') {
+                return createRect({ height: 300, left: 100, top: 100, width: 400 });
+            }
+            if (this.querySelector('[aria-controls="portal-bounded-options"]')) {
+                return createRect({ height: 42, left: 360, top: 300, width: 100 });
+            }
+            return createRect({ left: 0, width: 0 });
+        });
+
+        render(
+            <div data-testid='portal-bounds' style={{ overflow: 'auto' }}>
+                <ControlDropdown
+                    dropdownAriaLabel='Portal bounded options'
+                    dropdownRole='menu'
+                    id='portal-bounded'
+                    label='More...'
+                    renderDropdownInPortal
+                    triggerStyle='activity'
+                >
+                    <button role='menuitem' type='button'>
+                        Edit evaluation
+                    </button>
+                </ControlDropdown>
+            </div>
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        const dropdown = screen.getByRole('menu', { name: 'Portal bounded options' });
+
+        await waitFor(() => expect(dropdown).toHaveAttribute('data-placement', 'top'));
+        expect(dropdown.style.getPropertyValue('--dropdown-max-height')).toBe('192px');
+    });
+
     test('keeps a portal dropdown open while its own contents scroll', async () => {
         render(
             <ControlDropdown

@@ -6,6 +6,7 @@ import { routes } from '../../routes';
 import styles from './Navbar.module.css';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
 import { useTheme } from '../theme/ThemeContext';
+import { useActivityControlsEffect } from '../activityControls/ActivityControlsEffectContext';
 import { useToast } from '../toast/ToastProvider';
 import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 
@@ -38,6 +39,7 @@ const Navbar = () => {
     const api = useJobTrackerAPI();
     const { showErrorToast } = useToast();
     const { theme, toggleTheme } = useTheme();
+    const { activityControlsEffect, toggleActivityControlsEffect } = useActivityControlsEffect();
 
     useEffect(() => {
         activeLinkRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
@@ -100,6 +102,21 @@ const Navbar = () => {
                     >
                         <Icon name={archived ? 'archive' : 'activeApplications'} size={18} />
                         <span className={styles.utilityLabel}>{archived ? 'Show Active' : 'Show Archived'}</span>
+                    </PrimaryButton>
+
+                    <PrimaryButton
+                        aria-label={
+                            activityControlsEffect === 'glass'
+                                ? 'Switch to normal activity controls'
+                                : 'Switch to glass activity controls'
+                        }
+                        aria-pressed={activityControlsEffect === 'glass'}
+                        className={styles.iconAction}
+                        onClick={toggleActivityControlsEffect}
+                        type='button'
+                        variant='navigation'
+                    >
+                        <Icon name={activityControlsEffect === 'glass' ? 'highlight' : 'visibility'} size={20} />
                     </PrimaryButton>
 
                     <PrimaryButton

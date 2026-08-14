@@ -11,17 +11,13 @@ type DropdownBoundary = {
     top: number;
 };
 
-const getDropdownBoundary = (container: HTMLElement, ignoreClippingAncestors: boolean): DropdownBoundary => {
+const getDropdownBoundary = (container: HTMLElement): DropdownBoundary => {
     const viewportBoundary = {
         bottom: window.innerHeight - VIEWPORT_GUTTER,
         left: VIEWPORT_GUTTER,
         right: window.innerWidth - VIEWPORT_GUTTER,
         top: VIEWPORT_GUTTER,
     };
-
-    if (ignoreClippingAncestors) {
-        return viewportBoundary;
-    }
 
     let ancestor = container.parentElement;
     while (ancestor) {
@@ -136,7 +132,7 @@ const useControlDropdown = (renderInPortal = false) => {
             const containerRect = container.getBoundingClientRect();
             const dropdownRect = dropdown.getBoundingClientRect();
             const dropdownWidth = dropdownRect.width;
-            const boundary = getDropdownBoundary(container, renderInPortal);
+            const boundary = getDropdownBoundary(container);
             const rightAlignedLeft = containerRect.right - dropdownWidth;
             const preferredLeft =
                 containerRect.left + dropdownWidth <= boundary.right ? containerRect.left : rightAlignedLeft;

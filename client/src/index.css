@@ -92,6 +92,12 @@
     /* Backgrounds */
     --colorPageBg: #f8f4f1;
     --colorCardBg: #fffdfb;
+    --colorActivityGlassBase: color-mix(in srgb, var(--colorCardBg) 86%, var(--colorText));
+    --activityGlassSurfaceFill: 46%;
+    --activityGlassSurfaceBorder: rgb(255 255 255 / 88%);
+    --activityGlassSurfaceRim: rgb(255 255 255 / 70%);
+    --activityGlassSurfaceTopEdge: rgb(255 255 255 / 100%);
+    --activityGlassSurfaceInnerEdge: rgb(67 47 56 / 18%);
     --colorCardBorder: #dfcfd1;
     --colorOverlayBg: #f4eae9;
     --colorPublicPageBg: radial-gradient(circle at top left, var(--colorStatIconBg), transparent 45%),
@@ -257,6 +263,12 @@
     /* Backgrounds — neutral grays, no purple */
     --colorPageBg: #171517;
     --colorCardBg: #211e22;
+    --colorActivityGlassBase: var(--colorCardBg);
+    --activityGlassSurfaceFill: 74%;
+    --activityGlassSurfaceBorder: color-mix(in srgb, var(--colorInteractiveBorder) 58%, transparent);
+    --activityGlassSurfaceRim: rgb(255 255 255 / 10%);
+    --activityGlassSurfaceTopEdge: rgb(255 255 255 / 62%);
+    --activityGlassSurfaceInnerEdge: rgb(0 0 0 / 30%);
     --colorCardBorder: #423840;
     --colorOverlayBg: #2a252a;
     --colorPublicPageBg: radial-gradient(circle at top left, var(--colorStatIconBg), transparent 45%),

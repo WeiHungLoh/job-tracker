@@ -5,6 +5,7 @@ import PrimaryButton from '../../../../components/button/PrimaryButton';
 import { routes } from '../../../../routes';
 import styles from '../../../../components/navbar/Navbar.module.css';
 import { useTheme } from '../../../../components/theme/ThemeContext';
+import { useActivityControlsEffect } from '../../../../components/activityControls/ActivityControlsEffectContext';
 
 const ARCHIVED_LOCATIONS: readonly string[] = [
     routes.demoArchivedApplications,
@@ -33,6 +34,7 @@ const DemoNavbar = () => {
     const archived = ARCHIVED_LOCATIONS.includes(currentLocation);
     const activeLinkRef = useRef<HTMLAnchorElement>(null);
     const { theme, toggleTheme } = useTheme();
+    const { activityControlsEffect, toggleActivityControlsEffect } = useActivityControlsEffect();
 
     useEffect(() => {
         activeLinkRef.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
@@ -94,6 +96,21 @@ const DemoNavbar = () => {
                     >
                         <Icon name={archived ? 'archive' : 'activeApplications'} size={18} />
                         <span className={styles.utilityLabel}>{archived ? 'Show Active' : 'Show Archived'}</span>
+                    </PrimaryButton>
+
+                    <PrimaryButton
+                        aria-label={
+                            activityControlsEffect === 'glass'
+                                ? 'Switch to normal activity controls'
+                                : 'Switch to glass activity controls'
+                        }
+                        aria-pressed={activityControlsEffect === 'glass'}
+                        className={styles.iconAction}
+                        onClick={toggleActivityControlsEffect}
+                        type='button'
+                        variant='navigation'
+                    >
+                        <Icon name={activityControlsEffect === 'glass' ? 'highlight' : 'visibility'} size={20} />
                     </PrimaryButton>
 
                     <PrimaryButton

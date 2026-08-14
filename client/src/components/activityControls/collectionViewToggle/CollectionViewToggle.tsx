@@ -22,7 +22,7 @@ const CollectionViewToggle = <ViewMode extends string = CollectionViewMode>({
                     onClick={() => onViewChange(value)}
                     type='button'
                 >
-                    {label}
+                    <span className={styles.optionLabel}>{label}</span>
                 </button>
             ))}
         </div>

@@ -2,7 +2,7 @@
     text-align: center;
 }
 
-.sortOptions .dropdown {
+.dropdown {
     min-width: min(220px, calc(100vw - 16px));
 }
 

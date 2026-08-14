@@ -1,13 +1,13 @@
 .controls {
-    --activityGlassBaseStart: color-mix(in srgb, var(--colorPrimary) 7%, transparent);
-    --activityGlassBaseEnd: color-mix(in srgb, var(--colorPrimary) 3%, transparent);
-    --activityGlassFillOpacity: 74%;
-    --activityGlassBorder: color-mix(in srgb, var(--colorInteractiveBorder) 58%, transparent);
-    --activityGlassRim: transparent;
-    --activityGlassTopEdge: rgb(255 255 255 / 62%);
-    --activityGlassInnerEdge: color-mix(in srgb, var(--colorPrimary) 6%, transparent);
+    --activityGlassBaseStart: rgb(255 255 255 / 8%);
+    --activityGlassBaseEnd: transparent;
+    --activityGlassFillOpacity: var(--activityGlassSurfaceFill);
+    --activityGlassBorder: var(--activityGlassSurfaceBorder);
+    --activityGlassRim: var(--activityGlassSurfaceRim);
+    --activityGlassTopEdge: var(--activityGlassSurfaceTopEdge);
+    --activityGlassInnerEdge: var(--activityGlassSurfaceInnerEdge);
     --activityGlassSheenCore: rgb(255 255 255 / 42%);
-    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 8%, transparent);
+    --activityGlassSheenTint: rgb(255 255 255 / 18%);
     --activityGlassSheenHoverOpacity: 0.36;
     --activityGlassSheenPulseOpacity: 0.46;
     --activityGlassSheenDuration: 760ms;
@@ -25,40 +25,57 @@
     border: 1px solid var(--activityGlassBorder);
     border-radius: var(--radiusToolbar);
     background: linear-gradient(135deg, var(--activityGlassBaseStart), transparent 46%, var(--activityGlassBaseEnd)),
-        color-mix(in srgb, var(--colorCardBg) var(--activityGlassFillOpacity), transparent);
-    box-shadow: 0 12px 28px var(--colorControlShadow), inset 0 0 0 1px var(--activityGlassRim),
+        color-mix(in srgb, var(--colorActivityGlassBase) var(--activityGlassFillOpacity), transparent);
+    box-shadow: 0 12px 28px var(--colorControlShadow), inset 0 0 0 2px var(--activityGlassRim),
         inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);
     box-sizing: border-box;
-    -webkit-backdrop-filter: blur(20px) saturate(135%) contrast(1.03);
-    backdrop-filter: url('#activity-control-refraction') blur(20px) saturate(135%) contrast(1.03);
+    -webkit-backdrop-filter: blur(10px) saturate(135%) contrast(1.03);
+    backdrop-filter: url('#activity-control-refraction') blur(10px) saturate(135%) contrast(1.03);
     animation: activityGlassSettle 360ms var(--motionEasingEmphasized);
 }
 
-:global([data-theme='light']) .controls {
+:global([data-theme='light'][data-activity-controls-effect='glass']) .controls {
     --colorInteractiveBorder: color-mix(in srgb, var(--colorText) 24%, transparent);
-    --activityGlassFillOpacity: 46%;
-    --activityGlassBorder: rgb(255 255 255 / 88%);
-    --activityGlassRim: rgb(255 255 255 / 58%);
-    --activityGlassTopEdge: rgb(255 255 255 / 100%);
-    --activityGlassInnerEdge: color-mix(in srgb, var(--colorText) 10%, transparent);
+    --activityGlassFillOpacity: var(--activityGlassSurfaceFill);
+    --activityGlassBorder: var(--activityGlassSurfaceBorder);
+    --activityGlassRim: var(--activityGlassSurfaceRim);
+    --activityGlassTopEdge: var(--activityGlassSurfaceTopEdge);
+    --activityGlassInnerEdge: var(--activityGlassSurfaceInnerEdge);
     --activityGlassSheenCore: rgb(255 255 255 / 70%);
-    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 6%, transparent);
-    --activityGlassSheenHoverOpacity: 0.54;
+    --activityGlassSheenTint: rgb(255 255 255 / 38%);
+    --activityGlassSheenHoverOpacity: 0.72;
     --activityGlassSheenPulseOpacity: 0.5;
     --activityGlassSheenDuration: 620ms;
 
-    background: color-mix(
-        in srgb,
-        color-mix(in srgb, var(--colorCardBg) 94%, var(--colorText)) var(--activityGlassFillOpacity),
-        transparent
-    );
-    box-shadow: 0 12px 28px rgb(56 50 53 / 14%), 0 2px 6px rgb(56 50 53 / 8%), inset 0 0 0 1px var(--activityGlassRim),
+    background: linear-gradient(
+            135deg,
+            rgb(255 255 255 / 24%),
+            transparent 38%,
+            rgb(255 255 255 / 16%) 78%,
+            rgb(255 255 255 / 10%)
+        ),
+        color-mix(in srgb, var(--colorActivityGlassBase) var(--activityGlassFillOpacity), transparent);
+    box-shadow: 0 12px 28px rgb(56 50 53 / 14%), 0 2px 6px rgb(56 50 53 / 8%),
+        0 0 0 1px rgb(39 39 42 / 13%), inset 0 0 0 2px var(--activityGlassRim),
         inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);
 }
 
-:global([data-theme='light']) .controls:hover {
-    --activityGlassBorder: rgb(255 255 255 / 96%);
-    --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 10%, transparent);
+:global([data-theme='light'][data-activity-controls-effect='glass']) .controls:hover {
+    --activityGlassBorder: rgb(255 255 255 / 78%);
+    --activityGlassSheenTint: rgb(255 255 255 / 48%);
+}
+
+.controls::before {
+    position: absolute;
+    inset: 1px;
+    z-index: 0;
+    border-radius: inherit;
+    content: '';
+    pointer-events: none;
+}
+
+:global([data-theme='light'][data-activity-controls-effect='glass']) .controls::before {
+    background: radial-gradient(110% 90% at 8% -15%, rgb(255 255 255 / 54%), transparent 48%);
 }
 
 .controls::after {
@@ -86,6 +103,27 @@
 .controls:hover::after {
     background-position: -70% 0;
     opacity: var(--activityGlassSheenHoverOpacity);
+}
+
+:global([data-activity-controls-effect='normal']) .controls {
+    z-index: auto;
+    border-color: var(--colorInteractiveBorder);
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: none;
+}
+
+:global([data-activity-controls-effect='normal']) .controls::before,
+:global([data-activity-controls-effect='normal']) .controls::after {
+    display: none;
+}
+
+:global([data-activity-controls-effect='normal']) .primaryControls,
+:global([data-activity-controls-effect='normal']) .actions {
+    position: static;
+    z-index: auto;
 }
 
 .primaryControls,
@@ -155,6 +193,7 @@
         backdrop-filter: none;
     }
 
+    .controls::before,
     .controls::after {
         display: none;
     }
