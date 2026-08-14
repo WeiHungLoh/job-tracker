@@ -965,6 +965,7 @@ const OfferDecisionWorkspace = ({
                             dropdownRole='menu'
                             id='offer-comparison-table-layout'
                             label={tableOrientation === 'horizontal' ? 'Horizontal' : 'Vertical'}
+                            renderDropdownInPortal
                             triggerAriaLabel='Table layout'
                             triggerStyle='activity'
                         >

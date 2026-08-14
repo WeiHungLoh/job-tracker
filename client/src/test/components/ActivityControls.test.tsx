@@ -118,6 +118,22 @@ describe('ActivityControls', () => {
         expect(trigger).toHaveFocus();
     });
 
+    test('renders Activity Control filter menus in a portal so their toolbar can remain glass', async () => {
+        render(
+            <CheckboxFilter
+                buttonLabel='Filter by'
+                id='portal-filter'
+                onSelectionChange={async () => true}
+                options={['Applied', 'Offer']}
+                selectedOptions={['Applied', 'Offer']}
+            />
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+
+        expect(screen.getByRole('group', { name: 'Filter by options' }).parentElement).toBe(document.body);
+    });
+
     test('keeps a wide dropdown inside both viewport gutters', async () => {
         vi.stubGlobal('innerWidth', 320);
         vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {

@@ -12,6 +12,7 @@ const DisplayOptions = ({ children, id }: DisplayOptionsProps) => (
                 <span className={styles.fullLabel}>Display options</span>
             </>
         }
+        renderDropdownInPortal
         triggerAriaLabel='Display options'
         triggerStyle='activity'
     >

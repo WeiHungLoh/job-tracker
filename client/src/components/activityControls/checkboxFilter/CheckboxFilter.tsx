@@ -74,6 +74,7 @@ const CheckboxFilter = <Option extends string>({
             dropdownRole='group'
             id={id}
             label={buttonLabel}
+            renderDropdownInPortal
             triggerStyle='activity'
         >
             <label className={styles.option}>

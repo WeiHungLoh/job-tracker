@@ -39,10 +39,10 @@
 
 .activityTrigger:not(:disabled):hover,
 .open .activityTrigger {
-    border-color: var(--colorPrimary);
-    background: var(--colorNavHoverBg);
-    color: var(--colorNavActiveText);
-    box-shadow: 0 3px 8px var(--colorControlShadow);
+    border-color: color-mix(in srgb, var(--colorPrimary) 46%, var(--colorInteractiveBorder));
+    background: color-mix(in srgb, var(--colorPrimary) 12%, transparent);
+    color: var(--colorText);
+    box-shadow: 0 3px 8px var(--colorControlShadow), inset 0 1px 0 rgb(255 255 255 / 38%);
     transform: translateY(-1px);
 }
 

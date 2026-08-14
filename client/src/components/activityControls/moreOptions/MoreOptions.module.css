@@ -24,7 +24,7 @@
 }
 
 .action:not(:disabled):hover {
-    background: var(--colorNavHoverBg);
+    background: color-mix(in srgb, var(--colorPrimary) 10%, transparent);
 }
 
 .action:focus-visible {

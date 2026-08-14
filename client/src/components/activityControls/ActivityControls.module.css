@@ -61,12 +61,6 @@
     --activityGlassSheenTint: color-mix(in srgb, var(--colorPrimary) 10%, transparent);
 }
 
-.controls:has([aria-expanded='true']) {
-    z-index: 40;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-}
-
 .controls::after {
     position: absolute;
     inset: 1px;

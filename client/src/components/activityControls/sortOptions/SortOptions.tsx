@@ -57,6 +57,7 @@ const SortOptions = <SortOrder extends string>({
             dropdownRole='radiogroup'
             id={id}
             label='Sort by'
+            renderDropdownInPortal
             triggerStyle='activity'
         >
             {options.map((option) => {

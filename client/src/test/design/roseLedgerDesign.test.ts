@@ -100,7 +100,7 @@ const expectedBoxShadowDeclarations = {
     ],
     'src/components/activityControls/ControlDropdown.module.css': [
         'box-shadow: 0 1px 2px var(--colorControlShadow), inset 0 1px 0 rgb(255 255 255 / 24%);',
-        'box-shadow: 0 3px 8px var(--colorControlShadow);',
+        'box-shadow: 0 3px 8px var(--colorControlShadow), inset 0 1px 0 rgb(255 255 255 / 38%);',
         'box-shadow: none;',
         'box-shadow: 0 6px 18px var(--colorAuthCardShadow);',
         'box-shadow: 0 18px 38px var(--colorControlShadow), inset 0 0 0 1px var(--activityGlassRim), inset 0 1px 0 var(--activityGlassTopEdge), inset 0 -1px 0 var(--activityGlassInnerEdge);',
@@ -1771,9 +1771,7 @@ describe('Rose Ledger visual contract', () => {
         expect(activityControls).toContain(
             "backdrop-filter: url('#activity-control-refraction') blur(20px) saturate(135%) contrast(1.03);"
         );
-        expect(activityControls).toMatch(
-            /\.controls:has\(\[aria-expanded='true'\]\)\s*\{[^}]*z-index:\s*40;[^}]*-webkit-backdrop-filter:\s*none;[^}]*backdrop-filter:\s*none;/s
-        );
+        expect(activityControls).not.toContain(".controls:has([aria-expanded='true'])");
         expect(activityControls).toMatch(/\.controls\s*\{[^}]*z-index:\s*20;/s);
         expect(activityControls).toContain('@keyframes activityGlassSettle');
         expect(activityControls).toContain('@keyframes activityToolbarSheen');
@@ -1789,6 +1787,9 @@ describe('Rose Ledger visual contract', () => {
             /\.activityTrigger\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--colorControlMutedSurface\) 38%, transparent\);/s
         );
         expect(controlDropdown).toMatch(
+            /\.activityTrigger:not\(:disabled\):hover,\s*\.open \.activityTrigger\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--colorPrimary\) 12%, transparent\);[^}]*inset 0 1px 0 rgb\(255 255 255 \/ 38%\);/s
+        );
+        expect(controlDropdown).toMatch(
             /\.activityDropdown\s*\{[^}]*--activityGlassBaseStart:\s*color-mix\(in srgb, var\(--colorPrimary\) 8%, transparent\);[^}]*--activityGlassFillOpacity:\s*86%;[^}]*background:\s*linear-gradient\(\s*135deg,\s*var\(--activityGlassBaseStart\),[^;]*var\(--activityGlassBaseEnd\)[^;]*var\(--activityGlassFillOpacity\)/s
         );
         expect(controlDropdown).toContain(
@@ -1802,6 +1803,12 @@ describe('Rose Ledger visual contract', () => {
         expect(controlDropdown).not.toContain('.activityDropdown:hover');
         expect(controlDropdown).not.toContain('.activityDropdown:hover::after');
         expect(controlDropdown).not.toContain('.activityDropdown:focus-within::after');
+        [
+            'src/components/activityControls/checkboxFilter/CheckboxFilter.tsx',
+            'src/components/activityControls/sortOptions/SortOptions.tsx',
+            'src/components/activityControls/displayOptions/DisplayOptions.tsx',
+            'src/components/activityControls/moreOptions/MoreOptions.tsx',
+        ].forEach((sourcePath) => expect(readSource(sourcePath)).toContain('renderDropdownInPortal'));
         expect(viewToggle).toMatch(
             /\.toggle\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--colorControlMutedSurface\) 38%, transparent\);/s
         );
@@ -1812,6 +1819,16 @@ describe('Rose Ledger visual contract', () => {
         [activityControls, controlDropdown, viewToggle].forEach((source) => {
             expect(source).toContain('@media (prefers-reduced-motion: reduce)');
             expect(source).toContain('@media (prefers-reduced-transparency: reduce)');
+        });
+        [
+            'src/components/activityControls/checkboxFilter/CheckboxFilter.module.css',
+            'src/components/activityControls/sortOptions/SortOptions.module.css',
+            'src/components/activityControls/moreOptions/MoreOptions.module.css',
+        ].forEach((sourcePath) => {
+            const source = readSource(sourcePath);
+
+            expect(source).not.toContain('background: var(--colorNavHoverBg);');
+            expect(source).toContain('color-mix(in srgb, var(--colorPrimary) 10%, transparent)');
         });
         unrelatedSurfaces.forEach((source) => expect(source).not.toContain('activity-control-refraction'));
     });

@@ -22,7 +22,7 @@
 }
 
 .option:hover {
-    background: var(--colorNavHoverBg);
+    background: color-mix(in srgb, var(--colorPrimary) 10%, transparent);
 }
 
 .option input {

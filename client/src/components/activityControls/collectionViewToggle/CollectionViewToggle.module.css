@@ -48,8 +48,8 @@
 }
 
 .option:hover {
-    background: var(--colorNavHoverBg);
-    color: var(--colorNavActiveText);
+    background: color-mix(in srgb, var(--colorPrimary) 10%, transparent);
+    color: var(--colorText);
 }
 
 .option:focus-visible {

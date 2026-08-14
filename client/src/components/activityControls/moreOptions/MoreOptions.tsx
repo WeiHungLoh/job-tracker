@@ -22,6 +22,7 @@ const MoreOptions = ({
         dropdownRole='group'
         id={id}
         label='More...'
+        renderDropdownInPortal
         triggerStyle='activity'
     >
         <div className={styles.options}>
