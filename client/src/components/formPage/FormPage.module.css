@@ -19,7 +19,7 @@
     line-height: var(--lineHeightHeading);
     letter-spacing: var(--letterSpacingHeading);
     text-align: center;
-    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .formPage label {

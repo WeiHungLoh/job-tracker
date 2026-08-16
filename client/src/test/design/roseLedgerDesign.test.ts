@@ -589,6 +589,16 @@ describe('Rose Ledger visual contract', () => {
         expect(attentionSettingsCss).toMatch(/\.timingLabel\s*\{[^}]*font-size:\s*var\(--fontSizeControl\);/s);
     });
 
+    it('wraps long form headings and archived interview content without splitting every word', () => {
+        const formCss = readSource('src/components/formPage/FormPage.module.css');
+        const interviewCss = readSource('src/pages/interview/InterviewCard.module.css');
+
+        expect(formCss).toMatch(/\.formPage h2\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
+        expect(formCss).not.toMatch(/\.formPage h2\s*\{[^}]*word-break:\s*break-all;/s);
+        expect(interviewCss).toMatch(/\.archived \.interviewContent\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
+        expect(interviewCss).not.toMatch(/\.archived \.interviewContent\s*\{[^}]*word-break:\s*break-all;/s);
+    });
+
     it('defines both approved palettes and the shared metric aliases', () => {
         const globalCss = readSource('src/index.css');
         const lightCss = getThemeBlock(globalCss, 'light');

@@ -44,8 +44,7 @@
 }
 
 .archived .interviewContent {
-    overflow-wrap: normal;
-    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .location {
