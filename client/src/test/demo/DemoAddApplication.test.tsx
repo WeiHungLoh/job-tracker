@@ -130,6 +130,12 @@ describe('Demo Add Application duplicate confirmation', () => {
         vi.restoreAllMocks();
     });
 
+    test('explains that a blank application date uses the current date in demo mode', () => {
+        renderDemoAddApplication();
+
+        expect(screen.getByText('(uses current date if left blank)')).toBeInTheDocument();
+    });
+
     test('keeps normal application creation synchronous with the existing success toast and reset', async () => {
         renderDemoAddApplication();
         const initialApplicationCount = getActiveApplicationCount();

@@ -86,6 +86,16 @@ describe('User add application flow', () => {
         vi.restoreAllMocks();
     });
 
+    test('explains that a blank application date uses the current date', () => {
+        render(
+            <MemoryRouter>
+                <AddApplication />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByText('(uses current date if left blank)')).toBeInTheDocument();
+    });
+
     test('successfully adds an application and a notification message is shown', async () => {
         fetch.mockResolvedValueOnce({
             ok: true,

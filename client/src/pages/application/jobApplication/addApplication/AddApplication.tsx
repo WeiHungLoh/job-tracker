@@ -282,7 +282,9 @@ const AddApplication = () => {
             </div>
 
             <div className={styles.field}>
-                <label htmlFor='app-date'>Application date</label>
+                <label htmlFor='app-date'>
+                    Application date<span className={styles.optionalLabel}> (uses current date if left blank)</span>
+                </label>
                 <input
                     ref={applicationDateInputRef}
                     aria-describedby={errors.applicationDate ? 'app-date-error' : undefined}
