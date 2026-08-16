@@ -48,8 +48,8 @@ export const sortApplications = <Application extends SortableApplication>(
 
                 return (
                     byStatus ||
-                    compareCompanyNames(firstApplication.company_name, secondApplication.company_name) ||
-                    compareApplicationDates(secondApplication.application_date, firstApplication.application_date)
+                    compareApplicationDates(secondApplication.application_date, firstApplication.application_date) ||
+                    compareCompanyNames(firstApplication.company_name, secondApplication.company_name)
                 );
             }
             case 'application_date_desc': {

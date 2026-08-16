@@ -113,8 +113,39 @@ describe('application sorting', () => {
         }
     );
 
+    test('uses newest application first within the same job status, then company A–Z when dates are equal', () => {
+        const sameStatusApplications = [
+            {
+                ...applications[0],
+                id: 'older-alpha',
+                application_date: '2025-01-01T00:00:00Z',
+                company_name: 'Alpha Systems',
+                job_status: 'Applied' as const,
+            },
+            {
+                ...applications[1],
+                id: 'newer-zulu',
+                application_date: '2025-03-01T00:00:00Z',
+                company_name: 'Zulu Labs',
+                job_status: 'Applied' as const,
+            },
+            {
+                ...applications[2],
+                id: 'newer-beta',
+                application_date: '2025-03-01T00:00:00Z',
+                company_name: 'Beta Works',
+                job_status: 'Applied' as const,
+            },
+        ];
+
+        expect(sortApplications(sameStatusApplications, 'job_status').map((application) => application.id)).toEqual([
+            'newer-beta',
+            'newer-zulu',
+            'older-alpha',
+        ]);
+    });
+
     test.each([
-        ['job_status', ['alpha', 'beta']],
         ['application_date_desc', ['alpha', 'beta']],
         ['application_date_asc', ['alpha', 'beta']],
     ] as const)('uses company A–Z when the selected %s value is tied', (sortOrder, expectedOrder) => {
@@ -123,14 +154,14 @@ describe('application sorting', () => {
             {
                 ...applications[0],
                 id: 'beta',
-                application_date: sortOrder === 'job_status' ? '2025-03-01T00:00:00Z' : sharedDate,
+                application_date: sharedDate,
                 company_name: 'Beta Labs',
                 job_status: 'Applied' as const,
             },
             {
                 ...applications[1],
                 id: 'alpha',
-                application_date: sortOrder === 'job_status' ? '2025-01-01T00:00:00Z' : sharedDate,
+                application_date: sharedDate,
                 company_name: 'alpha Systems',
                 job_status: 'Applied' as const,
             },

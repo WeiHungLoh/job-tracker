@@ -2137,7 +2137,7 @@ describe('Job application viewing flow', () => {
         scrollAndHighlight.mockRestore();
     });
 
-    test('uses the company name tie-breaker after changing an application status', async () => {
+    test('uses newest application date first within the new status group after changing status', async () => {
         const applications = [
             {
                 ...mockApplication,
@@ -2184,8 +2184,8 @@ describe('Job application viewing flow', () => {
 
         await waitFor(() => {
             const companyHeadings = screen.getAllByRole('heading', { level: 2 });
-            expect(companyHeadings[0]).toHaveTextContent('1. Offer Pte Ltd');
-            expect(companyHeadings[1]).toHaveTextContent('2. XYZ Pte Ltd');
+            expect(companyHeadings[0]).toHaveTextContent('1. XYZ Pte Ltd');
+            expect(companyHeadings[1]).toHaveTextContent('2. Offer Pte Ltd');
             expect(companyHeadings[2]).toHaveTextContent('3. ABC Pte Ltd');
         });
 
