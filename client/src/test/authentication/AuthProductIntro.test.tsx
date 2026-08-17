@@ -1,9 +1,15 @@
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { act, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import AuthProductIntro, { AUTH_FOCUSED_MODE_STORAGE_KEY } from '../../components/authProductIntro/AuthProductIntro';
 import { render } from '../renderWithProviders';
 import { routes } from '../../routes';
+import { loadDemoRoute, loadUserGuideRoute } from '../../routeLoaders';
 import userEvent from '@testing-library/user-event';
+
+vi.mock('../../routeLoaders', () => ({
+    loadDemoRoute: vi.fn().mockResolvedValue({ default: () => null }),
+    loadUserGuideRoute: vi.fn().mockResolvedValue({ default: () => null }),
+}));
 
 globalThis.fetch = vi.fn();
 
@@ -34,6 +40,8 @@ const renderIntro = (onSubmit = vi.fn(), initialRoute = routes.signIn) => {
 describe('AuthProductIntro demo action', () => {
     beforeEach(() => {
         fetch.mockReset();
+        vi.mocked(loadDemoRoute).mockClear();
+        vi.mocked(loadUserGuideRoute).mockClear();
         localStorage.removeItem(AUTH_FOCUSED_MODE_STORAGE_KEY);
     });
 
@@ -90,6 +98,23 @@ describe('AuthProductIntro demo action', () => {
         expect(guideLink).toHaveAttribute('href', routes.userGuide);
         expect(guideLink).toHaveAttribute('target', '_blank');
         expect(guideLink).toHaveAttribute('rel', 'noreferrer');
+    });
+
+    test('preloads lazy public routes when their links receive user intent', () => {
+        renderIntro();
+
+        const demoLink = screen.getByRole('link', { name: /explore demo/i });
+        const guideLink = screen.getByRole('link', { name: /see how it works/i });
+
+        fireEvent.pointerEnter(demoLink);
+        fireEvent.focus(demoLink);
+        fireEvent.pointerDown(demoLink);
+        fireEvent.pointerEnter(guideLink);
+        fireEvent.focus(guideLink);
+        fireEvent.pointerDown(guideLink);
+
+        expect(loadDemoRoute).toHaveBeenCalledTimes(3);
+        expect(loadUserGuideRoute).toHaveBeenCalledTimes(3);
     });
 
     test('keeps account access inert until the Sign in trigger opens it', async () => {

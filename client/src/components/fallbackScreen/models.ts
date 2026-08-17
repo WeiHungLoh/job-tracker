@@ -1,4 +1,4 @@
-export type FallbackScreenVariant = 'authenticationError' | 'loading' | 'notFound' | 'routeError';
+export type FallbackScreenVariant = 'authenticationError' | 'loading' | 'notFound' | 'pageLoading' | 'routeError';
 
 export type FallbackScreenProps = {
     variant?: FallbackScreenVariant;

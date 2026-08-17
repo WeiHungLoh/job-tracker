@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { routes } from '../../routes';
+import { loadDemoRoute, loadUserGuideRoute } from '../../routeLoaders';
 import Icon from '../icon/Icon';
 import styles from './AuthProductIntro.module.css';
 import ProductPreviewCarousel from './ProductPreviewCarousel';
@@ -13,6 +14,14 @@ type AuthProductIntroProps = {
 export const AUTH_FOCUSED_MODE_STORAGE_KEY = 'jobTrackerAuthFocusedMode';
 const AUTH_PANEL_ID = 'auth-account-panel';
 const AUTH_FOCUS_TRANSITION_MS = 560;
+
+const preloadDemoRoute = () => {
+    void loadDemoRoute().catch(() => undefined);
+};
+
+const preloadUserGuideRoute = () => {
+    void loadUserGuideRoute().catch(() => undefined);
+};
 
 const getInitialFocusedMode = (): boolean => {
     try {
@@ -147,6 +156,9 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                                 <a
                                     className={styles.demoLink}
                                     href={routes.demoViewApplications}
+                                    onFocus={preloadDemoRoute}
+                                    onPointerDown={preloadDemoRoute}
+                                    onPointerEnter={preloadDemoRoute}
                                     rel='noreferrer'
                                     target='_blank'
                                 >
@@ -155,6 +167,9 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                                 </a>
                                 <Link
                                     className={styles.guideLink}
+                                    onFocus={preloadUserGuideRoute}
+                                    onPointerDown={preloadUserGuideRoute}
+                                    onPointerEnter={preloadUserGuideRoute}
                                     rel='noreferrer'
                                     to={routes.userGuide}
                                     target='_blank'

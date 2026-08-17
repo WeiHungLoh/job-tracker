@@ -16,9 +16,10 @@ import SignUp from './pages/authentication/signUp/SignUp';
 import { routes } from './routes';
 import QuickCaptureProvider from './pages/application/jobApplication/QuickCaptureProvider';
 import OfferDecisionPage from './pages/offerDecision/OfferDecisionPage';
+import { loadDemoRoute, loadUserGuideRoute } from './routeLoaders';
 
-const UserGuide = lazy(() => import('./pages/userGuide/UserGuide'));
-const DemoLayout = lazy(() => import('./pages/demo/components/demoLayout/DemoLayout'));
+const UserGuide = lazy(loadUserGuideRoute);
+const DemoLayout = lazy(loadDemoRoute);
 
 const reloadPage = () => window.location.reload();
 
@@ -105,7 +106,7 @@ const router = createBrowserRouter(appRoutes);
 
 const App = () => {
     return (
-        <Suspense fallback={null}>
+        <Suspense fallback={<FallbackScreen variant='pageLoading' />}>
             <RouterProvider router={router} />
         </Suspense>
     );

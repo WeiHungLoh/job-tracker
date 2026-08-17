@@ -4,9 +4,14 @@ import PrimaryButton from '../../components/button/PrimaryButton';
 import Icon from '../../components/icon/Icon';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../helper/formValidation';
 import { routes } from '../../routes';
+import { loadDemoRoute } from '../../routeLoaders';
 import QuickCaptureBookmarklet from '../application/jobApplication/QuickCaptureBookmarklet';
 import styles from './UserGuide.module.css';
 import type { UserGuideSection } from './models';
+
+const preloadDemoRoute = () => {
+    void loadDemoRoute().catch(() => undefined);
+};
 
 const guideSections: readonly UserGuideSection[] = [
     {
@@ -33,8 +38,16 @@ const guideSections: readonly UserGuideSection[] = [
                     pages, choose <strong>Show Archived</strong> to see records you have put away.
                 </p>
                 <p>
-                    Want to look around first? <Link to={routes.demoViewApplications}>Explore Demo</Link> with sample
-                    data. No account is needed.
+                    Want to look around first?{' '}
+                    <Link
+                        onFocus={preloadDemoRoute}
+                        onPointerDown={preloadDemoRoute}
+                        onPointerEnter={preloadDemoRoute}
+                        to={routes.demoViewApplications}
+                    >
+                        Explore Demo
+                    </Link>{' '}
+                    with sample data. No account is needed.
                 </p>
             </>
         ),
@@ -426,8 +439,15 @@ const guideSections: readonly UserGuideSection[] = [
         content: (
             <>
                 <p>
-                    <Link to={routes.demoViewApplications}>Explore Demo</Link> to try Job Tracker with sample data. No
-                    account is needed.
+                    <Link
+                        onFocus={preloadDemoRoute}
+                        onPointerDown={preloadDemoRoute}
+                        onPointerEnter={preloadDemoRoute}
+                        to={routes.demoViewApplications}
+                    >
+                        Explore Demo
+                    </Link>{' '}
+                    to try Job Tracker with sample data. No account is needed.
                 </p>
                 <p>
                     You can explore the Dashboard, Applications, Interviews, Offer Comparison, Cards and Table views,

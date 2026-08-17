@@ -873,6 +873,88 @@ describe('Rose Ledger visual contract', () => {
         );
     });
 
+    it('adapts shared Rose Ledger tokens to accessibility appearance preferences', () => {
+        const globalCss = readSource('src/index.css');
+        const contrastStart = globalCss.indexOf('@media (prefers-contrast: more)');
+        const transparencyStart = globalCss.indexOf('@media (prefers-reduced-transparency: reduce)');
+        const globalRulesStart = globalCss.indexOf('\n* {', transparencyStart);
+
+        expect(contrastStart).toBeGreaterThan(-1);
+        expect(transparencyStart).toBeGreaterThan(contrastStart);
+        expect(globalRulesStart).toBeGreaterThan(transparencyStart);
+
+        const contrastCss = globalCss.slice(contrastStart, transparencyStart);
+        const transparencyCss = globalCss.slice(transparencyStart, globalRulesStart);
+        const preferenceThemeBlock = (source: string, theme: 'light' | 'dark') => {
+            const start = source.indexOf(`[data-theme='${theme}'] {`);
+            const end = theme === 'light' ? source.indexOf("[data-theme='dark'] {", start) : source.length;
+
+            expect(start).toBeGreaterThan(-1);
+            expect(end).toBeGreaterThan(start);
+
+            return source.slice(start, end);
+        };
+        const lightContrastCss = preferenceThemeBlock(contrastCss, 'light');
+        const darkContrastCss = preferenceThemeBlock(contrastCss, 'dark');
+        const lightTransparencyCss = preferenceThemeBlock(transparencyCss, 'light');
+        const darkTransparencyCss = preferenceThemeBlock(transparencyCss, 'dark');
+
+        [lightContrastCss, darkContrastCss].forEach((themeCss) => {
+            [
+                '--colorTextSecondary:',
+                '--colorCardBorder:',
+                '--colorControlBorder:',
+                '--colorInteractiveBorder:',
+                '--colorInputBorder:',
+                '--colorControlFocusRing:',
+                '--colorPrimaryFocusOutline:',
+                '--colorNavBorder:',
+                '--colorTintBorder:',
+            ].forEach((token) => expect(themeCss).toContain(token));
+        });
+        [lightTransparencyCss, darkTransparencyCss].forEach((themeCss) => {
+            expect(themeCss).toMatch(/--colorTintSurface:\s*#[0-9a-f]{6};/);
+            expect(themeCss).toMatch(/--colorTintSurfaceStrong:\s*#[0-9a-f]{6};/);
+            expect(themeCss).toContain('--colorPublicPageBg: var(--colorPageBg);');
+            expect(themeCss).not.toMatch(/rgb\([^)]*\//);
+            expect(themeCss).not.toContain('transparent');
+        });
+
+        (
+            [
+                ['light', lightContrastCss],
+                ['dark', darkContrastCss],
+            ] as const
+        ).forEach(([theme, preferenceCss]) => {
+            const baseCss = getThemeBlock(globalCss, theme);
+            const pairs: Array<[string, string, number]> = [
+                ['TextSecondary', 'PageBg', 7],
+                ['CardBorder', 'CardBg', 3],
+                ['ControlBorder', 'ControlSurface', 3],
+                ['InteractiveBorder', 'ControlMutedSurface', 3],
+                ['InputBorder', 'InputBg', 3],
+                ['ControlFocusRing', 'ControlSurface', 3],
+                ['PrimaryFocusOutline', 'PageBg', 3],
+                ['NavBorder', 'CardBg', 3],
+                ['TintBorder', 'CardBg', 3],
+            ];
+
+            pairs.forEach(([foreground, background, minimum]) => {
+                const preferenceRatio = contrastRatio(
+                    getHexToken(preferenceCss, `color${foreground}`),
+                    getHexToken(baseCss, `color${background}`)
+                );
+                const defaultRatio = contrastRatio(
+                    getHexToken(baseCss, `color${foreground}`),
+                    getHexToken(baseCss, `color${background}`)
+                );
+
+                expect(preferenceRatio, `${theme} increased --color${foreground}`).toBeGreaterThanOrEqual(minimum);
+                expect(preferenceRatio, `${theme} increased --color${foreground}`).toBeGreaterThan(defaultRatio);
+            });
+        });
+    });
+
     it('keeps Material UI on the shared font and theme foreground tokens', () => {
         const muiTheme = readSource('src/components/theme/muiTheme.ts');
 

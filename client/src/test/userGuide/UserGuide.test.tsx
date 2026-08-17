@@ -1,9 +1,14 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import UserGuide from '../../pages/userGuide/UserGuide';
 import { routes } from '../../routes';
+import { loadDemoRoute } from '../../routeLoaders';
 import { render } from '../renderWithProviders';
+
+vi.mock('../../routeLoaders', () => ({
+    loadDemoRoute: vi.fn().mockResolvedValue({ default: () => null }),
+}));
 
 const sectionTitles = [
     'Getting started',
@@ -27,6 +32,10 @@ const renderGuide = () =>
     );
 
 describe('UserGuide', () => {
+    beforeEach(() => {
+        vi.mocked(loadDemoRoute).mockClear();
+    });
+
     test('renders the current workflow sections as an accessible collapsed accordion', () => {
         renderGuide();
 
@@ -90,5 +99,18 @@ describe('UserGuide', () => {
             routes.demoViewApplications
         );
         expect(demoPanel).toHaveTextContent(/resets when you refresh the page/i);
+    });
+
+    test('preloads the Demo route when an Explore Demo link receives user intent', async () => {
+        renderGuide();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Getting started' }));
+        const demoLink = screen.getByRole('link', { name: 'Explore Demo' });
+
+        fireEvent.pointerEnter(demoLink);
+        fireEvent.focus(demoLink);
+        fireEvent.pointerDown(demoLink);
+
+        expect(loadDemoRoute).toHaveBeenCalledTimes(3);
     });
 });

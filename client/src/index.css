@@ -433,6 +433,46 @@
     --colorStatIconBg: var(--colorTintSurfaceStrong);
 }
 
+@media (prefers-contrast: more) {
+    [data-theme='light'] {
+        --colorTextSecondary: #4f454a;
+        --colorCardBorder: #9b858e;
+        --colorControlBorder: #9b858e;
+        --colorInteractiveBorder: #665159;
+        --colorInputBorder: #665159;
+        --colorControlFocusRing: #711536;
+        --colorPrimaryFocusOutline: #711536;
+        --colorNavBorder: #9b858e;
+        --colorTintBorder: #a64769;
+    }
+
+    [data-theme='dark'] {
+        --colorTextSecondary: #e3dce0;
+        --colorCardBorder: #756973;
+        --colorControlBorder: #756973;
+        --colorInteractiveBorder: #b9aab2;
+        --colorInputBorder: #b9aab2;
+        --colorControlFocusRing: #ffb0c4;
+        --colorPrimaryFocusOutline: #ffb0c4;
+        --colorNavBorder: #756973;
+        --colorTintBorder: #c46784;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    [data-theme='light'] {
+        --colorTintSurface: #f5e9ed;
+        --colorTintSurfaceStrong: #eedce3;
+        --colorPublicPageBg: var(--colorPageBg);
+    }
+
+    [data-theme='dark'] {
+        --colorTintSurface: #36272e;
+        --colorTintSurfaceStrong: #472c36;
+        --colorPublicPageBg: var(--colorPageBg);
+    }
+}
+
 * {
     font-family: var(--fontFamilyBase);
 }
