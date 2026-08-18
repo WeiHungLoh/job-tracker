@@ -235,9 +235,9 @@ describe('App routing and authentication behavior', () => {
         vi.useRealTimers();
 
         await waitFor(() =>
-            expect(screen.getByRole('heading', { name: /Unable to verify authentication/i })).toBeInTheDocument()
+            expect(screen.getByRole('heading', { name: /We couldn’t confirm your session/i })).toBeInTheDocument()
         );
-        expect(screen.getByText(/We could not verify your session. Please try again./i)).toBeInTheDocument();
+        expect(screen.getByText(/Try again to continue to Job Tracker./i)).toBeInTheDocument();
         expect(screen.queryByText(/sign in to job tracker/i)).not.toBeInTheDocument();
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
         expect(screen.getByText('Authentication is temporarily unavailable')).toBeInTheDocument();
@@ -248,8 +248,8 @@ describe('App routing and authentication behavior', () => {
         fetch.mockReturnValueOnce(new Promise(() => undefined));
         renderRoute('/application/view');
 
-        expect(screen.getByRole('heading', { name: /checking authentication/i })).toBeInTheDocument();
-        expect(screen.getByText(/Please wait while we verify your session./i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /checking your session/i })).toBeInTheDocument();
+        expect(screen.getByText(/This should only take a moment./i)).toBeInTheDocument();
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
         expect(screen.queryByText(/job application viewer/i)).not.toBeInTheDocument();
     });
@@ -661,7 +661,7 @@ describe('App routing and authentication behavior', () => {
     test('displays page 404 not found on unknown routes without checking authentication', () => {
         renderRoute('/addassignment');
 
-        expect(screen.getByText(/^Page not found$/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /This page isn’t on the route/i })).toBeInTheDocument();
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalled();
     });
@@ -683,10 +683,8 @@ describe('App routing and authentication behavior', () => {
 
         render(<RouterProvider router={router} />);
 
-        expect(await screen.findByRole('heading', { name: /unable to load this page/i })).toBeInTheDocument();
-        expect(
-            screen.getByText(/Something went wrong while loading this page. Please try again./i)
-        ).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: /We couldn’t load this page/i })).toBeInTheDocument();
+        expect(screen.getByText(/Reload the page to try again./i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument();
     });
 

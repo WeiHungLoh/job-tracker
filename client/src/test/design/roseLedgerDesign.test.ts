@@ -96,7 +96,6 @@ const expectedBoxShadowDeclarations = {
         'box-shadow: 0 1px 5px var(--colorControlShadow);',
     ],
     'src/components/authProductIntro/AuthProductIntro.module.css': ['box-shadow: none;', 'box-shadow: none;'],
-    'src/components/fallbackScreen/FallbackScreen.module.css': ['box-shadow: 0 0px 20px var(--colorAuthCardShadow);'],
     'src/components/formPage/FormPage.module.css': ['box-shadow: 0 0 0 3px var(--colorPrimaryFocusShadow);'],
     'src/components/navbar/Navbar.module.css': [
         'box-shadow: 0 2px 8px var(--colorControlShadow);',
@@ -773,7 +772,10 @@ describe('Rose Ledger visual contract', () => {
         [
             [formCss, /\.formPage h2\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
             [emptyStateCss, /\.emptyState h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
-            [fallbackCss, /\.content h1\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
+            [
+                fallbackCss,
+                /\.copy h1\s*\{[^}]*font-size:\s*clamp\(var\(--fontSizePageTitle\), 7vw, calc\(var\(--fontSizePageTitle\) \* 1\.5\)\);/s,
+            ],
             [authCss, /\.title\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
             [userGuideCss, /\.header h1\s*\{[^}]*font-size:\s*var\(--fontSizePageTitle\);/s],
             [dashboardCardCss, /\.header h2\s*\{[^}]*font-size:\s*var\(--fontSizeSectionTitle\);/s],
@@ -821,6 +823,21 @@ describe('Rose Ledger visual contract', () => {
         expect(muiTheme).toContain("backgroundColor: 'transparent'");
         expect(muiTheme).toContain("color: 'var(--colorPrimary)'");
         expect(muiTheme).toContain("backgroundColor: 'var(--colorBtnSecondaryHoverBg)'");
+    });
+
+    it('keeps the shared fallback flat and limits route motion to loading states', () => {
+        const fallbackCss = readSource('src/components/fallbackScreen/FallbackScreen.module.css');
+
+        expect(fallbackCss).not.toContain('box-shadow');
+        expect(fallbackCss).not.toMatch(/(?:linear|radial)-gradient/);
+        expect(fallbackCss).toMatch(/\.brandLine\s*\{[^}]*background:\s*transparent;/s);
+        expect(fallbackCss).toMatch(/\.brandLine\s*\{[^}]*border:\s*0;/s);
+        expect(fallbackCss).toMatch(/\.routeLabel\s*\{[^}]*font-size:\s*var\(--fontSizeControl\);/s);
+        expect(fallbackCss).toMatch(/\.message\s*\{[^}]*margin:\s*var\(--spaceControl\) auto 0;/s);
+        expect(fallbackCss).toMatch(/\.routeMoving \.ticket\s*\{[^}]*animation:\s*ticketRoute/s);
+        expect(fallbackCss).toMatch(
+            /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ticket\s*\{[^}]*animation:\s*none;/s
+        );
     });
 
     it.each(['light', 'dark'] as const)('%s theme meets the planned contrast floors', (theme) => {

@@ -1,44 +1,295 @@
 .fallback {
+    --routeAccentWarm: color-mix(in srgb, var(--colorPrimary) 58%, var(--colorUpcomingBadge));
+
     position: fixed;
     inset: 0;
     z-index: 10001;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacePageGrid);
-    background-color: var(--colorOverlayBg);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    background-color: var(--colorPageBg);
     box-sizing: border-box;
     text-align: center;
 }
 
-.content {
+.brandLine {
     display: flex;
-    width: min(100%, 420px);
-    max-width: 420px;
-    flex-direction: column;
+    min-height: 56px;
     align-items: center;
-    gap: var(--spaceCard);
-    padding: 32px;
-    border: 1px solid var(--colorCardBorder);
-    border-radius: var(--radiusCard);
-    background-color: var(--colorCardBg);
-    box-shadow: 0 0px 20px var(--colorAuthCardShadow);
+    gap: var(--spaceControl);
+    padding: 0 var(--spacePageGrid);
+    border: 0;
+    background: transparent;
     box-sizing: border-box;
     color: var(--colorText);
 }
 
-.content h1 {
+.brandIcon {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: var(--radiusControl);
+    background-color: var(--colorPrimary);
+    color: var(--colorBtnPrimaryText);
+}
+
+.brandName {
+    font-size: var(--fontSizeBodyCompact);
+    font-weight: var(--fontWeightEmphasis);
+    letter-spacing: var(--letterSpacingHeading);
+}
+
+.content {
+    display: flex;
+    width: min(100%, 640px);
+    min-height: 0;
+    align-self: center;
+    justify-self: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: clamp(24px, 6vw, 48px) var(--spacePageGrid);
+    box-sizing: border-box;
+    color: var(--colorText);
+}
+
+.routeMap {
+    position: relative;
+    width: min(100%, 420px);
+    aspect-ratio: 420 / 170;
+    flex: 0 0 auto;
+}
+
+.routeSvg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.routeTrack,
+.routeActive {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.routeTrack {
+    stroke: var(--colorCardBorder);
+}
+
+.routeActive {
+    stroke-dasharray: 5 11;
+}
+
+.routeNode circle {
+    fill: var(--colorPageBg);
+    stroke: var(--colorPrimary);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.routeLabel {
+    position: absolute;
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeControl);
+    font-weight: var(--fontWeightEmphasis);
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.routeLabelStart {
+    top: 75%;
+    left: 10%;
+    transform: translateX(-50%);
+}
+
+.routeLabelMiddle {
+    top: 39%;
+    left: 43.81%;
+    transform: translateX(-50%);
+}
+
+.routeLabelFinal {
+    top: 36%;
+    left: 89.52%;
+    transform: translateX(-50%);
+}
+
+.ticket {
+    transform: translate(42px, 90px) rotate(-5deg);
+    transform-box: view-box;
+    transform-origin: center;
+}
+
+.routeMoving .ticket {
+    animation: ticketRoute 4.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.ticketPaper {
+    fill: var(--colorPageBg);
+    stroke: var(--colorCardBorder);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.ticketHole {
+    fill: var(--colorTintSurfaceStrong);
+}
+
+.ticketDetails {
+    fill: none;
+    stroke: var(--colorTextSecondary);
+    stroke-linecap: round;
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+}
+
+.errorMark,
+.routeBreak,
+.missingEnd {
+    display: none;
+}
+
+.errorMark circle {
+    fill: var(--colorPageBg);
+    stroke: var(--colorBtnDestructiveText);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.errorMark text,
+.missingEnd text {
+    fill: var(--colorBtnDestructiveText);
+    font-family: var(--fontFamilyBase);
+    font-size: var(--fontSizeControl);
+    font-weight: var(--fontWeightEmphasis);
+}
+
+.routeBreak path {
+    fill: none;
+    stroke: var(--colorBtnDestructiveText);
+    stroke-linecap: round;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.missingEnd circle {
+    fill: var(--colorPageBg);
+    stroke: var(--colorBtnDestructiveText);
+    stroke-dasharray: 3 4;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.authenticationError .routeActive {
+    stroke-dasharray: 43 57;
+}
+
+.routeError .routeActive {
+    stroke-dasharray: 62 38;
+}
+
+.notFound .routeActive {
+    stroke-dasharray: 78 22;
+}
+
+.authenticationError .ticket {
+    transform: translate(151px, 40px) rotate(3deg);
+}
+
+.routeError .ticket {
+    transform: translate(250px, 69px) rotate(-4deg);
+}
+
+.notFound .ticket {
+    transform: translate(304px, 59px) rotate(5deg);
+}
+
+.authenticationError .errorMark,
+.routeError .routeBreak,
+.notFound .missingEnd {
+    display: block;
+}
+
+.authenticationError .middleNode circle,
+.notFound .finalNode circle {
+    opacity: 0;
+}
+
+.copy {
+    width: min(100%, 520px);
+    margin-top: var(--spaceControl);
+}
+
+.copy h1 {
     margin: 0;
     color: var(--colorText);
-    font-size: var(--fontSizePageTitle);
+    font-size: clamp(var(--fontSizePageTitle), 7vw, calc(var(--fontSizePageTitle) * 1.5));
     font-weight: var(--fontWeightHeading);
     line-height: var(--lineHeightHeading);
     letter-spacing: var(--letterSpacingHeading);
 }
 
-.content p {
-    margin: 0;
+.message {
+    max-width: 420px;
+    margin: var(--spaceControl) auto 0;
     color: var(--colorTextSecondary);
     font-size: var(--fontSizeBody);
     line-height: var(--lineHeightBody);
+}
+
+.copy > button {
+    margin-top: var(--spaceCard);
+}
+
+@keyframes ticketRoute {
+    0%,
+    8% {
+        transform: translate(42px, 90px) rotate(-5deg);
+    }
+
+    34% {
+        transform: translate(184px, 27px) rotate(4deg);
+    }
+
+    64% {
+        transform: translate(312px, 64px) rotate(-3deg);
+    }
+
+    88%,
+    94% {
+        transform: translate(376px, 21px) rotate(3deg);
+    }
+
+    100% {
+        transform: translate(42px, 90px) rotate(-5deg);
+    }
+}
+
+@media (max-width: 480px) {
+    .brandLine {
+        min-height: 52px;
+        padding-inline: var(--spaceCard);
+    }
+
+    .content {
+        padding: var(--spaceSection) var(--spaceCard) 32px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .routeMoving .ticket {
+        animation: none;
+        transform: translate(184px, 27px);
+    }
+}
+
+@media (max-height: 560px) {
+    .content {
+        justify-content: flex-start;
+    }
 }
