@@ -529,7 +529,7 @@ describe('App routing and authentication behavior', () => {
 
         expect(await screen.findByText(/HorizonAI Labs/i, {}, { timeout: 5000 })).toBeInTheDocument();
         expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-        expect(screen.getByRole('heading', { level: 1, name: 'Demo' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1, name: 'Job Tracker Demo' })).toBeInTheDocument();
         expect(screen.getByRole('navigation')).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /demo guide/i })).not.toBeInTheDocument();
         expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();
@@ -550,7 +550,7 @@ describe('App routing and authentication behavior', () => {
 
         expect(await screen.findByText(expectedText, {}, { timeout: 5000 })).toBeInTheDocument();
         expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-        expect(screen.getByRole('heading', { level: 1, name: 'Demo' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1, name: 'Job Tracker Demo' })).toBeInTheDocument();
         expect(screen.getByRole('navigation')).toBeInTheDocument();
         expect(screen.queryByRole('region', { name: 'Device time and timezone' })).not.toBeInTheDocument();
         expect(screen.queryByText(/^Timezone:/)).not.toBeInTheDocument();

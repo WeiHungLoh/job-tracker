@@ -1,52 +1,23 @@
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ChartData, ChartOptions, Plugin } from 'chart.js';
-import ApplicationPipelineChart from '../../pages/dashboard/charts/applicationPipeline/ApplicationPipelineChart';
 import ApplicationsLineChart from '../../pages/dashboard/charts/applicationsTrend/ApplicationsLineChart';
-import ClosedOutcomesChart from '../../pages/dashboard/charts/closedOutcomes/ClosedOutcomesChart';
+import JobSearchRoadmap from '../../pages/dashboard/charts/jobSearchRoadmap/JobSearchRoadmap';
 import DashboardContent from '../../pages/dashboard/DashboardContent';
 import DashboardStats from '../../pages/dashboard/overview/dashboardStats/DashboardStats';
-import statusLegendStyles from '../../pages/dashboard/charts/shared/StatusLegend.module.css';
 import UpcomingInterviews from '../../pages/dashboard/overview/upcomingInterviews/UpcomingInterviews';
 import type { JobApplication, JobStatus, JobStatusCount, WeeklyApplicationCount } from '../../pages/application/models';
 import type { JobInterview } from '../../pages/interview/models';
-import {
-    getStatusBarTooltipPlacement,
-    getTrendTooltipPlacement,
-} from '../../pages/dashboard/charts/shared/chartConfig';
+import { getTrendTooltipPlacement } from '../../pages/dashboard/charts/applicationsTrend/chartConfig';
 import { render } from '../renderWithProviders';
 
 const chartMocks = vi.hoisted(() => ({
-    barOptions: undefined as ChartOptions<'bar'> | undefined,
-    barPlugins: undefined as Plugin<'bar'>[] | undefined,
     lineOptions: undefined as ChartOptions<'line'> | undefined,
     linePlugins: undefined as Plugin<'line'>[] | undefined,
     lineData: undefined as ChartData<'line'> | undefined,
 }));
 
 vi.mock('react-chartjs-2', () => ({
-    Bar: ({
-        data,
-        options,
-        plugins,
-    }: {
-        data: { labels?: unknown[]; datasets?: Array<{ data?: unknown[] }> };
-        options?: ChartOptions<'bar'>;
-        plugins?: Plugin<'bar'>[];
-    }) => {
-        chartMocks.barOptions = options;
-        chartMocks.barPlugins = plugins;
-
-        return (
-            <div data-testid='bar-chart'>
-                {data.labels?.map((label, index) => (
-                    <span key={`${String(label)}-${index}`}>
-                        {String(label)}: {String(data.datasets?.[0]?.data?.[index])}
-                    </span>
-                ))}
-            </div>
-        );
-    },
     Line: ({
         data,
         options,
@@ -94,11 +65,6 @@ const createApplication = (jobId: number, jobStatus: JobStatus): JobApplication 
     notes: '',
 });
 
-const getRenderedBars = (): Array<string | null> =>
-    within(screen.getByTestId('bar-chart'))
-        .getAllByText(/:/)
-        .map((row) => row.textContent);
-
 const getLegendStatuses = (label: string): Array<string | null> =>
     within(screen.getByRole('list', { name: label }))
         .getAllByRole('listitem')
@@ -111,8 +77,6 @@ describe('Dashboard V2', () => {
 
     afterEach(() => {
         vi.useRealTimers();
-        chartMocks.barOptions = undefined;
-        chartMocks.barPlugins = undefined;
         chartMocks.lineOptions = undefined;
         chartMocks.linePlugins = undefined;
         chartMocks.lineData = undefined;
@@ -136,10 +100,46 @@ describe('Dashboard V2', () => {
         expect(screen.getByRole('heading', { name: 'Job Search Activity' })).toBeInTheDocument();
         expect(screen.getByText('Applications submitted over the past eight weeks.')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Upcoming Interviews' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Job Search Roadmap' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Application Pipeline' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
         expect(screen.getByTestId('line-chart')).toBeInTheDocument();
-        expect(screen.getAllByTestId('bar-chart')).toHaveLength(2);
+        expect(screen.getByRole('article', { name: 'Job Search Roadmap' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('list', {
+                name: 'Application pipeline. Applied: 4, Interview: 0, Offer: 0, Accepted: 0',
+            })
+        ).toBeInTheDocument();
+    });
+
+    test('shows stable application pipeline and closed outcome totals beside their section headings', async () => {
+        render(
+            <JobSearchRoadmap
+                statusCounts={[
+                    statusCount('Applied', 1),
+                    statusCount('Interview', 2),
+                    statusCount('Offer', 3),
+                    statusCount('Accepted', 4),
+                    statusCount('Rejected', 5),
+                    statusCount('Withdrawn', 6),
+                    statusCount('Ghosted', 7),
+                    statusCount('Declined', 8),
+                ]}
+                isLoading={false}
+            />
+        );
+
+        const pipelineHeading = screen.getByRole('heading', { name: 'Application Pipeline' });
+        const closedHeading = screen.getByRole('heading', { name: 'Closed Outcomes' });
+
+        expect(within(pipelineHeading).getByText('10')).toHaveAttribute('aria-hidden', 'true');
+        expect(within(closedHeading).getByText('26')).toHaveAttribute('aria-hidden', 'true');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Hide Applied stage' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Hide Rejected outcome' }));
+
+        expect(within(pipelineHeading).getByText('10')).toBeInTheDocument();
+        expect(within(closedHeading).getByText('26')).toBeInTheDocument();
     });
 
     test('shows application-only trend details when the eight-week interview total is zero', () => {
@@ -262,29 +262,13 @@ describe('Dashboard V2', () => {
         expect(screen.getByText('8-week totals: 1 application · 1 interview')).toBeInTheDocument();
     });
 
-    test('renders only one positive pipeline status in the chart, legend, and accessible label', () => {
+    test('renders every pipeline stage and closed outcome in canonical order, including zero counts', () => {
         render(
-            <ApplicationPipelineChart
-                statusCounts={[statusCount('Applied', 5), statusCount('Interview', 0), statusCount('Rejected', 2)]}
-                isLoading={false}
-            />
-        );
-
-        expect(getRenderedBars()).toEqual(['Applied: 5']);
-        expect(getLegendStatuses('Application pipeline legend')).toEqual(['Applied']);
-        expect(screen.getByRole('img', { name: 'Application pipeline. Applied: 5' })).toBeInTheDocument();
-        expect(chartMocks.barPlugins?.map((plugin) => plugin.id)).toContain('statusBarTooltipPositioning');
-        expect(chartMocks.barOptions?.plugins?.tooltip).toEqual(
-            expect.objectContaining({ animation: false, caretPadding: 6, caretSize: 5 })
-        );
-    });
-
-    test('preserves pipeline order while excluding zero and closed statuses everywhere', () => {
-        render(
-            <ApplicationPipelineChart
+            <JobSearchRoadmap
                 statusCounts={[
                     statusCount('Accepted', 2),
                     statusCount('Offer', 0),
+                    statusCount('Withdrawn', 1),
                     statusCount('Rejected', 4),
                     statusCount('Interview', 3),
                     statusCount('Applied', 1),
@@ -293,19 +277,44 @@ describe('Dashboard V2', () => {
             />
         );
 
-        expect(getRenderedBars()).toEqual(['Applied: 1', 'Interview: 3', 'Accepted: 2']);
-        expect(getLegendStatuses('Application pipeline legend')).toEqual(['Applied', 'Interview', 'Accepted']);
+        expect(screen.getByRole('heading', { name: 'Job Search Roadmap' })).toBeInTheDocument();
+        expect(screen.getByText('See Where Every Application Is Headed.')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Application Pipeline' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
         expect(
-            screen.getByRole('img', {
-                name: 'Application pipeline. Applied: 1, Interview: 3, Accepted: 2',
-            })
-        ).toBeInTheDocument();
+            within(
+                screen.getByRole('list', {
+                    name: 'Application pipeline. Applied: 1, Interview: 3, Offer: 0, Accepted: 2',
+                })
+            )
+                .getAllByRole('listitem')
+                .map((item) => item.textContent)
+        ).toEqual(['Applied1', 'Interview3', 'Offer0', 'Accepted2']);
+        expect(getLegendStatuses('Application pipeline legend')).toEqual(['Applied', 'Interview', 'Offer', 'Accepted']);
+        expect(
+            within(
+                screen.getByRole('list', {
+                    name: 'Closed outcomes. Rejected: 4, Withdrawn: 1, Ghosted: 0, Declined: 0',
+                })
+            )
+                .getAllByRole('listitem')
+                .map((item) => item.textContent)
+        ).toEqual(['4Rejected', '1Withdrawn', '0Ghosted', '0Declined']);
+        expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected', 'Withdrawn', 'Ghosted', 'Declined']);
+        expect(screen.getByRole('img', { name: 'Offer: 0 applications' }).closest('li')).toHaveAttribute(
+            'data-zero-count',
+            'true'
+        );
+        expect(screen.getByRole('img', { name: 'Ghosted: 0 applications' }).closest('li')).toHaveAttribute(
+            'data-zero-count',
+            'true'
+        );
     });
 
-    test('toggles a pipeline bar from the accessible legend while preserving bar navigation', async () => {
+    test('keeps pipeline markers and the complete road fixed while a checkpoint is hidden', async () => {
         const onStatusSelect = vi.fn();
         render(
-            <ApplicationPipelineChart
+            <JobSearchRoadmap
                 statusCounts={[
                     statusCount('Applied', 1),
                     statusCount('Interview', 2),
@@ -317,176 +326,220 @@ describe('Dashboard V2', () => {
             />
         );
 
-        const hideAppliedButton = screen.getByRole('button', { name: 'Hide Applied bar' });
-        expect(hideAppliedButton).toHaveAttribute('aria-pressed', 'false');
-        await userEvent.click(hideAppliedButton);
+        const getStagePosition = (status: JobStatus) => {
+            const countByStatus: Partial<Record<JobStatus, number>> = {
+                Accepted: 4,
+                Applied: 1,
+                Interview: 2,
+                Offer: 3,
+            };
+            const count = countByStatus[status] ?? 0;
+            const marker = screen.getByRole('button', {
+                name: `${status}: ${count} ${count === 1 ? 'application' : 'applications'}`,
+            });
+            const stage = marker.closest('li');
+            return {
+                x: stage?.style.getPropertyValue('--stage-x'),
+                y: stage?.style.getPropertyValue('--stage-y'),
+            };
+        };
+        const positions = {
+            Applied: getStagePosition('Applied'),
+            Offer: getStagePosition('Offer'),
+            Accepted: getStagePosition('Accepted'),
+        };
+        const roadPath = screen.getByTestId('pipeline-road').getAttribute('d');
+        const startStyle = screen.getByTestId('pipeline-start').getAttribute('style');
+        const finishStyle = screen.getByTestId('pipeline-finish').getAttribute('style');
+        expect(roadPath).toContain('38 36');
 
-        const showAppliedButton = screen.getByRole('button', { name: 'Show Applied bar' });
-        expect(showAppliedButton).toHaveAttribute('aria-pressed', 'true');
-        expect(within(showAppliedButton).getByText('Applied')).toHaveClass(statusLegendStyles.hidden);
-        expect(getRenderedBars()).toEqual(['Interview: 2', 'Offer: 3', 'Accepted: 4']);
-        expect(getLegendStatuses('Application pipeline legend')).toEqual(['Applied', 'Interview', 'Offer', 'Accepted']);
-        expect(onStatusSelect).not.toHaveBeenCalled();
+        await userEvent.click(screen.getByRole('button', { name: 'Hide Interview stage' }));
 
-        await userEvent.click(showAppliedButton);
-        expect(screen.getByRole('button', { name: 'Hide Applied bar' })).toHaveAttribute('aria-pressed', 'false');
-        expect(getRenderedBars()).toEqual(['Applied: 1', 'Interview: 2', 'Offer: 3', 'Accepted: 4']);
-
-        chartMocks.barOptions?.onClick?.(
-            {} as never,
-            [{ index: 2 }] as never,
-            { data: { labels: ['Applied', 'Interview', 'Offer', 'Accepted'] } } as never
-        );
-        expect(onStatusSelect).toHaveBeenLastCalledWith('Offer');
-
-        onStatusSelect.mockClear();
-        chartMocks.barOptions?.onClick?.({} as never, [], {
-            data: { labels: ['Applied', 'Interview', 'Offer', 'Accepted'] },
-        } as never);
+        expect(screen.queryByRole('button', { name: 'Interview: 2 applications' })).not.toBeInTheDocument();
+        expect(getStagePosition('Applied')).toEqual(positions.Applied);
+        expect(getStagePosition('Offer')).toEqual(positions.Offer);
+        expect(getStagePosition('Accepted')).toEqual(positions.Accepted);
+        expect(screen.getByTestId('pipeline-road')).toHaveAttribute('d', roadPath);
+        expect(screen.getByTestId('pipeline-start')).toHaveAttribute('style', startStyle);
+        expect(screen.getByTestId('pipeline-finish')).toHaveAttribute('style', finishStyle);
+        expect(screen.getByRole('button', { name: 'Show Interview stage' })).toBeInTheDocument();
         expect(onStatusSelect).not.toHaveBeenCalled();
     });
 
-    test('keeps the pipeline chart area and complete legend mounted when every bar is hidden', async () => {
-        render(
-            <ApplicationPipelineChart
-                statusCounts={[statusCount('Applied', 1), statusCount('Interview', 2)]}
-                isLoading={false}
-            />
-        );
+    test('normalizes pipeline marker and endpoint anchors to the road viewBox height', () => {
+        render(<JobSearchRoadmap statusCounts={[statusCount('Applied', 1)]} isLoading={false} />);
 
-        await userEvent.click(screen.getByRole('button', { name: 'Hide Applied bar' }));
-        await userEvent.click(screen.getByRole('button', { name: 'Hide Interview bar' }));
-
-        expect(screen.getByTestId('bar-chart')).toBeInTheDocument();
-        expect(getLegendStatuses('Application pipeline legend')).toEqual(['Applied', 'Interview']);
-        expect(screen.getByRole('button', { name: 'Show Applied bar' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Show Interview bar' })).toBeInTheDocument();
-        expect(screen.queryByText('No applications in the pipeline yet.')).not.toBeInTheDocument();
+        expect(screen.getByTestId('pipeline-road').closest('svg')).toHaveAttribute('viewBox', '0 0 100 80');
+        expect(screen.getByRole('img', { name: 'Applied: 1 application' }).closest('li')).toHaveStyle({
+            '--stage-y': '72.5%',
+        });
+        expect(screen.getByTestId('pipeline-start')).toHaveStyle({ '--sign-y': '86.25%' });
+        expect(screen.getByTestId('pipeline-finish')).toHaveStyle({ '--flag-y': '35%' });
     });
 
-    test('shows the pipeline empty state when every pipeline count is zero', () => {
+    test('places each pipeline label above a pin whose stem begins below the circle', () => {
+        render(<JobSearchRoadmap statusCounts={[statusCount('Offer', 3)]} isLoading={false} />);
+
+        const marker = screen.getByRole('img', { name: 'Offer: 3 applications' });
+        const pin = within(marker).getByTestId('pipeline-pin-Offer');
+        expect(pin).toHaveAttribute('viewBox', '0 0 72 96');
+        expect(marker.firstElementChild).toHaveTextContent('Offer');
+        expect(marker.lastElementChild).toBe(pin);
+        expect([...pin.querySelectorAll('[data-pin-part]')].map((part) => part.getAttribute('data-pin-part'))).toEqual([
+            'stem',
+            'bubble',
+            'foot',
+        ]);
+        expect(pin.querySelector('[data-pin-part="stem"]')).toHaveAttribute('y1', '58');
+        expect(pin.querySelector('[data-pin-part="foot"]')).toHaveAttribute('cy', '96');
+    });
+
+    test('starts each closed-outcome stem below its translucent count circle', () => {
+        render(<JobSearchRoadmap statusCounts={[statusCount('Ghosted', 2)]} isLoading={false} />);
+
+        const marker = screen.getByRole('img', { name: 'Ghosted: 2 applications' });
+        const sign = within(marker).getByTestId('outcome-sign-Ghosted');
+
+        expect(sign.querySelector('line')).toHaveAttribute('y1', '46');
+    });
+
+    test('centers the remaining closed outcomes after a legend filter', async () => {
         render(
-            <ApplicationPipelineChart
+            <JobSearchRoadmap
                 statusCounts={[
-                    statusCount('Applied', 0),
-                    statusCount('Interview', 0),
-                    statusCount('Offer', 0),
-                    statusCount('Accepted', 0),
+                    statusCount('Rejected', 1),
+                    statusCount('Withdrawn', 2),
+                    statusCount('Ghosted', 3),
+                    statusCount('Declined', 4),
                 ]}
                 isLoading={false}
+                onStatusSelect={vi.fn()}
             />
         );
 
-        expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
-        expect(screen.queryByTestId('bar-chart')).not.toBeInTheDocument();
-        expect(screen.queryByRole('list', { name: 'Application pipeline legend' })).not.toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Hide Withdrawn outcome' }));
+
+        expect(screen.queryByRole('button', { name: 'Withdrawn: 2 applications' })).not.toBeInTheDocument();
+        expect(
+            screen
+                .getByRole('button', { name: 'Rejected: 1 application' })
+                .closest('li')
+                ?.style.getPropertyValue('--outcome-x')
+        ).toBe(`${100 / 6}%`);
+        expect(
+            screen
+                .getByRole('button', { name: 'Ghosted: 3 applications' })
+                .closest('li')
+                ?.style.getPropertyValue('--outcome-x')
+        ).toBe('50%');
+        expect(
+            screen
+                .getByRole('button', { name: 'Declined: 4 applications' })
+                .closest('li')
+                ?.style.getPropertyValue('--outcome-x')
+        ).toBe(`${500 / 6}%`);
+        expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected', 'Withdrawn', 'Ghosted', 'Declined']);
     });
 
-    test('uses only pipeline statuses to decide whether the pipeline has data', () => {
-        render(
-            <ApplicationPipelineChart
-                statusCounts={[statusCount('Rejected', 2), statusCount('Ghosted', 1)]}
-                isLoading={false}
-            />
-        );
-
-        expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
-        expect(screen.queryByTestId('bar-chart')).not.toBeInTheDocument();
-    });
-
-    test('renders only one positive closed status in the chart, legend, and accessible label', () => {
-        render(
-            <ClosedOutcomesChart
-                statusCounts={[statusCount('Rejected', 2), statusCount('Ghosted', 0), statusCount('Applied', 5)]}
-                isLoading={false}
-            />
-        );
-
-        expect(getRenderedBars()).toEqual(['Rejected: 2']);
-        expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected']);
-        expect(screen.getByRole('img', { name: 'Closed outcomes. Rejected: 2' })).toBeInTheDocument();
-    });
-
-    test('preserves closed-status order while excluding zero and pipeline statuses everywhere', () => {
-        render(
-            <ClosedOutcomesChart
-                statusCounts={[
-                    statusCount('Declined', 1),
-                    statusCount('Applied', 4),
-                    statusCount('Ghosted', 0),
-                    statusCount('Rejected', 3),
-                ]}
-                isLoading={false}
-            />
-        );
-
-        expect(getRenderedBars()).toEqual(['Rejected: 3', 'Declined: 1']);
-        expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected', 'Declined']);
-        expect(screen.getByRole('img', { name: 'Closed outcomes. Rejected: 3, Declined: 1' })).toBeInTheDocument();
-    });
-
-    test('toggles a closed-outcome bar without navigating and restores its original data', async () => {
+    test('navigates from pipeline and closed markers but never from legend controls', async () => {
         const onStatusSelect = vi.fn();
         render(
-            <ClosedOutcomesChart
-                statusCounts={[statusCount('Rejected', 1), statusCount('Ghosted', 2), statusCount('Declined', 3)]}
+            <JobSearchRoadmap
+                statusCounts={[statusCount('Offer', 0), statusCount('Rejected', 1)]}
                 isLoading={false}
                 onStatusSelect={onStatusSelect}
             />
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'Hide Ghosted bar' }));
-        const showGhostedButton = screen.getByRole('button', { name: 'Show Ghosted bar' });
-        expect(within(showGhostedButton).getByText('Ghosted')).toHaveClass(statusLegendStyles.hidden);
-        expect(getRenderedBars()).toEqual(['Rejected: 1', 'Declined: 3']);
+        await userEvent.click(screen.getByRole('button', { name: 'Offer: 0 applications' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Rejected: 1 application' }));
+        expect(onStatusSelect).toHaveBeenNthCalledWith(1, 'Offer');
+        expect(onStatusSelect).toHaveBeenNthCalledWith(2, 'Rejected');
+
+        onStatusSelect.mockClear();
+        await userEvent.click(screen.getByRole('button', { name: 'Hide Offer stage' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Hide Rejected outcome' }));
         expect(onStatusSelect).not.toHaveBeenCalled();
-
-        await userEvent.click(showGhostedButton);
-        expect(getRenderedBars()).toEqual(['Rejected: 1', 'Ghosted: 2', 'Declined: 3']);
-
-        chartMocks.barOptions?.onClick?.(
-            {} as never,
-            [{ index: 1 }] as never,
-            { data: { labels: ['Rejected', 'Ghosted', 'Declined'] } } as never
-        );
-        expect(onStatusSelect).toHaveBeenCalledWith('Ghosted');
     });
 
-    test('shows the closed-outcomes empty state when all closed counts are zero', () => {
+    test('disables hiding the final visible pipeline marker when the pipeline has applications', async () => {
         render(
-            <ClosedOutcomesChart
+            <JobSearchRoadmap
+                statusCounts={[statusCount('Applied', 1), statusCount('Rejected', 2)]}
+                isLoading={false}
+            />
+        );
+
+        for (const status of ['Interview', 'Offer', 'Accepted']) {
+            await userEvent.click(screen.getByRole('button', { name: `Hide ${status} stage` }));
+        }
+
+        const finalHideControl = screen.getByRole('button', { name: 'Hide Applied stage' });
+        expect(finalHideControl).toBeDisabled();
+        await userEvent.click(finalHideControl);
+        expect(screen.getByRole('img', { name: 'Applied: 1 application' })).toBeInTheDocument();
+        expect(screen.getByTestId('pipeline-road')).toBeInTheDocument();
+    });
+
+    test('allows an all-zero pipeline to hide and restore every marker', async () => {
+        render(<JobSearchRoadmap statusCounts={[]} isLoading={false} />);
+
+        for (const status of ['Applied', 'Interview', 'Offer', 'Accepted']) {
+            await userEvent.click(screen.getByRole('button', { name: `Hide ${status} stage` }));
+        }
+
+        expect(screen.getByRole('list', { name: 'Application pipeline. All stages hidden' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Show Applied stage' })).toBeEnabled();
+        expect(screen.getByTestId('pipeline-road')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Show Applied stage' }));
+        expect(screen.getByRole('img', { name: 'Applied: 0 applications' })).toBeInTheDocument();
+    });
+
+    test('hides an empty closed-outcomes map but keeps its footer legend available for recovery', async () => {
+        render(
+            <JobSearchRoadmap
                 statusCounts={[
-                    statusCount('Rejected', 0),
-                    statusCount('Ghosted', 0),
-                    statusCount('Declined', 0),
-                    statusCount('Applied', 3),
+                    statusCount('Rejected', 1),
+                    statusCount('Withdrawn', 2),
+                    statusCount('Ghosted', 3),
+                    statusCount('Declined', 4),
                 ]}
                 isLoading={false}
             />
         );
 
-        expect(screen.getByText('No closed outcomes yet.')).toBeInTheDocument();
-        expect(screen.queryByTestId('bar-chart')).not.toBeInTheDocument();
-        expect(screen.queryByRole('list', { name: 'Closed outcomes legend' })).not.toBeInTheDocument();
-    });
+        for (const status of ['Rejected', 'Withdrawn', 'Ghosted', 'Declined']) {
+            await userEvent.click(screen.getByRole('button', { name: `Hide ${status} outcome` }));
+        }
 
-    test('places status tooltips to the right with a left-facing caret when space allows', () => {
-        expect(getStatusBarTooltipPlacement({ x: 100, y: 60 }, { width: 80, height: 40 }, chartArea)).toEqual({
-            x: 111,
-            y: 40,
-            xAlign: 'left',
-            yAlign: 'center',
+        expect(screen.queryByRole('heading', { name: 'Closed Outcomes' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('list', { name: 'Closed outcomes. All outcomes hidden' })).not.toBeInTheDocument();
+        expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected', 'Withdrawn', 'Ghosted', 'Declined']);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Show Ghosted outcome' }));
+
+        expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Ghosted: 3 applications' }).closest('li')).toHaveStyle({
+            '--outcome-x': '50%',
         });
     });
 
-    test('falls status tooltips back to the left and keeps first and last bars within the chart area', () => {
-        expect(getStatusBarTooltipPlacement({ x: 300, y: 205 }, { width: 80, height: 40 }, chartArea)).toEqual({
-            x: 209,
-            y: 170,
-            xAlign: 'right',
-            yAlign: 'center',
+    test('keeps the full zero-count pipeline and closed-outcomes section', () => {
+        render(<JobSearchRoadmap statusCounts={[]} isLoading={false} />);
+
+        ['Applied', 'Interview', 'Offer', 'Accepted'].forEach((status) => {
+            expect(screen.getByRole('img', { name: `${status}: 0 applications` })).toBeInTheDocument();
         });
-        expect(getStatusBarTooltipPlacement({ x: 40, y: 12 }, { width: 80, height: 40 }, chartArea).y).toBe(10);
+        ['Rejected', 'Withdrawn', 'Ghosted', 'Declined'].forEach((status) => {
+            expect(screen.getByRole('img', { name: `${status}: 0 applications` })).toBeInTheDocument();
+        });
+        expect(screen.queryByText('No applications in the pipeline yet.')).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
+        expect(screen.queryByText('No closed outcomes yet.')).not.toBeInTheDocument();
+        expect(getLegendStatuses('Application pipeline legend')).toEqual(['Applied', 'Interview', 'Offer', 'Accepted']);
+        expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected', 'Withdrawn', 'Ghosted', 'Declined']);
+        expect(screen.getByText('Select A Marker To Open Applications With That Status.')).toBeInTheDocument();
     });
 
     test('places trend tooltips above with a downward-facing caret when space allows', () => {
@@ -570,10 +623,10 @@ describe('Dashboard V2', () => {
             )
         ).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'No upcoming interviews' })).toBeInTheDocument();
-        expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
-        expect(screen.getByText('No closed outcomes yet.')).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Applied: 0 applications' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
+        expect(screen.getByRole('img', { name: 'Rejected: 0 applications' })).toBeInTheDocument();
         expect(screen.queryByTestId('line-chart')).not.toBeInTheDocument();
-        expect(screen.queryByTestId('bar-chart')).not.toBeInTheDocument();
     });
 
     test('retains the complete dashboard loading state', () => {
@@ -587,9 +640,8 @@ describe('Dashboard V2', () => {
             />
         );
 
-        expect(screen.getAllByRole('progressbar', { name: 'Loading' })).toHaveLength(6);
+        expect(screen.getAllByRole('progressbar', { name: 'Loading' })).toHaveLength(5);
         expect(screen.queryByTestId('line-chart')).not.toBeInTheDocument();
-        expect(screen.queryByTestId('bar-chart')).not.toBeInTheDocument();
         expect(screen.queryByLabelText('Weekly application summary')).not.toBeInTheDocument();
     });
 

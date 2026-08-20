@@ -1,0 +1,643 @@
+.card {
+    --pipeline-pin-width: 60px;
+    --pipeline-pin-height: 80px;
+    --pipeline-marker-width: 104px;
+    --pipeline-label-height: 18px;
+    --pipeline-label-gap: 7px;
+    --pipeline-marker-height: calc(
+        var(--pipeline-label-height) + var(--pipeline-label-gap) + var(--pipeline-pin-height)
+    );
+    --pipeline-count-size: 20px;
+    --outcome-sign-width: 68px;
+    --outcome-sign-height: 71px;
+    --outcome-marker-width: 132px;
+    --outcome-marker-height: 120px;
+}
+
+.pipelineSection {
+    margin-top: var(--spaceSection);
+    padding-bottom: var(--spaceControl);
+}
+
+.pipelineSection h3,
+.closedSection h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--spaceControl);
+    margin: 0;
+    color: var(--colorText);
+    font-size: var(--fontSizeCardTitle);
+    font-weight: var(--fontWeightEmphasis);
+    line-height: var(--lineHeightHeading);
+}
+
+.sectionIcon {
+    width: 21px;
+    height: 21px;
+    flex: 0 0 21px;
+    fill: none;
+    stroke: var(--colorPrimary);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+}
+
+.sectionCount {
+    display: inline-flex;
+    min-width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 7px;
+    border-radius: var(--radiusPill);
+    background: var(--colorStatIconBg);
+    color: var(--colorTintText);
+    font-size: var(--fontSizeMicro);
+    font-weight: var(--fontWeightHeading);
+    line-height: 1;
+    box-sizing: border-box;
+}
+
+.pipelineMap {
+    position: relative;
+    height: clamp(270px, 24vw, 320px);
+    min-width: 0;
+    margin-top: 0;
+}
+
+.roadSvg {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.roadEdge,
+.roadSurface,
+.roadCenter {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.roadEdge {
+    stroke: color-mix(in srgb, var(--colorPrimary) 48%, var(--colorCardBorder));
+    stroke-width: 22;
+}
+
+.roadSurface {
+    stroke: color-mix(in srgb, var(--colorPrimary) 13%, var(--colorCardBg));
+    stroke-width: 18;
+}
+
+.roadCenter {
+    stroke: color-mix(in srgb, var(--colorCardBg) 82%, var(--colorText));
+    stroke-dasharray: 3 5;
+    stroke-width: 1.4;
+}
+
+.pipelineList,
+.outcomeList {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pipelineStage {
+    --markerBg: var(--colorTintSurfaceStrong);
+    --markerColor: var(--colorTintText);
+
+    position: absolute;
+    top: var(--stage-y);
+    left: var(--stage-x);
+    width: var(--pipeline-marker-width);
+    height: var(--pipeline-marker-height);
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+    transform-origin: 50% 100%;
+    transition: opacity var(--motionDurationFast) var(--motionEasingStandard),
+        transform var(--motionDurationStandard) var(--motionEasingEmphasized);
+}
+
+.pipelineMarker,
+.outcomeMarker {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--colorText);
+    cursor: pointer;
+    font: inherit;
+    transform: scale(1);
+    transform-origin: 50% 100%;
+    transition: transform var(--motionDurationFast) var(--motionEasingStandard);
+}
+
+.pipelineMarker[role='img'],
+.outcomeMarker[role='img'] {
+    cursor: default;
+}
+
+.pipelinePin {
+    position: absolute;
+    top: calc(var(--pipeline-label-height) + var(--pipeline-label-gap));
+    left: 50%;
+    width: var(--pipeline-pin-width);
+    height: var(--pipeline-pin-height);
+    overflow: visible;
+    font-family: inherit;
+    transform: translateX(-50%);
+}
+
+.pinStem {
+    stroke: var(--markerColor);
+    stroke-linecap: round;
+    stroke-width: 4;
+}
+
+.pinBubble {
+    fill: var(--markerBg);
+    stroke: var(--markerColor);
+    stroke-width: 3;
+}
+
+.pinFoot {
+    fill: var(--colorCardBg);
+    stroke: var(--markerColor);
+    stroke-width: 3;
+}
+
+.pinFootCenter {
+    fill: var(--markerColor);
+}
+
+.pinCount {
+    fill: var(--markerColor);
+    font-size: var(--pipeline-count-size);
+    font-weight: var(--fontWeightHeading);
+    line-height: 1;
+}
+
+.stageName {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: var(--pipeline-label-height);
+    color: var(--colorText);
+    font-size: var(--fontSizeBodyCompact);
+    font-weight: var(--fontWeightEmphasis);
+    line-height: var(--pipeline-label-height);
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+.pipelineMarker:hover,
+.pipelineMarker:focus-visible,
+.outcomeMarker:hover,
+.outcomeMarker:focus-visible {
+    transform: scale(1.035);
+}
+
+.pipelineMarker:focus-visible,
+.outcomeMarker:focus-visible {
+    border-radius: var(--radiusControl);
+    outline: 2px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 3px;
+}
+
+.startSign {
+    position: absolute;
+    top: var(--sign-y);
+    left: var(--sign-x);
+    width: 2px;
+    height: 30px;
+    background-color: color-mix(in srgb, var(--colorPrimary) 58%, var(--colorTextSecondary));
+    transform: translate(-2px, -2px);
+}
+
+.startSign span {
+    position: absolute;
+    top: 10px;
+    left: 3px;
+    padding: 3px 8px;
+    border: 1px solid color-mix(in srgb, var(--colorPrimary) 62%, var(--colorCardBorder));
+    border-radius: var(--radiusIndicator);
+    background-color: color-mix(in srgb, var(--colorPrimary) 11%, var(--colorCardBg));
+    color: var(--colorPrimary);
+    font-size: 10px;
+    font-weight: var(--fontWeightEmphasis);
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+    text-transform: uppercase;
+    transform: rotate(-4deg);
+}
+
+.finishFlag {
+    position: absolute;
+    top: var(--flag-y);
+    left: var(--flag-x);
+    width: 2px;
+    height: 32px;
+    background-color: color-mix(in srgb, var(--colorPrimary) 64%, var(--colorTextSecondary));
+    transform: translate(-2px, -29px);
+}
+
+.finishFlag::after {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 19px;
+    height: 12px;
+    background-color: color-mix(in srgb, var(--colorPrimary) 72%, var(--colorCardBg));
+    clip-path: polygon(0 0, 100% 18%, 76% 100%, 0 78%);
+    content: '';
+}
+
+.closedSection {
+    max-height: 230px;
+    overflow: hidden;
+    padding-top: 28px;
+    border-top: 1px dashed color-mix(in srgb, var(--colorPrimary) 26%, var(--colorCardBorder));
+    box-sizing: border-box;
+    opacity: 1;
+    visibility: visible;
+    transition: max-height var(--motionDurationStandard) var(--motionEasingEmphasized),
+        padding-top var(--motionDurationStandard) var(--motionEasingEmphasized),
+        border-color var(--motionDurationFast) var(--motionEasingStandard),
+        opacity var(--motionDurationFast) var(--motionEasingStandard), visibility 0s linear;
+}
+
+.closedSectionHidden {
+    max-height: 0;
+    padding-top: 0;
+    border-top-width: 0;
+    border-top-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition-delay: 0s, 0s, 0s, 0s, var(--motionDurationStandard);
+}
+
+.outcomeMap {
+    position: relative;
+    height: calc(var(--outcome-marker-height) + 10px);
+    min-width: 0;
+    margin-top: var(--spaceCard);
+}
+
+.outcome {
+    --markerBg: var(--colorTintSurfaceStrong);
+    --markerColor: var(--colorTintText);
+
+    position: absolute;
+    top: 50%;
+    left: var(--outcome-x);
+    width: min(23%, var(--outcome-marker-width));
+    min-width: 64px;
+    height: var(--outcome-marker-height);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: 50% 100%;
+    transition: left var(--motionDurationStandard) var(--motionEasingEmphasized),
+        opacity var(--motionDurationFast) var(--motionEasingStandard),
+        transform var(--motionDurationStandard) var(--motionEasingEmphasized);
+}
+
+.outcomeSign {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: var(--outcome-sign-width);
+    height: var(--outcome-sign-height);
+    overflow: visible;
+    font-family: inherit;
+    transform: translateX(-50%);
+}
+
+.outcomeStem {
+    stroke: var(--markerColor);
+    stroke-linecap: round;
+    stroke-width: 4;
+}
+
+.outcomeFlag {
+    fill: var(--markerBg);
+}
+
+.outcomeBubble {
+    fill: var(--markerBg);
+    stroke: var(--markerColor);
+    stroke-width: 3;
+}
+
+.outcomeCount {
+    fill: var(--markerColor);
+    font-size: var(--fontSizeBody);
+    font-weight: var(--fontWeightHeading);
+    line-height: 1;
+}
+
+.outcomeName {
+    position: absolute;
+    top: calc(var(--outcome-sign-height) + 10px);
+    left: 50%;
+    color: var(--colorText);
+    font-size: var(--fontSizeBodyCompact);
+    font-weight: var(--fontWeightEmphasis);
+    line-height: 1;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+.zeroCount {
+    opacity: 0.2;
+}
+
+.zeroCount:focus-within {
+    opacity: 1;
+}
+
+.markerHidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -100%) scale(0.84);
+}
+
+.outcomeHidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, calc(-50% + 10px)) scale(0.84);
+}
+
+.centered {
+    display: grid;
+    min-height: 320px;
+    flex: 1;
+    margin: 0;
+    place-items: center;
+    color: var(--colorTextSecondary);
+    text-align: center;
+}
+
+.legends {
+    display: grid;
+    gap: var(--spaceCard);
+    margin: var(--spaceControl) calc(-1 * var(--spaceSection)) calc(-1 * var(--spaceSection));
+    padding: var(--spaceSection);
+    border-top: 1px solid var(--colorCardBorder);
+}
+
+.legendGroup {
+    display: grid;
+    grid-template-columns: minmax(190px, 0.22fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--spaceCard);
+}
+
+.legendLabel {
+    color: var(--colorTextSecondary);
+    font-size: var(--fontSizeBody);
+    font-weight: var(--fontWeightEmphasis);
+}
+
+.legendList {
+    justify-content: flex-start;
+    margin: 0;
+}
+
+.markerHint {
+    margin: var(--spaceControl) 8px 0;
+    color: var(--colorPrimary);
+    font-size: var(--fontSizeBodyCompact);
+    font-weight: var(--fontWeightEmphasis);
+    line-height: var(--lineHeightBody);
+}
+
+.applied {
+    --markerBg: var(--colorStatusAppliedBadgeBg);
+    --markerColor: var(--colorStatusAppliedText);
+}
+
+.interview {
+    --markerBg: var(--colorStatusInterviewBadgeBg);
+    --markerColor: var(--colorStatusInterviewText);
+}
+
+.offer {
+    --markerBg: var(--colorStatusOfferBadgeBg);
+    --markerColor: var(--colorStatusOfferText);
+}
+
+.accepted {
+    --markerBg: var(--colorStatusAcceptedBadgeBg);
+    --markerColor: var(--colorStatusAcceptedText);
+}
+
+.rejected {
+    --markerBg: var(--colorStatusRejectedBadgeBg);
+    --markerColor: var(--colorStatusRejectedText);
+}
+
+.withdrawn {
+    --markerBg: var(--colorStatusWithdrawnBadgeBg);
+    --markerColor: var(--colorStatusWithdrawnText);
+}
+
+.ghosted {
+    --markerBg: var(--colorStatusGhostedBadgeBg);
+    --markerColor: var(--colorStatusGhostedText);
+}
+
+.declined {
+    --markerBg: var(--colorStatusDeclinedBadgeBg);
+    --markerColor: var(--colorStatusDeclinedText);
+}
+
+@media (max-width: 768px) {
+    .card {
+        --pipeline-pin-width: 52px;
+        --pipeline-pin-height: 69px;
+        --pipeline-marker-width: 80px;
+        --pipeline-label-height: 16px;
+        --pipeline-label-gap: 6px;
+        --pipeline-count-size: 18px;
+        --outcome-sign-width: 60px;
+        --outcome-sign-height: 63px;
+        --outcome-marker-width: 102px;
+        --outcome-marker-height: 108px;
+    }
+
+    .pipelineSection h3,
+    .closedSection h3 {
+        font-size: var(--fontSizeBody);
+    }
+
+    .sectionIcon {
+        width: 19px;
+        height: 19px;
+        flex-basis: 19px;
+    }
+
+    .pipelineMap {
+        height: 250px;
+        margin-top: 0;
+    }
+
+    .roadEdge {
+        stroke-width: 18;
+    }
+
+    .roadSurface {
+        stroke-width: 15;
+    }
+
+    .stageName,
+    .outcomeName {
+        font-size: var(--fontSizeMicro);
+    }
+
+    .startSign {
+        height: 27px;
+    }
+
+    .startSign span {
+        top: 8px;
+        padding: 3px 6px;
+        font-size: 9px;
+    }
+
+    .finishFlag {
+        height: 29px;
+        transform: translate(-2px, -26px);
+    }
+
+    .finishFlag::after {
+        width: 17px;
+        height: 11px;
+    }
+
+    .closedSection:not(.closedSectionHidden) {
+        padding-top: var(--spaceSection);
+    }
+
+    .outcome {
+        min-width: 58px;
+    }
+
+    .outcomeName {
+        top: calc(var(--outcome-sign-height) + 8px);
+    }
+
+    .legendGroup {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .legendLabel {
+        font-size: var(--fontSizeBodyCompact);
+    }
+
+    .markerHint {
+        margin-inline: 4px;
+        font-size: var(--fontSizeMicro);
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        --pipeline-pin-width: 48px;
+        --pipeline-pin-height: 64px;
+        --pipeline-marker-width: 72px;
+        --pipeline-label-height: 14px;
+        --pipeline-label-gap: 5px;
+        --pipeline-count-size: 17px;
+        --outcome-sign-width: 54px;
+        --outcome-sign-height: 57px;
+        --outcome-marker-width: 74px;
+        --outcome-marker-height: 98px;
+    }
+
+    .pipelineMap {
+        height: 230px;
+    }
+
+    .outcome {
+        min-width: 54px;
+    }
+
+    .legends {
+        gap: var(--spaceControl);
+    }
+}
+
+@media (max-width: 380px) {
+    .pipelineMap {
+        height: 220px;
+    }
+
+    .outcome {
+        min-width: 52px;
+    }
+
+    .legendList {
+        column-gap: var(--spaceControl);
+    }
+}
+
+@media (max-width: 340px) {
+    .card {
+        --pipeline-pin-width: 44px;
+        --pipeline-pin-height: 58px;
+        --pipeline-marker-width: 60px;
+        --pipeline-label-height: 14px;
+        --pipeline-label-gap: 5px;
+        --pipeline-count-size: 16px;
+        --outcome-sign-width: 48px;
+        --outcome-sign-height: 51px;
+        --outcome-marker-width: 58px;
+        --outcome-marker-height: 90px;
+    }
+
+    .stageName,
+    .outcomeName {
+        font-size: 10px;
+        letter-spacing: -0.015em;
+    }
+
+    .roadEdge {
+        stroke-width: 16;
+    }
+
+    .roadSurface {
+        stroke-width: 13;
+    }
+
+    .outcome {
+        min-width: 48px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pipelineStage,
+    .pipelineMarker,
+    .closedSection,
+    .outcome,
+    .outcomeMarker {
+        transition: none;
+    }
+
+    .pipelineMarker:hover,
+    .pipelineMarker:focus-visible,
+    .outcomeMarker:hover,
+    .outcomeMarker:focus-visible {
+        transform: none;
+    }
+}

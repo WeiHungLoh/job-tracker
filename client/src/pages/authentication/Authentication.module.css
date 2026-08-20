@@ -29,16 +29,7 @@
 }
 
 .logoIcon {
-    display: block;
-    width: 52px;
-    height: 52px;
-    padding: 13px;
     margin: auto;
-    box-sizing: border-box;
-    border: 0;
-    border-radius: var(--radiusToolbar);
-    background-color: var(--colorPrimary);
-    color: var(--colorBtnPrimaryText);
 }
 
 .title {

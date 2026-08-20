@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../../components/authLayout/AuthLayout';
 import AuthRequestInfo from '../../../components/authRequestInfo/AuthRequestInfo';
 import Icon from '../../../components/icon/Icon';
+import BrandMark from '../../../components/brandMark/BrandMark';
 import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
 import PrimaryButton from '../../../components/button/PrimaryButton';
 import type { SubmitEvent } from 'react';
@@ -68,7 +69,7 @@ const SignUp = () => {
     return (
         <AuthLayout>
             <div className={`${styles.card} ${styles.signUpCard}`}>
-                <Icon name='briefcase' className={styles.logoIcon} />
+                <BrandMark className={styles.logoIcon} size='lg' />
                 <h2 className={`${styles.title} ${styles.titleWithDescription}`}>Create your account</h2>
                 <p className={styles.cardDescription}>Track your applications and interviews in one place.</p>
                 <form onSubmit={handleSignUp}>

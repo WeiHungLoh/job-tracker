@@ -1,6 +1,5 @@
-import ApplicationPipelineChart from './charts/applicationPipeline/ApplicationPipelineChart';
 import ApplicationsLineChart from './charts/applicationsTrend/ApplicationsLineChart';
-import ClosedOutcomesChart from './charts/closedOutcomes/ClosedOutcomesChart';
+import JobSearchRoadmap from './charts/jobSearchRoadmap/JobSearchRoadmap';
 import DashboardStats from './overview/dashboardStats/DashboardStats';
 import UpcomingInterviews from './overview/upcomingInterviews/UpcomingInterviews';
 import AttentionCenter from './attentionCenter/AttentionCenter';
@@ -98,17 +97,8 @@ const DashboardContent = ({
                     onInterviewSelect={onInterviewSelect}
                 />
             </section>
-            <section className={styles.pipelineSection}>
-                <ApplicationPipelineChart
-                    statusCounts={statusCounts}
-                    hasError={statusError}
-                    isLoading={statusIsLoading ?? isLoading}
-                    onRetry={onRetryStatus}
-                    onStatusSelect={onStatusSelect}
-                />
-            </section>
-            <section className={styles.closedSection}>
-                <ClosedOutcomesChart
+            <section className={styles.roadmapSection}>
+                <JobSearchRoadmap
                     statusCounts={statusCounts}
                     hasError={statusError}
                     isLoading={statusIsLoading ?? isLoading}

@@ -1,6 +1,7 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { type MouseEvent, useEffect, useRef } from 'react';
 import Icon from '../../../../components/icon/Icon';
+import BrandMark from '../../../../components/brandMark/BrandMark';
 import PrimaryButton from '../../../../components/button/PrimaryButton';
 import { routes } from '../../../../routes';
 import styles from '../../../../components/navbar/Navbar.module.css';
@@ -62,10 +63,11 @@ const DemoNavbar = () => {
         <nav aria-label='Demo navigation' className={styles.navbar}>
             <div className={styles.navbarContent}>
                 <div className={styles.brand}>
-                    <span className={styles.brandIcon}>
-                        <Icon name='briefcase' size={17} />
-                    </span>
-                    <h1>Demo</h1>
+                    <BrandMark />
+                    <h1>
+                        <span className={styles.productName}>Job Tracker</span>
+                        <span className={styles.demoBadge}>Demo</span>
+                    </h1>
                 </div>
 
                 <div

@@ -20,7 +20,6 @@ import userEvent from '@testing-library/user-event';
 import DemoRoutes from '../../pages/demo/components/demoLayout/DemoRoutes';
 import * as highlightElement from '../../helper/highlightElement';
 import boardStyles from '../../pages/application/applicationBoard/ApplicationBoard.module.css';
-import type { ChartData, ChartOptions } from 'chart.js';
 
 const calendarMocks = vi.hoisted(() => ({
     downloadBulkIcsEvents: vi.fn(),
@@ -41,20 +40,6 @@ vi.mock('../../hooks/useUnsavedChangesBlocker', () => ({
 }));
 
 vi.mock('react-chartjs-2', () => ({
-    Bar: ({ data, options }: { data: ChartData<'bar'>; options?: ChartOptions<'bar'> }) => (
-        <div>
-            <span>Demo bar chart</span>
-            {data.labels?.map((label, index) => (
-                <button
-                    key={String(label)}
-                    onClick={() => options?.onClick?.({} as never, [{ index }] as never, { data } as never)}
-                    type='button'
-                >
-                    View {String(label)} bar
-                </button>
-            ))}
-        </div>
-    ),
     Line: () => <div>Demo line chart</div>,
 }));
 
@@ -1340,9 +1325,10 @@ describe('demo page interactions', () => {
         expect(screen.getByText('Northstar Mobility')).toBeInTheDocument();
         expect(screen.getByText('Demo line chart')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Upcoming Interviews' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Job Search Roadmap' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Application Pipeline' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
-        expect(screen.getAllByText('Demo bar chart')).toHaveLength(2);
+        expect(screen.getByRole('list', { name: /Application pipeline\. Applied:/ })).toBeInTheDocument();
     });
 
     test('marks and undoes a demo application follow-up in local state without fetching', async () => {
@@ -1390,11 +1376,11 @@ describe('demo page interactions', () => {
         fetchSpy.mockRestore();
     });
 
-    test('navigates from a demo dashboard status to the matching application filter without fetching', async () => {
+    test('navigates from a demo pipeline marker to the matching application filter without fetching', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
         renderDemo(<DemoRouteHarness />, [routes.demoDashboard]);
 
-        await userEvent.click(screen.getByRole('button', { name: 'View Offer bar' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Offer: 2 applications' }));
 
         expect(await screen.findByRole('heading', { name: /Greenhouse CloudOps/ })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: /Quantum Ledger/ })).toBeInTheDocument();
@@ -1402,6 +1388,22 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Applied' })).not.toBeChecked();
+        expect(fetchSpy).not.toHaveBeenCalled();
+        fetchSpy.mockRestore();
+    });
+
+    test('navigates from a demo closed-outcome marker to the matching application filter without fetching', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        renderDemo(<DemoRouteHarness />, [routes.demoDashboard]);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Rejected: 3 applications' }));
+
+        expect(await screen.findByRole('heading', { name: /Aster Security/ })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /TransitFlow/ })).toBeInTheDocument();
+        expect(screen.queryByText('HorizonAI Labs')).not.toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        expect(screen.getByRole('checkbox', { name: 'Rejected' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Offer' })).not.toBeChecked();
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });

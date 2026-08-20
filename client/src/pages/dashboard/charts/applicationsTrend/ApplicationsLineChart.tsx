@@ -20,11 +20,11 @@ import {
     CHART_COLORS,
     DASHBOARD_TOOLTIP_OPTIONS,
     LEGEND_LABELS,
-    STATUS_COLORS,
+    TREND_SERIES_COLORS,
     TITLE_FONT,
     TITLE_PADDING,
     trendTooltipPlugin,
-} from '../shared/chartConfig';
+} from './chartConfig';
 import { getWeeklyInterviewCounts } from '../../dashboardSelectors';
 import PrimaryButton from '../../../../components/button/PrimaryButton';
 
@@ -89,8 +89,8 @@ const ApplicationsLineChart = ({
                 {
                     label: 'Applications',
                     data: counts,
-                    backgroundColor: STATUS_COLORS.Applied[theme],
-                    borderColor: STATUS_COLORS.Applied[theme],
+                    backgroundColor: TREND_SERIES_COLORS.applications[theme],
+                    borderColor: TREND_SERIES_COLORS.applications[theme],
                     hidden: !applicationsVisible,
                 },
                 ...(showInterviewSeries
@@ -98,8 +98,8 @@ const ApplicationsLineChart = ({
                           {
                               label: 'Interviews',
                               data: interviewCounts,
-                              backgroundColor: STATUS_COLORS.Interview[theme],
-                              borderColor: STATUS_COLORS.Interview[theme],
+                              backgroundColor: TREND_SERIES_COLORS.interviews[theme],
+                              borderColor: TREND_SERIES_COLORS.interviews[theme],
                               hidden: !interviewsVisible,
                           },
                       ]

@@ -1,0 +1,30 @@
+.brandMark {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: var(--radiusControl);
+    background-color: var(--colorPrimary);
+    color: var(--colorBtnPrimaryText);
+}
+
+.brandMark > svg {
+    width: 52%;
+    height: 52%;
+}
+
+.sm {
+    width: 28px;
+    height: 28px;
+}
+
+.md {
+    width: 32px;
+    height: 32px;
+}
+
+.lg {
+    width: 52px;
+    height: 52px;
+}

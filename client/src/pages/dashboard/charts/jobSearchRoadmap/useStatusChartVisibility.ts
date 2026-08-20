@@ -1,21 +1,23 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { JobStatus } from '../../../application/models';
 
-type StatusChartVisibility = {
-    hiddenStatuses: ReadonlySet<JobStatus>;
-    visibleStatuses: JobStatus[];
-    toggleStatus: (status: JobStatus) => void;
+type StatusChartVisibility<Status extends JobStatus> = {
+    hiddenStatuses: ReadonlySet<Status>;
+    visibleStatuses: Status[];
+    toggleStatus: (status: Status) => void;
 };
 
-const useStatusChartVisibility = (statuses: readonly JobStatus[]): StatusChartVisibility => {
-    const [hiddenStatuses, setHiddenStatuses] = useState<ReadonlySet<JobStatus>>(() => new Set());
+const useStatusChartVisibility = <Status extends JobStatus>(
+    statuses: readonly Status[]
+): StatusChartVisibility<Status> => {
+    const [hiddenStatuses, setHiddenStatuses] = useState<ReadonlySet<Status>>(() => new Set());
 
     const visibleStatuses = useMemo(
         () => statuses.filter((status) => !hiddenStatuses.has(status)),
         [hiddenStatuses, statuses]
     );
 
-    const toggleStatus = useCallback((status: JobStatus) => {
+    const toggleStatus = useCallback((status: Status) => {
         setHiddenStatuses((currentStatuses) => {
             const nextStatuses = new Set(currentStatuses);
             if (nextStatuses.has(status)) {

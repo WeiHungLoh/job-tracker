@@ -1,11 +1,14 @@
 import type { JobStatus } from '../../../application/models';
 import styles from './StatusLegend.module.css';
 
-type StatusLegendProps = {
+type StatusLegendProps<Status extends JobStatus> = {
+    className?: string;
+    disabledStatuses?: ReadonlySet<Status>;
+    itemName: 'outcome' | 'stage';
     label: string;
-    statuses: readonly JobStatus[];
-    hiddenStatuses: ReadonlySet<JobStatus>;
-    onStatusToggle: (status: JobStatus) => void;
+    statuses: readonly Status[];
+    hiddenStatuses: ReadonlySet<Status>;
+    onStatusToggle: (status: Status) => void;
 };
 
 const statusClassNames: Record<JobStatus, string> = {
@@ -19,18 +22,30 @@ const statusClassNames: Record<JobStatus, string> = {
     Withdrawn: styles.withdrawn,
 };
 
-const StatusLegend = ({ label, statuses, hiddenStatuses, onStatusToggle }: StatusLegendProps) => {
+function StatusLegend<Status extends JobStatus>({
+    className = '',
+    disabledStatuses,
+    itemName,
+    label,
+    statuses,
+    hiddenStatuses,
+    onStatusToggle,
+}: StatusLegendProps<Status>) {
+    const classes = [styles.legend, className].filter(Boolean).join(' ');
+
     return (
-        <ul className={styles.legend} aria-label={label}>
+        <ul className={classes} aria-label={label}>
             {statuses.map((status) => {
                 const isHidden = hiddenStatuses.has(status);
+                const isDisabled = !isHidden && (disabledStatuses?.has(status) ?? false);
 
                 return (
                     <li key={status}>
                         <button
-                            aria-label={`${isHidden ? 'Show' : 'Hide'} ${status} bar`}
+                            aria-label={`${isHidden ? 'Show' : 'Hide'} ${status} ${itemName}`}
                             aria-pressed={isHidden}
                             className={styles.statusButton}
+                            disabled={isDisabled}
                             onClick={() => onStatusToggle(status)}
                             type='button'
                         >
@@ -42,6 +57,6 @@ const StatusLegend = ({ label, statuses, hiddenStatuses, onStatusToggle }: Statu
             })}
         </ul>
     );
-};
+}
 
 export default StatusLegend;

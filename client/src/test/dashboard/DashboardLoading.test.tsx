@@ -25,7 +25,6 @@ vi.mock('../../api/useJobTrackerAPI', () => ({
 }));
 
 vi.mock('react-chartjs-2', () => ({
-    Bar: () => <div>Bar chart</div>,
     Line: () => <div>Line chart</div>,
 }));
 
@@ -69,12 +68,14 @@ describe('Dashboard independent loading', () => {
         expect(screen.getByText("You're all caught up")).toBeInTheDocument();
         expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
 
-        const pipeline = screen.getByRole('article', { name: 'Application Pipeline' });
-        expect(within(pipeline).getByText('Unable to load application statistics.')).toBeInTheDocument();
-        await userEvent.click(within(pipeline).getByRole('button', { name: 'Try Again' }));
+        const roadmap = screen.getByRole('article', { name: 'Job Search Roadmap' });
+        expect(within(roadmap).getByText('Unable to load application statistics.')).toBeInTheDocument();
+        await userEvent.click(within(roadmap).getByRole('button', { name: 'Try Again' }));
 
         expect(
-            await within(pipeline).findByRole('img', { name: 'Application pipeline. Applied: 2' })
+            await within(roadmap).findByRole('list', {
+                name: 'Application pipeline. Applied: 2, Interview: 0, Offer: 0, Accepted: 0',
+            })
         ).toBeInTheDocument();
         expect(apiMocks.getDashboardApplicationSummary).toHaveBeenCalledTimes(2);
         expect(apiMocks.listApplications).toHaveBeenCalledTimes(1);

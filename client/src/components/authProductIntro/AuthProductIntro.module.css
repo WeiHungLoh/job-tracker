@@ -47,16 +47,6 @@
     letter-spacing: -0.015em;
 }
 
-.productBrandIcon {
-    display: grid;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background-color: var(--colorPrimary);
-    color: var(--colorBtnPrimaryText);
-    place-items: center;
-}
-
 .accountTrigger,
 .restoreOverviewButton {
     display: inline-flex;

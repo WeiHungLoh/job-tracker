@@ -10,7 +10,7 @@
     --guideMutedText: var(--colorGuideMuted);
 
     color: var(--colorGuideText);
-    background: var(--colorPublicPageBg);
+    background: var(--colorPageBg);
 }
 
 .guideContainer {
@@ -48,7 +48,6 @@
     border: 1px solid var(--guideBorder);
     border-radius: 20px;
     background-color: var(--colorGuideHeaderBg);
-    box-shadow: 0 14px 38px var(--colorGuideHeaderShadow);
 }
 
 .headerIcon {
@@ -88,13 +87,11 @@
     border: 1px solid var(--guideBorder);
     border-radius: var(--radiusPanel);
     background-color: var(--colorCardBg);
-    transition: border-color var(--motionDurationStandard) var(--motionEasingStandard),
-        box-shadow var(--motionDurationStandard) var(--motionEasingStandard);
+    transition: border-color var(--motionDurationStandard) var(--motionEasingStandard);
 }
 
 .accordionItemOpen {
     border-color: var(--colorGuideAccentBorder);
-    box-shadow: 0 10px 28px var(--colorStatIconBg);
 }
 
 .accordionHeading {
@@ -216,7 +213,6 @@
     background-color: var(--colorGuideTipBg);
     color: var(--guideMutedText);
     font-size: var(--fontSizeBodyCompact);
-    box-shadow: 0 8px 22px var(--colorGuideTipShadow);
 }
 
 @media (max-width: 600px) {

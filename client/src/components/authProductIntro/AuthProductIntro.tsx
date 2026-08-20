@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { routes } from '../../routes';
 import { loadDemoRoute, loadUserGuideRoute } from '../../routeLoaders';
 import Icon from '../icon/Icon';
+import BrandMark from '../brandMark/BrandMark';
 import styles from './AuthProductIntro.module.css';
 import ProductPreviewCarousel from './ProductPreviewCarousel';
 
@@ -125,9 +126,7 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
             >
                 <header className={styles.productHeader}>
                     <div className={styles.productBrand}>
-                        <span className={styles.productBrandIcon} aria-hidden='true'>
-                            <Icon name='briefcase' />
-                        </span>
+                        <BrandMark />
                         <span>Job Tracker</span>
                     </div>
                     <button

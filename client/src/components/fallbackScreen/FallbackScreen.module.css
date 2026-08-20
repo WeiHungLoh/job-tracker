@@ -23,16 +23,6 @@
     color: var(--colorText);
 }
 
-.brandIcon {
-    display: grid;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    border-radius: var(--radiusControl);
-    background-color: var(--colorPrimary);
-    color: var(--colorBtnPrimaryText);
-}
-
 .brandName {
     font-size: var(--fontSizeBodyCompact);
     font-weight: var(--fontWeightEmphasis);
@@ -98,25 +88,8 @@
     font-weight: var(--fontWeightEmphasis);
     line-height: 1;
     pointer-events: none;
+    transform: translateX(-50%);
     white-space: nowrap;
-}
-
-.routeLabelStart {
-    top: 75%;
-    left: 10%;
-    transform: translateX(-50%);
-}
-
-.routeLabelMiddle {
-    top: 39%;
-    left: 43.81%;
-    transform: translateX(-50%);
-}
-
-.routeLabelFinal {
-    top: 36%;
-    left: 89.52%;
-    transform: translateX(-50%);
 }
 
 .ticket {
@@ -125,8 +98,12 @@
     transform-origin: center;
 }
 
-.routeMoving .ticket {
+.genericRoute.routeMoving .ticket {
     animation: ticketRoute 4.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.applicationRoute.routeMoving .ticket {
+    animation: applicationTicketRoute 5.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .ticketPaper {
@@ -270,6 +247,46 @@
     }
 }
 
+@keyframes applicationTicketRoute {
+    0% {
+        opacity: 0;
+        transform: translate(42px, 90px) rotate(-5deg);
+    }
+
+    6%,
+    8% {
+        opacity: 1;
+        transform: translate(42px, 90px) rotate(-5deg);
+    }
+
+    31% {
+        opacity: 1;
+        transform: translate(150px, 27px) rotate(4deg);
+    }
+
+    55% {
+        opacity: 1;
+        transform: translate(270px, 81px) rotate(-3deg);
+    }
+
+    82%,
+    90% {
+        opacity: 1;
+        transform: translate(376px, 21px) rotate(3deg);
+    }
+
+    96% {
+        opacity: 0;
+        transform: translate(376px, 21px) rotate(3deg);
+    }
+
+    96.01%,
+    100% {
+        opacity: 0;
+        transform: translate(42px, 90px) rotate(-5deg);
+    }
+}
+
 @media (max-width: 480px) {
     .brandLine {
         min-height: 52px;
@@ -282,9 +299,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .routeMoving .ticket {
+    .genericRoute.routeMoving .ticket {
         animation: none;
         transform: translate(184px, 27px);
+    }
+
+    .applicationRoute.routeMoving .ticket {
+        animation: none;
+        transform: translate(150px, 27px);
     }
 }
 

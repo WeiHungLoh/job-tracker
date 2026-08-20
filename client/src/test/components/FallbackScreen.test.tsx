@@ -8,15 +8,17 @@ describe('FallbackScreen', () => {
             variant: 'pageLoading' as const,
             title: 'Opening your tracker',
             message: 'Putting your applications in place.',
-            stages: ['Applied', 'Interview', 'Offer'],
+            stages: ['Applied', 'Interview', 'Offer', 'Accepted'],
+            nodeCount: 4,
         },
         {
             variant: 'loading' as const,
             title: 'Checking your session',
             message: 'This should only take a moment.',
             stages: ['Sign in', 'Verify', 'Ready'],
+            nodeCount: 3,
         },
-    ])('shows the active application route for $variant', ({ variant, title, message, stages }) => {
+    ])('shows the active application route for $variant', ({ variant, title, message, stages, nodeCount }) => {
         render(<FallbackScreen variant={variant} />);
 
         expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'true');
@@ -26,6 +28,10 @@ describe('FallbackScreen', () => {
         expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
         expect(screen.getByText(message)).toBeInTheDocument();
         stages.forEach((stage) => expect(within(route).getByText(stage)).toBeInTheDocument());
+        expect(route.querySelectorAll('[data-route-node]')).toHaveLength(nodeCount);
+        expect(
+            [...route.querySelectorAll('[data-route-node]')].map((node) => node.getAttribute('data-route-node'))
+        ).toEqual(stages);
         expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
@@ -68,6 +74,10 @@ describe('FallbackScreen', () => {
             expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
             expect(screen.getByText(message)).toBeInTheDocument();
             stages.forEach((stage) => expect(within(route).getByText(stage)).toBeInTheDocument());
+            expect(route.querySelectorAll('[data-route-node]')).toHaveLength(3);
+            expect(
+                [...route.querySelectorAll('[data-route-node]')].map((node) => node.getAttribute('data-route-node'))
+            ).toEqual(stages);
 
             fireEvent.click(screen.getByRole('button', { name: action }));
             expect(onAction).toHaveBeenCalledOnce();

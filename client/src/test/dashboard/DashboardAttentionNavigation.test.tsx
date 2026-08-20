@@ -37,7 +37,6 @@ vi.mock('../../api/useJobTrackerAPI', () => ({
 }));
 
 vi.mock('react-chartjs-2', () => ({
-    Bar: () => <div>Bar chart</div>,
     Line: () => <div>Line chart</div>,
 }));
 
@@ -107,6 +106,28 @@ describe('signed-in dashboard attention navigation', () => {
 
     afterEach(() => {
         vi.resetAllMocks();
+    });
+
+    test.each([
+        ['Offer', 2],
+        ['Rejected', 3],
+    ] as const)('opens applications with the exact %s roadmap filter', async (status, count) => {
+        apiMocks.listApplications.mockResolvedValue([]);
+        apiMocks.getDashboardApplicationSummary.mockResolvedValue({
+            statusCounts: [{ job_status: status, count: String(count) }],
+            interviewedApplicationCount: 0,
+        });
+        renderDashboardRoutes();
+
+        await userEvent.click(
+            await screen.findByRole('button', {
+                name: `${status}: ${count} applications`,
+            })
+        );
+
+        expect(await screen.findByTestId('application-list-state')).toHaveTextContent(
+            JSON.stringify({ applicationJobStatus: status })
+        );
     });
 
     test('opens Add Interview with the selected application in route state', async () => {
@@ -283,8 +304,12 @@ describe('signed-in dashboard attention navigation', () => {
         expect(await screen.findByText('Application marked as Ghosted')).toBeInTheDocument();
         await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
         expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
-        expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
-        expect(screen.getByRole('img', { name: 'Closed outcomes. Ghosted: 1' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('list', {
+                name: 'Application pipeline. Applied: 0, Interview: 0, Offer: 0, Accepted: 0',
+            })
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Ghosted: 1 application' })).toBeInTheDocument();
     });
 
     test('keeps the stale application unchanged and shows an error toast when Mark as Ghosted fails', async () => {
@@ -315,8 +340,13 @@ describe('signed-in dashboard attention navigation', () => {
         ).toBeInTheDocument();
         await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
         expect(action).toBeInTheDocument();
-        expect(screen.getByRole('img', { name: 'Application pipeline. Applied: 1' })).toBeInTheDocument();
-        expect(screen.getByText('No closed outcomes yet.')).toBeInTheDocument();
+        expect(
+            screen.getByRole('list', {
+                name: 'Application pipeline. Applied: 1, Interview: 0, Offer: 0, Accepted: 0',
+            })
+        ).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Ghosted: 0 applications' })).toBeInTheDocument();
     });
 
     test('marks an unanswered post-interview follow-up as Ghosted through the existing status endpoint', async () => {
@@ -353,7 +383,11 @@ describe('signed-in dashboard attention navigation', () => {
         expect(await screen.findByText('Application marked as Ghosted')).toBeInTheDocument();
         await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
         expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
-        expect(screen.getByText('No applications in the pipeline yet.')).toBeInTheDocument();
-        expect(screen.getByRole('img', { name: 'Closed outcomes. Ghosted: 1' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('list', {
+                name: 'Application pipeline. Applied: 0, Interview: 0, Offer: 0, Accepted: 0',
+            })
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Ghosted: 1 application' })).toBeInTheDocument();
     });
 });

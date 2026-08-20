@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import AuthLayout from '../../../components/authLayout/AuthLayout';
 import AuthRequestInfo from '../../../components/authRequestInfo/AuthRequestInfo';
 import Icon from '../../../components/icon/Icon';
+import BrandMark from '../../../components/brandMark/BrandMark';
 import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
 import PrimaryButton from '../../../components/button/PrimaryButton';
 import type { SubmitEvent } from 'react';
@@ -56,7 +57,7 @@ const SignIn = () => {
     return (
         <AuthLayout>
             <div className={styles.card}>
-                <Icon name='briefcase' className={styles.logoIcon} />
+                <BrandMark className={styles.logoIcon} size='lg' />
                 <h2 className={styles.title}>Sign in to Job Tracker</h2>
                 <form onSubmit={handleSignIn}>
                     <label htmlFor='email'>Email</label>

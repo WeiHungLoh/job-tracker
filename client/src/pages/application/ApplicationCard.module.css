@@ -84,9 +84,8 @@
     padding: 14px;
     font-size: var(--fontSizeBodyCompact);
     border-radius: var(--radiusControl);
-    border: 2px solid var(--colorNotesBorder);
+    border: 1px solid var(--colorNotesBorder);
     background-color: var(--colorNotesBg);
-    box-shadow: 2px 2px 10px var(--colorNotesShadow);
     resize: none;
     outline: none;
     box-sizing: border-box;

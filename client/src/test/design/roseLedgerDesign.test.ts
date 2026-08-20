@@ -98,7 +98,6 @@ const expectedBoxShadowDeclarations = {
     'src/components/authProductIntro/AuthProductIntro.module.css': ['box-shadow: none;', 'box-shadow: none;'],
     'src/components/formPage/FormPage.module.css': ['box-shadow: 0 0 0 3px var(--colorPrimaryFocusShadow);'],
     'src/components/navbar/Navbar.module.css': [
-        'box-shadow: 0 2px 8px var(--colorControlShadow);',
         'box-shadow: inset 0 0 0 1px var(--colorControlBorder);',
         'box-shadow: 0 1px 2px var(--colorControlShadow);',
         'box-shadow: 0 3px 8px var(--colorControlShadow);',
@@ -111,28 +110,17 @@ const expectedBoxShadowDeclarations = {
         '-webkit-box-shadow: 0 0 0 1000px #fff inset !important;',
         '-webkit-box-shadow: 0 0 0 1000px #2a2a36 inset !important;',
     ],
-    'src/pages/application/ApplicationCard.module.css': [
-        'box-shadow: 2px 2px 10px var(--colorNotesShadow);',
-        'box-shadow: none;',
-    ],
+    'src/pages/application/ApplicationCard.module.css': ['box-shadow: none;'],
     'src/pages/application/applicationBoard/ApplicationBoard.module.css': [
         'box-shadow: 0 0 0 4px color-mix(in srgb, var(--boardStatusColor) 15%, transparent);',
         'box-shadow: 0 8px 20px var(--colorAuthCardShadow);',
         'box-shadow: 0 12px 26px var(--colorAuthCardShadow);',
         'box-shadow: 0 18px 36px var(--colorAuthCardShadow);',
     ],
-    'src/pages/interview/InterviewCard.module.css': [
-        'box-shadow: 2px 2px 10px var(--colorNotesShadow);',
-        'box-shadow: none;',
-    ],
+    'src/pages/interview/InterviewCard.module.css': ['box-shadow: none;'],
     'src/pages/authentication/Authentication.module.css': [
         'box-shadow: 0 20px 48px var(--colorAuthCardShadow);',
         'box-shadow: 0 0 0 3px var(--colorPrimaryFocusShadow);',
-    ],
-    'src/pages/userGuide/UserGuide.module.css': [
-        'box-shadow: 0 14px 38px var(--colorGuideHeaderShadow);',
-        'box-shadow: 0 10px 28px var(--colorStatIconBg);',
-        'box-shadow: 0 8px 22px var(--colorGuideTipShadow);',
     ],
 };
 
@@ -834,7 +822,13 @@ describe('Rose Ledger visual contract', () => {
         expect(fallbackCss).toMatch(/\.brandLine\s*\{[^}]*border:\s*0;/s);
         expect(fallbackCss).toMatch(/\.routeLabel\s*\{[^}]*font-size:\s*var\(--fontSizeControl\);/s);
         expect(fallbackCss).toMatch(/\.message\s*\{[^}]*margin:\s*var\(--spaceControl\) auto 0;/s);
-        expect(fallbackCss).toMatch(/\.routeMoving \.ticket\s*\{[^}]*animation:\s*ticketRoute/s);
+        expect(fallbackCss).toMatch(/\.genericRoute\.routeMoving \.ticket\s*\{[^}]*animation:\s*ticketRoute/s);
+        expect(fallbackCss).toMatch(
+            /\.applicationRoute\.routeMoving \.ticket\s*\{[^}]*animation:\s*applicationTicketRoute/s
+        );
+        expect(fallbackCss).toMatch(
+            /@keyframes applicationTicketRoute[\s\S]*?0%\s*\{[^}]*opacity:\s*0;[^}]*translate\(42px, 90px\)[\s\S]*?6%,\s*8%\s*\{[^}]*opacity:\s*1;[^}]*translate\(42px, 90px\)[\s\S]*?31%\s*\{[^}]*opacity:\s*1;[^}]*translate\(150px, 27px\)[\s\S]*?55%\s*\{[^}]*opacity:\s*1;[^}]*translate\(270px, 81px\)[\s\S]*?82%,\s*90%\s*\{[^}]*opacity:\s*1;[^}]*translate\(376px, 21px\)[\s\S]*?96%\s*\{[^}]*opacity:\s*0;[^}]*translate\(376px, 21px\)[\s\S]*?96\.01%,\s*100%\s*\{[^}]*opacity:\s*0;[^}]*translate\(42px, 90px\)/s
+        );
         expect(fallbackCss).toMatch(
             /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ticket\s*\{[^}]*animation:\s*none;/s
         );
@@ -1566,6 +1560,120 @@ describe('Rose Ledger visual contract', () => {
         expect(interviewCard).not.toMatch(/\.navigationLink\s*\{[^}]*display:\s*inline-flex/s);
     });
 
+    it('keeps roadmap status groups explicit and preserves their narrow types through visibility controls', () => {
+        const statusGroups = readSource('src/pages/application/applicationStatusGroups.ts');
+        const visibilityHook = readSource('src/pages/dashboard/charts/jobSearchRoadmap/useStatusChartVisibility.ts');
+        const statusLegend = readSource('src/pages/dashboard/charts/jobSearchRoadmap/StatusLegend.tsx');
+        const roadmap = readSource('src/pages/dashboard/charts/jobSearchRoadmap/JobSearchRoadmap.tsx');
+
+        expect(statusGroups).toContain(
+            "export type ApplicationPipelineStatus = 'Applied' | 'Interview' | 'Offer' | 'Accepted';"
+        );
+        expect(statusGroups).toContain(
+            "export type ClosedOutcomeStatus = 'Rejected' | 'Withdrawn' | 'Ghosted' | 'Declined';"
+        );
+        expect(statusGroups).toContain(
+            'export const APPLICATION_PIPELINE_STATUSES: readonly ApplicationPipelineStatus[]'
+        );
+        expect(statusGroups).toContain('export const CLOSED_OUTCOME_STATUSES: readonly ClosedOutcomeStatus[]');
+        expect(statusGroups).not.toContain('(typeof APPLICATION_PIPELINE_STATUSES)[number]');
+        expect(statusGroups).not.toContain('(typeof CLOSED_OUTCOME_STATUSES)[number]');
+        expect(visibilityHook).toContain('<Status extends JobStatus>');
+        expect(statusLegend).toContain('<Status extends JobStatus>');
+        expect(statusLegend).not.toContain("'bar'");
+        expect(roadmap).not.toContain('as ClosedOutcomeStatus[]');
+    });
+
+    it('does not retain bar-chart helpers after replacing both status bar charts', () => {
+        const chartConfig = readSource('src/pages/dashboard/charts/applicationsTrend/chartConfig.ts');
+
+        expect(chartConfig).not.toContain('getStatusBarTooltipPlacement');
+        expect(chartConfig).not.toContain('statusBarTooltipPlugin');
+        expect(chartConfig).not.toContain('createStatusBarChartData');
+        expect(chartConfig).not.toContain('createStatusBarChartOptions');
+        expect(chartConfig).not.toContain('createInteractiveStatusBarChartOptions');
+        expect(chartConfig).not.toContain('getClickedJobStatus');
+        expect(chartConfig).toContain('TREND_SERIES_COLORS');
+        expect(chartConfig).not.toContain('STATUS_COLORS');
+        ['Accepted', 'Declined', 'Ghosted', 'Offer', 'Rejected', 'Withdrawn'].forEach((status) => {
+            expect(chartConfig).not.toContain(`${status}:`);
+        });
+    });
+
+    it('keeps chart helpers with their sole feature owners after roadmap consolidation', () => {
+        const trendConfigPath = 'src/pages/dashboard/charts/applicationsTrend/chartConfig.ts';
+        const roadmapLegendPath = 'src/pages/dashboard/charts/jobSearchRoadmap/StatusLegend.tsx';
+        const roadmapVisibilityPath = 'src/pages/dashboard/charts/jobSearchRoadmap/useStatusChartVisibility.ts';
+
+        [trendConfigPath, roadmapLegendPath, roadmapVisibilityPath].forEach((path) => {
+            expect(existsSync(resolve(clientRoot, path))).toBe(true);
+        });
+        [
+            'src/pages/dashboard/charts/shared/chartConfig.ts',
+            'src/pages/dashboard/charts/shared/StatusLegend.tsx',
+            'src/pages/dashboard/charts/shared/StatusLegend.module.css',
+            'src/pages/dashboard/charts/shared/useStatusChartVisibility.ts',
+        ].forEach((path) => {
+            expect(existsSync(resolve(clientRoot, path))).toBe(false);
+        });
+    });
+
+    it('keeps the Job Search Roadmap marker geometry fixed and responsively scaled', () => {
+        const roadmap = readSource('src/pages/dashboard/charts/jobSearchRoadmap/JobSearchRoadmap.tsx');
+        const roadmapCss = readSource('src/pages/dashboard/charts/jobSearchRoadmap/JobSearchRoadmap.module.css');
+
+        expect(roadmap).toContain('PIPELINE_ROAD_PATH');
+        expect(roadmap).toContain("viewBox='0 0 72 96'");
+        expect(roadmap).toContain("data-pin-part='stem'");
+        expect(roadmap).toContain("data-pin-part='bubble'");
+        expect(roadmap).toContain("data-pin-part='foot'");
+        expect(roadmap).toContain("y1='58'");
+        expect(roadmap.indexOf("data-pin-part='stem'")).toBeLessThan(roadmap.indexOf("data-pin-part='bubble'"));
+        expect(roadmap).not.toContain('className={styles.terrain}');
+        expect(roadmap).toContain('Select A Marker To Open Applications With That Status.');
+        expect(roadmapCss).toContain('--pipeline-pin-width: 60px;');
+        expect(roadmapCss).toContain('--pipeline-pin-height: 80px;');
+        expect(roadmapCss).toContain('--outcome-marker-height: 120px;');
+        expect(roadmapCss).toContain('height: clamp(270px, 24vw, 320px);');
+        expect(roadmapCss).not.toMatch(/\.card\s*>\s*header/);
+        expect(roadmapCss).not.toContain('.terrain');
+        expect(roadmapCss).toMatch(/\.zeroCount\s*\{[^}]*opacity:\s*0\.2;/s);
+        expect(roadmapCss).not.toContain('.zeroCount .pipelinePin');
+        expect(roadmapCss).toMatch(/\.roadCenter\s*\{[^}]*stroke-dasharray:\s*3 5;/s);
+        expect(roadmapCss).toMatch(
+            /\.pipelineSection\s*\{[^}]*margin-top:\s*var\(--spaceSection\);[^}]*padding-bottom:\s*var\(--spaceControl\);/s
+        );
+        expect(roadmapCss).toMatch(/\.pipelineMap\s*\{[^}]*margin-top:\s*0;/s);
+        expect(roadmapCss).toMatch(
+            /\.outcomeMap\s*\{[^}]*height:\s*calc\(var\(--outcome-marker-height\) \+ 10px\);[^}]*margin-top:\s*var\(--spaceCard\);/s
+        );
+        expect(roadmapCss).toMatch(
+            /\.outcome\s*\{[^}]*top:\s*50%;[^}]*height:\s*var\(--outcome-marker-height\);[^}]*transform:\s*translate\(-50%, -50%\) scale\(1\);/s
+        );
+        expect(roadmapCss).toMatch(
+            /\.legends\s*\{[^}]*margin:\s*var\(--spaceControl\) calc\(-1 \* var\(--spaceSection\)\) calc\(-1 \* var\(--spaceSection\)\);/s
+        );
+        expect(roadmapCss).toMatch(
+            /\.sectionCount\s*\{[^}]*display:\s*inline-flex;[^}]*min-width:\s*22px;[^}]*height:\s*22px;[^}]*border-radius:\s*var\(--radiusPill\);[^}]*background:\s*var\(--colorStatIconBg\);[^}]*color:\s*var\(--colorTintText\);[^}]*font-size:\s*var\(--fontSizeMicro\);/s
+        );
+        expect(roadmapCss).toMatch(/\.closedSectionHidden\s*\{[^}]*max-height:\s*0;[^}]*border-top-width:\s*0;/s);
+        expect(roadmapCss).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?\.closedSection:not\(\.closedSectionHidden\)\s*\{[^}]*padding-top:\s*var\(--spaceSection\);/s
+        );
+        expect(roadmapCss).toMatch(
+            /@media \(max-width: 768px\)[\s\S]*?--pipeline-pin-width:\s*52px;[\s\S]*?--pipeline-pin-height:\s*69px;[\s\S]*?--outcome-marker-height:\s*108px;/s
+        );
+        expect(roadmapCss).toMatch(
+            /@media \(max-width: 340px\)[\s\S]*?--pipeline-pin-width:\s*44px;[\s\S]*?--pipeline-pin-height:\s*58px;[\s\S]*?--outcome-marker-height:\s*90px;/s
+        );
+        expect(roadmapCss).toMatch(
+            /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pipelineStage[\s\S]*?transition:\s*none;/s
+        );
+        expect(roadmapCss).not.toContain('box-shadow');
+        expect(roadmapCss).not.toContain('linear-gradient');
+        expect(roadmapCss).not.toContain('radial-gradient');
+    });
+
     it('does not expand the existing linear-gradient inventory', () => {
         expect(countsByFile(/linear-gradient\(/g)).toEqual(expectedLinearGradientCounts);
     });
@@ -1697,16 +1805,36 @@ describe('Rose Ledger visual contract', () => {
         );
     });
 
-    it('uses the product header briefcase treatment on both account cards', () => {
-        const authentication = readSource('src/pages/authentication/Authentication.module.css');
-        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+    it('uses one shared solid briefcase mark across product surfaces', () => {
+        const brandMarkPath = 'src/components/brandMark/BrandMark.tsx';
+        const brandMarkCssPath = 'src/components/brandMark/BrandMark.module.css';
 
-        expect(authIntro).toMatch(
-            /\.productBrandIcon\s*\{[^}]*background-color:\s*var\(--colorPrimary\);[^}]*color:\s*var\(--colorBtnPrimaryText\);/s
+        expect(existsSync(resolve(clientRoot, brandMarkPath))).toBe(true);
+        expect(existsSync(resolve(clientRoot, brandMarkCssPath))).toBe(true);
+        if (!existsSync(resolve(clientRoot, brandMarkPath)) || !existsSync(resolve(clientRoot, brandMarkCssPath))) {
+            return;
+        }
+
+        const brandMark = readSource(brandMarkPath);
+        const brandMarkCss = readSource(brandMarkCssPath);
+        const owners = [
+            'src/components/navbar/Navbar.tsx',
+            'src/pages/demo/components/demoNavbar/DemoNavbar.tsx',
+            'src/components/authProductIntro/AuthProductIntro.tsx',
+            'src/components/fallbackScreen/FallbackScreen.tsx',
+            'src/pages/authentication/signIn/SignIn.tsx',
+            'src/pages/authentication/signUp/SignUp.tsx',
+        ].map(readSource);
+
+        expect(brandMark).toContain("<Icon name='briefcase'");
+        expect(brandMarkCss).toMatch(
+            /\.brandMark\s*\{[^}]*border:\s*0;[^}]*background-color:\s*var\(--colorPrimary\);[^}]*color:\s*var\(--colorBtnPrimaryText\);/s
         );
-        expect(authentication).toMatch(
-            /\.logoIcon\s*\{[^}]*border:\s*0;[^}]*background-color:\s*var\(--colorPrimary\);[^}]*color:\s*var\(--colorBtnPrimaryText\);/s
-        );
+        expect(brandMarkCss).not.toContain('box-shadow');
+        owners.forEach((owner) => {
+            expect(owner).toContain('<BrandMark');
+            expect(owner).not.toContain("<Icon name='briefcase'");
+        });
     });
 
     it('keeps the box-shadow inventory bounded', () => {
@@ -1719,11 +1847,8 @@ describe('Rose Ledger visual contract', () => {
             '--colorPrimaryFocusShadow: rgb(241 53 109 / 12%);',
             '--colorControlShadow: rgb(74 40 54 / 10%);',
             '--colorAuthCardShadow: rgb(64 32 48 / 10%);',
-            '--colorNotesShadow: rgba(0, 0, 0, 0.1);',
             '--colorToastShadow: rgb(61 35 48 / 18%);',
             '--colorOfflineBannerShadow: rgb(0 64 133 / 16%);',
-            '--colorGuideHeaderShadow: rgb(91 42 59 / 8%);',
-            '--colorGuideTipShadow: rgb(91 42 59 / 6%);',
             '--colorStatIconBg: var(--colorTintSurfaceStrong);',
         ].forEach((declaration) => expect(lightCss).toContain(declaration));
 
@@ -1732,11 +1857,8 @@ describe('Rose Ledger visual contract', () => {
             '--colorPrimaryFocusShadow: rgb(244 80 126 / 16%);',
             '--colorControlShadow: rgb(0 0 0 / 30%);',
             '--colorAuthCardShadow: rgb(0 0 0 / 30%);',
-            '--colorNotesShadow: rgba(0, 0, 0, 0.3);',
             '--colorToastShadow: rgb(0 0 0 / 42%);',
             '--colorOfflineBannerShadow: rgb(0 0 0 / 28%);',
-            '--colorGuideHeaderShadow: rgb(0 0 0 / 20%);',
-            '--colorGuideTipShadow: rgb(0 0 0 / 20%);',
             '--colorStatIconBg: var(--colorTintSurfaceStrong);',
         ].forEach((declaration) => expect(darkCss).toContain(declaration));
 
@@ -1835,11 +1957,12 @@ describe('Rose Ledger visual contract', () => {
     it('keeps the Job Tracker wordmark and page messaging neutral while reserving rose for the brand mark', () => {
         const navbar = readSource('src/components/navbar/Navbar.module.css');
         const authProductIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+        const brandMark = readSource('src/components/brandMark/BrandMark.module.css');
 
         expect(navbar).toMatch(/\.brand\s*\{[^}]*color:\s*var\(--colorText\);/s);
         expect(authProductIntro).toMatch(/\.productBrand\s*\{[^}]*color:\s*var\(--colorText\);/s);
         expect(authProductIntro).toMatch(/\.heroRow h1\s*\{[^}]*color:\s*var\(--colorText\);/s);
-        expect(authProductIntro).toMatch(/\.productBrandIcon\s*\{[^}]*background-color:\s*var\(--colorPrimary\);/s);
+        expect(brandMark).toMatch(/\.brandMark\s*\{[^}]*background-color:\s*var\(--colorPrimary\);/s);
     });
 
     it('completes the shared button, form, and menu visual contracts', () => {
@@ -1892,11 +2015,69 @@ describe('Rose Ledger visual contract', () => {
         const muiTheme = readSource('src/components/theme/muiTheme.ts');
 
         expect(navbar).toContain('<h1>Job Tracker</h1>');
-        expect(demoNavbar).toContain('<h1>Demo</h1>');
+        expect(demoNavbar).toContain('<span className={styles.productName}>Job Tracker</span>');
+        expect(demoNavbar).toContain('<span className={styles.demoBadge}>Demo</span>');
         expect(fallback).toContain('<h1>{content.title}</h1>');
         expect(muiTheme).toContain('containedError:');
         expect(muiTheme).toContain("backgroundColor: 'var(--colorBtnDestructiveBg)'");
         expect(muiTheme).toContain("backgroundColor: 'var(--colorBtnDestructiveHoverBg)'");
+    });
+
+    it('keeps notes warm but flat and flattens the User Guide surfaces', () => {
+        const globalCss = readSource('src/index.css');
+        const applicationCss = readSource('src/pages/application/ApplicationCard.module.css');
+        const interviewCss = readSource('src/pages/interview/InterviewCard.module.css');
+        const guideCss = readSource('src/pages/userGuide/UserGuide.module.css');
+
+        expect(globalCss).toContain('--colorNotesBg: #fff7c8;');
+        expect(globalCss).toContain('--colorNotesBorder: #d5a82f;');
+        expect(globalCss).toContain('--colorNotesBg: #3b331d;');
+        expect(globalCss).toContain('--colorNotesBorder: #d1a93e;');
+        expect(globalCss).not.toContain('--colorNotesShadow:');
+        expect(globalCss).not.toContain('--colorGuideHeaderShadow:');
+        expect(globalCss).not.toContain('--colorGuideTipShadow:');
+        expect(applicationCss).toMatch(/\.notes textarea\s*\{[^}]*border:\s*1px solid var\(--colorNotesBorder\);/s);
+        expect(interviewCss).toMatch(/\.listNotes textarea\s*\{[^}]*border:\s*1px solid var\(--colorNotesBorder\);/s);
+        expect(guideCss).toMatch(/\.userGuide\s*\{[^}]*background:\s*var\(--colorPageBg\);/s);
+        expect(guideCss).not.toContain('box-shadow');
+    });
+
+    it('uses title case for shared form labels and common actions', () => {
+        const sources = [
+            'src/pages/application/jobApplication/addApplication/AddApplication.tsx',
+            'src/pages/demo/application/jobApplication/addApplication/DemoAddApplication.tsx',
+            'src/pages/interview/jobInterview/addInterview/AddInterview.tsx',
+            'src/pages/demo/interview/jobInterview/addInterview/DemoAddInterview.tsx',
+            'src/components/navbar/Navbar.tsx',
+            'src/pages/demo/components/demoNavbar/DemoNavbar.tsx',
+            'src/components/authProductIntro/AuthProductIntro.tsx',
+            'src/pages/application/ApplicationCard.tsx',
+            'src/pages/demo/application/DemoApplicationCard.tsx',
+        ].map(readSource);
+        const combinedSource = sources.join('\n');
+
+        [
+            'Company Name',
+            'Job Title',
+            'Job Status',
+            'Job Location',
+            'Job Posting URL',
+            'Interview Date',
+            'Interview Location',
+            'Interview Type',
+            'Meeting URL',
+            'Additional Notes',
+            'Add Application',
+            'View Applications',
+            'Add Interview',
+            'View Interviews',
+            'Edit Status',
+            'Save Changes',
+            'Show Archived',
+            'Show Active',
+            'Exit Demo',
+            'Explore Demo',
+        ].forEach((copy) => expect(combinedSource).toContain(copy));
     });
 
     it('uses role-based radius tokens across shared app surfaces', () => {

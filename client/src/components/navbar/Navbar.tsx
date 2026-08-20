@@ -1,6 +1,7 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import Icon from '../icon/Icon';
+import BrandMark from '../brandMark/BrandMark';
 import PrimaryButton from '../button/PrimaryButton';
 import { routes } from '../../routes';
 import styles from './Navbar.module.css';
@@ -71,9 +72,7 @@ const Navbar = () => {
         <nav aria-label='Primary navigation' className={styles.navbar}>
             <div className={styles.navbarContent}>
                 <div className={styles.brand}>
-                    <span className={styles.brandIcon}>
-                        <Icon name='briefcase' size={17} />
-                    </span>
+                    <BrandMark />
                     <h1>Job Tracker</h1>
                 </div>
 
