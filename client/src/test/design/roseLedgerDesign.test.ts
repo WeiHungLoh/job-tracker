@@ -1640,6 +1640,35 @@ describe('Rose Ledger visual contract', () => {
         expect(roadmapCss).toMatch(/\.zeroCount\s*\{[^}]*opacity:\s*0\.2;/s);
         expect(roadmapCss).not.toContain('.zeroCount .pipelinePin');
         expect(roadmapCss).toMatch(/\.roadCenter\s*\{[^}]*stroke-dasharray:\s*3 5;/s);
+        expect(roadmapCss).toMatch(/\.roadContour\s*\{[^}]*stroke:\s*var\(--colorPrimary\);[^}]*opacity:\s*0\.1;/s);
+        expect(roadmapCss).toMatch(
+            /\.roadProgress\s*\{[^}]*stroke-dasharray:\s*0 100;[^}]*transition:[^}]*stroke-dasharray/s
+        );
+        expect(roadmapCss).toMatch(/\.roadProgress\s*\{[^}]*stroke:\s*var\(--colorPrimary\);/s);
+        [
+            ['Applied', '12 88'],
+            ['Interview', '38 62'],
+            ['Offer', '65 35'],
+            ['Accepted', '92 8'],
+        ].forEach(([status, routeLength]) => {
+            const interactiveRouteSelector = `.pipelineMap:has(.pipelineMarker:not(:disabled)[data-stage='${status}']:is(:hover, :focus-visible)) .roadProgress`;
+            expect(roadmapCss).toContain(interactiveRouteSelector);
+            expect(roadmapCss).toMatch(
+                new RegExp(
+                    `\\.pipelineMap:has\\(\\.pipelineMarker:not\\(:disabled\\)\\[data-stage='${status}'\\]:is\\(:hover, :focus-visible\\)\\) \\.roadProgress\\s*\\{[^}]*stroke-dasharray:\\s*${routeLength};`,
+                    's'
+                )
+            );
+            expect(roadmapCss).not.toMatch(
+                new RegExp(
+                    `\\.pipelineMap:has\\(\\.pipelineMarker:not\\(:disabled\\)\\[data-stage='${status}'\\]:is\\(:hover, :focus-visible\\)\\) \\.roadProgress\\s*\\{[^}]*stroke\\s*:`,
+                    's'
+                )
+            );
+        });
+        expect(roadmapCss).toMatch(
+            /\.pipelineMarker:disabled,\s*\.outcomeMarker:disabled\s*\{[^}]*cursor:\s*default;/s
+        );
         expect(roadmapCss).toMatch(
             /\.pipelineSection\s*\{[^}]*margin-top:\s*var\(--spaceSection\);[^}]*padding-bottom:\s*var\(--spaceControl\);/s
         );
@@ -1665,6 +1694,9 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(roadmapCss).toMatch(
             /@media \(max-width: 340px\)[\s\S]*?--pipeline-pin-width:\s*44px;[\s\S]*?--pipeline-pin-height:\s*58px;[\s\S]*?--outcome-marker-height:\s*90px;/s
+        );
+        expect(roadmapCss).toMatch(
+            /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.roadProgress[\s\S]*?transition:\s*none;/s
         );
         expect(roadmapCss).toMatch(
             /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pipelineStage[\s\S]*?transition:\s*none;/s

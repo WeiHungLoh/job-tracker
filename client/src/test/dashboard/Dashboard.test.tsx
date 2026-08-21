@@ -366,6 +366,22 @@ describe('Dashboard V2', () => {
         expect(onStatusSelect).not.toHaveBeenCalled();
     });
 
+    test('layers fixed contour echoes and an interactive route over the complete pipeline road', () => {
+        render(<JobSearchRoadmap statusCounts={[statusCount('Applied', 1)]} isLoading={false} />);
+
+        const roadPath = screen.getByTestId('pipeline-road').getAttribute('d');
+        const contourPaths = screen.getAllByTestId('pipeline-road-contour');
+
+        expect(contourPaths).toHaveLength(2);
+        expect(contourPaths.map((path) => path.getAttribute('d'))).toEqual([roadPath, roadPath]);
+        expect(contourPaths.map((path) => path.getAttribute('transform'))).toEqual([
+            'translate(0 -5)',
+            'translate(0 5)',
+        ]);
+        expect(screen.getByTestId('pipeline-road-progress')).toHaveAttribute('d', roadPath);
+        expect(screen.getByTestId('pipeline-road-progress')).toHaveAttribute('pathLength', '100');
+    });
+
     test('normalizes pipeline marker and endpoint anchors to the road viewBox height', () => {
         render(<JobSearchRoadmap statusCounts={[statusCount('Applied', 1)]} isLoading={false} />);
 
@@ -441,17 +457,25 @@ describe('Dashboard V2', () => {
         expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected', 'Withdrawn', 'Ghosted', 'Declined']);
     });
 
-    test('navigates from pipeline and closed markers but never from legend controls', async () => {
+    test('navigates only from non-zero markers and never from zero-count markers or legend controls', async () => {
         const onStatusSelect = vi.fn();
         render(
             <JobSearchRoadmap
-                statusCounts={[statusCount('Offer', 0), statusCount('Rejected', 1)]}
+                statusCounts={[statusCount('Offer', 2), statusCount('Rejected', 1)]}
                 isLoading={false}
                 onStatusSelect={onStatusSelect}
             />
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'Offer: 0 applications' }));
+        const zeroCountPipelineMarker = screen.getByRole('button', { name: 'Applied: 0 applications' });
+        const zeroCountClosedMarker = screen.getByRole('button', { name: 'Ghosted: 0 applications' });
+        expect(zeroCountPipelineMarker).toBeDisabled();
+        expect(zeroCountClosedMarker).toBeDisabled();
+        await userEvent.click(zeroCountPipelineMarker);
+        await userEvent.click(zeroCountClosedMarker);
+        expect(onStatusSelect).not.toHaveBeenCalled();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Offer: 2 applications' }));
         await userEvent.click(screen.getByRole('button', { name: 'Rejected: 1 application' }));
         expect(onStatusSelect).toHaveBeenNthCalledWith(1, 'Offer');
         expect(onStatusSelect).toHaveBeenNthCalledWith(2, 'Rejected');

@@ -206,11 +206,31 @@ const JobSearchRoadmap = ({ statusCounts, hasError = false, isLoading, onRetry, 
                                     viewBox='0 0 100 80'
                                 >
                                     <g>
+                                        <path
+                                            className={styles.roadContour}
+                                            d={PIPELINE_ROAD_PATH}
+                                            data-testid='pipeline-road-contour'
+                                            transform='translate(0 -5)'
+                                        />
+                                        <path
+                                            className={styles.roadContour}
+                                            d={PIPELINE_ROAD_PATH}
+                                            data-testid='pipeline-road-contour'
+                                            transform='translate(0 5)'
+                                        />
+                                    </g>
+                                    <g>
                                         <path className={styles.roadEdge} d={PIPELINE_ROAD_PATH} />
                                         <path
                                             className={styles.roadSurface}
                                             d={PIPELINE_ROAD_PATH}
                                             data-testid='pipeline-road'
+                                            pathLength='100'
+                                        />
+                                        <path
+                                            className={styles.roadProgress}
+                                            d={PIPELINE_ROAD_PATH}
+                                            data-testid='pipeline-road-progress'
                                             pathLength='100'
                                         />
                                         <path className={styles.roadCenter} d={PIPELINE_ROAD_PATH} pathLength='100' />
@@ -264,7 +284,7 @@ const JobSearchRoadmap = ({ statusCounts, hasError = false, isLoading, onRetry, 
                                             >
                                                 <MarkerControl
                                                     className={styles.pipelineMarker}
-                                                    disabled={isHidden}
+                                                    disabled={isHidden || isZeroCount}
                                                     label={getMarkerLabel(status, count)}
                                                     onSelect={onStatusSelect}
                                                     status={status}
@@ -317,7 +337,7 @@ const JobSearchRoadmap = ({ statusCounts, hasError = false, isLoading, onRetry, 
                                             >
                                                 <MarkerControl
                                                     className={styles.outcomeMarker}
-                                                    disabled={isHidden}
+                                                    disabled={isHidden || isZeroCount}
                                                     label={getMarkerLabel(status, count)}
                                                     onSelect={onStatusSelect}
                                                     status={status}

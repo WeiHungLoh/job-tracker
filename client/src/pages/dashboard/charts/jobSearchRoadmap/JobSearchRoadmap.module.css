@@ -74,13 +74,21 @@
     overflow: visible;
 }
 
+.roadContour,
 .roadEdge,
 .roadSurface,
+.roadProgress,
 .roadCenter {
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
+}
+
+.roadContour {
+    stroke: var(--colorPrimary);
+    stroke-width: 1;
+    opacity: 0.1;
 }
 
 .roadEdge {
@@ -93,10 +101,34 @@
     stroke-width: 18;
 }
 
+.roadProgress {
+    stroke: var(--colorPrimary);
+    stroke-dasharray: 0 100;
+    stroke-width: 9;
+    opacity: 0.55;
+    transition: stroke-dasharray var(--motionDurationStandard) var(--motionEasingEmphasized);
+}
+
 .roadCenter {
     stroke: color-mix(in srgb, var(--colorCardBg) 82%, var(--colorText));
     stroke-dasharray: 3 5;
     stroke-width: 1.4;
+}
+
+.pipelineMap:has(.pipelineMarker:not(:disabled)[data-stage='Applied']:is(:hover, :focus-visible)) .roadProgress {
+    stroke-dasharray: 12 88;
+}
+
+.pipelineMap:has(.pipelineMarker:not(:disabled)[data-stage='Interview']:is(:hover, :focus-visible)) .roadProgress {
+    stroke-dasharray: 38 62;
+}
+
+.pipelineMap:has(.pipelineMarker:not(:disabled)[data-stage='Offer']:is(:hover, :focus-visible)) .roadProgress {
+    stroke-dasharray: 65 35;
+}
+
+.pipelineMap:has(.pipelineMarker:not(:disabled)[data-stage='Accepted']:is(:hover, :focus-visible)) .roadProgress {
+    stroke-dasharray: 92 8;
 }
 
 .pipelineList,
@@ -143,6 +175,11 @@
 
 .pipelineMarker[role='img'],
 .outcomeMarker[role='img'] {
+    cursor: default;
+}
+
+.pipelineMarker:disabled,
+.outcomeMarker:disabled {
     cursor: default;
 }
 
@@ -199,15 +236,15 @@
     white-space: nowrap;
 }
 
-.pipelineMarker:hover,
-.pipelineMarker:focus-visible,
-.outcomeMarker:hover,
-.outcomeMarker:focus-visible {
+.pipelineMarker:not(:disabled):hover,
+.pipelineMarker:not(:disabled):focus-visible,
+.outcomeMarker:not(:disabled):hover,
+.outcomeMarker:not(:disabled):focus-visible {
     transform: scale(1.035);
 }
 
-.pipelineMarker:focus-visible,
-.outcomeMarker:focus-visible {
+.pipelineMarker:not(:disabled):focus-visible,
+.outcomeMarker:not(:disabled):focus-visible {
     border-radius: var(--radiusControl);
     outline: 2px solid var(--colorPrimaryFocusOutline);
     outline-offset: 3px;
@@ -626,6 +663,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .roadProgress,
     .pipelineStage,
     .pipelineMarker,
     .closedSection,
