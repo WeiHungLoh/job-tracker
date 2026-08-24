@@ -1,5 +1,5 @@
-import { fireEvent, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import UserGuide from '../../pages/userGuide/UserGuide';
 import { routes } from '../../routes';
@@ -24,15 +24,22 @@ const sectionTitles = [
     'Account and appearance',
 ] as const;
 
-const renderGuide = () =>
+const LocationProbe = () => {
+    const location = useLocation();
+    return <output data-testid='guide-location'>{`${location.pathname}${location.hash}`}</output>;
+};
+
+const renderGuide = (initialEntry: string = routes.userGuide) =>
     render(
-        <MemoryRouter initialEntries={[routes.userGuide]}>
+        <MemoryRouter initialEntries={[initialEntry]}>
             <UserGuide />
+            <LocationProbe />
         </MemoryRouter>
     );
 
 describe('UserGuide', () => {
     beforeEach(() => {
+        localStorage.removeItem('theme');
         vi.mocked(loadDemoRoute).mockClear();
     });
 
@@ -71,12 +78,86 @@ describe('UserGuide', () => {
         expect(document.getElementById('dashboard-panel')).not.toBeVisible();
     });
 
+    test('renders guide discovery controls and concise section summaries', () => {
+        renderGuide();
+
+        expect(screen.getByRole('searchbox', { name: 'Search the User Guide' })).toBeInTheDocument();
+        expect(screen.getByText('11 sections')).toBeInTheDocument();
+        expect(screen.getByText('Add, capture, organise and update your applications')).toBeInTheDocument();
+    });
+
+    test('filters sections using nested guide topics and reports an empty result', async () => {
+        renderGuide();
+
+        const search = screen.getByRole('searchbox', { name: 'Search the User Guide' });
+
+        await userEvent.type(search, 'counteroffer');
+
+        expect(screen.getByText('1 section')).toBeInTheDocument();
+        const offerComparisonButton = screen.getByRole('button', { name: 'Offer Comparison' });
+        await waitFor(() => expect(offerComparisonButton).toHaveAttribute('aria-expanded', 'true'));
+        expect(screen.getByTestId('guide-location')).toHaveTextContent(`${routes.userGuide}#offer-comparison`);
+        expect(screen.queryByRole('button', { name: 'Applications' })).not.toBeInTheDocument();
+
+        await userEvent.clear(search);
+        await userEvent.type(search, 'topic that does not exist');
+
+        expect(screen.getByText('0 sections')).toBeInTheDocument();
+        expect(screen.getByText('No guide sections match your search.')).toBeInTheDocument();
+    });
+
+    test('does not add a page-level appearance control', () => {
+        renderGuide();
+
+        expect(screen.queryByRole('button', { name: /Switch to (dark|light) mode/ })).not.toBeInTheDocument();
+    });
+
+    test('opens and positions the matching section from a subtopic hash', () => {
+        renderGuide(`${routes.userGuide}#quick-capture`);
+
+        expect(screen.getByRole('button', { name: 'Applications' })).toHaveAttribute('aria-expanded', 'true');
+        expect(screen.getByRole('heading', { name: 'Quick Capture from a job posting' })).toHaveAttribute(
+            'id',
+            'quick-capture'
+        );
+    });
+
+    test('updates the URL when opening and closing a guide section', async () => {
+        renderGuide();
+
+        const gettingStartedButton = screen.getByRole('button', { name: 'Getting started' });
+        await userEvent.click(gettingStartedButton);
+
+        expect(screen.getByTestId('guide-location')).toHaveTextContent(`${routes.userGuide}#getting-started`);
+
+        await userEvent.click(gettingStartedButton);
+
+        expect(screen.getByTestId('guide-location')).toHaveTextContent(routes.userGuide);
+    });
+
+    test('keeps long guide sections as plain accordion content without a topic navigator', async () => {
+        renderGuide();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Applications' }));
+        const applicationsPanel = document.getElementById('applications-panel')!;
+
+        expect(within(applicationsPanel).getByRole('heading', { name: 'Application statuses' })).toBeVisible();
+        expect(within(applicationsPanel).queryByText('On this page')).not.toBeInTheDocument();
+        expect(
+            within(applicationsPanel).queryByRole('navigation', { name: 'Applications topics' })
+        ).not.toBeInTheDocument();
+    });
+
     test('covers current application, interview, offer and demo workflows', async () => {
         renderGuide();
 
         await userEvent.click(screen.getByRole('button', { name: 'Applications' }));
         const applicationsPanel = document.getElementById('applications-panel');
         expect(applicationsPanel).toBeVisible();
+        const applicationSteps = within(applicationsPanel!).getByRole('list', {
+            name: 'Add an application steps',
+        });
+        expect(within(applicationSteps).getAllByRole('listitem')).toHaveLength(3);
         expect(within(applicationsPanel!).getByRole('link', { name: 'Save to Job Tracker' })).toBeInTheDocument();
         expect(applicationsPanel).toHaveTextContent(/List and Board/i);
         expect(applicationsPanel).toHaveTextContent(/Withdrawn:/i);

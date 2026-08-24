@@ -25,6 +25,7 @@ export type IconName =
     | 'lock'
     | 'notes'
     | 'pin'
+    | 'search'
     | 'success'
     | 'undo'
     | 'visibility'

@@ -2074,6 +2074,42 @@ describe('Rose Ledger visual contract', () => {
         expect(guideCss).not.toContain('box-shadow');
     });
 
+    it('keeps the User Guide compact, grouped, responsive, and within shared controls', () => {
+        const guideCss = readSource('src/pages/userGuide/UserGuide.module.css');
+
+        expect(guideCss).not.toContain('.topControls');
+        expect(guideCss).toMatch(/\.backButton\s*\{[^}]*margin-bottom:\s*24px;/s);
+        expect(guideCss).not.toContain('.appearanceButton');
+        expect(guideCss).toMatch(/\.header\s*\{[^}]*border:\s*0;/s);
+        expect(guideCss).toMatch(/\.header\s*\{[^}]*background-color:\s*transparent;/s);
+        expect(guideCss).toMatch(/\.searchControl\s*\{[^}]*min-height:\s*44px;/s);
+        expect(guideCss).toMatch(/\.searchControl\s*\{[^}]*border:\s*1px solid var\(--colorInputBorder\);/s);
+        expect(guideCss).toMatch(/\.searchControl\s*\{[^}]*border-radius:\s*var\(--radiusControl\);/s);
+        expect(guideCss).toMatch(/\.searchControl\s*\{[^}]*background(?:-color)?:\s*var\(--colorInputBg\);/s);
+        expect(guideCss).toMatch(
+            /\.searchControl:focus-within\s*\{[^}]*border-color:\s*var\(--colorPrimary\);[^}]*outline:\s*3px solid var\(--colorPrimaryFocusShadow\);[^}]*outline-offset:\s*0;/s
+        );
+        expect(guideCss).toMatch(/\.accordion\s*\{[^}]*overflow:\s*clip;/s);
+        expect(guideCss).toMatch(/\.accordion\s*\{[^}]*border:\s*1px solid var\(--guideBorder\);/s);
+        expect(guideCss).toMatch(/\.accordion\s*\{[^}]*border-radius:\s*var\(--radiusCard\);/s);
+        expect(guideCss).toMatch(/\.accordion\s*\{[^}]*background-color:\s*var\(--colorCardBg\);/s);
+        expect(guideCss).toMatch(/\.accordionItem\s*\{[^}]*border:\s*0;/s);
+        expect(guideCss).toMatch(
+            /\.accordionItem\s*\+\s*\.accordionItem\s*\{[^}]*border-top:\s*1px solid var\(--guideBorder\);/s
+        );
+        expect(guideCss).toMatch(/\.accordionButton\.accordionButton\s*\{[^}]*min-height:\s*66px;/s);
+        expect(guideCss).toMatch(
+            /@media \(max-width:\s*600px\)[\s\S]*\.accordionButton\.accordionButton\s*\{[^}]*min-height:\s*62px;/s
+        );
+        expect(guideCss).toMatch(
+            /@media \(max-width:\s*600px\)[\s\S]*\.sectionSummary\s*\{[^}]*display:\s*-webkit-box;[^}]*-webkit-line-clamp:\s*2;[^}]*white-space:\s*normal;/s
+        );
+        expect(guideCss).toMatch(
+            /\.accordionPanel h3:not\(:first-child\)\s*\{[^}]*padding-top:\s*18px;[^}]*border-top:\s*1px solid var\(--guideBorder\);/s
+        );
+        expect(guideCss).not.toMatch(/\.tip\s*\{/);
+    });
+
     it('uses title case for shared form labels and common actions', () => {
         const sources = [
             'src/pages/application/jobApplication/addApplication/AddApplication.tsx',
