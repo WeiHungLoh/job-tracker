@@ -48,7 +48,7 @@ describe('UserGuide', () => {
 
         expect(screen.getByTestId('ug')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Job Tracker User Guide' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Back to sign in' })).toHaveAttribute('href', routes.signIn);
+        expect(screen.getByRole('link', { name: 'Back to Job Tracker' })).toHaveAttribute('href', routes.signIn);
 
         sectionTitles.forEach((title) => {
             const button = screen.getByRole('button', { name: title });
@@ -86,24 +86,62 @@ describe('UserGuide', () => {
         expect(screen.getByText('Add, capture, organise and update your applications')).toBeInTheDocument();
     });
 
-    test('filters sections using nested guide topics and reports an empty result', async () => {
+    test('searches the complete guide copy and opens the only matching section', async () => {
+        renderGuide();
+
+        const search = screen.getByRole('searchbox', { name: 'Search the User Guide' });
+        await userEvent.type(search, 'formula');
+
+        expect(screen.getByText('1 section')).toBeInTheDocument();
+        const exportingButton = screen.getByRole('button', { name: 'Exporting, sorting and display' });
+        await waitFor(() => expect(exportingButton).toHaveAttribute('aria-expanded', 'true'));
+        expect(document.getElementById('exporting-sorting-display-panel')).toHaveTextContent(
+            /spreadsheet apps do not treat ordinary notes as formulas/i
+        );
+        expect(screen.getByTestId('guide-location')).toHaveTextContent(`${routes.userGuide}#exporting-sorting-display`);
+    });
+
+    test('includes text rendered by embedded guide controls in search', async () => {
+        renderGuide();
+
+        await userEvent.type(screen.getByRole('searchbox', { name: 'Search the User Guide' }), 'Save to Job Tracker');
+
+        expect(screen.getByText('1 section')).toBeInTheDocument();
+        const applicationsButton = screen.getByRole('button', { name: 'Applications' });
+        await waitFor(() => expect(applicationsButton).toHaveAttribute('aria-expanded', 'true'));
+        expect(
+            within(document.getElementById('applications-panel')!).getByRole('link', { name: 'Save to Job Tracker' })
+        ).toBeVisible();
+    });
+
+    test('filters sections using nested guide topics and offers useful empty-search recovery', async () => {
         renderGuide();
 
         const search = screen.getByRole('searchbox', { name: 'Search the User Guide' });
 
-        await userEvent.type(search, 'counteroffer');
+        await userEvent.type(search, 'decisions and export');
 
         expect(screen.getByText('1 section')).toBeInTheDocument();
         const offerComparisonButton = screen.getByRole('button', { name: 'Offer Comparison' });
         await waitFor(() => expect(offerComparisonButton).toHaveAttribute('aria-expanded', 'true'));
         expect(screen.getByTestId('guide-location')).toHaveTextContent(`${routes.userGuide}#offer-comparison`);
         expect(screen.queryByRole('button', { name: 'Applications' })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Clear search' })).toBeInTheDocument();
 
         await userEvent.clear(search);
         await userEvent.type(search, 'topic that does not exist');
 
         expect(screen.getByText('0 sections')).toBeInTheDocument();
         expect(screen.getByText('No guide sections match your search.')).toBeInTheDocument();
+        expect(
+            screen.getByText('Try a feature or task, such as applications, calendar, counteroffer or password.')
+        ).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Clear search' }));
+
+        expect(search).toHaveValue('');
+        expect(screen.getByText('11 sections')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Clear search' })).not.toBeInTheDocument();
     });
 
     test('does not add a page-level appearance control', () => {
@@ -175,10 +213,10 @@ describe('UserGuide', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Demo mode' }));
         const demoPanel = document.getElementById('demo-mode-panel');
-        expect(within(demoPanel!).getByRole('link', { name: 'Explore Demo' })).toHaveAttribute(
-            'href',
-            routes.demoViewApplications
-        );
+        const demoLink = within(demoPanel!).getByRole('link', { name: 'Explore Demo' });
+        expect(demoLink).toHaveAttribute('href', routes.demoViewApplications);
+        expect(demoLink).toHaveAttribute('target', '_blank');
+        expect(demoLink).toHaveAttribute('rel', 'noreferrer');
         expect(demoPanel).toHaveTextContent(/resets when you refresh the page/i);
     });
 
@@ -187,6 +225,9 @@ describe('UserGuide', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Getting started' }));
         const demoLink = screen.getByRole('link', { name: 'Explore Demo' });
+
+        expect(demoLink).toHaveAttribute('target', '_blank');
+        expect(demoLink).toHaveAttribute('rel', 'noreferrer');
 
         fireEvent.pointerEnter(demoLink);
         fireEvent.focus(demoLink);

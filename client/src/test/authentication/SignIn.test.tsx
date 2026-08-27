@@ -178,7 +178,10 @@ describe('User sign in flow', () => {
             'href',
             routes.demoViewApplications
         );
-        expect(screen.getByRole('link', { name: /see how it works/i })).toHaveAttribute('href', '/user-guide');
+        expect(screen.getByRole('link', { name: /see how it works/i })).toHaveAttribute(
+            'href',
+            `${routes.userGuide}#getting-started`
+        );
         expect(screen.queryByRole('button', { name: /back to product/i })).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
         expect(document.querySelector('#auth-account-panel')).toHaveAttribute('inert');

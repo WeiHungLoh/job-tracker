@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Children, isValidElement, useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import PrimaryButton from '../../components/button/PrimaryButton';
 import Icon from '../../components/icon/Icon';
@@ -45,6 +45,8 @@ const guideSections: readonly UserGuideSection[] = [
                         onFocus={preloadDemoRoute}
                         onPointerDown={preloadDemoRoute}
                         onPointerEnter={preloadDemoRoute}
+                        rel='noreferrer'
+                        target='_blank'
                         to={routes.demoViewApplications}
                     >
                         Explore Demo
@@ -131,7 +133,16 @@ const guideSections: readonly UserGuideSection[] = [
         title: 'Applications',
         summary: 'Add, capture, organise and update your applications',
         icon: 'briefcase',
-        searchTerms: ['Quick Capture', 'bookmark', 'List', 'Board', 'statuses', 'pin', 'job posting'],
+        searchTerms: [
+            'Quick Capture',
+            'Save to Job Tracker',
+            'bookmark',
+            'List',
+            'Board',
+            'statuses',
+            'pin',
+            'job posting',
+        ],
         subtopics: [
             { id: 'add-application', label: 'Add an application' },
             { id: 'quick-capture', label: 'Quick Capture' },
@@ -490,6 +501,8 @@ const guideSections: readonly UserGuideSection[] = [
                         onFocus={preloadDemoRoute}
                         onPointerDown={preloadDemoRoute}
                         onPointerEnter={preloadDemoRoute}
+                        rel='noreferrer'
+                        target='_blank'
                         to={routes.demoViewApplications}
                     >
                         Explore Demo
@@ -542,6 +555,32 @@ const guideSections: readonly UserGuideSection[] = [
     },
 ];
 
+const getGuideText = (node: ReactNode): string =>
+    Children.toArray(node)
+        .map((child) => {
+            if (typeof child === 'string' || typeof child === 'number') {
+                return String(child);
+            }
+
+            return isValidElement<{ children?: ReactNode }>(child) ? getGuideText(child.props.children) : '';
+        })
+        .join(' ');
+
+const guideSearchText = new Map(
+    guideSections.map((section) => [
+        section.id,
+        [
+            section.title,
+            section.summary,
+            ...(section.searchTerms ?? []),
+            ...(section.subtopics ?? []).map(({ label }) => label),
+            getGuideText(section.content),
+        ]
+            .join(' ')
+            .toLocaleLowerCase(),
+    ])
+);
+
 const guideTargetSections = new Map<string, string>();
 
 guideSections.forEach((section) => {
@@ -571,17 +610,7 @@ const UserGuide = () => {
     const activeSectionId = activeTargetId ? guideTargetSections.get(activeTargetId) ?? null : null;
     const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase();
     const filteredSections = normalizedSearchQuery
-        ? guideSections.filter((section) =>
-              [
-                  section.title,
-                  section.summary,
-                  ...(section.searchTerms ?? []),
-                  ...(section.subtopics ?? []).map(({ label }) => label),
-              ]
-                  .join(' ')
-                  .toLocaleLowerCase()
-                  .includes(normalizedSearchQuery)
-          )
+        ? guideSections.filter((section) => guideSearchText.get(section.id)?.includes(normalizedSearchQuery))
         : guideSections;
     const soleMatchingSectionId =
         normalizedSearchQuery && filteredSections.length === 1 ? filteredSections[0].id : null;
@@ -635,7 +664,7 @@ const UserGuide = () => {
             <div className={styles.guideContainer}>
                 <Link className={styles.backButton} to={routes.signIn}>
                     <Icon name='arrowBack' />
-                    Back to sign in
+                    Back to Job Tracker
                 </Link>
                 <header className={styles.header}>
                     <span className={styles.headerIcon}>
@@ -647,7 +676,7 @@ const UserGuide = () => {
                     </div>
                 </header>
 
-                <label className={styles.searchControl}>
+                <div className={styles.searchControl}>
                     <Icon name='search' size={20} />
                     <input
                         aria-label='Search the User Guide'
@@ -656,7 +685,17 @@ const UserGuide = () => {
                         type='search'
                         value={searchQuery}
                     />
-                </label>
+                    {searchQuery ? (
+                        <button
+                            aria-label='Clear search'
+                            className={styles.clearSearchButton}
+                            onClick={() => setSearchQuery('')}
+                            type='button'
+                        >
+                            Clear
+                        </button>
+                    ) : null}
+                </div>
                 <p aria-live='polite' className={styles.resultCount}>
                     {resultLabel}
                 </p>
@@ -704,7 +743,10 @@ const UserGuide = () => {
                         })}
                     </div>
                 ) : (
-                    <p className={styles.emptyState}>No guide sections match your search.</p>
+                    <div className={styles.emptyState}>
+                        <p>No guide sections match your search.</p>
+                        <p>Try a feature or task, such as applications, calendar, counteroffer or password.</p>
+                    </div>
                 )}
             </div>
         </main>

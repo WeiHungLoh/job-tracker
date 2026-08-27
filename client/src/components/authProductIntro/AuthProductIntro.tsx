@@ -170,7 +170,7 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                                     onPointerDown={preloadUserGuideRoute}
                                     onPointerEnter={preloadUserGuideRoute}
                                     rel='noreferrer'
-                                    to={routes.userGuide}
+                                    to={`${routes.userGuide}#getting-started`}
                                     target='_blank'
                                 >
                                     See how it works <span aria-hidden='true'>→</span>

@@ -95,7 +95,7 @@ describe('AuthProductIntro demo action', () => {
         renderIntro();
 
         const guideLink = screen.getByRole('link', { name: /see how it works/i });
-        expect(guideLink).toHaveAttribute('href', routes.userGuide);
+        expect(guideLink).toHaveAttribute('href', `${routes.userGuide}#getting-started`);
         expect(guideLink).toHaveAttribute('target', '_blank');
         expect(guideLink).toHaveAttribute('rel', 'noreferrer');
     });

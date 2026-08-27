@@ -1788,6 +1788,16 @@ describe('Rose Ledger visual contract', () => {
         expect(authIntro).not.toContain('box-shadow: 0 18px 45px var(--colorAuthCardShadow);');
     });
 
+    it('underlines the complete landing-page guide link on hover', () => {
+        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+
+        expect(authIntro).toMatch(/\.guideLink\s*\{[^}]*position:\s*relative;/s);
+        expect(authIntro).toMatch(/\.guideLink:hover\s*\{[^}]*text-decoration:\s*none;/s);
+        expect(authIntro).toMatch(
+            /\.guideLink:hover::after\s*\{[^}]*position:\s*absolute;[^}]*right:\s*2px;[^}]*bottom:\s*7px;[^}]*left:\s*2px;[^}]*border-bottom:\s*1px solid currentColor;[^}]*content:\s*'';/s
+        );
+    });
+
     it('removes account translation and product fading for reduced motion', () => {
         const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
 
@@ -2089,6 +2099,10 @@ describe('Rose Ledger visual contract', () => {
         expect(guideCss).toMatch(
             /\.searchControl:focus-within\s*\{[^}]*border-color:\s*var\(--colorPrimary\);[^}]*outline:\s*3px solid var\(--colorPrimaryFocusShadow\);[^}]*outline-offset:\s*0;/s
         );
+        expect(guideCss).toMatch(
+            /\.clearSearchButton\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;[^}]*border:\s*0;[^}]*background:\s*transparent;[^}]*color:\s*var\(--guideAccentDark\);/s
+        );
+        expect(guideCss).toMatch(/\.searchControl input::-webkit-search-cancel-button\s*\{[^}]*display:\s*none;/s);
         expect(guideCss).toMatch(/\.accordion\s*\{[^}]*overflow:\s*clip;/s);
         expect(guideCss).toMatch(/\.accordion\s*\{[^}]*border:\s*1px solid var\(--guideBorder\);/s);
         expect(guideCss).toMatch(/\.accordion\s*\{[^}]*border-radius:\s*var\(--radiusCard\);/s);
@@ -2108,6 +2122,16 @@ describe('Rose Ledger visual contract', () => {
             /\.accordionPanel h3:not\(:first-child\)\s*\{[^}]*padding-top:\s*18px;[^}]*border-top:\s*1px solid var\(--guideBorder\);/s
         );
         expect(guideCss).not.toMatch(/\.tip\s*\{/);
+    });
+
+    it('underlines the complete User Guide back link on hover', () => {
+        const guideCss = readSource('src/pages/userGuide/UserGuide.module.css');
+
+        expect(guideCss).toMatch(/\.backButton\s*\{[^}]*position:\s*relative;/s);
+        expect(guideCss).toMatch(/\.backButton:hover\s*\{[^}]*text-decoration:\s*none;/s);
+        expect(guideCss).toMatch(
+            /\.backButton:hover::after\s*\{[^}]*position:\s*absolute;[^}]*right:\s*4px;[^}]*bottom:\s*8px;[^}]*left:\s*4px;[^}]*border-bottom:\s*1px solid currentColor;[^}]*content:\s*'';/s
+        );
     });
 
     it('uses title case for shared form labels and common actions', () => {
