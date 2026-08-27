@@ -191,6 +191,7 @@
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
+    border-radius: var(--radiusControl);
     background-color: transparent;
     color: var(--guideText);
     font-size: var(--fontSizeBody);

@@ -15,6 +15,10 @@ type RequestDetails = {
     url: string;
 };
 
+export type AuthenticatedRequestOptions = {
+    onUnauthenticated?: () => void;
+};
+
 const appendQueryValue = (query: URLSearchParams, field: string, value: unknown): void => {
     if (!Array.isArray(value)) {
         query.append(field, String(value));
@@ -207,7 +211,8 @@ const isUnauthorizedError = (error: unknown): error is JobTrackerAPIError => {
 
 export const makeAuthenticatedJobTrackerAPIRequest = async <TRequest extends APIRequest, TResponse>(
     request: TRequest,
-    config: EndpointConfigEntry
+    config: EndpointConfigEntry,
+    options: AuthenticatedRequestOptions = {}
 ): Promise<TResponse> => {
     try {
         return await makeJobTrackerAPIRequest<TRequest, TResponse>(request, config);
@@ -221,7 +226,7 @@ export const makeAuthenticatedJobTrackerAPIRequest = async <TRequest extends API
         await refreshAuthentication();
     } catch (error) {
         if (isUnauthorizedError(error)) {
-            redirectToSignIn();
+            (options.onUnauthenticated ?? redirectToSignIn)();
         }
         throw error;
     }
@@ -230,7 +235,7 @@ export const makeAuthenticatedJobTrackerAPIRequest = async <TRequest extends API
         return await makeJobTrackerAPIRequest<TRequest, TResponse>(request, config);
     } catch (error) {
         if (isUnauthorizedError(error)) {
-            redirectToSignIn();
+            (options.onUnauthenticated ?? redirectToSignIn)();
         }
         throw error;
     }

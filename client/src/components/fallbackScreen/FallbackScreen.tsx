@@ -3,6 +3,7 @@ import PrimaryButton from '../button/PrimaryButton';
 import BrandMark from '../brandMark/BrandMark';
 import { APPLICATION_PIPELINE_STATUSES } from '../../pages/application/applicationStatusGroups';
 import styles from './FallbackScreen.module.css';
+import { useEffect } from 'react';
 
 type FallbackContent = {
     actionLabel?: string;
@@ -85,6 +86,14 @@ const ROUTE_STATE_STYLES: Record<FallbackContent['routeState'], string> = {
     moving: styles.routeMoving,
     notFound: styles.notFound,
     routeError: styles.routeError,
+};
+
+const DOCUMENT_TITLES: Record<FallbackScreenVariant, string> = {
+    authenticationError: 'Session Error | Job Tracker',
+    loading: 'Checking Session | Job Tracker',
+    notFound: 'Page Not Found | Job Tracker',
+    pageLoading: 'Loading | Job Tracker',
+    routeError: 'Page Error | Job Tracker',
 };
 
 const FallbackRoute = ({ content, isLoading }: { content: FallbackContent; isLoading: boolean }) => {
@@ -172,9 +181,27 @@ const FallbackRoute = ({ content, isLoading }: { content: FallbackContent; isLoa
     );
 };
 
-const FallbackScreen = ({ variant = 'loading', onAction }: FallbackScreenProps) => {
+const FallbackScreen = ({
+    actionLabel,
+    variant = 'loading',
+    onAction,
+    onSecondaryAction,
+    secondaryActionLabel,
+}: FallbackScreenProps) => {
     const isLoading = variant === 'loading' || variant === 'pageLoading';
     const content = FALLBACK_CONTENT[variant];
+    const primaryActionLabel = actionLabel ?? content.actionLabel;
+    const hasPrimaryAction = Boolean(primaryActionLabel && onAction);
+    const hasSecondaryAction = Boolean(secondaryActionLabel && onSecondaryAction);
+
+    useEffect(() => {
+        const previousTitle = document.title;
+        document.title = DOCUMENT_TITLES[variant];
+
+        return () => {
+            document.title = previousTitle;
+        };
+    }, [variant]);
 
     return (
         <main className={styles.fallback} aria-live='polite' aria-busy={isLoading}>
@@ -187,10 +214,19 @@ const FallbackScreen = ({ variant = 'loading', onAction }: FallbackScreenProps) 
                 <div className={styles.copy}>
                     <h1>{content.title}</h1>
                     <p className={styles.message}>{content.message}</p>
-                    {content.actionLabel && onAction && (
-                        <PrimaryButton onClick={onAction} type='button'>
-                            {content.actionLabel}
-                        </PrimaryButton>
+                    {(hasPrimaryAction || hasSecondaryAction) && (
+                        <div className={styles.actions}>
+                            {hasPrimaryAction && (
+                                <PrimaryButton onClick={onAction} type='button'>
+                                    {primaryActionLabel}
+                                </PrimaryButton>
+                            )}
+                            {hasSecondaryAction && (
+                                <PrimaryButton onClick={onSecondaryAction} type='button' variant='secondary'>
+                                    {secondaryActionLabel}
+                                </PrimaryButton>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

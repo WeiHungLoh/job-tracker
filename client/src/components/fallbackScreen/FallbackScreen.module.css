@@ -219,7 +219,12 @@
     line-height: var(--lineHeightBody);
 }
 
-.copy > button {
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spaceControl);
     margin-top: var(--spaceCard);
 }
 

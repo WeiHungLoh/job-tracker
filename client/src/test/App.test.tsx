@@ -557,11 +557,12 @@ describe('App routing and authentication behavior', () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
-    test('redirects unknown demo routes to the demo application viewer', async () => {
+    test('shows demo recovery actions instead of redirecting an unknown demo route', async () => {
         renderRoute(`${routes.demoRoot}${routes.userGuide}`);
 
-        expect(await screen.findByText(/HorizonAI Labs/i, {}, { timeout: 5000 })).toBeInTheDocument();
-        expect(screen.queryByText(/Demo mode mirrors/i)).not.toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: /This page isn’t on the route/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Back to Demo' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
         expect(fetch).not.toHaveBeenCalled();
     });
 
@@ -658,12 +659,27 @@ describe('App routing and authentication behavior', () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
-    test('displays page 404 not found on unknown routes without checking authentication', () => {
+    test('gives signed-out visitors a public recovery path from unknown routes', async () => {
+        fetch.mockResolvedValueOnce(response(false, 401));
+        fetch.mockResolvedValueOnce(response(false, 401));
         renderRoute('/addassignment');
 
         expect(screen.getByRole('heading', { name: /This page isn’t on the route/i })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Back to Job Tracker' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-        expect(fetch).not.toHaveBeenCalled();
+        expect(document.title).toBe('Page Not Found | Job Tracker');
+        expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    test('gives authenticated visitors a direct applications recovery path from unknown routes', async () => {
+        renderRoute('/addassignment');
+
+        expect(await screen.findByRole('button', { name: 'View applications' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
+        expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/current`, {
+            method: 'GET',
+        });
     });
 
     test('displays the route-loading fallback when a route throws an error', async () => {

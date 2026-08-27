@@ -95,4 +95,41 @@ describe('FallbackScreen', () => {
         expect(screen.queryByText('Page loading')).not.toBeInTheDocument();
         expect(screen.queryByText('Opening Job Tracker')).not.toBeInTheDocument();
     });
+
+    test('supports contextual primary and secondary recovery actions', () => {
+        const onPrimaryAction = vi.fn();
+        const onSecondaryAction = vi.fn();
+
+        render(
+            <FallbackScreen
+                actionLabel='Back to Demo'
+                onAction={onPrimaryAction}
+                onSecondaryAction={onSecondaryAction}
+                secondaryActionLabel='Go back'
+                variant='notFound'
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Back to Demo' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Go back' }));
+
+        expect(onPrimaryAction).toHaveBeenCalledOnce();
+        expect(onSecondaryAction).toHaveBeenCalledOnce();
+    });
+
+    test.each([
+        ['authenticationError', 'Session Error | Job Tracker'],
+        ['loading', 'Checking Session | Job Tracker'],
+        ['notFound', 'Page Not Found | Job Tracker'],
+        ['pageLoading', 'Loading | Job Tracker'],
+        ['routeError', 'Page Error | Job Tracker'],
+    ] as const)('sets and restores the document title for %s', (variant, expectedTitle) => {
+        const previousTitle = document.title;
+        const { unmount } = render(<FallbackScreen variant={variant} />);
+
+        expect(document.title).toBe(expectedTitle);
+
+        unmount();
+        expect(document.title).toBe(previousTitle);
+    });
 });

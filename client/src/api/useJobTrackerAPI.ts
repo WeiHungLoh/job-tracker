@@ -105,6 +105,7 @@ import type {
 } from '../pages/offerDecision/models';
 import { endpointConfig } from './endpointConfig';
 import { makeAuthenticatedJobTrackerAPIRequest, makeJobTrackerAPIRequest } from './api';
+import type { AuthenticatedRequestOptions } from './api';
 import { useMemo } from 'react';
 
 export const useJobTrackerAPI = () => {
@@ -123,11 +124,11 @@ export const useJobTrackerAPI = () => {
             );
         };
 
-        const verify = async () => {
+        const verify = async (options?: AuthenticatedRequestOptions) => {
             return await makeAuthenticatedJobTrackerAPIRequest<
                 VerifyAuthenticationRequest,
                 VerifyAuthenticationResponse
-            >(null, endpointConfig.authentication.verify);
+            >(null, endpointConfig.authentication.verify, options);
         };
 
         const logout = async () => {

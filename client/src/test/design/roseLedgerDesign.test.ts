@@ -2113,6 +2113,9 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(guideCss).toMatch(/\.accordionButton\.accordionButton\s*\{[^}]*min-height:\s*66px;/s);
         expect(guideCss).toMatch(
+            /\.accordionButton\.accordionButton\s*\{[^}]*border-radius:\s*var\(--radiusControl\);/s
+        );
+        expect(guideCss).toMatch(
             /@media \(max-width:\s*600px\)[\s\S]*\.accordionButton\.accordionButton\s*\{[^}]*min-height:\s*62px;/s
         );
         expect(guideCss).toMatch(

@@ -469,6 +469,31 @@ describe('makeJobTrackerAPIRequest', () => {
         expect(fetch).toHaveBeenCalledTimes(2);
     });
 
+    test('lets a caller handle an unauthenticated request without forcing a page redirect', async () => {
+        const onUnauthenticated = vi.fn();
+        fetch
+            .mockResolvedValueOnce(response({ message: 'Access token expired.' }, false, 401))
+            .mockResolvedValueOnce(response({ message: 'Refresh token expired.' }, false, 401));
+
+        await expect(
+            makeAuthenticatedJobTrackerAPIRequest<null, never>(
+                null,
+                {
+                    url: '/authentication/sessions/current',
+                    verb: 'GET',
+                },
+                { onUnauthenticated }
+            )
+        ).rejects.toEqual(
+            expect.objectContaining<JobTrackerAPIError>({
+                message: 'Refresh token expired.',
+                status: 401,
+            })
+        );
+
+        expect(onUnauthenticated).toHaveBeenCalledOnce();
+    });
+
     test('shares one refresh request between concurrent authenticated requests', async () => {
         let protectedRequestCount = 0;
         let refreshRequestCount = 0;

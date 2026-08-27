@@ -8,6 +8,7 @@ import DemoViewArchivedInterview from '../../interview/archivedInterview/viewArc
 import DemoViewInterview from '../../interview/jobInterview/viewInterview/DemoViewInterview';
 import { routes } from '../../../../routes';
 import DemoOfferDecisionPage from '../../offerDecision/DemoOfferDecisionPage';
+import InvalidPage from '../../../invalidPage/InvalidPage';
 
 const getDemoChildPath = (path: string) => path.replace(`${routes.demoRoot}/`, '');
 
@@ -35,7 +36,7 @@ const DemoRoutes = () => (
         <Route path={demoPaths.archivedInterviews} element={<DemoViewArchivedInterview />} />
         <Route path={demoPaths.offerDecisions} element={<DemoOfferDecisionPage archived={false} />} />
         <Route path={demoPaths.archivedOfferDecisions} element={<DemoOfferDecisionPage archived />} />
-        <Route path='*' element={<Navigate to={demoPaths.viewApplications} replace />} />
+        <Route path='*' element={<InvalidPage context='demo' />} />
     </Routes>
 );
 
