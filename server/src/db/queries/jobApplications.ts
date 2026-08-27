@@ -21,14 +21,14 @@ export const insertJobApplication = async (
     userId: number,
     companyName: string,
     jobTitle: string,
-    applicationDate: string,
+    applicationDate: string | null,
     jobStatus: JobStatus,
     jobLocation: string,
     jobURL: string
 ): Promise<void> => {
     await pool.query(
         `INSERT INTO job_applications (user_id, company_name, job_title, application_date, job_status, job_location, job_posting_url)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        VALUES ($1, $2, $3, COALESCE($4::timestamptz, CURRENT_TIMESTAMP), $5, $6, $7)`,
         [userId, companyName, jobTitle, applicationDate, jobStatus, jobLocation, jobURL]
     );
 };

@@ -297,7 +297,7 @@ const AttentionCenter = ({
                             <h3>Unable to load Needs Attention.</h3>
                             {onRetry && (
                                 <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
-                                    Try Again
+                                    Try again
                                 </PrimaryButton>
                             )}
                         </div>

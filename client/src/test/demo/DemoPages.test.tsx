@@ -68,7 +68,7 @@ const renderDemo = (children: ReactNode, initialEntries: DemoInitialEntry[] = [r
 const saveFirstDemoApplicationAsOffer = () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit Status' })[0]);
     fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Offer' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 };
 
 const waitForScheduledApplicationAutoScroll = async () => {
@@ -393,7 +393,7 @@ describe('demo page interactions', () => {
             })
         ).toHaveTextContent('Add to Apple Calendar / Outlook (.ics)');
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(
             screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' })
         );
@@ -480,7 +480,7 @@ describe('demo page interactions', () => {
 
         await userEvent.click(screen.getAllByRole('button', { name: 'Edit Status' })[0]);
         fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Offer' } });
-        await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         expect(screen.getAllByText(/Job Status: Offer/i).length).toBeGreaterThan(0);
         await waitFor(() =>
             expect(document.getElementById(firstApplicationId || '')?.className).toContain('highlighted')
@@ -497,7 +497,7 @@ describe('demo page interactions', () => {
 
         await userEvent.click(screen.getAllByRole('button', { name: 'Edit Status' })[0]);
         fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Interview' } });
-        await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await act(async () => {
             await new Promise((resolve) => setTimeout(resolve, 150));
         });
@@ -702,7 +702,7 @@ describe('demo page interactions', () => {
         expect(await screen.findByText('Job application unarchived')).toBeInTheDocument();
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all archived applications/i }));
         expect(await screen.findByText('Job applications deleted')).toBeInTheDocument();
         expect(await screen.findByRole('heading', { name: 'No archived applications yet' })).toBeInTheDocument();
@@ -743,7 +743,7 @@ describe('demo page interactions', () => {
             );
             expect(displayedCompanyNames.length).toBeGreaterThan(0);
 
-            await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+            await userEvent.click(screen.getByRole('button', { name: 'More…' }));
             const csv = getExportCsvText('Export filtered applications as CSV');
             let previousCompanyIndex = -1;
             for (const companyName of displayedCompanyNames) {
@@ -782,7 +782,7 @@ describe('demo page interactions', () => {
             );
 
             expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
-            expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
             expect(screen.getByRole('region', { name: label }).children).toHaveLength(1);
         }
     );
@@ -980,7 +980,7 @@ describe('demo page interactions', () => {
         );
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all interviews/i }));
         await waitFor(() => expect(mockConfirm).toHaveBeenCalled());
         expect(await screen.findByText('Interviews deleted')).toBeInTheDocument();
@@ -1146,7 +1146,7 @@ describe('demo page interactions', () => {
         renderDemo(<DemoViewArchivedInterview />, [routes.demoArchivedInterviews]);
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all archived interviews/i }));
 
         expect(await screen.findByRole('heading', { name: 'No archived interviews yet' })).toBeInTheDocument();
@@ -1219,7 +1219,7 @@ describe('demo page interactions', () => {
         );
         expect(screen.getByRole('region', { name: 'Active interviews' })).toHaveAttribute('data-layout', 'board');
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         const csv = getExportCsvText('Export filtered interviews as CSV');
         expect(csv).toContain('Recruiter follow-up');
         expect(csv).not.toContain('System design interview');
@@ -1256,14 +1256,14 @@ describe('demo page interactions', () => {
         fireEvent.click(screen.getByRole('checkbox', { name: 'Past Interviews' }));
 
         expect(await screen.findByRole('heading', { name: 'No interviews match your filters' })).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
         expect(
             screen.getByRole('region', { name: 'Demo archived interview view and management controls' }).children
         ).toHaveLength(1);
         await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
 
         expect(await screen.findByRole('region', { name: 'Archived interviews' })).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(getExportCsvText('Export filtered interviews as CSV')).toContain('Archived with rejected application.');
         expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toHaveAttribute(
             'download',
@@ -1279,7 +1279,7 @@ describe('demo page interactions', () => {
         renderDemo(<DemoViewApplication />);
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all applications/i }));
         expect(await screen.findByRole('heading', { name: 'No active applications yet' })).toBeInTheDocument();
 
@@ -1302,7 +1302,7 @@ describe('demo page interactions', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Board' }));
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all applications/i }));
 
         expect(await screen.findByRole('heading', { name: 'No active applications yet' })).toBeInTheDocument();

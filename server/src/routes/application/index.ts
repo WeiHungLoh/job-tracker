@@ -65,7 +65,7 @@ router.post(
         if (
             companyName === undefined ||
             jobTitle === undefined ||
-            !isValidDate(appDate) ||
+            (appDate !== null && !isValidDate(appDate)) ||
             !isJobStatus(jobStatus) ||
             jobLocation === undefined ||
             jobURL === undefined
@@ -73,7 +73,7 @@ router.post(
             sendError(res, 422, 'Job application fields are missing, invalid, or too long.');
             return;
         }
-        if (isFutureDate(appDate)) {
+        if (appDate !== null && isFutureDate(appDate)) {
             sendError(res, 422, 'Application date cannot be in the future.');
             return;
         }
@@ -107,7 +107,7 @@ router.post(
                 req.user.id,
                 companyName,
                 jobTitle,
-                new Date(appDate).toISOString(),
+                appDate === null ? null : new Date(appDate).toISOString(),
                 jobStatus,
                 jobLocation,
                 jobURL

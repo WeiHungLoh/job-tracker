@@ -21,7 +21,7 @@ const MoreOptions = ({
         dropdownAriaLabel='More options'
         dropdownRole='group'
         id={id}
-        label='More...'
+        label='More…'
         triggerStyle='activity'
     >
         <div className={styles.options}>

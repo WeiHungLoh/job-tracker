@@ -95,7 +95,7 @@ const expectListCompanyOrder = (companyNames: string[]) => {
 };
 
 const getExportCsvText = async (): Promise<string> => {
-    await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More…' }));
     const href = screen.getByRole('link', { name: 'Export filtered applications as CSV' }).getAttribute('href') ?? '';
     const csvStart = href.indexOf(',');
 
@@ -218,7 +218,7 @@ describe('Archived job application viewing flow', () => {
         expect(screen.queryByRole('region', { name: 'Archived application board' })).not.toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'false');
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('button', { name: /delete all archived applications/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /unarchive all applications/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export filtered applications as CSV' })).toBeInTheDocument();
@@ -283,7 +283,7 @@ describe('Archived job application viewing flow', () => {
         const filterButton = screen.getByRole('button', { name: 'Filter by' });
         const sortButton = screen.getByRole('button', { name: 'Sort by' });
         const displayButton = screen.getByRole('button', { name: 'Display options' });
-        const moreButton = screen.getByRole('button', { name: 'More...' });
+        const moreButton = screen.getByRole('button', { name: 'More…' });
 
         expect(listButton.compareDocumentPosition(boardButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(boardButton.compareDocumentPosition(filterButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -1017,7 +1017,7 @@ describe('Archived job application viewing flow', () => {
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
 
         // Simulates user clicking delete button and clicking confirm delete
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all archived applications/i }));
 
         await waitFor(() =>
@@ -1060,7 +1060,7 @@ describe('Archived job application viewing flow', () => {
             </MemoryRouter>
         );
         await screen.findByText(/ABC Pte Ltd/i);
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: 'Unarchive all applications' }));
 
         expect(mockConfirm).toHaveBeenCalledWith(
@@ -1273,7 +1273,7 @@ describe('Archived job application viewing flow', () => {
         expect(
             await screen.findByRole('heading', { name: 'No archived applications match your filters' })
         ).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
         expect(
             screen.getByRole('region', { name: 'Archived application view and management controls' }).children
         ).toHaveLength(1);

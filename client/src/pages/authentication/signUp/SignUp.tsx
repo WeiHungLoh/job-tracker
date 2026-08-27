@@ -125,7 +125,7 @@ const SignUp = () => {
                     )}
 
                     <Link className={styles.authLink} to={routes.signIn}>
-                        Already have an account? Login here
+                        Already have an account? Sign in
                     </Link>
                 </form>
 

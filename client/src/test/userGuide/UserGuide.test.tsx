@@ -84,6 +84,7 @@ describe('UserGuide', () => {
         expect(screen.getByRole('searchbox', { name: 'Search the User Guide' })).toBeInTheDocument();
         expect(screen.getByText('11 sections')).toBeInTheDocument();
         expect(screen.getByText('Add, capture, organise and update your applications')).toBeInTheDocument();
+        expect(screen.getByText('Try again')).toBeInTheDocument();
     });
 
     test('searches the complete guide copy and opens the only matching section', async () => {
@@ -99,6 +100,26 @@ describe('UserGuide', () => {
             /spreadsheet apps do not treat ordinary notes as formulas/i
         );
         expect(screen.getByTestId('guide-location')).toHaveTextContent(`${routes.userGuide}#exporting-sorting-display`);
+    });
+
+    test('shows the matching guide sentence for each search result', async () => {
+        renderGuide();
+
+        await userEvent.type(screen.getByRole('searchbox', { name: 'Search the User Guide' }), 'counteroffer');
+
+        expect(screen.getByText('3 sections')).toBeInTheDocument();
+
+        const archivedExcerpt = screen.getByTestId('guide-search-excerpt-archived-records-deletion');
+        expect(archivedExcerpt).toHaveTextContent(
+            /Saved offer evaluations and counteroffer plans are kept as read-only records\./i
+        );
+        expect(within(archivedExcerpt).getByText(/counteroffer/i).tagName).toBe('MARK');
+
+        const exportingExcerpt = screen.getByTestId('guide-search-excerpt-exporting-sorting-display');
+        expect(exportingExcerpt).toHaveTextContent(
+            /Offer Comparison exports the sections you selected and includes counteroffer plan details when they exist\./i
+        );
+        expect(within(exportingExcerpt).getByText(/counteroffer/i).tagName).toBe('MARK');
     });
 
     test('includes text rendered by embedded guide controls in search', async () => {

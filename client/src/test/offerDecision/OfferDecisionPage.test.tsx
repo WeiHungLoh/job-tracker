@@ -216,7 +216,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
 
         await waitFor(() =>
@@ -268,7 +268,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
 
         await waitFor(() => expect(mocks.downloadBulkIcsEvents).toHaveBeenCalledOnce());
@@ -304,7 +304,7 @@ describe('OfferDecisionPage', () => {
         });
         await screen.findByRole('heading', { name: 'Previous Evaluations' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
 
         await waitFor(() => expect(mocks.getActive).toHaveBeenCalledTimes(2));
@@ -324,7 +324,7 @@ describe('OfferDecisionPage', () => {
         });
         await screen.findByRole('heading', { name: 'Previous Evaluations' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
 
         await waitFor(() => expect(mocks.getActive).toHaveBeenCalledTimes(2));
@@ -341,7 +341,7 @@ describe('OfferDecisionPage', () => {
         });
         await screen.findByRole('heading', { name: 'Previous Evaluations' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' }));
 
         await waitFor(() => expect(mocks.showErrorToast).toHaveBeenCalledWith('Unable to load deadlines.'));
@@ -365,7 +365,7 @@ describe('OfferDecisionPage', () => {
         });
         await screen.findByRole('heading', { name: 'Previous Evaluations' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         const exportAction = screen.getByRole('button', {
             name: 'Export all active evaluated offer deadlines (.ics)',
         });
@@ -381,7 +381,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived />);
         await screen.findByRole('heading', { name: 'Archived Evaluated Offers' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
 
         expect(
             screen.queryByRole('button', { name: 'Export all active evaluated offer deadlines (.ics)' })
@@ -942,7 +942,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
 
         await waitFor(() => expect(mocks.deleteAllActiveEvaluations).toHaveBeenCalledOnce());
@@ -960,7 +960,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived />);
         await screen.findByRole('heading', { name: 'Archived Evaluated Offers' });
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
 
         await waitFor(() => expect(mocks.deleteAllArchivedEvaluations).toHaveBeenCalledOnce());
@@ -979,7 +979,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
 
-        fireEvent.click(screen.getByRole('button', { name: 'More...' }));
+        fireEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
 
         await waitFor(() => expect(mocks.showErrorToast).toHaveBeenCalledWith('Unable to delete these evaluations.'));

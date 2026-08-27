@@ -118,7 +118,7 @@ describe('Job interview viewer flow', () => {
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Interview view' })).toBeInTheDocument();
         expect(screen.queryByRole('region', { name: 'Application board' })).not.toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('button', { name: /delete all interviews/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toBeInTheDocument();
     });
@@ -664,7 +664,7 @@ describe('Job interview viewer flow', () => {
         // Simulates user confirming delete
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         // Simulates user clicking delete button and clicking confirm delete
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: 'Delete all interviews' }));
 
         await waitFor(() =>
@@ -988,7 +988,7 @@ describe('Job interview viewer flow', () => {
         expect(screen.queryByRole('article', { name: 'Future Company interview' })).not.toBeInTheDocument();
         expect(screen.queryByRole('article', { name: 'In Progress Company interview' })).not.toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         const csv = getExportCsvText();
         expect(csv).toContain('Ended Company');
         expect(csv).not.toContain('Future Company');
@@ -1056,7 +1056,7 @@ describe('Job interview viewer flow', () => {
 
         expect(await screen.findByRole('heading', { name: 'No interviews match your filters' })).toBeInTheDocument();
         expect(screen.getByText('Try showing all time filters to see every active interview.')).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
         expect(screen.getByRole('region', { name: 'Interview view and management controls' }).children).toHaveLength(1);
         await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
         expect(await screen.findByRole('article', { name: 'Ended Company interview' })).toBeInTheDocument();
@@ -1093,7 +1093,7 @@ describe('Job interview viewer flow', () => {
         );
 
         await screen.findByRole('article', { name: 'Past Company interview' });
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })).toBeDisabled();
     });
 });

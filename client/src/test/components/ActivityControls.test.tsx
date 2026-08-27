@@ -211,7 +211,7 @@ describe('ActivityControls', () => {
                     dropdownAriaLabel='Scrolling options'
                     dropdownRole='menu'
                     id='scrolling'
-                    label='More...'
+                    label='More…'
                     triggerStyle='activity'
                 >
                     <button role='menuitem' type='button'>
@@ -221,7 +221,7 @@ describe('ActivityControls', () => {
             </div>
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         const dropdown = screen.getByRole('menu', { name: 'Scrolling options' });
 
         await waitFor(() => expect(dropdown).toHaveAttribute('data-placement', 'top'));
@@ -236,7 +236,7 @@ describe('ActivityControls', () => {
                     dropdownAriaLabel='Overflow-safe options'
                     dropdownRole='menu'
                     id='overflow-safe'
-                    label='More...'
+                    label='More…'
                     renderDropdownInPortal
                     triggerStyle='activity'
                 >
@@ -247,7 +247,7 @@ describe('ActivityControls', () => {
             </div>
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('menu', { name: 'Overflow-safe options' }).parentElement).toBe(document.body);
     });
 
@@ -257,7 +257,7 @@ describe('ActivityControls', () => {
                 dropdownAriaLabel='Scrollable portal options'
                 dropdownRole='menu'
                 id='scrollable-portal'
-                label='More...'
+                label='More…'
                 renderDropdownInPortal
                 triggerStyle='activity'
             >
@@ -267,7 +267,7 @@ describe('ActivityControls', () => {
             </ControlDropdown>
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         const dropdown = screen.getByRole('menu', { name: 'Scrollable portal options' });
 
         fireEvent.scroll(dropdown);
@@ -289,7 +289,7 @@ describe('ActivityControls', () => {
                     dropdownAriaLabel='Portal scroll options'
                     dropdownRole='menu'
                     id='portal-scroll'
-                    label='More...'
+                    label='More…'
                     renderDropdownInPortal
                     triggerStyle='activity'
                 >
@@ -300,7 +300,7 @@ describe('ActivityControls', () => {
             </div>
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('menu', { name: 'Portal scroll options' })).toBeInTheDocument();
 
         fireEvent.scroll(screen.getByTestId('portal-scroll-boundary'));

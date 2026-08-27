@@ -146,7 +146,7 @@ const AddApplication = () => {
         const request: CreateApplicationRequest = {
             companyName: values.companyName,
             jobTitle: values.jobTitle,
-            appDate: values.applicationDate,
+            appDate: applicationDate === '' ? null : values.applicationDate,
             jobStatus,
             jobLocation: values.jobLocation,
             jobURL: values.jobURL,

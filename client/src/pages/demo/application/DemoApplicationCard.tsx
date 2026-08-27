@@ -142,7 +142,7 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                 {variant === 'job' ? (
                     <>
                         <PrimaryButton variant='secondary' onClick={() => props.onToggleStatusEditor(application)}>
-                            {props.isEditingStatus ? 'Save Changes' : 'Edit Status'}
+                            {props.isEditingStatus ? 'Save changes' : 'Edit Status'}
                         </PrimaryButton>
                         <PrimaryButton
                             isLoading={isDeleting}

@@ -159,7 +159,7 @@ const OfferEvaluationActionsMenu = ({
     if (isStatusUpdating) {
         return (
             <PrimaryButton aria-label={menuLabel} isLoading type='button' variant='secondary'>
-                More...
+                More…
             </PrimaryButton>
         );
     }
@@ -208,7 +208,7 @@ const OfferEvaluationActionsMenu = ({
             dropdownClassName={styles.cardActionDropdown}
             dropdownRole='menu'
             id={`offer-evaluation-${application.job_id}-more`}
-            label='More...'
+            label='More…'
             triggerAriaLabel={menuLabel}
             triggerClassName={styles.cardActionTrigger}
             triggerStyle='activity'

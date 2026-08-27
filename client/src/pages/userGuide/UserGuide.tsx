@@ -79,7 +79,7 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <p>
                     Each part loads on its own. If one part cannot load, the rest of the Dashboard stays available. Use
-                    <strong> Try Again</strong> on the part that needs to be reloaded.
+                    <strong> Try again</strong> on the part that needs to be reloaded.
                 </p>
 
                 <h3 id='needs-attention'>Needs Attention</h3>
@@ -566,6 +566,27 @@ const getGuideText = (node: ReactNode): string =>
         })
         .join(' ');
 
+const normalizeGuideText = (text: string) => text.replace(/\s+/g, ' ').trim();
+
+const getGuideContentSentences = (node: ReactNode): string[] =>
+    Children.toArray(node).flatMap((child) => {
+        if (!isValidElement<{ children?: ReactNode }>(child)) {
+            return [];
+        }
+
+        if (child.type === 'p' || child.type === 'li') {
+            const blockText = normalizeGuideText(getGuideText(child.props.children));
+            return (
+                blockText
+                    .match(/[^.!?]+(?:[.!?]+|$)/g)
+                    ?.map(normalizeGuideText)
+                    .filter(Boolean) ?? []
+            );
+        }
+
+        return getGuideContentSentences(child.props.children);
+    });
+
 const guideSearchText = new Map(
     guideSections.map((section) => [
         section.id,
@@ -580,6 +601,33 @@ const guideSearchText = new Map(
             .toLocaleLowerCase(),
     ])
 );
+
+const guideContentSentences = new Map(
+    guideSections.map((section) => [section.id, getGuideContentSentences(section.content)])
+);
+
+const getGuideSearchExcerpt = (section: UserGuideSection, normalizedSearchQuery: string) =>
+    guideContentSentences
+        .get(section.id)
+        ?.find((sentence) => sentence.toLocaleLowerCase().includes(normalizedSearchQuery)) ?? section.summary;
+
+const renderHighlightedSearchExcerpt = (excerpt: string, normalizedSearchQuery: string) => {
+    const matchIndex = excerpt.toLocaleLowerCase().indexOf(normalizedSearchQuery);
+
+    if (matchIndex < 0) {
+        return excerpt;
+    }
+
+    const matchEnd = matchIndex + normalizedSearchQuery.length;
+
+    return (
+        <>
+            {excerpt.slice(0, matchIndex)}
+            <mark className={styles.searchMatch}>{excerpt.slice(matchIndex, matchEnd)}</mark>
+            {excerpt.slice(matchEnd)}
+        </>
+    );
+};
 
 const guideTargetSections = new Map<string, string>();
 
@@ -705,6 +753,9 @@ const UserGuide = () => {
                         {filteredSections.map((section) => {
                             const isOpen = activeSectionId === section.id;
                             const panelId = `${section.id}-panel`;
+                            const searchExcerpt = normalizedSearchQuery
+                                ? getGuideSearchExcerpt(section, normalizedSearchQuery)
+                                : section.summary;
 
                             return (
                                 <section
@@ -725,8 +776,23 @@ const UserGuide = () => {
                                             </span>
                                             <span className={styles.sectionCopy}>
                                                 <span>{section.title}</span>
-                                                <span aria-hidden='true' className={styles.sectionSummary}>
-                                                    {section.summary}
+                                                <span
+                                                    aria-hidden='true'
+                                                    className={`${styles.sectionSummary} ${
+                                                        normalizedSearchQuery ? styles.sectionSearchExcerpt : ''
+                                                    }`}
+                                                    data-testid={
+                                                        normalizedSearchQuery
+                                                            ? `guide-search-excerpt-${section.id}`
+                                                            : undefined
+                                                    }
+                                                >
+                                                    {normalizedSearchQuery
+                                                        ? renderHighlightedSearchExcerpt(
+                                                              searchExcerpt,
+                                                              normalizedSearchQuery
+                                                          )
+                                                        : searchExcerpt}
                                                 </span>
                                             </span>
                                             <Icon

@@ -82,7 +82,7 @@ describe('Archived job interview viewer flow', () => {
         expect(screen.getByText(/hr/i)).toBeInTheDocument();
         expect(screen.getByRole('textbox', { name: 'Notes for ABC Pte Ltd' })).toHaveValue('Bring resume');
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('button', { name: /delete all archived interviews/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toBeInTheDocument();
     });
@@ -209,7 +209,7 @@ describe('Archived job interview viewer flow', () => {
         // Simulates user confirming delete
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         // Simulates user clicking delete button and clicking confirm delete
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: 'Delete all archived interviews' }));
 
         await waitFor(() =>
@@ -273,7 +273,7 @@ describe('Archived job interview viewer flow', () => {
 
         expect(await screen.findByRole('heading', { name: 'No interviews match your filters' })).toBeInTheDocument();
         expect(screen.getByText('Try showing all time filters to see every archived interview.')).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
         expect(
             screen.getByRole('region', { name: 'Archived interview view and management controls' }).children
         ).toHaveLength(1);
@@ -546,7 +546,7 @@ describe('Archived job interview viewer flow', () => {
             within(board).queryByRole('article', { name: 'Future Archived Company interview' })
         ).not.toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         const csv = getExportCsvText();
         expect(csv).toContain('Ended Archived Company');
         expect(csv).not.toContain('Future Archived Company');

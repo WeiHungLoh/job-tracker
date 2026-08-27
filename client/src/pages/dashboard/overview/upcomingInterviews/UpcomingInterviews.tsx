@@ -68,7 +68,7 @@ const UpcomingInterviews = ({
                         <p>Unable to load upcoming interviews.</p>
                         {onRetry && (
                             <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
-                                Try Again
+                                Try again
                             </PrimaryButton>
                         )}
                     </div>

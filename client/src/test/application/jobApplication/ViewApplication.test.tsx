@@ -153,7 +153,7 @@ const expectListCompanyOrder = (companyNames: string[]) => {
 };
 
 const getExportCsvText = async (): Promise<string> => {
-    await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+    await userEvent.click(screen.getByRole('button', { name: 'More…' }));
     const href = screen.getByRole('link', { name: 'Export filtered applications as CSV' }).getAttribute('href') ?? '';
     const csvStart = href.indexOf(',');
 
@@ -312,7 +312,7 @@ describe('Job application viewing flow', () => {
             'aria-checked',
             'false'
         );
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('button', { name: /delete all applications/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /archive all applications/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export filtered applications as CSV' })).toBeInTheDocument();
@@ -586,7 +586,7 @@ describe('Job application viewing flow', () => {
         await screen.findByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' });
         await userEvent.click(screen.getByRole('button', { name: 'Edit Status' }));
         await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
-        await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
         await waitFor(() => expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument());
         expect(fetch).toHaveBeenCalledWith(
@@ -612,7 +612,7 @@ describe('Job application viewing flow', () => {
         const filterButton = screen.getByRole('button', { name: 'Filter by' });
         const sortButton = screen.getByRole('button', { name: 'Sort by' });
         const displayButton = screen.getByRole('button', { name: 'Display options' });
-        const moreButton = screen.getByRole('button', { name: 'More...' });
+        const moreButton = screen.getByRole('button', { name: 'More…' });
 
         expect(listButton.compareDocumentPosition(boardButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(boardButton.compareDocumentPosition(filterButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -2685,7 +2685,7 @@ describe('Job application viewing flow', () => {
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
 
         // Simulates user clicking delete button and clicking confirm delete
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: /delete all applications/i }));
 
         await waitFor(() =>
@@ -2721,7 +2721,7 @@ describe('Job application viewing flow', () => {
         );
 
         await screen.findByText(/ABC Pte Ltd/i);
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         const options = screen.getByRole('link', { name: 'Export filtered applications as CSV' }).parentElement;
 
         expect(options).not.toBeNull();
@@ -2756,7 +2756,7 @@ describe('Job application viewing flow', () => {
             </MemoryRouter>
         );
         await screen.findByText(/ABC Pte Ltd/i);
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: 'Archive all applications' }));
 
         expect(mockConfirm).toHaveBeenCalledWith(
@@ -2798,7 +2798,7 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         const notesField = screen.getByRole('textbox', { name: 'Notes for ABC Pte Ltd' });
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await userEvent.click(screen.getByRole('button', { name: 'Archive all applications' }));
 
         expect(notesField).toBeDisabled();
@@ -2815,7 +2815,7 @@ describe('Job application viewing flow', () => {
             </MemoryRouter>
         );
         await screen.findByText(/ABC Pte Ltd/i);
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await clickConfirmedAction(screen.getByRole('button', { name: 'Archive all applications' }));
 
         expect(fetch).not.toHaveBeenCalledWith(
@@ -2842,7 +2842,7 @@ describe('Job application viewing flow', () => {
 
         expect(await screen.findByRole('heading', { name: 'No applications match your filters' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Sort by' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
         expect(screen.getByRole('region', { name: 'Application view and management controls' }).children).toHaveLength(
             1
         );
@@ -2866,7 +2866,7 @@ describe('Job application viewing flow', () => {
             </MemoryRouter>
         );
         await screen.findByText(/ABC Pte Ltd/i);
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await userEvent.click(screen.getByRole('button', { name: 'Delete all applications' }));
 
         expect(
@@ -2895,7 +2895,7 @@ describe('Job application viewing flow', () => {
             </MemoryRouter>
         );
         await screen.findByText(/ABC Pte Ltd/i);
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await userEvent.click(screen.getByRole('button', { name: 'Delete all applications' }));
 
         expect(await screen.findByRole('heading', { name: 'No active applications yet' })).toBeInTheDocument();

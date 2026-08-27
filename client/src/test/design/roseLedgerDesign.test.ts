@@ -1630,7 +1630,7 @@ describe('Rose Ledger visual contract', () => {
         expect(roadmap).toContain("y1='58'");
         expect(roadmap.indexOf("data-pin-part='stem'")).toBeLessThan(roadmap.indexOf("data-pin-part='bubble'"));
         expect(roadmap).not.toContain('className={styles.terrain}');
-        expect(roadmap).toContain('Select A Marker To Open Applications With That Status.');
+        expect(roadmap).toContain('Select a marker to open applications with that status.');
         expect(roadmapCss).toContain('--pipeline-pin-width: 60px;');
         expect(roadmapCss).toContain('--pipeline-pin-height: 80px;');
         expect(roadmapCss).toContain('--outcome-marker-height: 120px;');
@@ -2134,7 +2134,7 @@ describe('Rose Ledger visual contract', () => {
         );
     });
 
-    it('uses title case for shared form labels and common actions', () => {
+    it('uses established capitalization for shared form labels and common actions', () => {
         const sources = [
             'src/pages/application/jobApplication/addApplication/AddApplication.tsx',
             'src/pages/demo/application/jobApplication/addApplication/DemoAddApplication.tsx',
@@ -2164,12 +2164,44 @@ describe('Rose Ledger visual contract', () => {
             'Add Interview',
             'View Interviews',
             'Edit Status',
-            'Save Changes',
+            'Save changes',
             'Show Archived',
             'Show Active',
             'Exit Demo',
             'Explore Demo',
         ].forEach((copy) => expect(combinedSource).toContain(copy));
+    });
+
+    it('uses concise microcopy for recurring actions and dashboard guidance', () => {
+        const copyContracts = [
+            ['src/components/activityControls/moreOptions/MoreOptions.tsx', 'More...', 'More…'],
+            ['src/pages/offerDecision/OfferEvaluationCard.tsx', 'More...', 'More…'],
+            ['src/pages/offerDecision/offerEvaluationTable/OfferEvaluationTable.tsx', 'More...', 'More…'],
+            ['src/pages/authentication/signUp/SignUp.tsx', 'Login here', 'Already have an account? Sign in'],
+            ['src/pages/application/ApplicationCard.tsx', 'Save Changes', 'Save changes'],
+            ['src/pages/demo/application/DemoApplicationCard.tsx', 'Save Changes', 'Save changes'],
+            ['src/pages/dashboard/attentionCenter/AttentionCenter.tsx', 'Try Again', 'Try again'],
+            ['src/pages/dashboard/overview/upcomingInterviews/UpcomingInterviews.tsx', 'Try Again', 'Try again'],
+            ['src/pages/dashboard/charts/jobSearchRoadmap/JobSearchRoadmap.tsx', 'Try Again', 'Try again'],
+            ['src/pages/dashboard/charts/applicationsTrend/ApplicationsLineChart.tsx', 'Try Again', 'Try again'],
+            ['src/pages/userGuide/UserGuide.tsx', 'Try Again', 'Try again'],
+            [
+                'src/pages/dashboard/charts/jobSearchRoadmap/JobSearchRoadmap.tsx',
+                'See Where Every Application Is Headed.',
+                'See where every application is headed.',
+            ],
+            [
+                'src/pages/dashboard/charts/jobSearchRoadmap/JobSearchRoadmap.tsx',
+                'Select A Marker To Open Applications With That Status.',
+                'Select a marker to open applications with that status.',
+            ],
+        ] as const;
+
+        copyContracts.forEach(([path, oldCopy, newCopy]) => {
+            const source = readSource(path);
+            expect(source).not.toContain(oldCopy);
+            expect(source).toContain(newCopy);
+        });
     });
 
     it('uses role-based radius tokens across shared app surfaces', () => {

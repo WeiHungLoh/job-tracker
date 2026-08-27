@@ -192,7 +192,7 @@ const TableActions = ({
                 type='button'
                 variant='secondary'
             >
-                More...
+                More…
             </PrimaryButton>
         );
     }
@@ -204,7 +204,7 @@ const TableActions = ({
             dropdownClassName={styles.actionDropdown}
             dropdownRole='menu'
             id={`offer-evaluation-${application.job_id}-table-more`}
-            label='More...'
+            label='More…'
             renderDropdownInPortal
             triggerAriaLabel={menuLabel}
             triggerClassName={`${evaluationStyles.cardActionTrigger} ${styles.actionTrigger}`}

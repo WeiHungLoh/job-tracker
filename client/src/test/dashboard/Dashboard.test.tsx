@@ -278,7 +278,7 @@ describe('Dashboard V2', () => {
         );
 
         expect(screen.getByRole('heading', { name: 'Job Search Roadmap' })).toBeInTheDocument();
-        expect(screen.getByText('See Where Every Application Is Headed.')).toBeInTheDocument();
+        expect(screen.getByText('See where every application is headed.')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Application Pipeline' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Closed Outcomes' })).toBeInTheDocument();
         expect(
@@ -563,7 +563,7 @@ describe('Dashboard V2', () => {
         expect(screen.queryByText('No closed outcomes yet.')).not.toBeInTheDocument();
         expect(getLegendStatuses('Application pipeline legend')).toEqual(['Applied', 'Interview', 'Offer', 'Accepted']);
         expect(getLegendStatuses('Closed outcomes legend')).toEqual(['Rejected', 'Withdrawn', 'Ghosted', 'Declined']);
-        expect(screen.getByText('Select A Marker To Open Applications With That Status.')).toBeInTheDocument();
+        expect(screen.getByText('Select a marker to open applications with that status.')).toBeInTheDocument();
     });
 
     test('places trend tooltips above with a downward-facing caret when space allows', () => {

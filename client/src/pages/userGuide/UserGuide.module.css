@@ -246,6 +246,21 @@
     white-space: nowrap;
 }
 
+.sectionSearchExcerpt {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.searchMatch {
+    padding: 0 2px;
+    border-radius: var(--radiusIndicator);
+    background-color: var(--guideAccentSoft);
+    color: var(--guideAccentDark);
+    font-weight: var(--fontWeightEmphasis);
+}
+
 .chevron {
     color: var(--colorGuideChevron);
     font-size: var(--fontSizePageTitle);

@@ -21,7 +21,7 @@ export type ListApplicationsQuery = {
 export type CreateApplicationRequest = {
     companyName: string;
     jobTitle: string;
-    appDate: string;
+    appDate: string | null;
     jobStatus: JobStatus;
     jobLocation: string;
     jobURL: string;

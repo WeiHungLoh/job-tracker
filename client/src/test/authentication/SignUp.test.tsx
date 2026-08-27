@@ -135,7 +135,7 @@ describe('User sign up flow', () => {
         );
 
         await openSignUpPanel();
-        expect(screen.getByRole('link', { name: /already have an account/i })).toHaveAttribute('href', '/');
+        expect(screen.getByRole('link', { name: 'Already have an account? Sign in' })).toHaveAttribute('href', '/');
     });
 
     test('rejects a short password before calling the sign-up endpoint', async () => {

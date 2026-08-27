@@ -70,7 +70,7 @@ describe('Dashboard independent loading', () => {
 
         const roadmap = screen.getByRole('article', { name: 'Job Search Roadmap' });
         expect(within(roadmap).getByText('Unable to load application statistics.')).toBeInTheDocument();
-        await userEvent.click(within(roadmap).getByRole('button', { name: 'Try Again' }));
+        await userEvent.click(within(roadmap).getByRole('button', { name: 'Try again' }));
 
         expect(
             await within(roadmap).findByRole('list', {

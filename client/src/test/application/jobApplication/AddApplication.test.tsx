@@ -386,7 +386,7 @@ describe('User add application flow', () => {
         expect(screen.getByLabelText(/job location/i)).toHaveValue('Remote');
     });
 
-    test('submits prefilled values through the unchanged application request', async () => {
+    test('leaves a blank Quick Capture application date for the server to resolve', async () => {
         fetch.mockResolvedValueOnce(successResponse());
         const fragment = new URLSearchParams({
             jobURL: 'https://example.com/jobs/1',
@@ -403,6 +403,7 @@ describe('User add application flow', () => {
         const request = fetch.mock.calls[0][1] as RequestInit;
         const body = JSON.parse(request.body as string);
         expect(body).toMatchObject({
+            appDate: null,
             companyName: 'Example',
             jobTitle: 'Engineer',
             jobLocation: 'Remote',

@@ -141,7 +141,7 @@ const ApplicationsLineChart = ({
                         <p>Unable to load application trends.</p>
                         {onRetry && (
                             <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
-                                Try Again
+                                Try again
                             </PrimaryButton>
                         )}
                     </div>

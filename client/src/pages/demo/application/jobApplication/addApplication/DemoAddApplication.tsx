@@ -29,6 +29,8 @@ import { useUnsavedChangesBlocker } from '../../../../../hooks/useUnsavedChanges
 import { hasUnsavedApplicationFormChanges } from '../../../../application/applicationFormChanges';
 import Icon from '../../../../../components/icon/Icon';
 
+type DemoCreateApplicationRequest = CreateApplicationRequest & { appDate: Date };
+
 const DemoAddApplication = () => {
     const [companyName, setCompanyName] = useState<string>('');
     const [jobTitle, setJobTitle] = useState<string>('');
@@ -79,7 +81,7 @@ const DemoAddApplication = () => {
         setErrors({});
     };
 
-    const createApplication = (request: CreateApplicationRequest) => {
+    const createApplication = (request: DemoCreateApplicationRequest) => {
         dispatch({
             type: 'CREATE_APPLICATION',
             payload: {
@@ -124,7 +126,7 @@ const DemoAddApplication = () => {
         }
 
         const values = validation.values;
-        const request: CreateApplicationRequest = {
+        const request: DemoCreateApplicationRequest = {
             companyName: values.companyName,
             jobTitle: values.jobTitle,
             appDate: values.applicationDate,

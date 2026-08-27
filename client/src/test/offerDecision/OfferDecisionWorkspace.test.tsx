@@ -1611,7 +1611,7 @@ describe('OfferDecisionWorkspace', () => {
             />
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await userEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
 
         await waitFor(() => expect(getDeleteAllEvaluationSummary).toHaveBeenCalledOnce());
@@ -1752,7 +1752,7 @@ describe('OfferDecisionWorkspace', () => {
             />
         );
 
-        expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
         expect(screen.getByRole('region', { name: 'Offer comparison controls' }).children).toHaveLength(1);
     });
 
@@ -1772,7 +1772,7 @@ describe('OfferDecisionWorkspace', () => {
             { initialPreferences: { offer_decision_filters: [selectedFilter] } }
         );
 
-        expect(screen.getByRole('button', { name: 'More...' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'More…' })).toBeInTheDocument();
         expect(screen.getByRole('region', { name: 'Offer comparison controls' }).children).toHaveLength(2);
     });
 
@@ -1786,7 +1786,7 @@ describe('OfferDecisionWorkspace', () => {
             { initialPreferences: { archived_offer_decision_filters: ['Previous Evaluations'] } }
         );
 
-        expect(screen.queryByRole('button', { name: 'More...' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'More…' })).not.toBeInTheDocument();
         expect(screen.getByRole('region', { name: 'Archived offer comparison controls' }).children).toHaveLength(1);
     });
 
@@ -1805,7 +1805,7 @@ describe('OfferDecisionWorkspace', () => {
         await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Evaluated Offers' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
 
         const exportLink = screen.getByRole('link', { name: 'Export filtered offer evaluations as CSV' });
         const href = exportLink.getAttribute('href') ?? '';
@@ -1839,7 +1839,7 @@ describe('OfferDecisionWorkspace', () => {
             { initialPreferences: { offer_decision_filters: ['Evaluated Offers'] } }
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         const href =
             screen.getByRole('link', { name: 'Export filtered offer evaluations as CSV' }).getAttribute('href') ?? '';
         const encodedCsv = href.slice(href.indexOf(',') + 1).replace(/%(?![0-9a-f]{2})/gi, '%25');
@@ -1863,7 +1863,7 @@ describe('OfferDecisionWorkspace', () => {
             />
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await userEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
 
         await waitFor(() => expect(onDeleteAll).toHaveBeenCalledOnce());
@@ -1895,7 +1895,7 @@ describe('OfferDecisionWorkspace', () => {
             />
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         await act(async () => {
             await userEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
         });
@@ -1922,7 +1922,7 @@ describe('OfferDecisionWorkspace', () => {
             />
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'More...' }));
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         fireEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));
         await waitFor(() => expect(onDeleteAll).toHaveBeenCalledOnce());
         fireEvent.click(screen.getByRole('button', { name: 'Delete all evaluations' }));

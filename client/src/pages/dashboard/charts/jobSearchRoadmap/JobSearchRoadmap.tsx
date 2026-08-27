@@ -170,7 +170,7 @@ const JobSearchRoadmap = ({ statusCounts, hasError = false, isLoading, onRetry, 
         <>
             <DashboardCard
                 className={styles.card}
-                description='See Where Every Application Is Headed.'
+                description='See where every application is headed.'
                 title='Job Search Roadmap'
             >
                 {hasError ? (
@@ -179,7 +179,7 @@ const JobSearchRoadmap = ({ statusCounts, hasError = false, isLoading, onRetry, 
                             <p>Unable to load application statistics.</p>
                             {onRetry && (
                                 <PrimaryButton onClick={onRetry} type='button' variant='secondary'>
-                                    Try Again
+                                    Try again
                                 </PrimaryButton>
                             )}
                         </div>
@@ -381,7 +381,7 @@ const JobSearchRoadmap = ({ statusCounts, hasError = false, isLoading, onRetry, 
                 )}
             </DashboardCard>
             {!hasError && !isLoading && (
-                <p className={styles.markerHint}>Select A Marker To Open Applications With That Status.</p>
+                <p className={styles.markerHint}>Select a marker to open applications with that status.</p>
             )}
         </>
     );

@@ -162,6 +162,24 @@ test('no duplicate preserves trimmed insertion values and the existing 201 respo
     ]);
 });
 
+test('a blank application date is resolved by the database clock', async () => {
+    const calls = [];
+
+    const response = await withMockedPoolQuery(
+        async (sql, values) => {
+            calls.push({ sql: compactSQL(sql), values });
+            return { rows: [], rowCount: 1 };
+        },
+        () => invokeCreateApplication({ ...VALID_APPLICATION, appDate: null, allowDuplicate: true })
+    );
+
+    assert.equal(response.statusCode, 201);
+    assert.equal(response.body, 'Successfully added a job application!');
+    assert.equal(calls.length, 1);
+    assert.match(calls[0].sql, /COALESCE\(\$4::timestamptz, CURRENT_TIMESTAMP\)/);
+    assert.equal(calls[0].values[3], null);
+});
+
 test('a possible duplicate returns the stable 409 shape with an ISO date and does not insert', async () => {
     const calls = [];
     const storedDuplicate = {
