@@ -84,6 +84,42 @@ describe('User sign in flow', () => {
         await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/application/add'));
     });
 
+    test('keeps the submit label in place while sign in is pending', async () => {
+        let resolveSignIn: ((value: Response) => void) | undefined;
+
+        globalThis.fetch.mockImplementation(async (url: string) => {
+            if (url.endsWith('/authentication/sessions/current') || url.endsWith('/authentication/sessions/refresh')) {
+                return { ok: false, status: 401 } as Response;
+            }
+
+            return new Promise<Response>((resolve) => {
+                resolveSignIn = resolve;
+            });
+        });
+
+        render(
+            <MemoryRouter>
+                <SignIn />
+            </MemoryRouter>
+        );
+
+        await openSignInPanel();
+        await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
+        await userEvent.type(screen.getByLabelText(/^password$/i), 'password');
+        await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+        const submitButton = await screen.findByRole('button', { name: 'Sign in' });
+        expect(submitButton).toBeDisabled();
+        expect(submitButton).toHaveAttribute('aria-busy', 'true');
+
+        resolveSignIn?.(
+            new Response(JSON.stringify({ message: 'Successfully signed in' }), {
+                headers: { 'content-type': 'application/json' },
+                status: 200,
+            })
+        );
+    });
+
     test('shows the generic authentication error when the account does not exist', async () => {
         mockUnauthenticatedSession({
             ok: false,
@@ -178,10 +214,7 @@ describe('User sign in flow', () => {
             'href',
             routes.demoViewApplications
         );
-        expect(screen.getByRole('link', { name: /see how it works/i })).toHaveAttribute(
-            'href',
-            `${routes.userGuide}#getting-started`
-        );
+        expect(screen.getByRole('link', { name: /see how it works/i })).toHaveAttribute('href', routes.userGuide);
         expect(screen.queryByRole('button', { name: /back to product/i })).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
         expect(document.querySelector('#auth-account-panel')).toHaveAttribute('inert');
@@ -253,7 +286,10 @@ describe('User sign in flow', () => {
 
         userEvent.click(screen.getByRole('tab', { name: 'Applications' }));
         await waitFor(() =>
-            expect(screen.getByRole('img')).toHaveAttribute('src', expect.stringContaining('dark-list-applications.webp'))
+            expect(screen.getByRole('img')).toHaveAttribute(
+                'src',
+                expect.stringContaining('dark-list-applications.webp')
+            )
         );
     });
 

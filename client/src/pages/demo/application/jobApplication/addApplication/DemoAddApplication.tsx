@@ -159,7 +159,7 @@ const DemoAddApplication = () => {
     return (
         <form className={styles.addApplication} noValidate onSubmit={handleAdd}>
             <div className={styles.field}>
-                <label htmlFor='company-name'>Company Name</label>
+                <label htmlFor='company-name'>Company name</label>
                 <input
                     ref={companyNameInputRef}
                     aria-describedby={errors.companyName ? 'company-name-error' : undefined}
@@ -177,7 +177,7 @@ const DemoAddApplication = () => {
             </div>
 
             <div className={styles.field}>
-                <label htmlFor='job-title'>Job Title</label>
+                <label htmlFor='job-title'>Job title</label>
                 <input
                     ref={jobTitleInputRef}
                     aria-describedby={errors.jobTitle ? 'job-title-error' : undefined}
@@ -195,7 +195,7 @@ const DemoAddApplication = () => {
             </div>
 
             <div className={styles.field}>
-                <label htmlFor='job-status'>Job Status</label>
+                <label htmlFor='job-status'>Job status</label>
                 <div className={styles.selectControl}>
                     <select
                         id='job-status'
@@ -242,7 +242,7 @@ const DemoAddApplication = () => {
 
             <div className={styles.field}>
                 <label htmlFor='job-location'>
-                    Job Location<span className={styles.optionalLabel}> (optional)</span>
+                    Job location<span className={styles.optionalLabel}> (optional)</span>
                 </label>
                 <input
                     ref={jobLocationInputRef}
@@ -261,7 +261,7 @@ const DemoAddApplication = () => {
 
             <div className={styles.field}>
                 <label htmlFor='job-url'>
-                    Job Posting URL<span className={styles.optionalLabel}> (optional)</span>
+                    Job posting URL<span className={styles.optionalLabel}> (optional)</span>
                 </label>
                 <input
                     ref={jobURLInputRef}
@@ -280,10 +280,10 @@ const DemoAddApplication = () => {
 
             <div className={styles.submitButton}>
                 <PrimaryButton isLoading={isSubmissionPending} type='submit' variant='compact'>
-                    Add Application
+                    Add application
                 </PrimaryButton>
                 <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.demoViewApplications)}>
-                    View Applications
+                    View applications
                 </PrimaryButton>
             </div>
         </form>

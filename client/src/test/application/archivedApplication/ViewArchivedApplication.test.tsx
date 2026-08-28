@@ -303,13 +303,13 @@ describe('Archived job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
 
         expect(getSortOptionLabels()).toEqual([
-            'Job Status',
-            'Newest Application',
-            'Oldest Application',
+            'Job status',
+            'Newest application',
+            'Oldest application',
             'Company A–Z',
             'Company Z–A',
         ]);
-        expect(screen.getByRole('radio', { name: 'Job Status' })).toBeChecked();
+        expect(screen.getByRole('radio', { name: 'Job status' })).toBeChecked();
 
         await act(async () => {
             await userEvent.click(screen.getByRole('button', { name: 'Board' }));
@@ -318,13 +318,13 @@ describe('Archived job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
 
         expect(getSortOptionLabels()).toEqual([
-            'Newest Application',
-            'Oldest Application',
+            'Newest application',
+            'Oldest application',
             'Company A–Z',
             'Company Z–A',
         ]);
-        expect(screen.queryByRole('radio', { name: 'Job Status' })).not.toBeInTheDocument();
-        expect(screen.getByRole('radio', { name: 'Newest Application' })).toBeChecked();
+        expect(screen.queryByRole('radio', { name: 'Job status' })).not.toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: 'Newest application' })).toBeChecked();
     });
 
     test('reorders the archived application list for every sort option', async () => {
@@ -376,11 +376,11 @@ describe('Archived job application viewing flow', () => {
             await waitFor(() => expectListCompanyOrder(expectedCompanyOrder));
         };
 
-        await selectSortOption('Newest Application', ['Alpha Ltd', 'Charlie Ltd', 'Bravo Ltd', 'Delta Ltd']);
-        await selectSortOption('Oldest Application', ['Delta Ltd', 'Bravo Ltd', 'Charlie Ltd', 'Alpha Ltd']);
+        await selectSortOption('Newest application', ['Alpha Ltd', 'Charlie Ltd', 'Bravo Ltd', 'Delta Ltd']);
+        await selectSortOption('Oldest application', ['Delta Ltd', 'Bravo Ltd', 'Charlie Ltd', 'Alpha Ltd']);
         await selectSortOption('Company A–Z', ['Alpha Ltd', 'Bravo Ltd', 'Charlie Ltd', 'Delta Ltd']);
         await selectSortOption('Company Z–A', ['Delta Ltd', 'Charlie Ltd', 'Bravo Ltd', 'Alpha Ltd']);
-        await selectSortOption('Job Status', ['Bravo Ltd', 'Charlie Ltd', 'Delta Ltd', 'Alpha Ltd']);
+        await selectSortOption('Job status', ['Bravo Ltd', 'Charlie Ltd', 'Delta Ltd', 'Alpha Ltd']);
     });
 
     test('saves only the archived mode sort preference without refetching applications', async () => {
@@ -402,7 +402,7 @@ describe('Archived job application viewing flow', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
         await act(async () => {
-            await userEvent.click(screen.getByRole('radio', { name: 'Oldest Application' }));
+            await userEvent.click(screen.getByRole('radio', { name: 'Oldest application' }));
         });
         await waitFor(() =>
             expect(updatePreferences).toHaveBeenNthCalledWith(1, {
@@ -544,7 +544,7 @@ describe('Archived job application viewing flow', () => {
             ['India Applied', 'Juliet Applied', 'Hotel Applied', 'Kilo Applied']
         );
         await selectSortOption(
-            'Oldest Application',
+            'Oldest application',
             ['Delta Offer', 'Alpha Offer', 'Charlie Offer', 'Bravo Offer'],
             ['Kilo Applied', 'Hotel Applied', 'Juliet Applied', 'India Applied']
         );
@@ -559,7 +559,7 @@ describe('Archived job application viewing flow', () => {
             ['Kilo Applied', 'Juliet Applied', 'India Applied', 'Hotel Applied']
         );
         await selectSortOption(
-            'Newest Application',
+            'Newest application',
             ['Bravo Offer', 'Charlie Offer', 'Alpha Offer', 'Delta Offer'],
             ['India Applied', 'Juliet Applied', 'Hotel Applied', 'Kilo Applied']
         );
@@ -669,7 +669,7 @@ describe('Archived job application viewing flow', () => {
         expect(getListCompanyHeadings()).toEqual(['1. Zulu Offer', '2. Alpha Applied']);
 
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
-        expect(screen.getByRole('radio', { name: 'Job Status' })).toBeChecked();
+        expect(screen.getByRole('radio', { name: 'Job status' })).toBeChecked();
         expect(screen.getByRole('radio', { name: 'Company A–Z' })).not.toBeChecked();
     });
 
@@ -796,7 +796,7 @@ describe('Archived job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
         await waitFor(() =>
@@ -831,7 +831,7 @@ describe('Archived job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
         const filterButton = screen.getByRole('button', { name: 'Filter by' });
@@ -874,7 +874,7 @@ describe('Archived job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Accepted' }));
 
@@ -920,7 +920,7 @@ describe('Archived job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
         await waitFor(() =>
             expect(updatePreferences).toHaveBeenCalledWith({ archived_application_job_statuses: ['Offer'] })
@@ -981,7 +981,7 @@ describe('Archived job application viewing flow', () => {
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
-                title: 'Confirm Deletion',
+                title: 'Confirm deletion',
                 description:
                     'Delete this archived job application and its 1 related archived interview? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
@@ -1023,10 +1023,10 @@ describe('Archived job application viewing flow', () => {
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    title: 'Confirm Delete All',
+                    title: 'Confirm delete all',
                     description:
                         'Delete all 1 archived job application? This affects every archived application you own, including applications not visible under the current archived job-status filters. This action is permanent and cannot be undone.',
-                    confirmationText: 'Delete All',
+                    confirmationText: 'Delete all',
                     cancellationText: 'Cancel',
                     confirmationButtonProps: expect.objectContaining({
                         autoFocus: false,
@@ -1065,7 +1065,7 @@ describe('Archived job application viewing flow', () => {
 
         expect(mockConfirm).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Confirm Unarchive All',
+                title: 'Confirm unarchive all',
                 description:
                     'Unarchive all 5 archived job applications and their 2 related archived interviews? This affects every archived application you own, including applications not visible under the current archived job-status filters.',
             })
@@ -1099,7 +1099,7 @@ describe('Archived job application viewing flow', () => {
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
-                title: 'Confirm Unarchive',
+                title: 'Confirm unarchive',
                 description: 'Unarchive this archived job application and its 2 related archived interviews?',
                 confirmationText: 'Unarchive',
                 cancellationText: 'Cancel',
@@ -1221,7 +1221,7 @@ describe('Archived job application viewing flow', () => {
         expect(screen.queryByRole('button', { name: 'Sort by' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Display options' })).not.toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeVisible();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeVisible();
         expect(screen.getByRole('checkbox', { name: 'Accepted' })).toBeVisible();
     });
 
@@ -1252,7 +1252,7 @@ describe('Archived job application viewing flow', () => {
             { method: 'GET' }
         );
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
     });
 
     test('hides collection actions when filters hide every archived application', async () => {

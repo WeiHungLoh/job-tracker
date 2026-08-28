@@ -87,6 +87,22 @@ describe('UserGuide', () => {
         expect(screen.getByText('Try again')).toBeInTheDocument();
     });
 
+    test('uses an accessible icon button to clear the guide search', async () => {
+        renderGuide();
+
+        const search = screen.getByRole('searchbox', { name: 'Search the User Guide' });
+        await userEvent.type(search, 'password');
+
+        const clearSearchButton = screen.getByRole('button', { name: 'Clear search' });
+        expect(clearSearchButton.querySelector('svg')).toBeInTheDocument();
+        expect(clearSearchButton).not.toHaveTextContent('Clear');
+
+        await userEvent.click(clearSearchButton);
+
+        expect(search).toHaveValue('');
+        expect(screen.queryByRole('button', { name: 'Clear search' })).not.toBeInTheDocument();
+    });
+
     test('searches the complete guide copy and opens the only matching section', async () => {
         renderGuide();
 
@@ -100,6 +116,32 @@ describe('UserGuide', () => {
             /spreadsheet apps do not treat ordinary notes as formulas/i
         );
         expect(screen.getByTestId('guide-location')).toHaveTextContent(`${routes.userGuide}#exporting-sorting-display`);
+    });
+
+    test('collapses the open section when a changed search has multiple matches', async () => {
+        renderGuide();
+
+        const search = screen.getByRole('searchbox', { name: 'Search the User Guide' });
+        await userEvent.type(search, 'password');
+
+        await waitFor(() =>
+            expect(screen.getByRole('button', { name: 'Account and appearance' })).toHaveAttribute(
+                'aria-expanded',
+                'true'
+            )
+        );
+
+        await userEvent.clear(search);
+        await userEvent.type(search, 'sign');
+
+        expect(screen.getByText('3 sections')).toBeInTheDocument();
+        await waitFor(() =>
+            expect(screen.getByRole('button', { name: 'Account and appearance' })).toHaveAttribute(
+                'aria-expanded',
+                'false'
+            )
+        );
+        expect(screen.getByTestId('guide-location')).toHaveTextContent(/^\/user-guide$/);
     });
 
     test('shows the matching guide sentence for each search result', async () => {

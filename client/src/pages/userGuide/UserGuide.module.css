@@ -19,36 +19,7 @@
 }
 
 .backButton {
-    position: relative;
-    display: inline-flex;
-    min-height: 44px;
-    align-items: center;
-    gap: 6px;
-    padding: 0 4px;
     margin-bottom: 24px;
-    color: var(--guideAccentDark);
-    font-weight: var(--fontWeightEmphasis);
-    text-decoration: none;
-}
-
-.backButton:hover {
-    color: var(--guideAccent);
-    text-decoration: none;
-}
-
-.backButton:hover::after {
-    position: absolute;
-    right: 4px;
-    bottom: 8px;
-    left: 4px;
-    border-bottom: 1px solid currentColor;
-    content: '';
-}
-
-.backButton:focus-visible {
-    border-radius: var(--radiusCompact);
-    outline: 3px solid var(--colorPrimaryFocusOutline);
-    outline-offset: 2px;
 }
 
 .header {
@@ -130,17 +101,16 @@
 }
 
 .clearSearchButton {
+    display: grid;
     min-width: 44px;
     min-height: 44px;
-    padding: 0 8px;
+    place-items: center;
+    padding: 0;
     margin-right: -8px;
     border: 0;
     border-radius: var(--radiusCompact);
     background: transparent;
     color: var(--guideAccentDark);
-    font: inherit;
-    font-size: var(--fontSizeBodyCompact);
-    font-weight: var(--fontWeightEmphasis);
     cursor: pointer;
 }
 
@@ -152,7 +122,6 @@
 .clearSearchButton:focus-visible {
     outline: 0;
     background-color: var(--guideAccentSoft);
-    text-decoration: underline;
 }
 
 .resultCount {
@@ -184,6 +153,7 @@
 }
 
 .accordionButton.accordionButton {
+    position: relative;
     display: grid;
     width: 100%;
     min-height: 66px;
@@ -191,7 +161,7 @@
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
-    border-radius: var(--radiusControl);
+    border-radius: 0;
     background-color: transparent;
     color: var(--guideText);
     font-size: var(--fontSizeBody);
@@ -208,9 +178,21 @@
     background-color: var(--guideAccentSoft);
 }
 
+.accordionButton.accordionButton:not(:disabled):active {
+    transform: none;
+}
+
 .accordionButton.accordionButton:focus-visible {
-    outline: 3px solid var(--colorPrimaryFocusOutline);
-    outline-offset: -3px;
+    outline: 0;
+}
+
+.accordionButton.accordionButton:focus-visible::after {
+    position: absolute;
+    inset: 3px;
+    border: 3px solid var(--colorPrimaryFocusOutline);
+    border-radius: var(--radiusControl);
+    content: '';
+    pointer-events: none;
 }
 
 .sectionIcon {

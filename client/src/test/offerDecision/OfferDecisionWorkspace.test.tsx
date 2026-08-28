@@ -434,7 +434,7 @@ describe('OfferDecisionWorkspace', () => {
             expect(mockConfirm).toHaveBeenLastCalledWith({
                 title: 'Accept this offer?',
                 description: 'Acme — Software Engineer will be marked as Accepted.',
-                confirmationText: 'Accept Offer',
+                confirmationText: 'Accept offer',
                 cancellationText: 'Cancel',
                 confirmationButtonProps: { autoFocus: true },
             })
@@ -446,7 +446,7 @@ describe('OfferDecisionWorkspace', () => {
             expect(mockConfirm).toHaveBeenLastCalledWith({
                 title: 'Decline this offer?',
                 description: 'Acme — Software Engineer will be marked as Declined.',
-                confirmationText: 'Decline Offer',
+                confirmationText: 'Decline offer',
                 cancellationText: 'Cancel',
                 confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
             })
@@ -1108,7 +1108,7 @@ describe('OfferDecisionWorkspace', () => {
             expect(mockConfirm).toHaveBeenCalledWith(
                 expect.objectContaining({
                     title: 'Delete counteroffer plan?',
-                    confirmationText: 'Delete and Save',
+                    confirmationText: 'Delete and save',
                     description: expect.stringContaining('higher fit rating than your saved counteroffer plan'),
                     confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
                 })
@@ -1439,7 +1439,7 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Delete evaluation for Continuum' }));
         await waitFor(() => expect(onDelete).toHaveBeenCalledWith(13));
         expect(mockConfirm).toHaveBeenCalledWith(
-            expect.objectContaining({ title: 'Confirm Deletion', confirmationText: 'Delete' })
+            expect.objectContaining({ title: 'Confirm deletion', confirmationText: 'Delete' })
         );
 
         rerender(
@@ -1553,14 +1553,14 @@ describe('OfferDecisionWorkspace', () => {
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         expect(screen.getAllByRole('checkbox').map((checkbox) => checkbox.closest('label')?.textContent)).toEqual([
-            'Show All',
+            'Show all',
             'Offers to Evaluate',
             'Evaluated Offers',
             'Expired Evaluated Offers',
             'Previous Evaluations',
         ]);
 
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
 
         expect(screen.getByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
@@ -1598,7 +1598,7 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.getByRole('button', { name: 'Filter by' })).toBeEnabled();
     });
 
-    test('uses the full production evaluation count for Delete All confirmation', async () => {
+    test('uses the full production evaluation count for Delete all confirmation', async () => {
         const getDeleteAllEvaluationSummary = vi
             .fn()
             .mockResolvedValue({ evaluationCount: 7, counterofferPlanCount: 2 });
@@ -1642,7 +1642,7 @@ describe('OfferDecisionWorkspace', () => {
         expect(updatePreferences).not.toHaveBeenCalled();
     });
 
-    test('saves active filter changes and Show All through the preference provider', async () => {
+    test('saves active filter changes and Show all through the preference provider', async () => {
         let savedPreferences: UserPreferences = {
             ...testPreferences,
             offer_decision_filters: ['Previous Evaluations'],
@@ -1668,7 +1668,7 @@ describe('OfferDecisionWorkspace', () => {
         );
 
         await act(async () => {
-            await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+            await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
             await Promise.resolve();
         });
         await waitFor(() =>
@@ -1802,7 +1802,7 @@ describe('OfferDecisionWorkspace', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Evaluated Offers' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
         await userEvent.click(screen.getByRole('button', { name: 'More…' }));
@@ -1870,8 +1870,8 @@ describe('OfferDecisionWorkspace', () => {
         const options = mockConfirm.mock.calls[0][0];
         expect(options).toEqual(
             expect.objectContaining({
-                title: 'Confirm Delete All',
-                confirmationText: 'Delete All',
+                title: 'Confirm delete all',
+                confirmationText: 'Delete all',
                 description: expect.stringContaining('Offers without evaluations are not deleted.'),
             })
         );
@@ -1935,7 +1935,7 @@ describe('OfferDecisionWorkspace', () => {
         render(<OfferDecisionWorkspace data={activeData} onDelete={vi.fn()} onSave={vi.fn()} readOnly={false} />);
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Expired Evaluated Offers' }));
 
         expect(screen.getByRole('heading', { name: 'No offer comparisons match your filters' })).toBeInTheDocument();
@@ -1950,7 +1950,7 @@ describe('OfferDecisionWorkspace', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
 
         expect(
@@ -1973,7 +1973,7 @@ describe('OfferDecisionWorkspace', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offers to Evaluate' }));
 
         expect(screen.getByRole('heading', { name: 'No offer comparisons match your filters' })).toBeInTheDocument();
@@ -2382,8 +2382,8 @@ describe('OfferDecisionWorkspace', () => {
         expect(screen.queryByRole('button', { name: 'More actions for Beta Labs' })).not.toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
 
-        const dialog = screen.getByRole('dialog', { name: 'Add Evaluation' });
-        expect(within(dialog).getByRole('heading', { name: 'Add Evaluation' })).toBeInTheDocument();
+        const dialog = screen.getByRole('dialog', { name: 'Add evaluation' });
+        expect(within(dialog).getByRole('heading', { name: 'Add evaluation' })).toBeInTheDocument();
         expect(within(dialog).getByRole('heading', { name: 'Beta Labs' })).toBeInTheDocument();
         expect(within(dialog).getByText('Platform Developer')).toBeInTheDocument();
         expect(within(dialog).getByText('Offer')).toBeInTheDocument();
@@ -2430,7 +2430,7 @@ describe('OfferDecisionWorkspace', () => {
 
             await waitFor(() => expect(onSave).toHaveBeenCalledWith(jobId, expect.any(Object)));
             await waitFor(() =>
-                expect(screen.queryByRole('dialog', { name: 'Edit Evaluation' })).not.toBeInTheDocument()
+                expect(screen.queryByRole('dialog', { name: 'Edit evaluation' })).not.toBeInTheDocument()
             );
         }
 
@@ -2544,7 +2544,7 @@ describe('OfferDecisionWorkspace', () => {
         });
 
         editOfferEvaluation('Acme');
-        const dialog = screen.getByRole('dialog', { name: 'Edit Evaluation' });
+        const dialog = screen.getByRole('dialog', { name: 'Edit evaluation' });
         const deadlineInput = within(dialog).getByLabelText('Acme decision deadline');
         fireEvent.change(deadlineInput, { target: { value: '' } });
         fireEvent.click(within(dialog).getByRole('button', { name: 'Save evaluation for Acme' }));
@@ -2558,7 +2558,7 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(within(dialog).getByRole('button', { name: 'Save evaluation for Acme' }));
 
         await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
-        expect(screen.getByRole('dialog', { name: 'Edit Evaluation' })).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Edit evaluation' })).toBeInTheDocument();
         expect(screen.getByLabelText('Acme monthly base salary')).toHaveValue(11000);
 
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Acme' }));
@@ -2575,7 +2575,7 @@ describe('OfferDecisionWorkspace', () => {
         });
 
         editOfferEvaluation('Acme');
-        const dialog = screen.getByRole('dialog', { name: 'Edit Evaluation' });
+        const dialog = screen.getByRole('dialog', { name: 'Edit evaluation' });
         fireEvent.change(within(dialog).getByLabelText('Acme monthly base salary'), { target: { value: '11000' } });
         fireEvent.keyDown(within(dialog).getByRole('heading', { name: 'Acme' }), { key: 'Enter' });
 
@@ -2635,7 +2635,7 @@ describe('OfferDecisionWorkspace', () => {
                 within(planMenu).getByRole('menuitem', { name: 'View counteroffer plan for Plan Co' })
             );
         });
-        const counterofferDialog = await screen.findByRole('dialog', { name: 'Counteroffer Plan' });
+        const counterofferDialog = await screen.findByRole('dialog', { name: 'Counteroffer plan' });
         expect(within(counterofferDialog).getByText('Delete', { selector: 'button' })).toBeInTheDocument();
         expect(within(counterofferDialog).getByRole('button', { name: 'Close' })).toBeInTheDocument();
         expect(within(counterofferDialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();

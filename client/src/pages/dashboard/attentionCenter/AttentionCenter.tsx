@@ -44,13 +44,13 @@ type MarkApplicationGhostedActionProps = {
 
 const ACTION_LABELS: Record<AttentionItemCategory, string> = {
     'application-follow-up': 'Draft application follow-up',
-    'application-follow-up-stale': 'Mark as Ghosted',
+    'application-follow-up-stale': 'Mark as ghosted',
     'interview-unscheduled': 'Add interview',
     'offer-decision-overdue': 'Record offer decision',
     'offer-decision-due': 'Record offer decision',
     'offer-evaluation': 'Evaluate offer',
     'post-interview': 'Draft post-interview message',
-    'post-interview-follow-up-stale': 'Mark as Ghosted',
+    'post-interview-follow-up-stale': 'Mark as ghosted',
 };
 const VISIBLE_ATTENTION_ITEMS = 6;
 
@@ -65,9 +65,9 @@ const MarkApplicationGhostedAction = ({ application, onMarkApplicationGhosted }:
         }
 
         const confirmation: ConfirmOptions = {
-            title: 'Mark as Ghosted?',
+            title: 'Mark as ghosted?',
             description: `${application.company_name} — ${application.job_title} will be marked as Ghosted.`,
-            confirmationText: 'Mark as Ghosted',
+            confirmationText: 'Mark as ghosted',
             cancellationText: 'Cancel',
             confirmationButtonProps: createDestructiveConfirmationButtonProps(),
         };
@@ -89,14 +89,14 @@ const MarkApplicationGhostedAction = ({ application, onMarkApplicationGhosted }:
 
     return (
         <PrimaryButton
-            aria-label={`Mark as Ghosted for ${application.job_title} at ${application.company_name}`}
+            aria-label={`Mark as ghosted for ${application.job_title} at ${application.company_name}`}
             className={styles.actionButton}
             isLoading={isPending}
             type='button'
             variant='secondary'
             onClick={() => void handleMarkAsGhosted()}
         >
-            Mark as Ghosted
+            Mark as ghosted
         </PrimaryButton>
     );
 };
@@ -274,7 +274,7 @@ const AttentionCenter = ({
                 description='Your highest-priority follow-ups, with suggested next steps.'
                 headerAction={
                     <PrimaryButton
-                        aria-label='Customise Dashboard Reminders'
+                        aria-label='Customise dashboard reminders'
                         className={styles.settingsButton}
                         onClick={() => setIsSettingsOpen(true)}
                         type='button'

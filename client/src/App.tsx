@@ -17,6 +17,7 @@ import { routes } from './routes';
 import QuickCaptureProvider from './pages/application/jobApplication/QuickCaptureProvider';
 import OfferDecisionPage from './pages/offerDecision/OfferDecisionPage';
 import { loadDemoRoute, loadUserGuideRoute } from './routeLoaders';
+import DocumentTitle from './components/documentTitle/DocumentTitle';
 
 const UserGuide = lazy(loadUserGuideRoute);
 const DemoLayout = lazy(loadDemoRoute);
@@ -25,6 +26,7 @@ const reloadPage = () => window.location.reload();
 
 export const appRoutes: RouteObject[] = [
     {
+        element: <DocumentTitle />,
         errorElement: <FallbackScreen variant='routeError' onAction={reloadPage} />,
         children: [
             {

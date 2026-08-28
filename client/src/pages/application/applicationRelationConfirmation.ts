@@ -15,9 +15,9 @@ const ACTION_LABELS: Record<ApplicationRelationAction, string> = {
 };
 
 const CONFIRMATION_TITLES: Record<ApplicationRelationAction, string> = {
-    archive: 'Confirm Archive',
-    delete: 'Confirm Deletion',
-    unarchive: 'Confirm Unarchive',
+    archive: 'Confirm archive',
+    delete: 'Confirm deletion',
+    unarchive: 'Confirm unarchive',
 };
 
 export const createApplicationRelationConfirmation = (

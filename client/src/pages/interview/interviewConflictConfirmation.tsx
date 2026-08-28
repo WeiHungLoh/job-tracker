@@ -69,8 +69,8 @@ export const createInterviewConflictConfirmation = (
     conflicts: readonly InterviewSchedulingConflict[]
 ): ConfirmOptions => {
     const options: ConfirmOptions = {
-        title: 'Possible Scheduling Conflict',
-        confirmationText: 'Add Anyway',
+        title: 'Possible scheduling conflict',
+        confirmationText: 'Add anyway',
         cancellationText: 'Cancel',
         confirmationButtonProps: { autoFocus: true },
     };

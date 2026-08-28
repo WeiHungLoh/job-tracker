@@ -117,19 +117,17 @@ describe('FallbackScreen', () => {
         expect(onSecondaryAction).toHaveBeenCalledOnce();
     });
 
-    test.each([
-        ['authenticationError', 'Session Error | Job Tracker'],
-        ['loading', 'Checking Session | Job Tracker'],
-        ['notFound', 'Page Not Found | Job Tracker'],
-        ['pageLoading', 'Loading | Job Tracker'],
-        ['routeError', 'Page Error | Job Tracker'],
-    ] as const)('sets and restores the document title for %s', (variant, expectedTitle) => {
-        const previousTitle = document.title;
-        const { unmount } = render(<FallbackScreen variant={variant} />);
+    test.each(['authenticationError', 'loading', 'notFound', 'pageLoading', 'routeError'] as const)(
+        'uses and restores the Job Tracker document title for %s',
+        (variant) => {
+            document.title = 'Previous page';
+            const previousTitle = document.title;
+            const { unmount } = render(<FallbackScreen variant={variant} />);
 
-        expect(document.title).toBe(expectedTitle);
+            expect(document.title).toBe('Job Tracker');
 
-        unmount();
-        expect(document.title).toBe(previousTitle);
-    });
+            unmount();
+            expect(document.title).toBe(previousTitle);
+        }
+    );
 });

@@ -1,24 +1,25 @@
-import { Link } from 'react-router-dom';
 import { useId } from 'react';
 import Icon from '../icon/Icon';
+import ButtonLink from '../button/ButtonLink';
+import PrimaryButton from '../button/PrimaryButton';
 import type { EmptyStateAction, EmptyStateProps } from './models';
 import styles from './EmptyState.module.css';
 
 const Action = ({ action, variant }: { action: EmptyStateAction; variant: 'primary' | 'secondary' }) => {
-    const className = `${styles.action} ${styles[variant]}`;
+    const buttonVariant = variant === 'primary' ? 'default' : 'secondary';
 
     if (action.to) {
         return (
-            <Link className={className} onClick={action.onClick} to={action.to}>
+            <ButtonLink className={styles.action} onClick={action.onClick} to={action.to} variant={buttonVariant}>
                 {action.label}
-            </Link>
+            </ButtonLink>
         );
     }
 
     return (
-        <button className={className} onClick={action.onClick} type='button'>
+        <PrimaryButton className={styles.action} onClick={action.onClick} type='button' variant={buttonVariant}>
             {action.label}
-        </button>
+        </PrimaryButton>
     );
 };
 

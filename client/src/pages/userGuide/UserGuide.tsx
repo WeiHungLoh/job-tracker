@@ -2,6 +2,7 @@ import { Children, isValidElement, useEffect, useState, type ReactNode } from 'r
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import PrimaryButton from '../../components/button/PrimaryButton';
 import Icon from '../../components/icon/Icon';
+import DirectionalLink from '../../components/directionalLink/DirectionalLink';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../helper/formValidation';
 import { routes } from '../../routes';
 import { loadDemoRoute } from '../../routeLoaders';
@@ -37,7 +38,7 @@ const guideSections: readonly UserGuideSection[] = [
                 </ol>
                 <p>
                     The main menu takes you to your Dashboard, Applications, Interviews and Offer Comparison. On list
-                    pages, choose <strong>Show Archived</strong> to see records you have put away.
+                    pages, choose <strong>Show archived</strong> to see records you have put away.
                 </p>
                 <p>
                     Want to look around first?{' '}
@@ -106,7 +107,7 @@ const guideSections: readonly UserGuideSection[] = [
                     priority order so the most time-sensitive work appears first.
                 </p>
                 <p>
-                    <strong>Reset to Default</strong> restores the original choices in the open window. Select
+                    <strong>Reset to default</strong> restores the original choices in the open window. Select
                     <strong> Save</strong> to keep those changes. Changing reminder settings does not change your
                     applications, interviews or offers.
                 </p>
@@ -253,7 +254,7 @@ const guideSections: readonly UserGuideSection[] = [
                 </p>
                 <p>
                     If the time overlaps another interview or an offer deadline is close, Job Tracker warns you before
-                    saving. Review the warning, then choose <strong>Add Anyway</strong> if the timing is correct or
+                    saving. Review the warning, then choose <strong>Add anyway</strong> if the timing is correct or
                     <strong> Cancel</strong> to make a change.
                 </p>
 
@@ -342,7 +343,7 @@ const guideSections: readonly UserGuideSection[] = [
 
                 <h3 id='offer-decisions-export'>Record a decision, export or add a deadline</h3>
                 <p>
-                    Choose <strong>Accept Offer</strong> or <strong>Decline Offer</strong> to update the application and
+                    Choose <strong>Accept offer</strong> or <strong>Decline offer</strong> to update the application and
                     keep the evaluation as a previous offer. You can export the offer sections you are viewing, and
                     download decision deadlines as a calendar file.
                 </p>
@@ -400,13 +401,13 @@ const guideSections: readonly UserGuideSection[] = [
         title: 'Archived records and deletion',
         summary: 'Understand what is reversible and what is permanent',
         icon: 'archive',
-        searchTerms: ['unarchive', 'Delete All', 'Archive All', 'restore'],
+        searchTerms: ['unarchive', 'Delete all', 'Archive all', 'restore'],
         content: (
             <>
                 <h3>Archive when you may need the record later</h3>
                 <p>
                     Archiving removes a record from your active workspace without erasing it. Choose
-                    <strong> Show Archived</strong> to see archived records, then choose <strong>Show Active</strong> to
+                    <strong> Show archived</strong> to see archived records, then choose <strong>Show active</strong> to
                     return.
                 </p>
                 <p>
@@ -421,8 +422,8 @@ const guideSections: readonly UserGuideSection[] = [
                     evaluation and any saved counteroffer plan. Deleting an interview removes only that interview.
                 </p>
                 <p>
-                    Bulk actions such as <strong>Archive All</strong>, <strong>Unarchive All</strong> and
-                    <strong> Delete All</strong> affect the full active or archived collection you selected, not only
+                    Bulk actions such as <strong>Archive all</strong>, <strong>Unarchive all</strong> and
+                    <strong> Delete all</strong> affect the full active or archived collection you selected, not only
                     the records currently shown by your search or filters. The confirmation tells you how many related
                     records and plans will be affected. Read it carefully before continuing.
                 </p>
@@ -602,6 +603,11 @@ const guideSearchText = new Map(
     ])
 );
 
+const getFilteredGuideSections = (normalizedSearchQuery: string): readonly UserGuideSection[] =>
+    normalizedSearchQuery
+        ? guideSections.filter((section) => guideSearchText.get(section.id)?.includes(normalizedSearchQuery))
+        : guideSections;
+
 const guideContentSentences = new Map(
     guideSections.map((section) => [section.id, getGuideContentSentences(section.content)])
 );
@@ -657,12 +663,32 @@ const UserGuide = () => {
     const activeTargetId = getGuideTargetId(location.hash);
     const activeSectionId = activeTargetId ? guideTargetSections.get(activeTargetId) ?? null : null;
     const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase();
-    const filteredSections = normalizedSearchQuery
-        ? guideSections.filter((section) => guideSearchText.get(section.id)?.includes(normalizedSearchQuery))
-        : guideSections;
-    const soleMatchingSectionId =
-        normalizedSearchQuery && filteredSections.length === 1 ? filteredSections[0].id : null;
+    const filteredSections = getFilteredGuideSections(normalizedSearchQuery);
     const resultLabel = `${filteredSections.length} ${filteredSections.length === 1 ? 'section' : 'sections'}`;
+
+    const updateGuideTarget = (targetId: string | null) => {
+        void navigate(
+            {
+                pathname: location.pathname,
+                search: location.search,
+                hash: targetId ? `#${targetId}` : '',
+            },
+            { replace: true }
+        );
+    };
+
+    const updateSearchQuery = (nextSearchQuery: string) => {
+        const normalizedNextSearchQuery = nextSearchQuery.trim().toLocaleLowerCase();
+        const nextFilteredSections = getFilteredGuideSections(normalizedNextSearchQuery);
+        const nextActiveSectionId =
+            normalizedNextSearchQuery && nextFilteredSections.length === 1 ? nextFilteredSections[0].id : null;
+
+        setSearchQuery(nextSearchQuery);
+
+        if (activeSectionId !== nextActiveSectionId) {
+            updateGuideTarget(nextActiveSectionId);
+        }
+    };
 
     useEffect(() => {
         if (!activeTargetId || !guideTargetSections.has(activeTargetId)) {
@@ -677,43 +703,12 @@ const UserGuide = () => {
         }
     }, [activeTargetId]);
 
-    useEffect(() => {
-        if (!soleMatchingSectionId) {
-            return;
-        }
-
-        if (activeSectionId === soleMatchingSectionId) {
-            return;
-        }
-
-        void navigate(
-            {
-                pathname: location.pathname,
-                search: location.search,
-                hash: `#${soleMatchingSectionId}`,
-            },
-            { replace: true }
-        );
-    }, [activeSectionId, location.pathname, location.search, navigate, soleMatchingSectionId]);
-
-    const updateGuideTarget = (targetId: string | null) => {
-        void navigate(
-            {
-                pathname: location.pathname,
-                search: location.search,
-                hash: targetId ? `#${targetId}` : '',
-            },
-            { replace: true }
-        );
-    };
-
     return (
         <main data-testid='ug' className={styles.userGuide}>
             <div className={styles.guideContainer}>
-                <Link className={styles.backButton} to={routes.signIn}>
-                    <Icon name='arrowBack' />
+                <DirectionalLink className={styles.backButton} direction='back' to={routes.signIn}>
                     Back to Job Tracker
-                </Link>
+                </DirectionalLink>
                 <header className={styles.header}>
                     <span className={styles.headerIcon}>
                         <Icon name='guide' />
@@ -728,7 +723,7 @@ const UserGuide = () => {
                     <Icon name='search' size={20} />
                     <input
                         aria-label='Search the User Guide'
-                        onChange={(event) => setSearchQuery(event.target.value)}
+                        onChange={(event) => updateSearchQuery(event.target.value)}
                         placeholder='Search the guide'
                         type='search'
                         value={searchQuery}
@@ -737,10 +732,10 @@ const UserGuide = () => {
                         <button
                             aria-label='Clear search'
                             className={styles.clearSearchButton}
-                            onClick={() => setSearchQuery('')}
+                            onClick={() => updateSearchQuery('')}
                             type='button'
                         >
-                            Clear
+                            <Icon name='close' size={20} />
                         </button>
                     ) : null}
                 </div>

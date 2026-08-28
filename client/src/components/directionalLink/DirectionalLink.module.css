@@ -1,0 +1,31 @@
+.link {
+    position: relative;
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px;
+    color: var(--colorGuideAccentDark);
+    font-weight: var(--fontWeightEmphasis);
+    text-decoration: none;
+}
+
+.link:hover {
+    color: var(--colorPrimary);
+    text-decoration: none;
+}
+
+.link:hover::after {
+    position: absolute;
+    right: 4px;
+    bottom: 8px;
+    left: 4px;
+    border-bottom: 1px solid currentColor;
+    content: '';
+}
+
+.link:focus-visible {
+    border-radius: var(--radiusCompact);
+    outline: 3px solid var(--colorPrimaryFocusOutline);
+    outline-offset: 2px;
+}

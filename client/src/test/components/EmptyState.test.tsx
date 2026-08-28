@@ -2,6 +2,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import EmptyState from '../../components/emptyState/EmptyState';
 import styles from '../../components/emptyState/EmptyState.module.css';
+import buttonStyles from '../../components/button/PrimaryButton.module.css';
 import userEvent from '@testing-library/user-event';
 
 describe('EmptyState', () => {
@@ -23,7 +24,15 @@ describe('EmptyState', () => {
         expect(screen.getByRole('region', { name: 'Nothing here yet' })).toHaveClass(styles.followsControls);
         expect(screen.getByText('A helpful description.')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Add application' })).toHaveAttribute('href', '/application/add');
+        expect(screen.getByRole('link', { name: 'Add application' })).toHaveClass(
+            buttonStyles.button,
+            buttonStyles.primary
+        );
         expect(screen.getByRole('link', { name: 'View applications' })).toHaveAttribute('href', '/application/view');
+        expect(screen.getByRole('link', { name: 'View applications' })).toHaveClass(
+            buttonStyles.button,
+            buttonStyles.secondary
+        );
     });
 
     test('supports callback actions without submitting a surrounding form', async () => {
@@ -38,7 +47,10 @@ describe('EmptyState', () => {
             </MemoryRouter>
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+        const action = screen.getByRole('button', { name: 'Clear filters' });
+        expect(action).toHaveClass(buttonStyles.button, buttonStyles.primary);
+
+        await userEvent.click(action);
 
         expect(onClick).toHaveBeenCalledOnce();
         expect(onSubmit).not.toHaveBeenCalled();

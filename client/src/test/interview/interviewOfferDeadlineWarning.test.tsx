@@ -44,8 +44,8 @@ describe('interview offer deadline warning', () => {
         const confirmation = createInterviewOfferDeadlineConfirmation([warning], new Date(2026, 6, 25, 15, 30), 60);
 
         expect(confirmation).toMatchObject({
-            title: 'Offer Deadline Warning',
-            confirmationText: 'Add Anyway',
+            title: 'Offer deadline warning',
+            confirmationText: 'Add anyway',
             cancellationText: 'Cancel',
             confirmationButtonProps: { autoFocus: true },
         });

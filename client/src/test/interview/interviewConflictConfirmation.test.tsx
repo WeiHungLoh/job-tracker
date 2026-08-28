@@ -46,8 +46,8 @@ describe('interview conflict confirmation', () => {
         const confirmation = createInterviewConflictConfirmation([conflict]);
 
         expect(confirmation).toMatchObject({
-            title: 'Possible Scheduling Conflict',
-            confirmationText: 'Add Anyway',
+            title: 'Possible scheduling conflict',
+            confirmationText: 'Add anyway',
             cancellationText: 'Cancel',
             confirmationButtonProps: { autoFocus: true },
         });

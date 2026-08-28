@@ -66,7 +66,7 @@ const renderDemo = (children: ReactNode, initialEntries: DemoInitialEntry[] = [r
 };
 
 const saveFirstDemoApplicationAsOffer = () => {
-    fireEvent.click(screen.getAllByRole('button', { name: 'Edit Status' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
     fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Offer' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 };
@@ -468,7 +468,7 @@ describe('demo page interactions', () => {
             'aria-checked',
             'true'
         );
-        const firstApplicationCard = screen.getAllByRole('button', { name: 'Edit Status' })[0].closest('[id]');
+        const firstApplicationCard = screen.getAllByRole('button', { name: 'Edit status' })[0].closest('[id]');
         const firstApplicationId = firstApplicationCard?.id;
         expect(firstApplicationId).toBeTruthy();
         const firstNotesField = screen.getAllByPlaceholderText('Add your notes here')[0];
@@ -478,16 +478,16 @@ describe('demo page interactions', () => {
         expect(firstNotesField).toHaveValue('Demo note update');
         expect(screen.getAllByText('Saving…').length).toBeGreaterThan(0);
 
-        await userEvent.click(screen.getAllByRole('button', { name: 'Edit Status' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
         fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Offer' } });
         await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
-        expect(screen.getAllByText(/Job Status: Offer/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Job status: Offer/i).length).toBeGreaterThan(0);
         await waitFor(() =>
             expect(document.getElementById(firstApplicationId || '')?.className).toContain('highlighted')
         );
     });
 
-    test('does not auto-scroll after a status change when list sorting is not Job Status', async () => {
+    test('does not auto-scroll after a status change when list sorting is not Job status', async () => {
         const scrollAndHighlight = vi.spyOn(highlightElement, 'scrollAndHighlight');
         renderDemo(<DemoViewApplication />);
 
@@ -495,7 +495,7 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('radio', { name: /Company A/ }));
         await waitFor(() => expect(screen.getByRole('button', { name: 'Sort by' })).toBeEnabled());
 
-        await userEvent.click(screen.getAllByRole('button', { name: 'Edit Status' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
         fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Interview' } });
         await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await act(async () => {
@@ -624,7 +624,7 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('article', { name: /HorizonAI Labs/i })).toHaveClass(boardStyles.cardHighlighted);
 
         await userEvent.click(screen.getByRole('button', { name: 'List' }));
-        expect(screen.getAllByText(/Job Status: Rejected/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Job status: Rejected/i).length).toBeGreaterThan(0);
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         await clickConfirmedAction(screen.getAllByRole('button', { name: 'Archive' })[0]);
@@ -671,8 +671,8 @@ describe('demo page interactions', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Board' }));
         fireEvent.click(screen.getByRole('button', { name: 'Sort by' }));
-        expect(screen.getByRole('radio', { name: 'Newest Application' })).toBeChecked();
-        fireEvent.click(screen.getByRole('radio', { name: 'Oldest Application' }));
+        expect(screen.getByRole('radio', { name: 'Newest application' })).toBeChecked();
+        fireEvent.click(screen.getByRole('radio', { name: 'Oldest application' }));
         await waitFor(() => expect(screen.getByRole('button', { name: 'Sort by' })).toBeEnabled());
 
         const appliedColumn = screen.getByRole('heading', { name: 'Applied 6' }).closest('section');
@@ -712,7 +712,7 @@ describe('demo page interactions', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
         expect(
             await screen.findByRole('heading', { name: 'No archived applications match your filters' })
@@ -853,7 +853,7 @@ describe('demo page interactions', () => {
             [routes.demoAddApplication]
         );
         const initialApplicationCount = screen.getByTestId('demo-application-count').textContent;
-        const viewApplicationsButton = screen.getByRole('button', { name: 'View Applications' });
+        const viewApplicationsButton = screen.getByRole('button', { name: 'View applications' });
 
         expect(viewApplicationsButton).toHaveAttribute('type', 'button');
         await userEvent.click(viewApplicationsButton);
@@ -870,13 +870,13 @@ describe('demo page interactions', () => {
 
         renderDemo(<DemoAddInterview />, [{ pathname: routes.demoAddInterview, state: { app } }]);
 
-        const notesInput = screen.getByLabelText('Additional Notes (optional)');
+        const notesInput = screen.getByLabelText('Additional notes (optional)');
         expect(notesInput.tagName).toBe('TEXTAREA');
         expect(notesInput).toHaveAttribute('maxlength', '3000');
         await userEvent.click(screen.getByRole('button', { name: /^add interview$/i }));
 
-        const dateInput = screen.getByLabelText('Interview Date');
-        const locationInput = screen.getByLabelText('Interview Location');
+        const dateInput = screen.getByLabelText('Interview date');
+        const locationInput = screen.getByLabelText('Interview location');
         const dateError = screen.getByText('Please enter an interview date.');
         const locationError = screen.getByText('Please enter an interview location.');
         expect(dateInput).toHaveAttribute('aria-invalid', 'true');
@@ -958,7 +958,7 @@ describe('demo page interactions', () => {
 
         const firstRender = renderInterviewForm();
         const initialInterviewCount = screen.getByTestId('demo-interview-count').textContent;
-        const viewInterviewsButton = screen.getByRole('button', { name: 'View Interviews' });
+        const viewInterviewsButton = screen.getByRole('button', { name: 'View interviews' });
         const backButton = screen.getByRole('button', { name: 'Back' });
 
         expect(viewInterviewsButton).toHaveAttribute('type', 'button');
@@ -1203,7 +1203,7 @@ describe('demo page interactions', () => {
         fetchSpy.mockRestore();
     });
 
-    test('keeps demo interview CSV filtered while bulk calendar and Delete All use the complete active collection', async () => {
+    test('keeps demo interview CSV filtered while bulk calendar and Delete all use the complete active collection', async () => {
         renderDemo(<DemoViewInterview />, [routes.demoViewInterviews]);
         await screen.findByRole('region', { name: 'Active interviews' });
 
@@ -1284,7 +1284,7 @@ describe('demo page interactions', () => {
         expect(await screen.findByRole('heading', { name: 'No active applications yet' })).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Declined' }));
 
         expect(await screen.findByRole('heading', { name: 'No applications match your filters' })).toBeInTheDocument();
@@ -1292,7 +1292,7 @@ describe('demo page interactions', () => {
 
         expect(await screen.findByRole('heading', { name: 'No active applications yet' })).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
         expect(fetchSpy).not.toHaveBeenCalled();
         fetchSpy.mockRestore();
     });

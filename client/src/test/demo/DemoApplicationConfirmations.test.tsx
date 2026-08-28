@@ -86,7 +86,7 @@ describe('demo single-application relation confirmations', () => {
         );
 
         expect(mockConfirm).toHaveBeenCalledWith({
-            title: 'Confirm Archive',
+            title: 'Confirm archive',
             description: 'Archive this active job application and its 2 related active interviews?',
             confirmationText: 'Archive',
             cancellationText: 'Cancel',
@@ -109,7 +109,7 @@ describe('demo single-application relation confirmations', () => {
 
         expect(mockConfirm).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Confirm Deletion',
+                title: 'Confirm deletion',
                 description:
                     'Delete this active job application and its 2 related active interviews? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
@@ -133,7 +133,7 @@ describe('demo single-application relation confirmations', () => {
         );
 
         expect(mockConfirm).toHaveBeenCalledWith({
-            title: 'Confirm Unarchive',
+            title: 'Confirm unarchive',
             description: 'Unarchive this archived job application and its 1 related archived interview?',
             confirmationText: 'Unarchive',
             cancellationText: 'Cancel',
@@ -158,7 +158,7 @@ describe('demo single-application relation confirmations', () => {
 
         expect(mockConfirm).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Confirm Deletion',
+                title: 'Confirm deletion',
                 description:
                     'Delete this archived job application and its 1 related archived interview? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',

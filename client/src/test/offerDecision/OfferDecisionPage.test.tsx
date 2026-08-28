@@ -225,7 +225,7 @@ describe('OfferDecisionPage', () => {
                     title: 'Export all active evaluated offer deadlines?',
                     description:
                         'This will download one .ics file containing all 1 active evaluated offer deadline, including offers you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
-                    confirmationText: 'Export All',
+                    confirmationText: 'Export all',
                 })
             )
         );
@@ -495,7 +495,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />, { updatePreferences });
         await waitForActiveWorkspace();
         fireEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        fireEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         fireEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
 
         expect(await screen.findByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
@@ -511,7 +511,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />);
         await waitForActiveWorkspace();
         fireEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        fireEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         fireEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
 
         expect(
@@ -562,7 +562,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived />, { updatePreferences });
         await screen.findByRole('heading', { name: 'Archived Evaluated Offers' });
         fireEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        fireEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         fireEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
 
         expect(await screen.findByRole('heading', { name: 'Archived Previous Evaluations' })).toBeInTheDocument();
@@ -580,7 +580,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived />);
         await screen.findByRole('heading', { name: 'Archived Evaluated Offers' });
         fireEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        fireEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         fireEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
 
         expect(
@@ -659,7 +659,7 @@ describe('OfferDecisionPage', () => {
         render(<OfferDecisionPage archived={false} />, { updatePreferences });
         await waitForActiveWorkspace();
         fireEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        fireEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         fireEvent.click(screen.getByRole('checkbox', { name: 'Previous Evaluations' }));
 
         await waitFor(() =>
@@ -820,7 +820,7 @@ describe('OfferDecisionPage', () => {
             expect(mocks.confirm).toHaveBeenCalledWith(
                 expect.objectContaining({
                     title: 'Delete counteroffer plan?',
-                    confirmationText: 'Delete and Save',
+                    confirmationText: 'Delete and save',
                     confirmationButtonProps: { autoFocus: true, color: 'error', variant: 'contained' },
                 })
             )

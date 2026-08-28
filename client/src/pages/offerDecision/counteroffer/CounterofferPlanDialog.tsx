@@ -50,9 +50,9 @@ const clonePlan = (plan: CounterofferPlan): CounterofferPlan => ({
 
 const getDialogTitle = (mode: DialogMode): string => {
     if (mode === 'create') {
-        return 'Plan Counteroffer';
+        return 'Plan counteroffer';
     }
-    return mode === 'edit' ? 'Edit Counteroffer Plan' : 'Counteroffer Plan';
+    return mode === 'edit' ? 'Edit counteroffer plan' : 'Counteroffer plan';
 };
 
 const CounterofferPlanDialog = ({

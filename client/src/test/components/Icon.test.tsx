@@ -6,6 +6,7 @@ const ICON_NAMES: readonly IconName[] = [
     'activeApplications',
     'alert',
     'arrowBack',
+    'arrowForward',
     'archive',
     'briefcase',
     'calendar',

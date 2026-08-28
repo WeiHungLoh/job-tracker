@@ -40,7 +40,7 @@ const applications = [
 ] as const;
 
 describe('application sorting', () => {
-    test('enables status-change auto scroll only for Job Status sorting when the toggle is enabled', () => {
+    test('enables status-change auto scroll only for Job status sorting when the toggle is enabled', () => {
         expect(shouldAutoScrollAfterStatusChange(true, 'job_status')).toBe(true);
         expect(shouldAutoScrollAfterStatusChange(false, 'job_status')).toBe(false);
         expect(shouldAutoScrollAfterStatusChange(true, 'application_date_desc')).toBe(false);
@@ -53,9 +53,9 @@ describe('application sorting', () => {
         expect(DEFAULT_APPLICATION_LIST_SORT_ORDER).toBe('job_status');
         expect(DEFAULT_APPLICATION_BOARD_SORT_ORDER).toBe('application_date_desc');
         expect(APPLICATION_LIST_SORT_OPTIONS).toEqual([
-            { label: 'Job Status', value: 'job_status' },
-            { label: 'Newest Application', value: 'application_date_desc' },
-            { label: 'Oldest Application', value: 'application_date_asc' },
+            { label: 'Job status', value: 'job_status' },
+            { label: 'Newest application', value: 'application_date_desc' },
+            { label: 'Oldest application', value: 'application_date_asc' },
             { label: 'Company A–Z', value: 'company_name_asc' },
             { label: 'Company Z–A', value: 'company_name_desc' },
         ]);

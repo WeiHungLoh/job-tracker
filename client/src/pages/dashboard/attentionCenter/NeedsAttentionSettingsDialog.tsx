@@ -176,7 +176,7 @@ const NeedsAttentionSettingsDialog = ({ onClose, open }: NeedsAttentionSettingsD
             open={open}
             PaperProps={{ className: styles.dialogPaper }}
         >
-            <DialogTitle>Customise Dashboard Reminders</DialogTitle>
+            <DialogTitle>Customise dashboard reminders</DialogTitle>
             <DialogContent className={styles.content}>
                 <p id='needs-attention-settings-description'>
                     Choose what appears in Needs Attention and when each reminder should show.
@@ -310,12 +310,12 @@ const NeedsAttentionSettingsDialog = ({ onClose, open }: NeedsAttentionSettingsD
                     disabled={!draft || isSaving}
                     onClick={() => {
                         setDraft(createDraft(DEFAULT_NEEDS_ATTENTION_SETTINGS));
-                        showSuccessToast('Reminder settings reset to default. Click Save to apply these changes.');
+                        showSuccessToast('Reminder settings reset to default. Click save to apply these changes.');
                     }}
                     type='button'
                     variant='destructive'
                 >
-                    Reset to Default
+                    Reset to default
                 </PrimaryButton>
                 <div className={styles.rightActions}>
                     <PrimaryButton disabled={isSaving} onClick={requestClose} type='button' variant='secondary'>

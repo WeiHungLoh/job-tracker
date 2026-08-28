@@ -11,11 +11,11 @@ describe('duplicate application confirmation', () => {
         };
 
         expect(createDuplicateApplicationConfirmation(duplicate)).toEqual({
-            title: 'Possible Duplicate Application',
+            title: 'Possible duplicate application',
             description: `You already added an application for Software Engineer at Morgan Stanley on ${
                 formatDate(duplicate.application_date).formattedDate
             }. Do you want to add this application anyway?`,
-            confirmationText: 'Add Anyway',
+            confirmationText: 'Add anyway',
             cancellationText: 'Cancel',
             confirmationButtonProps: { autoFocus: true },
         });

@@ -50,7 +50,7 @@ const OfferEvaluationDialog = ({
     onSave,
 }: OfferEvaluationDialogProps) => {
     const titleId = `offer-evaluation-dialog-title-${application.job_id}`;
-    const dialogTitle = mode === 'add' ? 'Add Evaluation' : 'Edit Evaluation';
+    const dialogTitle = mode === 'add' ? 'Add evaluation' : 'Edit evaluation';
     const formId = `offer-evaluation-dialog-form-${application.job_id}`;
     const score = calculateOfferDecisionScore(evaluation.ratings);
     const formRef = useRef<HTMLFormElement>(null);

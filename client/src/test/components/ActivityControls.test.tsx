@@ -308,7 +308,7 @@ describe('ActivityControls', () => {
         expect(screen.queryByRole('menu', { name: 'Portal scroll options' })).not.toBeInTheDocument();
     });
 
-    test('marks Show All as partially checked when only some filters are selected', async () => {
+    test('marks Show all as partially checked when only some filters are selected', async () => {
         render(
             <CheckboxFilter
                 buttonLabel='Filter by'
@@ -320,7 +320,7 @@ describe('ActivityControls', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBePartiallyChecked();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBePartiallyChecked();
     });
 
     test('reflects externally saved filters while an older selection is still pending', async () => {
@@ -342,7 +342,7 @@ describe('ActivityControls', () => {
         );
 
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
         rerender(
@@ -355,7 +355,7 @@ describe('ActivityControls', () => {
             />
         );
 
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
         resolveSelection(true);
     });
 });

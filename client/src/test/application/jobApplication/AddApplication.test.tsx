@@ -160,14 +160,14 @@ describe('User add application flow', () => {
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
     });
 
-    test('View Applications does not submit the form', () => {
+    test('View applications does not submit the form', () => {
         render(
             <MemoryRouter>
                 <AddApplication />
             </MemoryRouter>
         );
 
-        const viewApplicationsButton = screen.getByRole('button', { name: 'View Applications' });
+        const viewApplicationsButton = screen.getByRole('button', { name: 'View applications' });
         expect(viewApplicationsButton).toHaveAttribute('type', 'button');
         userEvent.click(viewApplicationsButton);
 
@@ -782,7 +782,7 @@ describe('User add application flow', () => {
         expect(screen.getByLabelText(/job title/i)).toHaveValue('Cleaner');
     });
 
-    test('shows duplicate details with exactly Cancel and Add Anyway actions', async () => {
+    test('shows duplicate details with exactly Cancel and Add anyway actions', async () => {
         fetch.mockResolvedValueOnce(duplicateResponse());
 
         render(
@@ -798,13 +798,13 @@ describe('User add application flow', () => {
         const dialog = await screen.findByRole('dialog');
         const formattedApplicationDate = formatDate(DUPLICATE_APPLICATION.application_date).formattedDate;
 
-        expect(within(dialog).getByRole('heading', { name: 'Possible Duplicate Application' })).toBeInTheDocument();
+        expect(within(dialog).getByRole('heading', { name: 'Possible duplicate application' })).toBeInTheDocument();
         expect(dialog).toHaveTextContent(DUPLICATE_APPLICATION.company_name);
         expect(dialog).toHaveTextContent(DUPLICATE_APPLICATION.job_title);
         expect(dialog).toHaveTextContent(formattedApplicationDate);
         expect(within(dialog).getAllByRole('button')).toHaveLength(2);
         expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-        expect(within(dialog).getByRole('button', { name: 'Add Anyway' })).toBeInTheDocument();
+        expect(within(dialog).getByRole('button', { name: 'Add anyway' })).toBeInTheDocument();
         expect(within(dialog).queryByRole('button', { name: /view existing/i })).not.toBeInTheDocument();
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
@@ -859,7 +859,7 @@ describe('User add application flow', () => {
 
         fillCompleteApplicationForm();
         userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
-        userEvent.click(await screen.findByRole('button', { name: 'Add Anyway' }));
+        userEvent.click(await screen.findByRole('button', { name: 'Add anyway' }));
 
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
         const expectedRequest = {
@@ -885,7 +885,7 @@ describe('User add application flow', () => {
         expect(screen.getByLabelText(/job posting url/i)).toHaveValue('');
     });
 
-    test('confirms Add Anyway with Enter exactly once using the original normalized request', async () => {
+    test('confirms Add anyway with Enter exactly once using the original normalized request', async () => {
         fetch.mockResolvedValueOnce(duplicateResponse()).mockResolvedValueOnce(successResponse());
 
         render(
@@ -898,7 +898,7 @@ describe('User add application flow', () => {
         userEvent.type(screen.getByLabelText(/job title/i), '  Software Engineer  ');
         userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
 
-        const addAnywayButton = await screen.findByRole('button', { name: 'Add Anyway' });
+        const addAnywayButton = await screen.findByRole('button', { name: 'Add anyway' });
         await waitFor(() => expect(addAnywayButton).toHaveFocus());
         userEvent.keyboard('{enter}');
 
@@ -913,7 +913,7 @@ describe('User add application flow', () => {
         expect(fetch).toHaveBeenCalledTimes(2);
     });
 
-    test('shows the standard error toast and preserves values when Add Anyway fails', async () => {
+    test('shows the standard error toast and preserves values when Add anyway fails', async () => {
         fetch.mockResolvedValueOnce(duplicateResponse()).mockResolvedValueOnce({
             headers: new Headers({ 'content-type': 'text/plain' }),
             ok: false,
@@ -930,7 +930,7 @@ describe('User add application flow', () => {
 
         fillCompleteApplicationForm();
         userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
-        userEvent.click(await screen.findByRole('button', { name: 'Add Anyway' }));
+        userEvent.click(await screen.findByRole('button', { name: 'Add anyway' }));
 
         await waitFor(() => expect(screen.getByText('Failed to add a job application')).toBeInTheDocument());
         expect(fetch).toHaveBeenCalledTimes(2);

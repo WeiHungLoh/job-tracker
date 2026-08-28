@@ -116,7 +116,7 @@ describe('Dashboard independent loading', () => {
         await waitFor(() => expect(apiMocks.listApplications).toHaveBeenCalledTimes(1));
         expect(apiMocks.getActiveOfferDecisions).not.toHaveBeenCalled();
 
-        await userEvent.click(screen.getByRole('button', { name: 'Customise Dashboard Reminders' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Customise dashboard reminders' }));
         expect(apiMocks.getDashboardApplicationSummary).toHaveBeenCalledTimes(1);
         expect(apiMocks.listApplications).toHaveBeenCalledTimes(1);
         expect(apiMocks.listInterviews).toHaveBeenCalledTimes(1);

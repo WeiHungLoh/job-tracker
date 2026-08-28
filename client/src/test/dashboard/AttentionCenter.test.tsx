@@ -492,7 +492,7 @@ Best regards,
         expect(screen.queryByText('Company 1')).not.toBeInTheDocument();
     });
 
-    test('confirms Mark as Ghosted with auto-focus, Enter, and Escape cancellation', async () => {
+    test('confirms Mark as ghosted with auto-focus, Enter, and Escape cancellation', async () => {
         const application = {
             ...createApplication(1, 'Applied'),
             application_follow_up_sent_at: '2026-06-26T12:00:00.000Z',
@@ -510,13 +510,13 @@ Best regards,
             </ConfirmProvider>
         );
 
-        const action = screen.getByRole('button', { name: 'Mark as Ghosted for Role 1 at Company 1' });
+        const action = screen.getByRole('button', { name: 'Mark as ghosted for Role 1 at Company 1' });
         expect(screen.queryByText(/view application/i)).not.toBeInTheDocument();
 
         await userEvent.click(action);
-        expect(screen.getByRole('dialog', { name: 'Mark as Ghosted?' })).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Mark as ghosted?' })).toBeInTheDocument();
         expect(screen.getByText('Company 1 — Role 1 will be marked as Ghosted.')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Mark as Ghosted' })).toHaveFocus();
+        expect(screen.getByRole('button', { name: 'Mark as ghosted' })).toHaveFocus();
         await userEvent.keyboard('{Escape}');
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         expect(onMarkApplicationGhosted).not.toHaveBeenCalled();
@@ -529,7 +529,7 @@ Best regards,
         await waitFor(() => expect(action).not.toHaveAttribute('aria-busy'));
     });
 
-    test('uses the same Mark as Ghosted confirmation for an unanswered interview follow-up', async () => {
+    test('uses the same Mark as ghosted confirmation for an unanswered interview follow-up', async () => {
         const application = createApplication(1, 'Interview');
         const interview = {
             ...createInterview(1, '2026-06-18T11:00:00.000Z'),
@@ -548,9 +548,9 @@ Best regards,
             </ConfirmProvider>
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'Mark as Ghosted for Role 1 at Company 1' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Mark as ghosted for Role 1 at Company 1' }));
         expect(screen.getByText('Company 1 — Role 1 will be marked as Ghosted.')).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: 'Mark as Ghosted' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Mark as ghosted' }));
 
         await waitFor(() => expect(onMarkApplicationGhosted).toHaveBeenCalledWith(application));
     });

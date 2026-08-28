@@ -91,14 +91,14 @@ const Navbar = () => {
 
                 <div className={styles.utilityActions}>
                     <PrimaryButton
-                        aria-label={archived ? 'Show Active' : 'Show Archived'}
+                        aria-label={archived ? 'Show active' : 'Show archived'}
                         className={styles.archiveStatus}
                         onClick={handleArchiveStatusToggle}
                         type='button'
                         variant='navigation'
                     >
                         <Icon name={archived ? 'archive' : 'activeApplications'} size={18} />
-                        <span className={styles.utilityLabel}>{archived ? 'Show Active' : 'Show Archived'}</span>
+                        <span className={styles.utilityLabel}>{archived ? 'Show active' : 'Show archived'}</span>
                     </PrimaryButton>
 
                     <PrimaryButton
@@ -117,7 +117,7 @@ const Navbar = () => {
                         type='button'
                         variant='navigation'
                     >
-                        Logout
+                        Sign out
                     </PrimaryButton>
                 </div>
             </div>

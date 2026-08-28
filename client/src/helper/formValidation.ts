@@ -149,7 +149,7 @@ export const validateApplicationForm = (
     }
 
     if (trimmedJobURL.length > FIELD_MAX_LENGTHS.jobURL) {
-        errors.jobURL = `Job Posting URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`;
+        errors.jobURL = `Job posting URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`;
     }
 
     const applicationDateIsInvalid =

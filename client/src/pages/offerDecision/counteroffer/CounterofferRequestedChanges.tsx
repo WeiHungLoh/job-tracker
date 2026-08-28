@@ -8,7 +8,7 @@ type CounterofferRequestedChangesProps = {
 
 const CounterofferRequestedChanges = ({ changes, ratingsChanged }: CounterofferRequestedChangesProps) => (
     <section aria-labelledby='counteroffer-requested-changes-heading' className={styles.requestedChanges}>
-        <h5 id='counteroffer-requested-changes-heading'>Requested Changes</h5>
+        <h5 id='counteroffer-requested-changes-heading'>Requested changes</h5>
         {changes.length === 0 ? (
             <p className={styles.noRequestedChanges}>
                 {ratingsChanged ? 'No changes in offer fields (only ratings changed).' : 'No requested changes yet.'}

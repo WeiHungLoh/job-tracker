@@ -88,7 +88,7 @@ const CheckboxFilter = <Option extends string>({
                     type='checkbox'
                 />
                 <span aria-hidden='true' className={styles.checkbox} />
-                <span>Show All</span>
+                <span>Show all</span>
             </label>
 
             {options.map((option) => (

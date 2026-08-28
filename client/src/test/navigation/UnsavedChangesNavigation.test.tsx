@@ -264,50 +264,50 @@ describe('unsaved-changes route protection', () => {
         vi.mocked(fetch).mockReset();
     });
 
-    test('Add Application stays clean at its normal defaults', async () => {
+    test('Add application stays clean at its normal defaults', async () => {
         renderRouter(applicationRoutes, [routes.addApplication]);
 
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        await click(screen.getByRole('button', { name: 'View applications' }));
         expect(screen.getByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     test.each([
-        ['Company Name', 'OpenAI', ''],
-        ['Job Title', 'Software Engineer', ''],
-        ['Job Status', 'Interview', 'Applied'],
-        ['Application date', '2026-07-02T10:30', ''],
-        ['Job Location (optional)', 'Singapore', ''],
-        ['Job Posting URL (optional)', 'https://jobs.example.com/role', ''],
+        ['Company name', 'OpenAI', ''],
+        ['Job title', 'Software Engineer', ''],
+        ['Job status', 'Interview', 'Applied'],
+        ['Application date (uses current date if left blank)', '2026-07-02T10:30', ''],
+        ['Job location (optional)', 'Singapore', ''],
+        ['Job posting URL (optional)', 'https://jobs.example.com/role', ''],
     ])(
-        '%s activates the Add Application blocker and reverting it removes the block',
+        '%s activates the Add application blocker and reverting it removes the block',
         async (label, value, cleanValue) => {
             renderRouter(applicationRoutes, [routes.addApplication]);
             const field = screen.getByLabelText(label);
 
             fireEvent.change(field, { target: { value } });
-            await click(screen.getByRole('button', { name: 'View Applications' }));
+            await click(screen.getByRole('button', { name: 'View applications' }));
             const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
             await click(within(dialog).getByRole('button', { name: 'Stay' }));
 
             await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
             fireEvent.change(field, { target: { value: cleanValue } });
-            await click(screen.getByRole('button', { name: 'View Applications' }));
+            await click(screen.getByRole('button', { name: 'View applications' }));
 
             expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         }
     );
 
-    test('an incomplete Add Application date activates the blocker', async () => {
+    test('an incomplete Add application date activates the blocker', async () => {
         renderRouter(applicationRoutes, [routes.addApplication]);
 
-        enterIncompleteDate(screen.getByLabelText('Application date'));
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        enterIncompleteDate(screen.getByLabelText('Application date (uses current date if left blank)'));
+        await click(screen.getByRole('button', { name: 'View applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
 
-    test('Add Evaluation blocks only after a non-default field changes and uses the shared Leave Page focus', async () => {
+    test('Add evaluation blocks only after a non-default field changes and uses the shared Leave Page focus', async () => {
         const { router } = renderRouter(offerDecisionRoutes, [routes.offerDecisions]);
         await click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
 
@@ -333,7 +333,7 @@ describe('unsaved-changes route protection', () => {
         expect(screen.getByLabelText('Beta Labs bonus')).toHaveValue('20% target');
     });
 
-    test('an incomplete Add Evaluation decision deadline activates the blocker', async () => {
+    test('an incomplete Add evaluation decision deadline activates the blocker', async () => {
         const { router } = renderRouter(offerDecisionRoutes, [routes.offerDecisions]);
         await click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
 
@@ -345,7 +345,7 @@ describe('unsaved-changes route protection', () => {
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
 
-    test('Edit Evaluation blocks only while its draft differs from the saved evaluation', async () => {
+    test('Edit evaluation blocks only while its draft differs from the saved evaluation', async () => {
         const { router } = renderRouter(offerDecisionRoutes, [routes.offerDecisions]);
         await editOfferEvaluation('Acme');
 
@@ -381,7 +381,7 @@ describe('unsaved-changes route protection', () => {
     ])('Quick Capture %s prefill blocks without manual editing', async (parameter, value) => {
         renderRouter(applicationRoutes, [`${routes.addApplication}?${parameter}=${encodeURIComponent(value)}`]);
 
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        await click(screen.getByRole('button', { name: 'View applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
@@ -391,7 +391,7 @@ describe('unsaved-changes route protection', () => {
             `${routes.addApplication}?companyName=Google&jobTitle=Software+Engineer&jobLocation=Singapore&jobURL=https%3A%2F%2Fjobs.example.com`,
         ]);
 
-        const viewApplicationsButton = screen.getByRole('button', { name: 'View Applications' });
+        const viewApplicationsButton = screen.getByRole('button', { name: 'View applications' });
         await click(viewApplicationsButton);
 
         const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
@@ -404,10 +404,10 @@ describe('unsaved-changes route protection', () => {
 
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         await waitFor(() => expect(viewApplicationsButton).toHaveFocus());
-        expect(screen.getByLabelText('Company Name')).toHaveValue('Google');
-        expect(screen.getByLabelText('Job Title')).toHaveValue('Software Engineer');
-        expect(screen.getByLabelText('Job Location (optional)')).toHaveValue('Singapore');
-        expect(screen.getByLabelText('Job Posting URL (optional)')).toHaveValue('https://jobs.example.com');
+        expect(screen.getByLabelText('Company name')).toHaveValue('Google');
+        expect(screen.getByLabelText('Job title')).toHaveValue('Software Engineer');
+        expect(screen.getByLabelText('Job location (optional)')).toHaveValue('Singapore');
+        expect(screen.getByLabelText('Job posting URL (optional)')).toHaveValue('https://jobs.example.com');
     });
 
     test('clearing every Quick Capture form field restores the clean defaults', async () => {
@@ -415,22 +415,22 @@ describe('unsaved-changes route protection', () => {
             `${routes.addApplication}?companyName=Google&jobTitle=Software+Engineer&jobLocation=Singapore&jobURL=https%3A%2F%2Fjobs.example.com`,
         ]);
 
-        fireEvent.change(screen.getByLabelText('Company Name'), { target: { value: '' } });
-        fireEvent.change(screen.getByLabelText('Job Title'), { target: { value: '' } });
-        fireEvent.change(screen.getByLabelText('Job Location (optional)'), { target: { value: '' } });
-        fireEvent.change(screen.getByLabelText('Job Posting URL (optional)'), { target: { value: '' } });
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        fireEvent.change(screen.getByLabelText('Company name'), { target: { value: '' } });
+        fireEvent.change(screen.getByLabelText('Job title'), { target: { value: '' } });
+        fireEvent.change(screen.getByLabelText('Job location (optional)'), { target: { value: '' } });
+        fireEvent.change(screen.getByLabelText('Job posting URL (optional)'), { target: { value: '' } });
+        await click(screen.getByRole('button', { name: 'View applications' }));
 
         expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    test('captured page title and Quick Capture setup expansion do not make Add Application dirty', async () => {
+    test('captured page title and Quick Capture setup expansion do not make Add application dirty', async () => {
         const { unmount } = renderRouter(applicationRoutes, [
             `${routes.addApplication}?pageTitle=${encodeURIComponent('Software Engineer at Google')}`,
         ]);
 
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        await click(screen.getByRole('button', { name: 'View applications' }));
         expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         unmount();
@@ -438,61 +438,61 @@ describe('unsaved-changes route protection', () => {
         renderRouter(applicationRoutes, [routes.addApplication]);
         await click(screen.getByRole('button', { name: 'Quick Capture' }));
         expect(screen.getByRole('region', { name: 'Quick Capture setup' })).toBeInTheDocument();
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        await click(screen.getByRole('button', { name: 'View applications' }));
 
         expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     test.each([
-        ['Interview Date', '2026-08-03T14:30', ''],
+        ['Interview date', '2026-08-03T14:30', ''],
         ['Duration (minutes)', '90', '60'],
-        ['Interview Location', 'Zoom', ''],
-        ['Interview Type (optional)', 'Panel', ''],
+        ['Interview location', 'Zoom', ''],
+        ['Interview type (optional)', 'Panel', ''],
         ['Meeting URL (optional)', 'https://meet.example.com/room', ''],
-        ['Additional Notes (optional)', 'Prepare examples', ''],
+        ['Additional notes (optional)', 'Prepare examples', ''],
     ])(
-        '%s activates the Add Interview blocker and reverting it removes the block',
+        '%s activates the Add interview blocker and reverting it removes the block',
         async (label, value, cleanValue) => {
             renderRouter(interviewRoutes, [{ pathname: routes.addInterview, state: { app: application } }]);
             const field = screen.getByLabelText(label);
 
             fireEvent.change(field, { target: { value } });
-            await click(screen.getByRole('button', { name: 'View Interviews' }));
+            await click(screen.getByRole('button', { name: 'View interviews' }));
             const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
             await click(within(dialog).getByRole('button', { name: 'Stay' }));
 
             await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
             fireEvent.change(field, { target: { value: cleanValue } });
-            await click(screen.getByRole('button', { name: 'View Interviews' }));
+            await click(screen.getByRole('button', { name: 'View interviews' }));
 
             expect(await screen.findByRole('heading', { name: 'Interviews destination' })).toBeInTheDocument();
         }
     );
 
-    test('an incomplete Add Interview date activates the blocker', async () => {
+    test('an incomplete Add interview date activates the blocker', async () => {
         renderRouter(interviewRoutes, [{ pathname: routes.addInterview, state: { app: application } }]);
 
-        enterIncompleteDate(screen.getByLabelText('Interview Date'));
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        enterIncompleteDate(screen.getByLabelText('Interview date'));
+        await click(screen.getByRole('button', { name: 'View interviews' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
 
-    test('Add Interview application context and default duration are clean', async () => {
+    test('Add interview application context and default duration are clean', async () => {
         renderRouter(interviewRoutes, [{ pathname: routes.addInterview, state: { app: application } }]);
 
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        await click(screen.getByRole('button', { name: 'View interviews' }));
 
         expect(await screen.findByRole('heading', { name: 'Interviews destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    test('Add Interview treats application context and default duration as clean, then preserves original navigation', async () => {
+    test('Add interview treats application context and default duration as clean, then preserves original navigation', async () => {
         renderRouter(interviewRoutes, [{ pathname: routes.addInterview, state: { app: application } }]);
 
-        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2026-08-03T14:30' } });
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        fireEvent.change(screen.getByLabelText('Interview date'), { target: { value: '2026-08-03T14:30' } });
+        await click(screen.getByRole('button', { name: 'View interviews' }));
 
         const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
         await click(within(dialog).getByRole('button', { name: 'Leave Page' }));
@@ -525,7 +525,7 @@ describe('unsaved-changes route protection', () => {
             </ConfirmProvider>
         );
 
-        fireEvent.change(screen.getByLabelText('Company Name'), { target: { value: 'OpenAI' } });
+        fireEvent.change(screen.getByLabelText('Company name'), { target: { value: 'OpenAI' } });
         act(() => {
             void router.navigate(delta);
         });
@@ -540,10 +540,10 @@ describe('unsaved-changes route protection', () => {
         vi.mocked(fetch).mockResolvedValueOnce(duplicateApplicationResponse);
         const { router } = renderPreviousHistory(applicationRoutes, routes.addApplication);
 
-        await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Application' }));
-        const duplicateDialog = await screen.findByRole('dialog', { name: 'Possible Duplicate Application' });
+        await userEvent.type(screen.getByLabelText('Company name'), 'OpenAI');
+        await userEvent.type(screen.getByLabelText('Job title'), 'Software Engineer');
+        await click(screen.getByRole('button', { name: 'Add application' }));
+        const duplicateDialog = await screen.findByRole('dialog', { name: 'Possible duplicate application' });
 
         await act(async () => {
             void router.navigate(-1);
@@ -557,14 +557,14 @@ describe('unsaved-changes route protection', () => {
         await click(within(leaveDialog).getByRole('button', { name: 'Stay' }));
 
         await waitFor(() =>
-            expect(screen.getByRole('button', { name: 'Add Application' })).not.toHaveAttribute('aria-busy')
+            expect(screen.getByRole('button', { name: 'Add application' })).not.toHaveAttribute('aria-busy')
         );
-        expect(screen.getByLabelText('Company Name')).toHaveValue('OpenAI');
+        expect(screen.getByLabelText('Company name')).toHaveValue('OpenAI');
     });
 
     test.each([
-        ['scheduling-conflict', interviewSchedulingConflictResponse, 'Possible Scheduling Conflict'],
-        ['offer-deadline', interviewOfferDeadlineResponse, 'Offer Deadline Warning'],
+        ['scheduling-conflict', interviewSchedulingConflictResponse, 'Possible scheduling conflict'],
+        ['offer-deadline', interviewOfferDeadlineResponse, 'Offer deadline warning'],
     ])('waits for the %s confirmation before showing the leave warning', async (_, response, dialogName) => {
         vi.mocked(fetch).mockResolvedValueOnce(response);
         const { router } = renderPreviousHistory(interviewRoutes, {
@@ -572,9 +572,9 @@ describe('unsaved-changes route protection', () => {
             state: { app: application },
         });
 
-        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2030-08-03T14:30' } });
-        await userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
-        await click(screen.getByRole('button', { name: 'Add Interview' }));
+        fireEvent.change(screen.getByLabelText('Interview date'), { target: { value: '2030-08-03T14:30' } });
+        await userEvent.type(screen.getByLabelText('Interview location'), 'Zoom');
+        await click(screen.getByRole('button', { name: 'Add interview' }));
         const submissionDialog = await screen.findByRole('dialog', { name: dialogName });
 
         await act(async () => {
@@ -588,8 +588,8 @@ describe('unsaved-changes route protection', () => {
         const leaveDialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
         await click(within(leaveDialog).getByRole('button', { name: 'Stay' }));
 
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Add Interview' })).not.toBeDisabled());
-        expect(screen.getByLabelText('Interview Location')).toHaveValue('Zoom');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Add interview' })).not.toBeDisabled());
+        expect(screen.getByLabelText('Interview location')).toHaveValue('Zoom');
     });
 
     test('defers browser history while a duplicate check is pending, then queues the leave warning', async () => {
@@ -601,9 +601,9 @@ describe('unsaved-changes route protection', () => {
         );
         const { router } = renderPreviousHistory(applicationRoutes, routes.addApplication);
 
-        await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Application' }));
+        await userEvent.type(screen.getByLabelText('Company name'), 'OpenAI');
+        await userEvent.type(screen.getByLabelText('Job title'), 'Software Engineer');
+        await click(screen.getByRole('button', { name: 'Add application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
 
         await act(async () => {
@@ -613,13 +613,13 @@ describe('unsaved-changes route protection', () => {
         expect(screen.queryByRole('dialog', { name: 'Leave this page?' })).not.toBeInTheDocument();
         await act(async () => resolveRequest(duplicateApplicationResponse));
 
-        const duplicateDialog = await screen.findByRole('dialog', { name: 'Possible Duplicate Application' });
+        const duplicateDialog = await screen.findByRole('dialog', { name: 'Possible duplicate application' });
         await click(within(duplicateDialog).getByRole('button', { name: 'Cancel' }));
         const leaveDialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
         await click(within(leaveDialog).getByRole('button', { name: 'Stay' }));
 
         await waitFor(() =>
-            expect(screen.getByRole('button', { name: 'Add Application' })).not.toHaveAttribute('aria-busy')
+            expect(screen.getByRole('button', { name: 'Add application' })).not.toHaveAttribute('aria-busy')
         );
     });
 
@@ -632,9 +632,9 @@ describe('unsaved-changes route protection', () => {
         );
         const { router } = renderPreviousHistory(applicationRoutes, routes.addApplication);
 
-        await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Application' }));
+        await userEvent.type(screen.getByLabelText('Company name'), 'OpenAI');
+        await userEvent.type(screen.getByLabelText('Job title'), 'Software Engineer');
+        await click(screen.getByRole('button', { name: 'Add application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         await act(async () => {
             void router.navigate(-1);
@@ -675,9 +675,9 @@ describe('unsaved-changes route protection', () => {
             </ConfirmProvider>
         );
 
-        await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Application' }));
+        await userEvent.type(screen.getByLabelText('Company name'), 'OpenAI');
+        await userEvent.type(screen.getByLabelText('Job title'), 'Software Engineer');
+        await click(screen.getByRole('button', { name: 'Add application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         await act(async () => {
             void router.navigate(-1);
@@ -701,9 +701,9 @@ describe('unsaved-changes route protection', () => {
         );
         const { router } = renderPreviousHistory(applicationRoutes, routes.addApplication);
 
-        await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Application' }));
+        await userEvent.type(screen.getByLabelText('Company name'), 'OpenAI');
+        await userEvent.type(screen.getByLabelText('Job title'), 'Software Engineer');
+        await click(screen.getByRole('button', { name: 'Add application' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
         await act(async () => {
             void router.navigate(-1);
@@ -715,7 +715,7 @@ describe('unsaved-changes route protection', () => {
         const leaveDialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
         expect(screen.getByText('Failed to add a job application')).toBeInTheDocument();
         await click(within(leaveDialog).getByRole('button', { name: 'Stay' }));
-        expect(screen.getByLabelText('Company Name')).toHaveValue('OpenAI');
+        expect(screen.getByLabelText('Company name')).toHaveValue('OpenAI');
     });
 
     test('defers browser history across chained interview confirmations', async () => {
@@ -732,10 +732,10 @@ describe('unsaved-changes route protection', () => {
             state: { app: application },
         });
 
-        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2030-08-03T14:30' } });
-        await userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
-        await click(screen.getByRole('button', { name: 'Add Interview' }));
-        await click(await screen.findByRole('button', { name: 'Add Anyway' }));
+        fireEvent.change(screen.getByLabelText('Interview date'), { target: { value: '2030-08-03T14:30' } });
+        await userEvent.type(screen.getByLabelText('Interview location'), 'Zoom');
+        await click(screen.getByRole('button', { name: 'Add interview' }));
+        await click(await screen.findByRole('button', { name: 'Add anyway' }));
         await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
         await act(async () => {
             void router.navigate(-1);
@@ -744,21 +744,21 @@ describe('unsaved-changes route protection', () => {
         expect(screen.queryByRole('dialog', { name: 'Leave this page?' })).not.toBeInTheDocument();
         await act(async () => resolveRetry(interviewOfferDeadlineResponse));
 
-        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
+        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer deadline warning' });
         await click(within(deadlineDialog).getByRole('button', { name: 'Cancel' }));
         const leaveDialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
         await click(within(leaveDialog).getByRole('button', { name: 'Stay' }));
-        expect(screen.getByLabelText('Interview Location')).toHaveValue('Zoom');
+        expect(screen.getByLabelText('Interview location')).toHaveValue('Zoom');
     });
 
-    test('missing Add Interview application context redirects without a warning', async () => {
+    test('missing Add interview application context redirects without a warning', async () => {
         renderRouter(interviewRoutes, [routes.addInterview]);
 
         expect(await screen.findByRole('heading', { name: 'Applications destination' })).toBeInTheDocument();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    test('successful Add Application submission resets cleanly and later edits activate the blocker again', async () => {
+    test('successful Add application submission resets cleanly and later edits activate the blocker again', async () => {
         vi.mocked(fetch).mockResolvedValue({
             ok: true,
             status: 201,
@@ -767,19 +767,19 @@ describe('unsaved-changes route protection', () => {
         } as Response);
         renderRouter(applicationRoutes, [routes.addApplication]);
 
-        await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await userEvent.type(screen.getByLabelText('Job Title'), 'Software Engineer');
-        await click(screen.getByRole('button', { name: 'Add Application' }));
+        await userEvent.type(screen.getByLabelText('Company name'), 'OpenAI');
+        await userEvent.type(screen.getByLabelText('Job title'), 'Software Engineer');
+        await click(screen.getByRole('button', { name: 'Add application' }));
 
-        await waitFor(() => expect(screen.getByLabelText('Company Name')).toHaveValue(''));
-        expect(screen.getByLabelText('Job Title')).toHaveValue('');
-        await userEvent.type(screen.getByLabelText('Company Name'), 'Another company');
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        await waitFor(() => expect(screen.getByLabelText('Company name')).toHaveValue(''));
+        expect(screen.getByLabelText('Job title')).toHaveValue('');
+        await userEvent.type(screen.getByLabelText('Company name'), 'Another company');
+        await click(screen.getByRole('button', { name: 'View applications' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
 
-    test('successful Add Interview submission resets cleanly and later edits activate the blocker again', async () => {
+    test('successful Add interview submission resets cleanly and later edits activate the blocker again', async () => {
         vi.mocked(fetch).mockResolvedValue({
             ok: true,
             status: 201,
@@ -788,15 +788,15 @@ describe('unsaved-changes route protection', () => {
         } as Response);
         renderRouter(interviewRoutes, [{ pathname: routes.addInterview, state: { app: application } }]);
 
-        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2030-08-03T14:30' } });
-        await userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
-        await click(screen.getByRole('button', { name: 'Add Interview' }));
+        fireEvent.change(screen.getByLabelText('Interview date'), { target: { value: '2030-08-03T14:30' } });
+        await userEvent.type(screen.getByLabelText('Interview location'), 'Zoom');
+        await click(screen.getByRole('button', { name: 'Add interview' }));
 
-        await waitFor(() => expect(screen.getByLabelText('Interview Date')).toHaveValue(''));
+        await waitFor(() => expect(screen.getByLabelText('Interview date')).toHaveValue(''));
         expect(screen.getByLabelText('Duration (minutes)')).toHaveValue(60);
-        expect(screen.getByLabelText('Interview Location')).toHaveValue('');
-        await userEvent.type(screen.getByLabelText('Additional Notes (optional)'), 'Another interview');
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        expect(screen.getByLabelText('Interview location')).toHaveValue('');
+        await userEvent.type(screen.getByLabelText('Additional notes (optional)'), 'Another interview');
+        await click(screen.getByRole('button', { name: 'View interviews' }));
 
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
@@ -804,29 +804,29 @@ describe('unsaved-changes route protection', () => {
     test('Escape and backdrop dismissal stay on the dirty form without opening duplicate dialogs', async () => {
         renderRouter(interviewRoutes, [{ pathname: routes.addInterview, state: { app: application } }]);
 
-        await userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        await userEvent.type(screen.getByLabelText('Interview location'), 'Zoom');
+        await click(screen.getByRole('button', { name: 'View interviews' }));
         const dialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
         expect(screen.getAllByRole('dialog')).toHaveLength(1);
 
         fireEvent.keyDown(dialog, { key: 'Escape' });
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-        expect(screen.getByLabelText('Interview Location')).toHaveValue('Zoom');
+        expect(screen.getByLabelText('Interview location')).toHaveValue('Zoom');
 
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        await click(screen.getByRole('button', { name: 'View interviews' }));
         const reopenedDialog = await screen.findByRole('dialog', { name: 'Leave this page?' });
         fireEvent.mouseDown(reopenedDialog.parentElement!);
         fireEvent.click(reopenedDialog.parentElement!);
 
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-        expect(screen.getByLabelText('Interview Location')).toHaveValue('Zoom');
+        expect(screen.getByLabelText('Interview location')).toHaveValue('Zoom');
     });
 
     test('Enter confirms leaving only while the warning dialog is open', async () => {
         renderRouter(interviewRoutes, [{ pathname: routes.addInterview, state: { app: application } }]);
 
-        await userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        await userEvent.type(screen.getByLabelText('Interview location'), 'Zoom');
+        await click(screen.getByRole('button', { name: 'View interviews' }));
         await screen.findByRole('dialog', { name: 'Leave this page?' });
         await act(async () => {
             userEvent.keyboard('{Enter}');
@@ -835,7 +835,7 @@ describe('unsaved-changes route protection', () => {
         expect(await screen.findByRole('heading', { name: 'Interviews destination' })).toBeInTheDocument();
     });
 
-    test('demo Add Application and Add Interview use the same warning lifecycle', async () => {
+    test('demo Add application and Add interview use the same warning lifecycle', async () => {
         const demoApplicationRoutes: RouteObject[] = [
             {
                 path: routes.demoAddApplication,
@@ -858,8 +858,8 @@ describe('unsaved-changes route protection', () => {
             </DemoProvider>
         );
 
-        await userEvent.type(screen.getByLabelText('Company Name'), 'OpenAI');
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        await userEvent.type(screen.getByLabelText('Company name'), 'OpenAI');
+        await click(screen.getByRole('button', { name: 'View applications' }));
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
         await click(screen.getByRole('button', { name: 'Stay' }));
         unmount();
@@ -876,8 +876,8 @@ describe('unsaved-changes route protection', () => {
         ];
         renderRouter(demoInterviewRoutes, [{ pathname: routes.demoAddInterview, state: { app: application } }], true);
 
-        await userEvent.type(screen.getByLabelText('Additional Notes (optional)'), 'Prepare examples');
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        await userEvent.type(screen.getByLabelText('Additional notes (optional)'), 'Prepare examples');
+        await click(screen.getByRole('button', { name: 'View interviews' }));
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
 
@@ -894,8 +894,8 @@ describe('unsaved-changes route protection', () => {
         ];
         const { unmount } = renderRouter(demoApplicationRoutes, [routes.demoAddApplication], true);
 
-        enterIncompleteDate(screen.getByLabelText('Application date'));
-        await click(screen.getByRole('button', { name: 'View Applications' }));
+        enterIncompleteDate(screen.getByLabelText('Application date (uses current date if left blank)'));
+        await click(screen.getByRole('button', { name: 'View applications' }));
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
         unmount();
 
@@ -911,8 +911,8 @@ describe('unsaved-changes route protection', () => {
         ];
         renderRouter(demoInterviewRoutes, [{ pathname: routes.demoAddInterview, state: { app: application } }], true);
 
-        enterIncompleteDate(screen.getByLabelText('Interview Date'));
-        await click(screen.getByRole('button', { name: 'View Interviews' }));
+        enterIncompleteDate(screen.getByLabelText('Interview date'));
+        await click(screen.getByRole('button', { name: 'View interviews' }));
         expect(await screen.findByRole('dialog', { name: 'Leave this page?' })).toBeInTheDocument();
     });
 });

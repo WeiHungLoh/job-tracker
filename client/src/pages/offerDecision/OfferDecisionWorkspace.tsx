@@ -131,7 +131,7 @@ const getEvaluationHighlightSurface = (
 const createCounterofferDeletionConfirmation = (companyName: string): ConfirmOptions => ({
     title: 'Delete counteroffer plan?',
     description: `The edited evaluation for ${companyName} has a higher fit rating than your saved counteroffer plan. Delete the counteroffer plan and save this evaluation?`,
-    confirmationText: 'Delete and Save',
+    confirmationText: 'Delete and save',
     cancellationText: 'Cancel',
     confirmationButtonProps: createDestructiveConfirmationButtonProps(),
 });
@@ -154,7 +154,7 @@ const createOfferOutcomeConfirmation = (
     return {
         title: `${isAccepting ? 'Accept' : 'Decline'} this offer?`,
         description: `${application.company_name} — ${application.job_title} will be marked as ${status}.`,
-        confirmationText: isAccepting ? 'Accept Offer' : 'Decline Offer',
+        confirmationText: isAccepting ? 'Accept offer' : 'Decline offer',
         cancellationText: 'Cancel',
         confirmationButtonProps: isAccepting ? { autoFocus: true } : createDestructiveConfirmationButtonProps(),
     };

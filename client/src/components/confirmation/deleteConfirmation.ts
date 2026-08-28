@@ -4,7 +4,7 @@ import { createDestructiveConfirmationButtonProps } from './destructiveConfirmat
 
 export const createDeleteConfirmation = (target: string): ConfirmOptions => {
     const options: ConfirmOptions = {
-        title: 'Confirm Deletion',
+        title: 'Confirm deletion',
         description: `Are you sure you want to delete this ${target}? ${PERMANENT_DELETION_WARNING}`,
         confirmationText: 'Delete',
         cancellationText: 'Cancel',

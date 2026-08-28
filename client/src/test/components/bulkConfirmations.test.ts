@@ -18,10 +18,10 @@ describe('bulk confirmations', () => {
         const confirmation = createArchiveAllConfirmation(12, 4);
 
         expect(confirmation).toMatchObject({
-            title: 'Confirm Archive All',
+            title: 'Confirm archive all',
             description:
                 'Archive all 12 active job applications and their 4 related active interviews? This affects every active application you own, including applications not visible under the current job-status filters.',
-            confirmationText: 'Archive All',
+            confirmationText: 'Archive all',
             cancellationText: 'Cancel',
         });
     });
@@ -114,7 +114,7 @@ describe('bulk confirmations', () => {
             title: 'Export all upcoming active interviews?',
             description:
                 'This will download one .ics file containing all 1 upcoming active interview from the active Interview collection, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
-            confirmationText: 'Export All',
+            confirmationText: 'Export all',
             cancellationText: 'Cancel',
         });
     });

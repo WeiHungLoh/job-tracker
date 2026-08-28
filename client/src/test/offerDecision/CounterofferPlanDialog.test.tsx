@@ -113,7 +113,7 @@ describe('CounterofferPlanDialog', () => {
     test('shows Current offer above one prefilled Ideal offer without tabs or optional packages', () => {
         renderDialog();
 
-        expect(screen.getByRole('dialog', { name: 'Plan Counteroffer' })).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Plan counteroffer' })).toBeInTheDocument();
         expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
         expect(screen.queryByRole('tab')).not.toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Current offer' })).toBeVisible();
@@ -151,10 +151,10 @@ describe('CounterofferPlanDialog', () => {
         expect(screen.getByLabelText('Acme Ideal offer Work-Life Balance rating')).toHaveValue('3');
     });
 
-    test('updates Requested Changes live and removes restored offer fields', () => {
+    test('updates Requested changes live and removes restored offer fields', () => {
         renderDialog();
 
-        const requestedChanges = screen.getByRole('region', { name: 'Requested Changes' });
+        const requestedChanges = screen.getByRole('region', { name: 'Requested changes' });
         expect(within(requestedChanges).getByText('No requested changes yet.')).toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText('Acme Ideal offer monthly base salary'), {
@@ -204,13 +204,13 @@ describe('CounterofferPlanDialog', () => {
         ).toBeInTheDocument();
     });
 
-    test('shows saved Requested Changes in view mode without presenting rating differences as requested terms', async () => {
+    test('shows saved Requested changes in view mode without presenting rating differences as requested terms', async () => {
         renderDialog({
             hasPlan: true,
             onGet: vi.fn().mockResolvedValue({ ...savedPlan, work_arrangement: 'Remote' }),
         });
 
-        const requestedChanges = await screen.findByRole('region', { name: 'Requested Changes' });
+        const requestedChanges = await screen.findByRole('region', { name: 'Requested changes' });
         for (const label of ['Monthly base salary', 'Bonus', 'Annual leave', 'Work arrangement']) {
             expect(within(requestedChanges).getByRole('article', { name: label })).toBeInTheDocument();
         }
@@ -256,7 +256,7 @@ describe('CounterofferPlanDialog', () => {
         expect(within(saveButton).queryByText('Saving…')).not.toBeInTheDocument();
 
         resolveSave?.();
-        await waitFor(() => expect(screen.getByRole('heading', { name: 'Counteroffer Plan' })).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument());
     });
 
     test('keeps non-fit validation inline, focuses and scrolls to it without showing an error toast', async () => {
@@ -278,7 +278,7 @@ describe('CounterofferPlanDialog', () => {
         expect(onSave).not.toHaveBeenCalled();
     });
 
-    test('keeps Requested Changes below the conclusion without an inline Fit-rating error', () => {
+    test('keeps Requested changes below the conclusion without an inline Fit-rating error', () => {
         renderDialog();
 
         for (const category of ['Career Growth', 'Company/Culture Fit', 'Work-Life Balance', 'Compensation']) {
@@ -288,7 +288,7 @@ describe('CounterofferPlanDialog', () => {
         }
 
         const conclusion = screen.getByText(/Your Ideal offer has the same fit rating|Your Ideal offer would/);
-        const requestedChanges = screen.getByRole('region', { name: 'Requested Changes' });
+        const requestedChanges = screen.getByRole('region', { name: 'Requested changes' });
         expect(conclusion.compareDocumentPosition(requestedChanges) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(
             screen.queryByText(
@@ -303,13 +303,13 @@ describe('CounterofferPlanDialog', () => {
 
         expect(screen.getByRole('progressbar', { name: 'Loading counteroffer plan' })).toBeInTheDocument();
         expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Counteroffer Plan' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
         expect(onGet).toHaveBeenCalledOnce();
         expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(primaryButtonStyles.secondary);
         expect(screen.getByRole('button', { name: 'Edit' })).toHaveClass(primaryButtonStyles.primary);
 
         await click(screen.getByRole('button', { name: 'Edit' }));
-        expect(screen.getByRole('heading', { name: 'Edit Counteroffer Plan' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Edit counteroffer plan' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Cancel changes' })).toHaveClass(primaryButtonStyles.secondary);
         expect(screen.getByRole('button', { name: 'Save' })).toHaveClass(primaryButtonStyles.primary);
         fireEvent.change(screen.getByLabelText('Acme Ideal offer monthly base salary'), {
@@ -318,7 +318,7 @@ describe('CounterofferPlanDialog', () => {
         await click(screen.getByRole('button', { name: 'Cancel changes' }));
 
         expect(mockConfirm).not.toHaveBeenCalled();
-        expect(await screen.findByRole('heading', { name: 'Counteroffer Plan' })).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
         await click(screen.getByRole('button', { name: 'Edit' }));
         expect(screen.getByLabelText('Acme Ideal offer monthly base salary')).toHaveValue(11500);
     });
@@ -331,7 +331,7 @@ describe('CounterofferPlanDialog', () => {
         await click(screen.getByRole('button', { name: 'Save' }));
 
         expect(await screen.findByText('Change at least one term or rating for the Ideal offer')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Edit Counteroffer Plan' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Edit counteroffer plan' })).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
     });
 
@@ -346,7 +346,7 @@ describe('CounterofferPlanDialog', () => {
         await click(screen.getByRole('button', { name: 'Save' }));
 
         expect(await screen.findByText('Change at least one term or rating for the Ideal offer')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Edit Counteroffer Plan' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Edit counteroffer plan' })).toBeInTheDocument();
         expect(onSave).not.toHaveBeenCalled();
     });
 
@@ -380,7 +380,7 @@ describe('CounterofferPlanDialog', () => {
         expect(screen.queryByText(/(?<!rating |percentage )points/)).not.toBeInTheDocument();
     });
 
-    test('blocks a lower Fit rating without rendering its error beneath Requested Changes', async () => {
+    test('blocks a lower Fit rating without rendering its error beneath Requested changes', async () => {
         const onSave = vi.fn();
         renderDialog({ onSave });
         for (const category of ['Career Growth', 'Company/Culture Fit', 'Work-Life Balance', 'Compensation']) {
@@ -433,7 +433,7 @@ describe('CounterofferPlanDialog', () => {
         );
         expect(onPlanAvailabilityChange).toHaveBeenCalledWith(11, true);
         expect(screen.getByText('Counteroffer plan saved')).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Counteroffer Plan' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
     });
 
     test('preserves form input after a server save failure', async () => {
@@ -446,7 +446,7 @@ describe('CounterofferPlanDialog', () => {
 
         expect(await screen.findByText('Unable to save the counteroffer plan. Please try again')).toBeInTheDocument();
         expect(screen.getByLabelText('Acme Ideal offer monthly base salary')).toHaveValue(12500);
-        expect(screen.getByRole('heading', { name: 'Plan Counteroffer' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Plan counteroffer' })).toBeInTheDocument();
     });
 
     test('confirms and deletes a saved plan without changing the evaluation', async () => {
@@ -496,7 +496,7 @@ describe('CounterofferPlanDialog', () => {
         await click(screen.getByRole('button', { name: 'Cancel changes' }));
 
         expect(mockConfirm).not.toHaveBeenCalled();
-        expect(screen.getByRole('heading', { name: 'Counteroffer Plan' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
         expect(screen.getAllByText('15% target')).not.toHaveLength(0);
         expect(screen.queryByLabelText('Acme Ideal offer bonus')).not.toBeInTheDocument();
     });
@@ -510,14 +510,14 @@ describe('CounterofferPlanDialog', () => {
                 })
         );
         renderDialog({ hasPlan: true, onClose, onGet });
-        await screen.findByRole('heading', { name: 'Counteroffer Plan' });
+        await screen.findByRole('heading', { name: 'Counteroffer plan' });
         await click(await screen.findByRole('button', { name: 'Edit' }));
         const bonusInput = screen.getByLabelText('Acme Ideal offer bonus');
         fireEvent.change(bonusInput, { target: { value: 'Changed bonus' } });
 
         fireEvent.keyDown(bonusInput, { key: 'Escape' });
 
-        expect(screen.getByRole('heading', { name: 'Counteroffer Plan' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Counteroffer plan' })).toBeInTheDocument();
         expect(screen.queryByLabelText('Acme Ideal offer bonus')).not.toBeInTheDocument();
         expect(onClose).not.toHaveBeenCalled();
         expect(mockConfirm).not.toHaveBeenCalled();
@@ -530,7 +530,7 @@ describe('CounterofferPlanDialog', () => {
             readOnly: true,
         });
 
-        await screen.findByRole('heading', { name: 'Counteroffer Plan' });
+        await screen.findByRole('heading', { name: 'Counteroffer plan' });
         const deleteButton = await within(screen.getByRole('dialog')).findByText('Delete', { selector: 'button' });
         expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
         expect(deleteButton).toHaveClass(primaryButtonStyles.destructive);
@@ -544,7 +544,7 @@ describe('CounterofferPlanDialog', () => {
         const onPlanAvailabilityChange = vi.fn();
         renderDialog({ hasPlan: true, onGet, onPlanAvailabilityChange });
 
-        expect(await screen.findByRole('heading', { name: 'Plan Counteroffer' })).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'Plan counteroffer' })).toBeInTheDocument();
         expect(onPlanAvailabilityChange).toHaveBeenCalledWith(11, false);
         expect(screen.getByLabelText('Acme Ideal offer monthly base salary')).toHaveValue(10000);
     });

@@ -87,7 +87,7 @@ export const createArchiveAllConfirmation = (
     counterofferPlanCount = 0
 ): ConfirmOptions =>
     bulkOptions(
-        'Confirm Archive All',
+        'Confirm archive all',
         applicationDescription(
             'Archive',
             applicationCount,
@@ -96,7 +96,7 @@ export const createArchiveAllConfirmation = (
             counterofferPlanCount,
             'active'
         ),
-        'Archive All'
+        'Archive all'
     );
 
 export const createUnarchiveAllConfirmation = (
@@ -106,7 +106,7 @@ export const createUnarchiveAllConfirmation = (
     counterofferPlanCount = 0
 ): ConfirmOptions =>
     bulkOptions(
-        'Confirm Unarchive All',
+        'Confirm unarchive all',
         applicationDescription(
             'Unarchive',
             applicationCount,
@@ -115,7 +115,7 @@ export const createUnarchiveAllConfirmation = (
             counterofferPlanCount,
             'archived'
         ),
-        'Unarchive All'
+        'Unarchive all'
     );
 
 export const createDeleteAllApplicationsConfirmation = (
@@ -126,7 +126,7 @@ export const createDeleteAllApplicationsConfirmation = (
     counterofferPlanCount = 0
 ): ConfirmOptions =>
     bulkOptions(
-        'Confirm Delete All',
+        'Confirm delete all',
         applicationDescription(
             'Delete',
             applicationCount,
@@ -135,7 +135,7 @@ export const createDeleteAllApplicationsConfirmation = (
             counterofferPlanCount,
             state
         ),
-        'Delete All',
+        'Delete all',
         true
     );
 
@@ -146,9 +146,9 @@ export const createDeleteAllInterviewsConfirmation = (
     const interviewLabel = formatCountLabel(interviewCount, `${state} interview`);
 
     return bulkOptions(
-        'Confirm Delete All',
+        'Confirm delete all',
         `Delete all ${interviewLabel} you own? This affects every ${state} interview in your account. ${PERMANENT_DELETION_WARNING}`,
-        'Delete All',
+        'Delete all',
         true
     );
 };
@@ -165,9 +165,9 @@ export const createDeleteAllOfferEvaluationsConfirmation = (
             : '';
 
     return bulkOptions(
-        'Confirm Delete All',
+        'Confirm delete all',
         `Delete all ${evaluationLabel} you own? This removes only saved evaluations for ${state} applications.${counterofferDescription} Offers without evaluations are not deleted. ${PERMANENT_DELETION_WARNING}`,
-        'Delete All',
+        'Delete all',
         true
     );
 };
@@ -178,7 +178,7 @@ export const createBulkCalendarExportConfirmation = (interviewCount: number): Co
     return bulkOptions(
         'Export all upcoming active interviews?',
         `This will download one .ics file containing all ${interviewLabel} from the active Interview collection, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.`,
-        'Export All'
+        'Export all'
     );
 };
 
@@ -188,6 +188,6 @@ export const createBulkOfferDeadlineCalendarExportConfirmation = (offerCount: nu
     return bulkOptions(
         'Export all active evaluated offer deadlines?',
         `This will download one .ics file containing all ${offerLabel}, including offers you may already have added to your calendar. Importing the file again may create duplicate calendar events.`,
-        'Export All'
+        'Export all'
     );
 };

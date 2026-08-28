@@ -584,7 +584,7 @@ describe('Job application viewing flow', () => {
         );
 
         await screen.findByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' });
-        await userEvent.click(screen.getByRole('button', { name: 'Edit Status' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Edit status' }));
         await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
         await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
@@ -632,13 +632,13 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
 
         expect(getSortOptionLabels()).toEqual([
-            'Job Status',
-            'Newest Application',
-            'Oldest Application',
+            'Job status',
+            'Newest application',
+            'Oldest application',
             'Company A–Z',
             'Company Z–A',
         ]);
-        expect(screen.getByRole('radio', { name: 'Job Status' })).toBeChecked();
+        expect(screen.getByRole('radio', { name: 'Job status' })).toBeChecked();
 
         await act(async () => {
             await userEvent.click(screen.getByRole('button', { name: 'Board' }));
@@ -647,13 +647,13 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
 
         expect(getSortOptionLabels()).toEqual([
-            'Newest Application',
-            'Oldest Application',
+            'Newest application',
+            'Oldest application',
             'Company A–Z',
             'Company Z–A',
         ]);
-        expect(screen.queryByRole('radio', { name: 'Job Status' })).not.toBeInTheDocument();
-        expect(screen.getByRole('radio', { name: 'Newest Application' })).toBeChecked();
+        expect(screen.queryByRole('radio', { name: 'Job status' })).not.toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: 'Newest application' })).toBeChecked();
     });
 
     test('reorders the active application list for every sort option', async () => {
@@ -709,11 +709,11 @@ describe('Job application viewing flow', () => {
             await waitFor(() => expect(sortButton).toBeEnabled());
         };
 
-        await selectSortOption('Newest Application', ['Alpha Ltd', 'Charlie Ltd', 'Bravo Ltd', 'Delta Ltd']);
-        await selectSortOption('Oldest Application', ['Delta Ltd', 'Bravo Ltd', 'Charlie Ltd', 'Alpha Ltd']);
+        await selectSortOption('Newest application', ['Alpha Ltd', 'Charlie Ltd', 'Bravo Ltd', 'Delta Ltd']);
+        await selectSortOption('Oldest application', ['Delta Ltd', 'Bravo Ltd', 'Charlie Ltd', 'Alpha Ltd']);
         await selectSortOption('Company A–Z', ['Alpha Ltd', 'Bravo Ltd', 'Charlie Ltd', 'Delta Ltd']);
         await selectSortOption('Company Z–A', ['Delta Ltd', 'Charlie Ltd', 'Bravo Ltd', 'Alpha Ltd']);
-        await selectSortOption('Job Status', ['Bravo Ltd', 'Charlie Ltd', 'Delta Ltd', 'Alpha Ltd']);
+        await selectSortOption('Job status', ['Bravo Ltd', 'Charlie Ltd', 'Delta Ltd', 'Alpha Ltd']);
     });
 
     test('reorders active cards within board columns for every board sort option', async () => {
@@ -831,7 +831,7 @@ describe('Job application viewing flow', () => {
             ['India Applied', 'Juliet Applied', 'Hotel Applied', 'Kilo Applied']
         );
         await selectSortOption(
-            'Oldest Application',
+            'Oldest application',
             ['Delta Offer', 'Alpha Offer', 'Charlie Offer', 'Bravo Offer'],
             ['Kilo Applied', 'Hotel Applied', 'Juliet Applied', 'India Applied']
         );
@@ -846,7 +846,7 @@ describe('Job application viewing flow', () => {
             ['Kilo Applied', 'Juliet Applied', 'India Applied', 'Hotel Applied']
         );
         await selectSortOption(
-            'Newest Application',
+            'Newest application',
             ['Bravo Offer', 'Charlie Offer', 'Alpha Offer', 'Delta Offer'],
             ['India Applied', 'Juliet Applied', 'Hotel Applied', 'Kilo Applied']
         );
@@ -949,7 +949,7 @@ describe('Job application viewing flow', () => {
         expect(getListCompanyHeadings()).toEqual(['1. Zulu Offer', '2. Alpha Applied']);
 
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
-        expect(screen.getByRole('radio', { name: 'Job Status' })).toBeChecked();
+        expect(screen.getByRole('radio', { name: 'Job status' })).toBeChecked();
         expect(screen.getByRole('radio', { name: 'Company A–Z' })).not.toBeChecked();
     });
 
@@ -1058,7 +1058,7 @@ describe('Job application viewing flow', () => {
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Board' }));
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
         await waitFor(() =>
@@ -1135,7 +1135,7 @@ describe('Job application viewing flow', () => {
         expect(scrollIntoView).not.toHaveBeenCalled();
 
         await userEvent.click(screen.getByRole('button', { name: 'List' }));
-        expect(screen.getByText(/^Job Status: Interview$/)).toBeInTheDocument();
+        expect(screen.getByText(/^Job status: Interview$/)).toBeInTheDocument();
     });
 
     test('dragging a board card updates status through the existing endpoint with horizontal feedback', async () => {
@@ -1483,13 +1483,13 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
 
         const callsBeforeTogglingShowAll = fetch.mock.calls.length;
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         expect(fetch).toHaveBeenCalledTimes(callsBeforeTogglingShowAll);
 
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         expect(fetch).toHaveBeenCalledTimes(callsBeforeTogglingShowAll);
 
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
 
         const callsBeforeSelectingOffer = fetch.mock.calls.length;
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
@@ -1532,7 +1532,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() =>
             expect(applicationRequestCount(allStatusesUrl)).toBeGreaterThan(allStatusRequestsBeforeClearingFinalStatus)
         );
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
     });
 
     test('uses a valid dashboard status for the first request, saves it once, and preserves board preferences', async () => {
@@ -1719,7 +1719,7 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
         expect(screen.getByRole('checkbox', { name: 'Accepted' })).not.toBeDisabled();
@@ -1761,7 +1761,7 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Accepted' }));
 
@@ -1810,7 +1810,7 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
         await waitFor(() => expect(updatePreferences).toHaveBeenCalledWith({ application_job_statuses: ['Offer'] }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Accepted' }));
@@ -1897,11 +1897,11 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        await userEvent.click(screen.getByRole('checkbox', { name: 'Show All' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
 
         expect(await screen.findByText('Job application filtering is temporarily unavailable')).toBeInTheDocument();
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
         expect(screen.getByRole('checkbox', { name: 'Offer' })).toBeChecked();
     });
 
@@ -1997,7 +1997,7 @@ describe('Job application viewing flow', () => {
         expect(await screen.findByText('Status update is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
         expect(screen.getByRole('listbox')).toHaveValue('Interview');
-        expect(screen.getByText(/^Job Status: Applied$/)).toBeInTheDocument();
+        expect(screen.getByText(/^Job status: Applied$/)).toBeInTheDocument();
     });
 
     test.each([
@@ -2024,7 +2024,7 @@ describe('Job application viewing flow', () => {
             await userEvent.selectOptions(await screen.findByRole('listbox'), 'Interview');
             await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
-            await waitFor(() => expect(screen.getByText(/^Job Status: Interview$/)).toBeInTheDocument());
+            await waitFor(() => expect(screen.getByText(/^Job status: Interview$/)).toBeInTheDocument());
             if (shouldScroll) {
                 await waitFor(() => expect(scrollAndHighlight).toHaveBeenCalledOnce());
             } else {
@@ -2051,7 +2051,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() => expect(autoScrollToggle).toHaveAttribute('aria-checked', 'false'));
 
         await act(async () => resolveStatusUpdate());
-        await waitFor(() => expect(screen.getByText(/^Job Status: Interview$/)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/^Job status: Interview$/)).toBeInTheDocument());
         await waitForStatusAutoScrollDelay();
 
         expect(scrollAndHighlight).not.toHaveBeenCalled();
@@ -2071,7 +2071,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() => expect(screen.getByRole('button', { name: 'Sort by' })).toBeEnabled());
 
         await act(async () => resolveStatusUpdate());
-        await waitFor(() => expect(screen.getByText(/^Job Status: Interview$/)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/^Job status: Interview$/)).toBeInTheDocument());
         await waitForStatusAutoScrollDelay();
 
         expect(scrollAndHighlight).not.toHaveBeenCalled();
@@ -2228,7 +2228,7 @@ describe('Job application viewing flow', () => {
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
-                title: 'Confirm Deletion',
+                title: 'Confirm deletion',
                 description:
                     'Delete this active job application and its 2 related active interviews? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
@@ -2277,7 +2277,7 @@ describe('Job application viewing flow', () => {
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
-                title: 'Confirm Archive',
+                title: 'Confirm archive',
                 description: 'Archive this active job application and its 1 related active interview?',
                 confirmationText: 'Archive',
                 cancellationText: 'Cancel',
@@ -2593,7 +2593,7 @@ describe('Job application viewing flow', () => {
         expect(screen.queryByRole('button', { name: 'Sort by' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Display options' })).not.toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeVisible();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeVisible();
         expect(screen.getByRole('checkbox', { name: 'Accepted' })).toBeVisible();
     });
 
@@ -2628,7 +2628,7 @@ describe('Job application viewing flow', () => {
             { method: 'GET' }
         );
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
-        expect(screen.getByRole('checkbox', { name: 'Show All' })).toBeChecked();
+        expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
     });
 
     test('clears active application filters and refreshes board results', async () => {
@@ -2691,10 +2691,10 @@ describe('Job application viewing flow', () => {
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    title: 'Confirm Delete All',
+                    title: 'Confirm delete all',
                     description:
                         'Delete all 1 active job application? This affects every active application you own, including applications not visible under the current job-status filters. This action is permanent and cannot be undone.',
-                    confirmationText: 'Delete All',
+                    confirmationText: 'Delete all',
                     cancellationText: 'Cancel',
                     confirmationButtonProps: expect.objectContaining({
                         autoFocus: false,
@@ -2713,7 +2713,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() => expect(screen.queryByText(/ABC Pte Ltd/i)).not.toBeInTheDocument());
     });
 
-    test('orders Export, Archive All, and Delete All with exactly two dividers', async () => {
+    test('orders Export, Archive all, and Delete all with exactly two dividers', async () => {
         render(
             <MemoryRouter>
                 <ViewApplication />
@@ -2761,7 +2761,7 @@ describe('Job application viewing flow', () => {
 
         expect(mockConfirm).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Confirm Archive All',
+                title: 'Confirm archive all',
                 description:
                     'Archive all 2 active job applications and their 1 related active interview? This affects every active application you own, including applications not visible under the current job-status filters.',
             })

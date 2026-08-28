@@ -19,7 +19,7 @@ describe('SortOptions', () => {
         await userEvent.click(trigger);
 
         expect(screen.getByRole('radiogroup', { name: 'Sort options' })).toBeInTheDocument();
-        expect(screen.getByRole('radio', { name: 'Job Status' })).toBeChecked();
+        expect(screen.getByRole('radio', { name: 'Job status' })).toBeChecked();
         expect(screen.getAllByRole('radio').map((radio) => radio.getAttribute('value'))).toEqual([
             'job_status',
             'application_date_desc',
@@ -30,7 +30,7 @@ describe('SortOptions', () => {
         expect(new Set(screen.getAllByRole('radio').map((radio) => radio.id)).size).toBe(5);
 
         await act(async () => {
-            await userEvent.click(screen.getByText('Newest Application'));
+            await userEvent.click(screen.getByText('Newest application'));
         });
 
         expect(onSelectionChange).toHaveBeenCalledWith('application_date_desc');
@@ -60,7 +60,7 @@ describe('SortOptions', () => {
         await waitFor(() => expect(onSelectionChange).toHaveBeenCalledWith('company_name_asc'));
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
 
-        await waitFor(() => expect(screen.getByRole('radio', { name: 'Job Status' })).toBeChecked());
+        await waitFor(() => expect(screen.getByRole('radio', { name: 'Job status' })).toBeChecked());
     });
 
     test('synchronizes its checked option when the saved preference changes', async () => {
@@ -106,8 +106,8 @@ describe('SortOptions', () => {
         );
         await userEvent.click(screen.getByRole('button', { name: 'Sort by' }));
 
-        expect(screen.queryByRole('radio', { name: 'Job Status' })).not.toBeInTheDocument();
-        expect(screen.getByRole('radio', { name: 'Newest Application' })).toBeChecked();
+        expect(screen.queryByRole('radio', { name: 'Job status' })).not.toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: 'Newest application' })).toBeChecked();
     });
 
     test('does not resubmit the current option and disables the trigger while saving', async () => {
@@ -127,11 +127,11 @@ describe('SortOptions', () => {
 
         const trigger = screen.getByRole('button', { name: 'Sort by' });
         await userEvent.click(trigger);
-        await userEvent.click(screen.getByRole('radio', { name: 'Job Status' }));
+        await userEvent.click(screen.getByRole('radio', { name: 'Job status' }));
         expect(onSelectionChange).not.toHaveBeenCalled();
 
         await userEvent.click(trigger);
-        await userEvent.click(screen.getByRole('radio', { name: 'Oldest Application' }));
+        await userEvent.click(screen.getByRole('radio', { name: 'Oldest application' }));
         expect(onSelectionChange).toHaveBeenCalledTimes(1);
         expect(trigger).toBeDisabled();
 

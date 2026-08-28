@@ -119,7 +119,7 @@ describe('job tracker form validation', () => {
         [
             'jobURL',
             { jobURL: 'x'.repeat(FIELD_MAX_LENGTHS.jobURL + 1) },
-            `Job Posting URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`,
+            `Job posting URL must be ${FIELD_MAX_LENGTHS.jobURL} characters or fewer.`,
         ],
         ['applicationDate', { applicationDate: '2999-01-01T00:00' }, 'Application date cannot be in the future.'],
     ] as const)('maps the application rule to the %s field', (field, overrides, message) => {

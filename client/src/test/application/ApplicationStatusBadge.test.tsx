@@ -9,7 +9,7 @@ describe('ApplicationStatusBadge', () => {
     test('shows only the status while keeping the optional label available to screen readers', () => {
         render(<ApplicationStatusBadge jobStatus='Interview' showLabel />);
 
-        const accessibleLabel = screen.getByText('Job Status: Interview');
+        const accessibleLabel = screen.getByText('Job status: Interview');
         const visibleStatus = screen.getByText('Interview');
 
         expect(accessibleLabel).toHaveClass(applicationStyles.visuallyHidden);

@@ -159,7 +159,7 @@ describe('Demo Add Application duplicate confirmation', () => {
         expect(screen.getByLabelText(/job posting url/i)).toHaveValue('');
     });
 
-    test('shows normalized active duplicate details with exactly Cancel and Add Anyway actions', async () => {
+    test('shows normalized active duplicate details with exactly Cancel and Add anyway actions', async () => {
         renderDemoAddApplication(ACTIVE_DUPLICATE_ACTION);
         await waitForSeededApplication('Morgan Stanley');
         const initialApplicationCount = getActiveApplicationCount();
@@ -173,13 +173,13 @@ describe('Demo Add Application duplicate confirmation', () => {
             ACTIVE_DUPLICATE_ACTION.payload.applicationDate.toISOString()
         ).formattedDate;
 
-        expect(within(dialog).getByRole('heading', { name: 'Possible Duplicate Application' })).toBeInTheDocument();
+        expect(within(dialog).getByRole('heading', { name: 'Possible duplicate application' })).toBeInTheDocument();
         expect(dialog).toHaveTextContent('Morgan Stanley');
         expect(dialog).toHaveTextContent('Software Engineer');
         expect(dialog).toHaveTextContent(formattedApplicationDate);
         expect(within(dialog).getAllByRole('button')).toHaveLength(2);
         expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-        expect(within(dialog).getByRole('button', { name: 'Add Anyway' })).toBeInTheDocument();
+        expect(within(dialog).getByRole('button', { name: 'Add anyway' })).toBeInTheDocument();
         expect(within(dialog).queryByRole('button', { name: /view existing/i })).not.toBeInTheDocument();
         expect(screen.getByTestId('active-application-count')).toHaveTextContent(String(initialApplicationCount));
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
@@ -267,14 +267,14 @@ describe('Demo Add Application duplicate confirmation', () => {
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
 
-    test('clicking Add Anyway creates exactly once, shows success, and resets normalized values', async () => {
+    test('clicking Add anyway creates exactly once, shows success, and resets normalized values', async () => {
         renderDemoAddApplication(ACTIVE_DUPLICATE_ACTION);
         await waitForSeededApplication('Morgan Stanley');
         const initialApplicationCount = getActiveApplicationCount();
 
         fillCompleteDuplicateForm();
         submitApplication();
-        await clickDialogAction(await screen.findByRole('button', { name: 'Add Anyway' }));
+        await clickDialogAction(await screen.findByRole('button', { name: 'Add anyway' }));
 
         await waitFor(() =>
             expect(screen.getByTestId('active-application-count')).toHaveTextContent(
@@ -294,7 +294,7 @@ describe('Demo Add Application duplicate confirmation', () => {
         expect(screen.getByLabelText(/job posting url/i)).toHaveValue('');
     });
 
-    test('autofocuses Add Anyway and confirms with Enter exactly once', async () => {
+    test('autofocuses Add anyway and confirms with Enter exactly once', async () => {
         renderDemoAddApplication(ACTIVE_DUPLICATE_ACTION);
         await waitForSeededApplication('Morgan Stanley');
         const initialApplicationCount = getActiveApplicationCount();
@@ -303,7 +303,7 @@ describe('Demo Add Application duplicate confirmation', () => {
         userEvent.type(screen.getByLabelText(/job title/i), 'Software Engineer');
         submitApplication();
 
-        const addAnywayButton = await screen.findByRole('button', { name: 'Add Anyway' });
+        const addAnywayButton = await screen.findByRole('button', { name: 'Add anyway' });
         await waitFor(() => expect(addAnywayButton).toHaveFocus());
         await act(async () => {
             userEvent.keyboard('{enter}');
@@ -340,7 +340,7 @@ describe('Demo Add Application duplicate confirmation', () => {
         expect(screen.getAllByRole('dialog')).toHaveLength(1);
         expect(screen.getByTestId('active-application-count')).toHaveTextContent(String(initialApplicationCount));
 
-        await clickDialogAction(screen.getByRole('button', { name: 'Add Anyway' }));
+        await clickDialogAction(screen.getByRole('button', { name: 'Add anyway' }));
         await waitFor(() =>
             expect(screen.getByTestId('active-application-count')).toHaveTextContent(
                 String(initialApplicationCount + 1)

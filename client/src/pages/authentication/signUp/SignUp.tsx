@@ -3,7 +3,6 @@ import AuthLayout from '../../../components/authLayout/AuthLayout';
 import AuthRequestInfo from '../../../components/authRequestInfo/AuthRequestInfo';
 import Icon from '../../../components/icon/Icon';
 import BrandMark from '../../../components/brandMark/BrandMark';
-import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
 import PrimaryButton from '../../../components/button/PrimaryButton';
 import type { SubmitEvent } from 'react';
 import { routes } from '../../../routes';
@@ -55,7 +54,7 @@ const SignUp = () => {
         try {
             await api.authentication.signUp({ email: normalizeEmail(email), password });
 
-            showSuccessToast('Sign up successful — redirecting you to login page');
+            showSuccessToast('Sign up successful — redirecting you to sign-in page');
             setTimeout(() => {
                 navigate(routes.signIn);
             }, 1500);
@@ -114,15 +113,9 @@ const SignUp = () => {
                     </p>
                     <PasswordStrengthMeter email={email} password={password} />
 
-                    {isPending ? (
-                        <PrimaryButton variant='form' type='submit' disabled>
-                            <LoadingSpinner size='sm' variant='light' />
-                        </PrimaryButton>
-                    ) : (
-                        <PrimaryButton variant='form' type='submit'>
-                            Sign up
-                        </PrimaryButton>
-                    )}
+                    <PrimaryButton isLoading={isPending} variant='form' type='submit'>
+                        Sign up
+                    </PrimaryButton>
 
                     <Link className={styles.authLink} to={routes.signIn}>
                         Already have an account? Sign in

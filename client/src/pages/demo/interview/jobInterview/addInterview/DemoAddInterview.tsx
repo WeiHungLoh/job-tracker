@@ -250,7 +250,7 @@ const DemoAddInterview = () => {
             </div>
 
             <div className={styles.field}>
-                <label htmlFor='date'>Interview Date</label>
+                <label htmlFor='date'>Interview date</label>
                 <input
                     ref={interviewDateInputRef}
                     aria-describedby={errors.interviewDate ? 'interview-date-error' : undefined}
@@ -272,7 +272,7 @@ const DemoAddInterview = () => {
             </div>
 
             <div className={styles.field}>
-                <label htmlFor='location'>Interview Location</label>
+                <label htmlFor='location'>Interview location</label>
                 <input
                     ref={interviewLocationInputRef}
                     aria-describedby={errors.interviewLocation ? 'interview-location-error' : undefined}
@@ -313,7 +313,7 @@ const DemoAddInterview = () => {
 
             <div className={styles.field}>
                 <label htmlFor='type'>
-                    Interview Type<span className={styles.optionalLabel}> (optional)</span>
+                    Interview type<span className={styles.optionalLabel}> (optional)</span>
                 </label>
                 <input
                     ref={interviewTypeInputRef}
@@ -351,7 +351,7 @@ const DemoAddInterview = () => {
 
             <div className={styles.field}>
                 <label htmlFor='notes'>
-                    Additional Notes<span className={styles.optionalLabel}> (optional)</span>
+                    Additional notes<span className={styles.optionalLabel}> (optional)</span>
                 </label>
                 <textarea
                     ref={notesInputRef}
@@ -370,10 +370,10 @@ const DemoAddInterview = () => {
 
             <div className={styles.submitButton}>
                 <PrimaryButton isLoading={isLoading} type='submit' variant='compact' data-testid='add-interview'>
-                    Add Interview
+                    Add interview
                 </PrimaryButton>
                 <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.demoViewInterviews)}>
-                    View Interviews
+                    View interviews
                 </PrimaryButton>
                 <PrimaryButton type='button' variant='secondary' onClick={handleBack}>
                     Back

@@ -19,7 +19,7 @@ describe('NeedsAttentionSettingsDialog', () => {
     test('uses the already-loaded preferences and renders categories in fixed order with applicable timing fields', async () => {
         render(<NeedsAttentionSettingsDialog open onClose={vi.fn()} />);
 
-        const dialog = screen.getByRole('dialog', { name: 'Customise Dashboard Reminders' });
+        const dialog = screen.getByRole('dialog', { name: 'Customise dashboard reminders' });
         expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
         expect(
             within(dialog)
@@ -45,7 +45,7 @@ describe('NeedsAttentionSettingsDialog', () => {
         expect(offerDueInput).toHaveAttribute('max', '14');
     });
 
-    test('disables a switched-off timing field, restores its draft value, and Reset to Default makes no request', async () => {
+    test('disables a switched-off timing field, restores its draft value, and Reset to default makes no request', async () => {
         const updatePreferences = vi.fn();
         render(<NeedsAttentionSettingsDialog open onClose={vi.fn()} />, { updatePreferences });
 
@@ -64,12 +64,12 @@ describe('NeedsAttentionSettingsDialog', () => {
         expect(screen.getByLabelText('Start showing this many days before the deadline (1–14)')).toBeEnabled();
         expect(screen.getByLabelText('Start showing this many days before the deadline (1–14)')).toHaveValue(9);
 
-        const resetButton = screen.getByRole('button', { name: 'Reset to Default' });
+        const resetButton = screen.getByRole('button', { name: 'Reset to default' });
         expect(resetButton).toHaveClass(primaryButtonStyles.destructive);
         expect(resetButton).not.toHaveClass(primaryButtonStyles.secondary);
         await userEvent.click(resetButton);
         expect(
-            await screen.findByText('Reminder settings reset to default. Click Save to apply these changes')
+            await screen.findByText('Reminder settings reset to default. Click save to apply these changes')
         ).toBeInTheDocument();
         expect(screen.getByLabelText('Start showing this many days before the deadline (1–14)')).toHaveValue(3);
         expect(screen.getByLabelText('Maximum reminders shown (1–50)')).toHaveValue(10);
@@ -146,7 +146,7 @@ describe('NeedsAttentionSettingsDialog', () => {
         const updatePreferences = vi.fn(() => new Promise<typeof testPreferences>(() => undefined));
         render(<NeedsAttentionSettingsDialog open onClose={vi.fn()} />, { updatePreferences });
 
-        const dialog = await screen.findByRole('dialog', { name: 'Customise Dashboard Reminders' });
+        const dialog = await screen.findByRole('dialog', { name: 'Customise dashboard reminders' });
         fireEvent.keyDown(dialog, { key: 'Enter' });
 
         expect(updatePreferences).toHaveBeenCalledTimes(1);

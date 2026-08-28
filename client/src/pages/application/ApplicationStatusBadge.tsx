@@ -29,7 +29,7 @@ const ApplicationStatusBadge = ({ compact = false, jobStatus, showLabel = false 
         <span className={className}>
             {showLabel ? (
                 <>
-                    <span className={styles.visuallyHidden}>Job Status: {jobStatus}</span>
+                    <span className={styles.visuallyHidden}>Job status: {jobStatus}</span>
                     <span aria-hidden='true'>{jobStatus}</span>
                 </>
             ) : (

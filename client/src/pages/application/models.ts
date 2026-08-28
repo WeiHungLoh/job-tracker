@@ -42,9 +42,9 @@ export const DEFAULT_APPLICATION_LIST_SORT_ORDER: ApplicationListSortOrder = 'jo
 export const DEFAULT_APPLICATION_BOARD_SORT_ORDER: ApplicationBoardSortOrder = 'application_date_desc';
 
 export const APPLICATION_LIST_SORT_OPTIONS: readonly SortOption<ApplicationListSortOrder>[] = [
-    { label: 'Job Status', value: 'job_status' },
-    { label: 'Newest Application', value: 'application_date_desc' },
-    { label: 'Oldest Application', value: 'application_date_asc' },
+    { label: 'Job status', value: 'job_status' },
+    { label: 'Newest application', value: 'application_date_desc' },
+    { label: 'Oldest application', value: 'application_date_asc' },
     { label: 'Company A–Z', value: 'company_name_asc' },
     { label: 'Company Z–A', value: 'company_name_desc' },
 ];

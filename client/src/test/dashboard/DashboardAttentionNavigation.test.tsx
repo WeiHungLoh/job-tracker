@@ -296,14 +296,14 @@ describe('signed-in dashboard attention navigation', () => {
         renderDashboardRoutes();
 
         await userEvent.click(
-            await screen.findByRole('button', { name: 'Mark as Ghosted for Software Engineer at Acme' })
+            await screen.findByRole('button', { name: 'Mark as ghosted for Software Engineer at Acme' })
         );
-        await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Mark as ghosted' }));
 
         expect(apiMocks.updateApplicationStatus).toHaveBeenCalledWith({ jobId: 42, jobStatus: 'Ghosted' });
         expect(await screen.findByText('Application marked as Ghosted')).toBeInTheDocument();
-        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
-        expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as ghosted?' })).not.toBeInTheDocument());
+        expect(screen.queryByRole('button', { name: /Mark as ghosted for/i })).not.toBeInTheDocument();
         expect(
             screen.getByRole('list', {
                 name: 'Application pipeline. Applied: 0, Interview: 0, Offer: 0, Accepted: 0',
@@ -312,7 +312,7 @@ describe('signed-in dashboard attention navigation', () => {
         expect(screen.getByRole('button', { name: 'Ghosted: 1 application' })).toBeInTheDocument();
     });
 
-    test('keeps the stale application unchanged and shows an error toast when Mark as Ghosted fails', async () => {
+    test('keeps the stale application unchanged and shows an error toast when Mark as ghosted fails', async () => {
         apiMocks.listApplications.mockResolvedValue([
             {
                 ...application('Applied'),
@@ -330,15 +330,15 @@ describe('signed-in dashboard attention navigation', () => {
         renderDashboardRoutes();
 
         const action = await screen.findByRole('button', {
-            name: 'Mark as Ghosted for Software Engineer at Acme',
+            name: 'Mark as ghosted for Software Engineer at Acme',
         });
         await userEvent.click(action);
-        await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Mark as ghosted' }));
 
         expect(
             await screen.findByText('Unable to mark the application as Ghosted. Please try again')
         ).toBeInTheDocument();
-        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as ghosted?' })).not.toBeInTheDocument());
         expect(action).toBeInTheDocument();
         expect(
             screen.getByRole('list', {
@@ -375,14 +375,14 @@ describe('signed-in dashboard attention navigation', () => {
         renderDashboardRoutes();
 
         await userEvent.click(
-            await screen.findByRole('button', { name: 'Mark as Ghosted for Software Engineer at Acme' })
+            await screen.findByRole('button', { name: 'Mark as ghosted for Software Engineer at Acme' })
         );
-        await userEvent.click(await screen.findByRole('button', { name: 'Mark as Ghosted' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Mark as ghosted' }));
 
         expect(apiMocks.updateApplicationStatus).toHaveBeenCalledWith({ jobId: 42, jobStatus: 'Ghosted' });
         expect(await screen.findByText('Application marked as Ghosted')).toBeInTheDocument();
-        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as Ghosted?' })).not.toBeInTheDocument());
-        expect(screen.queryByRole('button', { name: /Mark as Ghosted for/i })).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Mark as ghosted?' })).not.toBeInTheDocument());
+        expect(screen.queryByRole('button', { name: /Mark as ghosted for/i })).not.toBeInTheDocument();
         expect(
             screen.getByRole('list', {
                 name: 'Application pipeline. Applied: 0, Interview: 0, Offer: 0, Accepted: 0',

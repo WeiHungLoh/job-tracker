@@ -31,7 +31,8 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
     const formattedApplicationDate = formatDate(application.application_date);
 
     return (
-        <div
+        <article
+            aria-label={`${application.company_name} application`}
             className={`${styles.application} ${JOB_STATUS_CARD_CLASS_MAP[application.job_status]}`}
             id={String(applicationId)}
         >
@@ -142,7 +143,7 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                 {variant === 'job' ? (
                     <>
                         <PrimaryButton variant='secondary' onClick={() => props.onToggleStatusEditor(application)}>
-                            {props.isEditingStatus ? 'Save changes' : 'Edit Status'}
+                            {props.isEditingStatus ? 'Save changes' : 'Edit status'}
                         </PrimaryButton>
                         <PrimaryButton
                             isLoading={isDeleting}
@@ -201,7 +202,9 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                         </div>
                     ) : (
                         <textarea
+                            aria-label={`Notes for ${application.company_name}`}
                             disabled
+                            readOnly
                             value={
                                 !application.notes || application.notes.trim() === ''
                                     ? 'You do not have any notes here'
@@ -211,7 +214,7 @@ const DemoApplicationCard = (props: DemoApplicationCardProps) => {
                     )}
                 </div>
             )}
-        </div>
+        </article>
     );
 };
 

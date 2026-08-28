@@ -1741,6 +1741,7 @@ describe('Rose Ledger visual contract', () => {
     it('uses a balanced product story and preview with a centred full-page account stage', () => {
         const authLayout = readSource('src/components/authLayout/AuthLayout.module.css');
         const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+        const directionalLink = readSource('src/components/directionalLink/DirectionalLink.module.css');
 
         expect(authLayout).toMatch(/\.authPage\s*\{[^}]*background:\s*var\(--colorPublicPageBg\);/s);
         expect(authLayout).toMatch(/\.authPage\s*\{[^}]*padding:\s*16px 28px 48px;/s);
@@ -1757,7 +1758,7 @@ describe('Rose Ledger visual contract', () => {
         expect(authIntro).toMatch(/\.productDetails\s*\{[^}]*gap:\s*24px;/s);
         expect(authIntro).toMatch(/\.productActions\s*\{[^}]*gap:\s*24px;/s);
         expect(authIntro).toMatch(/\.demoLink\s*\{[^}]*border-radius:\s*10px;/s);
-        expect(authIntro).toMatch(/\.guideLink\s*\{[^}]*gap:\s*6px;/s);
+        expect(directionalLink).toMatch(/\.link\s*\{[^}]*gap:\s*6px;/s);
         expect(authIntro).toMatch(
             /\.authPanel\s*\{[^}]*position:\s*fixed;[^}]*width:\s*100vw;[^}]*clip-path:\s*polygon\(110% 0, 100% 0, 100% 100%, 124% 100%\);[^}]*opacity:\s*1;/s
         );
@@ -1788,13 +1789,13 @@ describe('Rose Ledger visual contract', () => {
         expect(authIntro).not.toContain('box-shadow: 0 18px 45px var(--colorAuthCardShadow);');
     });
 
-    it('underlines the complete landing-page guide link on hover', () => {
-        const authIntro = readSource('src/components/authProductIntro/AuthProductIntro.module.css');
+    it('underlines the complete shared directional link on hover', () => {
+        const directionalLink = readSource('src/components/directionalLink/DirectionalLink.module.css');
 
-        expect(authIntro).toMatch(/\.guideLink\s*\{[^}]*position:\s*relative;/s);
-        expect(authIntro).toMatch(/\.guideLink:hover\s*\{[^}]*text-decoration:\s*none;/s);
-        expect(authIntro).toMatch(
-            /\.guideLink:hover::after\s*\{[^}]*position:\s*absolute;[^}]*right:\s*2px;[^}]*bottom:\s*7px;[^}]*left:\s*2px;[^}]*border-bottom:\s*1px solid currentColor;[^}]*content:\s*'';/s
+        expect(directionalLink).toMatch(/\.link\s*\{[^}]*position:\s*relative;/s);
+        expect(directionalLink).toMatch(/\.link:hover\s*\{[^}]*text-decoration:\s*none;/s);
+        expect(directionalLink).toMatch(
+            /\.link:hover::after\s*\{[^}]*position:\s*absolute;[^}]*right:\s*4px;[^}]*bottom:\s*8px;[^}]*left:\s*4px;[^}]*border-bottom:\s*1px solid currentColor;[^}]*content:\s*'';/s
         );
     });
 
@@ -2113,7 +2114,14 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(guideCss).toMatch(/\.accordionButton\.accordionButton\s*\{[^}]*min-height:\s*66px;/s);
         expect(guideCss).toMatch(
-            /\.accordionButton\.accordionButton\s*\{[^}]*border-radius:\s*var\(--radiusControl\);/s
+            /\.accordionButton\.accordionButton\s*\{[^}]*position:\s*relative;[^}]*border-radius:\s*0;/s
+        );
+        expect(guideCss).toMatch(
+            /\.accordionButton\.accordionButton:not\(:disabled\):active\s*\{[^}]*transform:\s*none;/s
+        );
+        expect(guideCss).toMatch(/\.accordionButton\.accordionButton:focus-visible\s*\{[^}]*outline:\s*0;/s);
+        expect(guideCss).toMatch(
+            /\.accordionButton\.accordionButton:focus-visible::after\s*\{[^}]*inset:\s*3px;[^}]*border:\s*3px solid var\(--colorPrimaryFocusOutline\);[^}]*border-radius:\s*var\(--radiusControl\);[^}]*pointer-events:\s*none;/s
         );
         expect(guideCss).toMatch(
             /@media \(max-width:\s*600px\)[\s\S]*\.accordionButton\.accordionButton\s*\{[^}]*min-height:\s*62px;/s
@@ -2127,17 +2135,16 @@ describe('Rose Ledger visual contract', () => {
         expect(guideCss).not.toMatch(/\.tip\s*\{/);
     });
 
-    it('underlines the complete User Guide back link on hover', () => {
+    it('uses the shared directional-link contract for the User Guide back link', () => {
         const guideCss = readSource('src/pages/userGuide/UserGuide.module.css');
+        const guide = readSource('src/pages/userGuide/UserGuide.tsx');
 
-        expect(guideCss).toMatch(/\.backButton\s*\{[^}]*position:\s*relative;/s);
-        expect(guideCss).toMatch(/\.backButton:hover\s*\{[^}]*text-decoration:\s*none;/s);
-        expect(guideCss).toMatch(
-            /\.backButton:hover::after\s*\{[^}]*position:\s*absolute;[^}]*right:\s*4px;[^}]*bottom:\s*8px;[^}]*left:\s*4px;[^}]*border-bottom:\s*1px solid currentColor;[^}]*content:\s*'';/s
-        );
+        expect(guide).toContain("<DirectionalLink className={styles.backButton} direction='back'");
+        expect(guideCss).toMatch(/\.backButton\s*\{[^}]*margin-bottom:\s*24px;/s);
+        expect(guideCss).not.toContain('.backButton:hover');
     });
 
-    it('uses established capitalization for shared form labels and common actions', () => {
+    it('uses sentence case for shared form labels and common actions', () => {
         const sources = [
             'src/pages/application/jobApplication/addApplication/AddApplication.tsx',
             'src/pages/demo/application/jobApplication/addApplication/DemoAddApplication.tsx',
@@ -2152,24 +2159,25 @@ describe('Rose Ledger visual contract', () => {
         const combinedSource = sources.join('\n');
 
         [
-            'Company Name',
-            'Job Title',
-            'Job Status',
-            'Job Location',
-            'Job Posting URL',
-            'Interview Date',
-            'Interview Location',
-            'Interview Type',
+            'Company name',
+            'Job title',
+            'Job status',
+            'Job location',
+            'Job posting URL',
+            'Interview date',
+            'Interview location',
+            'Interview type',
             'Meeting URL',
-            'Additional Notes',
-            'Add Application',
-            'View Applications',
-            'Add Interview',
-            'View Interviews',
-            'Edit Status',
+            'Additional notes',
+            'Add application',
+            'View applications',
+            'Add interview',
+            'View interviews',
+            'Edit status',
             'Save changes',
-            'Show Archived',
-            'Show Active',
+            'Show archived',
+            'Show active',
+            'Sign out',
             'Exit Demo',
             'Explore Demo',
         ].forEach((copy) => expect(combinedSource).toContain(copy));

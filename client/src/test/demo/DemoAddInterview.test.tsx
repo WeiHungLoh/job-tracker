@@ -75,12 +75,12 @@ const renderDemoAddInterview = (setupActions: DemoAction[] = []) =>
     );
 
 const fillInterviewForm = (startHour = 10, startMinute = 30) => {
-    fireEvent.change(screen.getByLabelText('Interview Date'), {
+    fireEvent.change(screen.getByLabelText('Interview date'), {
         target: { value: `2030-01-10T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}` },
     });
-    userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
-    userEvent.type(screen.getByLabelText('Interview Type (optional)'), 'Panel');
-    userEvent.type(screen.getByLabelText('Additional Notes (optional)'), 'Prepare examples');
+    userEvent.type(screen.getByLabelText('Interview location'), 'Zoom');
+    userEvent.type(screen.getByLabelText('Interview type (optional)'), 'Panel');
+    userEvent.type(screen.getByLabelText('Additional notes (optional)'), 'Prepare examples');
 };
 
 const submitInterview = () => userEvent.click(screen.getByTestId('add-interview'));
@@ -132,19 +132,19 @@ describe('Demo Add Interview scheduling conflicts', () => {
 
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         expect(getActiveInterviewCount()).toBe(initialCount);
-        expect(screen.getByLabelText('Interview Date')).toHaveValue('2030-01-10T10:30');
-        expect(screen.getByLabelText('Interview Location')).toHaveValue('Zoom');
-        expect(screen.getByLabelText('Interview Type (optional)')).toHaveValue('Panel');
-        expect(screen.getByLabelText('Additional Notes (optional)')).toHaveValue('Prepare examples');
+        expect(screen.getByLabelText('Interview date')).toHaveValue('2030-01-10T10:30');
+        expect(screen.getByLabelText('Interview location')).toHaveValue('Zoom');
+        expect(screen.getByLabelText('Interview type (optional)')).toHaveValue('Panel');
+        expect(screen.getByLabelText('Additional notes (optional)')).toHaveValue('Prepare examples');
         expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
     });
 
     test('keeps Enter as a notes newline and submits with Shift+Enter', async () => {
         renderDemoAddInterview();
         const initialCount = getActiveInterviewCount();
-        fireEvent.change(screen.getByLabelText('Interview Date'), { target: { value: '2031-01-10T10:30' } });
-        userEvent.type(screen.getByLabelText('Interview Location'), 'Zoom');
-        const notes = screen.getByLabelText('Additional Notes (optional)');
+        fireEvent.change(screen.getByLabelText('Interview date'), { target: { value: '2031-01-10T10:30' } });
+        userEvent.type(screen.getByLabelText('Interview location'), 'Zoom');
+        const notes = screen.getByLabelText('Additional notes (optional)');
         await userEvent.type(notes, 'First line{enter}Second line');
 
         expect(notes).toHaveValue('First line\nSecond line');
@@ -152,8 +152,8 @@ describe('Demo Add Interview scheduling conflicts', () => {
 
         fireEvent.keyDown(notes, { key: 'Enter', shiftKey: true });
 
-        const warningDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
-        fireEvent.click(within(warningDialog).getByRole('button', { name: 'Add Anyway' }));
+        const warningDialog = await screen.findByRole('dialog', { name: 'Offer deadline warning' });
+        fireEvent.click(within(warningDialog).getByRole('button', { name: 'Add anyway' }));
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
     });
 
@@ -165,19 +165,19 @@ describe('Demo Add Interview scheduling conflicts', () => {
         fillInterviewForm();
         submitInterview();
         const dialog = await screen.findByRole('dialog');
-        expect(within(dialog).getByRole('button', { name: 'Add Anyway' })).toHaveFocus();
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Add Anyway' }));
-        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
-        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add Anyway' }));
+        expect(within(dialog).getByRole('button', { name: 'Add anyway' })).toHaveFocus();
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Add anyway' }));
+        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer deadline warning' });
+        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add anyway' }));
 
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
         expect(screen.getAllByTestId('toast')).toHaveLength(1);
         expect(screen.getByText('Successfully added an interview')).toBeInTheDocument();
-        expect(screen.getByLabelText('Interview Date')).toHaveValue('');
+        expect(screen.getByLabelText('Interview date')).toHaveValue('');
         expect(screen.getByLabelText('Duration (minutes)')).toHaveValue(60);
-        expect(screen.getByLabelText('Interview Location')).toHaveValue('');
-        expect(screen.getByLabelText('Interview Type (optional)')).toHaveValue('');
-        expect(screen.getByLabelText('Additional Notes (optional)')).toHaveValue('');
+        expect(screen.getByLabelText('Interview location')).toHaveValue('');
+        expect(screen.getByLabelText('Interview type (optional)')).toHaveValue('');
+        expect(screen.getByLabelText('Additional notes (optional)')).toHaveValue('');
     });
 
     test('allows a boundary-touching interview after only the offer deadline warning', async () => {
@@ -187,8 +187,8 @@ describe('Demo Add Interview scheduling conflicts', () => {
 
         fillInterviewForm(11, 0);
         submitInterview();
-        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
-        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add Anyway' }));
+        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer deadline warning' });
+        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add anyway' }));
 
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -201,8 +201,8 @@ describe('Demo Add Interview scheduling conflicts', () => {
 
         fillInterviewForm();
         submitInterview();
-        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer Deadline Warning' });
-        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add Anyway' }));
+        const deadlineDialog = await screen.findByRole('dialog', { name: 'Offer deadline warning' });
+        fireEvent.click(within(deadlineDialog).getByRole('button', { name: 'Add anyway' }));
 
         await waitFor(() => expect(getActiveInterviewCount()).toBe(initialCount + 1));
         await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -248,16 +248,16 @@ describe('Demo Add Interview scheduling conflicts', () => {
         fillInterviewForm();
         submitInterview();
         await act(async () => undefined);
-        const schedulingDialog = screen.getByRole('dialog', { name: 'Possible Scheduling Conflict' });
-        fireEvent.click(within(schedulingDialog).getByRole('button', { name: 'Add Anyway' }));
+        const schedulingDialog = screen.getByRole('dialog', { name: 'Possible scheduling conflict' });
+        fireEvent.click(within(schedulingDialog).getByRole('button', { name: 'Add anyway' }));
         await act(async () => undefined);
 
-        const dialog = screen.getByRole('dialog', { name: 'Offer Deadline Warning' });
+        const dialog = screen.getByRole('dialog', { name: 'Offer deadline warning' });
         expect(dialog).toHaveTextContent('these active offers');
         expect(within(dialog).getAllByRole('listitem')).toHaveLength(2);
         expect(getActiveInterviewCount()).toBe(initialCount);
 
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Add Anyway' }));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Add anyway' }));
         await act(async () => undefined);
 
         expect(getActiveInterviewCount()).toBe(initialCount + 1);

@@ -24,6 +24,19 @@
     transform: scale(0.98);
 }
 
+.link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    font: inherit;
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: none;
+}
+
 .loading {
     position: relative;
 }

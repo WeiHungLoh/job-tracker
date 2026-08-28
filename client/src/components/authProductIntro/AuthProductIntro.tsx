@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { routes } from '../../routes';
 import { loadDemoRoute, loadUserGuideRoute } from '../../routeLoaders';
 import Icon from '../icon/Icon';
 import BrandMark from '../brandMark/BrandMark';
 import styles from './AuthProductIntro.module.css';
 import ProductPreviewCarousel from './ProductPreviewCarousel';
+import DirectionalLink from '../directionalLink/DirectionalLink';
 
 type AuthProductIntroProps = {
     children: ReactNode;
@@ -138,7 +139,7 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                         onClick={openAccountAccess}
                     >
                         {accountTriggerLabel}
-                        <span aria-hidden='true'>→</span>
+                        <Icon name='arrowForward' size={18} />
                     </button>
                 </header>
 
@@ -162,19 +163,20 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                                     target='_blank'
                                 >
                                     Explore Demo
-                                    <span aria-hidden='true'>→</span>
+                                    <Icon name='arrowForward' size={18} />
                                 </a>
-                                <Link
+                                <DirectionalLink
                                     className={styles.guideLink}
+                                    direction='forward'
                                     onFocus={preloadUserGuideRoute}
                                     onPointerDown={preloadUserGuideRoute}
                                     onPointerEnter={preloadUserGuideRoute}
                                     rel='noreferrer'
-                                    to={`${routes.userGuide}#getting-started`}
+                                    to={routes.userGuide}
                                     target='_blank'
                                 >
-                                    See how it works <span aria-hidden='true'>→</span>
-                                </Link>
+                                    See how it works
+                                </DirectionalLink>
                             </div>
                             <p className={styles.demoCopy}>
                                 Explore Job Tracker with sample data. No account needed. The demo resets when you

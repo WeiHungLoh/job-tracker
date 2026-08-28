@@ -179,7 +179,7 @@ describe('Archived job interview viewer flow', () => {
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
-                title: 'Confirm Deletion',
+                title: 'Confirm deletion',
                 description:
                     'Are you sure you want to delete this archived job interview? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
@@ -215,10 +215,10 @@ describe('Archived job interview viewer flow', () => {
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    title: 'Confirm Delete All',
+                    title: 'Confirm delete all',
                     description:
                         'Delete all 1 archived interview you own? This affects every archived interview in your account. This action is permanent and cannot be undone.',
-                    confirmationText: 'Delete All',
+                    confirmationText: 'Delete all',
                     cancellationText: 'Cancel',
                     confirmationButtonProps: expect.objectContaining({
                         autoFocus: false,

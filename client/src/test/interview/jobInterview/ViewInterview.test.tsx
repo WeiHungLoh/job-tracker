@@ -634,7 +634,7 @@ describe('Job interview viewer flow', () => {
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
-                title: 'Confirm Deletion',
+                title: 'Confirm deletion',
                 description:
                     'Are you sure you want to delete this job interview? This action is permanent and cannot be undone.',
                 confirmationText: 'Delete',
@@ -670,10 +670,10 @@ describe('Job interview viewer flow', () => {
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    title: 'Confirm Delete All',
+                    title: 'Confirm delete all',
                     description:
                         'Delete all 1 active interview you own? This affects every active interview in your account. This action is permanent and cannot be undone.',
-                    confirmationText: 'Delete All',
+                    confirmationText: 'Delete all',
                     cancellationText: 'Cancel',
                     confirmationButtonProps: expect.objectContaining({
                         autoFocus: false,
@@ -943,7 +943,7 @@ describe('Job interview viewer flow', () => {
         expect(screen.queryByRole('article', { name: 'Older Interview Result interview' })).not.toBeInTheDocument();
     });
 
-    test('uses one filtered collection for display and CSV while bulk calendar and Delete All keep full scope', async () => {
+    test('uses one filtered collection for display and CSV while bulk calendar and Delete all keep full scope', async () => {
         const now = Date.now();
         const interviews = [
             {
@@ -1004,7 +1004,7 @@ describe('Job interview viewer flow', () => {
                 title: 'Export all upcoming active interviews?',
                 description:
                     'This will download one .ics file containing all 2 upcoming active interviews from the active Interview collection, including interviews you may already have added to your calendar. Importing the file again may create duplicate calendar events.',
-                confirmationText: 'Export All',
+                confirmationText: 'Export all',
                 cancellationText: 'Cancel',
             })
         );

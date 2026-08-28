@@ -88,14 +88,6 @@ const ROUTE_STATE_STYLES: Record<FallbackContent['routeState'], string> = {
     routeError: styles.routeError,
 };
 
-const DOCUMENT_TITLES: Record<FallbackScreenVariant, string> = {
-    authenticationError: 'Session Error | Job Tracker',
-    loading: 'Checking Session | Job Tracker',
-    notFound: 'Page Not Found | Job Tracker',
-    pageLoading: 'Loading | Job Tracker',
-    routeError: 'Page Error | Job Tracker',
-};
-
 const FallbackRoute = ({ content, isLoading }: { content: FallbackContent; isLoading: boolean }) => {
     const isApplicationRoute = content.routeKind === 'application';
     const routePath = isApplicationRoute ? APPLICATION_ROUTE_PATH : GENERIC_ROUTE_PATH;
@@ -196,7 +188,7 @@ const FallbackScreen = ({
 
     useEffect(() => {
         const previousTitle = document.title;
-        document.title = DOCUMENT_TITLES[variant];
+        document.title = 'Job Tracker';
 
         return () => {
             document.title = previousTitle;

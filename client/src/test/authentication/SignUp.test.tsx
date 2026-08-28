@@ -75,7 +75,7 @@ describe('User sign up flow', () => {
         );
 
         await waitFor(() =>
-            expect(screen.getByText('Sign up successful — redirecting you to login page')).toBeInTheDocument()
+            expect(screen.getByText('Sign up successful — redirecting you to sign-in page')).toBeInTheDocument()
         );
 
         const redirectTimerIndex = setTimeoutSpy.mock.calls.findIndex(([, delay]) => delay === 1500);
@@ -94,6 +94,42 @@ describe('User sign up flow', () => {
 
         expect(mockNavigate).toHaveBeenCalledWith('/');
         setTimeoutSpy.mockRestore();
+    });
+
+    test('keeps the submit label in place while sign up is pending', async () => {
+        let resolveSignUp: ((value: Response) => void) | undefined;
+
+        globalThis.fetch.mockImplementation(async (url: string) => {
+            if (url.endsWith('/authentication/sessions/current') || url.endsWith('/authentication/sessions/refresh')) {
+                return { ok: false, status: 401 } as Response;
+            }
+
+            return new Promise<Response>((resolve) => {
+                resolveSignUp = resolve;
+            });
+        });
+
+        render(
+            <MemoryRouter initialEntries={['/sign-up']}>
+                <SignUp />
+            </MemoryRouter>
+        );
+
+        await openSignUpPanel();
+        await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
+        await userEvent.type(screen.getByLabelText(/^password$/i), VALID_PASSWORD);
+        await userEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+
+        const submitButton = await screen.findByRole('button', { name: 'Sign up' });
+        expect(submitButton).toBeDisabled();
+        expect(submitButton).toHaveAttribute('aria-busy', 'true');
+
+        resolveSignUp?.(
+            new Response('User successfully registered', {
+                headers: { 'content-type': 'text/plain' },
+                status: 201,
+            })
+        );
     });
 
     test('shows an error when the account already exists', async () => {

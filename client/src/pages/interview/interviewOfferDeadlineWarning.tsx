@@ -99,8 +99,8 @@ export const createInterviewOfferDeadlineConfirmation = (
 ): ConfirmOptions => {
     const orderedWarnings = sortWarningsByDeadline(warnings);
     const options: ConfirmOptions = {
-        title: 'Offer Deadline Warning',
-        confirmationText: 'Add Anyway',
+        title: 'Offer deadline warning',
+        confirmationText: 'Add anyway',
         cancellationText: 'Cancel',
         confirmationButtonProps: { autoFocus: true },
     };

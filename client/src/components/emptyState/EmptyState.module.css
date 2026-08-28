@@ -54,50 +54,7 @@
 
 .action {
     min-height: 38px;
-    padding: var(--spaceControl) 12px;
-    border-radius: var(--radiusControl);
-    cursor: pointer;
-    font: inherit;
-    font-weight: var(--fontWeightEmphasis);
     line-height: 1.25;
-    text-decoration: none;
-    box-sizing: border-box;
-    transition: transform var(--motionDurationFast) var(--motionEasingStandard),
-        background-color var(--motionDurationFast) var(--motionEasingStandard),
-        border-color var(--motionDurationFast) var(--motionEasingStandard),
-        color var(--motionDurationFast) var(--motionEasingStandard);
-}
-
-.primary {
-    border: 1.5px solid var(--colorPrimary);
-    background: var(--colorPrimary);
-    color: var(--colorBtnPrimaryText);
-}
-
-.primary:hover {
-    border-color: var(--colorPrimaryHover);
-    background: var(--colorPrimaryHover);
-    color: var(--colorBtnPrimaryText);
-}
-
-.secondary {
-    border: 1.5px solid var(--colorPrimary);
-    background: transparent;
-    color: var(--colorPrimary);
-}
-
-.secondary:hover {
-    background: var(--colorBtnSecondaryHoverBg);
-    color: var(--colorPrimary);
-}
-
-.action:active {
-    transform: scale(0.98);
-}
-
-.action:focus-visible {
-    outline: 3px solid var(--colorPrimaryFocusOutline);
-    outline-offset: 3px;
 }
 
 @media (max-width: 480px) {
@@ -112,15 +69,5 @@
 
     .action {
         width: 100%;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .action {
-        transition: none;
-    }
-
-    .action:active {
-        transform: none;
     }
 }

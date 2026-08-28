@@ -403,14 +403,14 @@ describe('App routing and authentication behavior', () => {
         expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'New Application' })).toHaveAttribute('aria-current', 'page');
 
-        await userEvent.click(screen.getByRole('button', { name: 'Show Archived' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Show archived' }));
         expect(await screen.findByRole('link', { name: 'Archived Applications' })).toHaveAttribute(
             'aria-current',
             'page'
         );
         expect(screen.queryByRole('link', { name: 'New Application' })).not.toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Show active' }));
         expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute('aria-current', 'page');
     });
 
@@ -453,7 +453,7 @@ describe('App routing and authentication behavior', () => {
         expect(screen.getByRole('link', { name: 'Archived Offer Comparison' })).toHaveAttribute('aria-current', 'page');
         expect(screen.queryByRole('button', { name: /save evaluation/i })).not.toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Show active' }));
         expect(await screen.findByRole('link', { name: 'Offer Comparison' })).toHaveAttribute('aria-current', 'page');
     });
 
@@ -630,14 +630,14 @@ describe('App routing and authentication behavior', () => {
         renderRoute(routes.demoViewApplications);
 
         expect(await screen.findByText(/HorizonAI Labs/i)).toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: 'Show Archived' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Show archived' }));
 
         expect(await screen.findByRole('link', { name: 'Archived Applications' })).toHaveAttribute(
             'aria-current',
             'page'
         );
 
-        await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Show active' }));
         expect(await screen.findByRole('link', { name: 'Applications' })).toHaveAttribute('aria-current', 'page');
         expect(fetch).not.toHaveBeenCalled();
     });
@@ -646,7 +646,7 @@ describe('App routing and authentication behavior', () => {
         renderRoute(routes.demoOfferDecisions);
 
         expect(await screen.findByRole('link', { name: 'Offer Comparison' })).toHaveAttribute('aria-current', 'page');
-        await userEvent.click(screen.getByRole('button', { name: 'Show Archived' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Show archived' }));
 
         expect(await screen.findByRole('link', { name: 'Archived Offer Comparison' })).toHaveAttribute(
             'aria-current',
@@ -654,7 +654,7 @@ describe('App routing and authentication behavior', () => {
         );
         expect(screen.queryByRole('button', { name: /save evaluation/i })).not.toBeInTheDocument();
 
-        await userEvent.click(screen.getByRole('button', { name: 'Show Active' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Show active' }));
         expect(await screen.findByRole('link', { name: 'Offer Comparison' })).toHaveAttribute('aria-current', 'page');
         expect(fetch).not.toHaveBeenCalled();
     });
@@ -668,7 +668,7 @@ describe('App routing and authentication behavior', () => {
         expect(await screen.findByRole('button', { name: 'Back to Job Tracker' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-        expect(document.title).toBe('Page Not Found | Job Tracker');
+        expect(document.title).toBe('Job Tracker');
         expect(fetch).toHaveBeenCalledTimes(2);
     });
 
@@ -723,10 +723,10 @@ describe('App routing and authentication behavior', () => {
         });
     });
 
-    test('displays sign in page after clicking logout', async () => {
+    test('displays sign in page after clicking sign out', async () => {
         renderRoute('/interview/view');
         await waitFor(() => expect(screen.getByRole('navigation')).toBeInTheDocument());
-        await userEvent.click(screen.getByText(/logout/i));
+        await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
         await waitFor(() => expect(screen.getByText(/Sign in to job tracker/i)).toBeInTheDocument());
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/current`, {
             method: 'DELETE',
@@ -746,7 +746,7 @@ describe('App routing and authentication behavior', () => {
         renderRoute(routes.addApplication);
 
         await screen.findByLabelText(/company name/i);
-        await userEvent.click(screen.getByRole('button', { name: 'Logout' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
 
         expect(await screen.findByText('Sign out is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByLabelText(/company name/i)).toBeInTheDocument();

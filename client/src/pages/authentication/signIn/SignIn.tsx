@@ -4,7 +4,6 @@ import AuthLayout from '../../../components/authLayout/AuthLayout';
 import AuthRequestInfo from '../../../components/authRequestInfo/AuthRequestInfo';
 import Icon from '../../../components/icon/Icon';
 import BrandMark from '../../../components/brandMark/BrandMark';
-import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
 import PrimaryButton from '../../../components/button/PrimaryButton';
 import type { SubmitEvent } from 'react';
 import { routes } from '../../../routes';
@@ -95,15 +94,9 @@ const SignIn = () => {
                         </PrimaryButton>
                     </div>
 
-                    {isPending ? (
-                        <PrimaryButton variant='form' type='submit' disabled>
-                            <LoadingSpinner size='sm' variant='light' />
-                        </PrimaryButton>
-                    ) : (
-                        <PrimaryButton variant='form' type='submit'>
-                            Sign in
-                        </PrimaryButton>
-                    )}
+                    <PrimaryButton isLoading={isPending} variant='form' type='submit'>
+                        Sign in
+                    </PrimaryButton>
 
                     <Link className={styles.authLink} to={routes.signUp}>
                         Don’t have an account? Create one
