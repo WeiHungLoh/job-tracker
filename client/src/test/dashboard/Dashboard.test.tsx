@@ -167,6 +167,18 @@ describe('Dashboard V2', () => {
         expect(screen.queryByText(/0 interviews?/)).not.toBeInTheDocument();
     });
 
+    test('labels a date-only Monday without shifting it into Sunday', () => {
+        render(
+            <ApplicationsLineChart
+                weeklyApplications={[{ start_of_week: '2026-07-06', applications_count: '1' }]}
+                interviews={[]}
+                isLoading={false}
+            />
+        );
+
+        expect(chartMocks.lineData?.labels).toEqual(['6 Jul 2026']);
+    });
+
     test('uses the safe trend fallback when there is no previous week', () => {
         render(
             <ApplicationsLineChart
@@ -180,15 +192,25 @@ describe('Dashboard V2', () => {
     });
 
     test('keeps eight application points and adds aligned weekly interview points with the exact light colours', () => {
-        const weeklyApplications: WeeklyApplicationCount[] = Array.from({ length: 8 }, (_, index) => ({
-            start_of_week: new Date(Date.UTC(2026, 4, 18 + index * 7)).toISOString(),
+        const weekStarts = [
+            '2026-05-18',
+            '2026-05-25',
+            '2026-06-01',
+            '2026-06-08',
+            '2026-06-15',
+            '2026-06-22',
+            '2026-06-29',
+            '2026-07-06',
+        ];
+        const weeklyApplications: WeeklyApplicationCount[] = weekStarts.map((startOfWeek, index) => ({
+            start_of_week: startOfWeek,
             applications_count: String(index),
         }));
         const interviews = [
-            createInterview(1, '2026-05-18T10:00:00.000Z', 'First Week'),
-            createInterview(2, '2026-06-01T10:00:00.000Z', 'Third Week'),
+            createInterview(1, '2026-05-18T10:00:00.000', 'First Week'),
+            createInterview(2, '2026-06-01T10:00:00.000', 'Third Week'),
             createInterview(3, 'invalid', 'Invalid Date'),
-            createInterview(4, '2026-07-13T00:00:00.000Z', 'Outside Range'),
+            createInterview(4, '2026-07-13T00:00:00.000', 'Outside Range'),
         ];
 
         render(

@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { pool } from '../dist/db/connectDB.js';
-import { getDashboardApplicationSummary } from '../dist/db/queries/jobApplications.js';
+import {
+    getApplicationsForLatestEightWeeks,
+    getDashboardApplicationSummary,
+} from '../dist/db/queries/jobApplications.js';
 
 test('dashboard application summary counts recorded interview evidence once and keeps status counts independent', async () => {
     const originalQuery = pool.query;
@@ -55,4 +58,26 @@ test('dashboard application summary returns an empty successful summary when no 
     } finally {
         pool.query = originalQuery;
     }
+});
+
+test('weekly application counts use one requested time zone for calendar boundaries and grouping', async () => {
+    const originalQuery = pool.query;
+    let captured;
+    pool.query = async (sql, values) => {
+        captured = { sql: String(sql), values };
+        return { rows: [{ start_of_week: '2026-08-24', applications_count: '3' }] };
+    };
+
+    try {
+        assert.deepEqual(await getApplicationsForLatestEightWeeks(42, 'America/Los_Angeles'), [
+            { start_of_week: '2026-08-24', applications_count: '3' },
+        ]);
+    } finally {
+        pool.query = originalQuery;
+    }
+
+    assert.deepEqual(captured.values, [42, 'America/Los_Angeles']);
+    assert.match(captured.sql, /CURRENT_TIMESTAMP AT TIME ZONE \$2/);
+    assert.match(captured.sql, /application_date AT TIME ZONE \$2/);
+    assert.match(captured.sql, /TO_CHAR\(weeks\.start_of_week, 'YYYY-MM-DD'\)/);
 });

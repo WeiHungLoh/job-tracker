@@ -99,7 +99,9 @@ describe('follow-up card variants', () => {
 
         const visibleStatus = screen.getByText('Applied', { selector: '[aria-hidden="true"]' });
         const statusBadge = visibleStatus.parentElement;
-        const statusSelect = screen.getByRole('listbox');
+        const statusSelect = screen.getByRole('combobox', {
+            name: 'Application status for Engineer at Acme',
+        });
         const badgeGroup = statusBadge?.closest(`.${applicationStyles.badgeGroup}`);
 
         expect(statusBadge?.parentElement).toHaveClass(applicationStyles.statusEditRow);

@@ -67,6 +67,34 @@ describe('Archived job interview viewer flow', () => {
         });
     });
 
+    test('aborts its initial archived-interview request when unmounted', async () => {
+        const pendingResponse = new Promise<never>(() => undefined);
+        fetch.mockImplementation(async (url: string) => {
+            if (url.includes('/archived-job-interviews?')) {
+                return pendingResponse;
+            }
+            return response([]);
+        });
+
+        const { unmount } = render(
+            <MemoryRouter>
+                <ViewArchivedInterview />
+            </MemoryRouter>
+        );
+
+        await waitFor(() =>
+            expect(fetch.mock.calls.some(([url]) => String(url).includes('/archived-job-interviews?'))).toBe(true)
+        );
+        const requestInit = fetch.mock.calls.find(([url]) => String(url).includes('/archived-job-interviews?'))?.[1] as
+            | RequestInit
+            | undefined;
+
+        unmount();
+
+        expect(requestInit?.signal).toBeInstanceOf(AbortSignal);
+        expect(requestInit?.signal?.aborted).toBe(true);
+    });
+
     test('displays job interview details and action buttons', async () => {
         render(
             <MemoryRouter>
@@ -384,7 +412,7 @@ describe('Archived job interview viewer flow', () => {
         ).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(
             `${import.meta.env.VITE_API_URL}/archived-job-interviews?timeFilters=Past+Interviews`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
     });
 

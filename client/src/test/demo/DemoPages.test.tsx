@@ -67,7 +67,9 @@ const renderDemo = (children: ReactNode, initialEntries: DemoInitialEntry[] = [r
 
 const saveFirstDemoApplicationAsOffer = () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
-    fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Offer' } });
+    fireEvent.change(screen.getByRole('combobox', { name: /Application status for/ }), {
+        target: { value: 'Offer' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 };
 
@@ -479,7 +481,9 @@ describe('demo page interactions', () => {
         expect(screen.getAllByText('Saving…').length).toBeGreaterThan(0);
 
         await userEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
-        fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Offer' } });
+        fireEvent.change(screen.getByRole('combobox', { name: /Application status for/ }), {
+            target: { value: 'Offer' },
+        });
         await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         expect(screen.getAllByText(/Job status: Offer/i).length).toBeGreaterThan(0);
         await waitFor(() =>
@@ -496,7 +500,9 @@ describe('demo page interactions', () => {
         await waitFor(() => expect(screen.getByRole('button', { name: 'Sort by' })).toBeEnabled());
 
         await userEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
-        fireEvent.change(screen.getByRole('listbox'), { target: { value: 'Interview' } });
+        fireEvent.change(screen.getByRole('combobox', { name: /Application status for/ }), {
+            target: { value: 'Interview' },
+        });
         await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
         await act(async () => {
             await new Promise((resolve) => setTimeout(resolve, 150));

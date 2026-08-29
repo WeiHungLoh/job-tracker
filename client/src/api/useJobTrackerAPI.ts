@@ -138,18 +138,19 @@ export const useJobTrackerAPI = () => {
             );
         };
 
-        const listApplications = async (req: ListApplicationsRequest) => {
+        const listApplications = async (req: ListApplicationsRequest, options?: AuthenticatedRequestOptions) => {
             return await makeAuthenticatedJobTrackerAPIRequest<ListApplicationsRequest, ListApplicationsResponse>(
                 req,
-                endpointConfig.application.listApplications
+                endpointConfig.application.listApplications,
+                options
             );
         };
 
-        const listWeeklyApplications = async () => {
+        const listWeeklyApplications = async (req: ListWeeklyApplicationsRequest) => {
             return await makeAuthenticatedJobTrackerAPIRequest<
                 ListWeeklyApplicationsRequest,
                 ListWeeklyApplicationsResponse
-            >(null, endpointConfig.application.listWeeklyApplications);
+            >(req, endpointConfig.application.listWeeklyApplications);
         };
 
         const getDashboardApplicationSummary = async () => {
@@ -229,10 +230,11 @@ export const useJobTrackerAPI = () => {
             >(req, endpointConfig.application.undoFollowUp);
         };
 
-        const listInterviews = async (req: ListInterviewsRequest) => {
+        const listInterviews = async (req: ListInterviewsRequest, options?: AuthenticatedRequestOptions) => {
             return await makeAuthenticatedJobTrackerAPIRequest<ListInterviewsRequest, ListInterviewsResponse>(
                 req,
-                endpointConfig.interview.listInterviews
+                endpointConfig.interview.listInterviews,
+                options
             );
         };
 
@@ -292,11 +294,14 @@ export const useJobTrackerAPI = () => {
             >(req, endpointConfig.interview.undoFollowUp);
         };
 
-        const listArchivedApplications = async (req: ListArchivedApplicationsRequest) => {
+        const listArchivedApplications = async (
+            req: ListArchivedApplicationsRequest,
+            options?: AuthenticatedRequestOptions
+        ) => {
             return await makeAuthenticatedJobTrackerAPIRequest<
                 ListArchivedApplicationsRequest,
                 ListArchivedApplicationsResponse
-            >(req, endpointConfig.archivedApplication.listApplications);
+            >(req, endpointConfig.archivedApplication.listApplications, options);
         };
 
         const archiveApplication = async (req: ArchiveApplicationRequest) => {
@@ -355,11 +360,14 @@ export const useJobTrackerAPI = () => {
             >(req, endpointConfig.archivedApplication.unarchiveApplication);
         };
 
-        const listArchivedInterviews = async (req: ListArchivedInterviewsRequest) => {
+        const listArchivedInterviews = async (
+            req: ListArchivedInterviewsRequest,
+            options?: AuthenticatedRequestOptions
+        ) => {
             return await makeAuthenticatedJobTrackerAPIRequest<
                 ListArchivedInterviewsRequest,
                 ListArchivedInterviewsResponse
-            >(req, endpointConfig.archivedInterview.listInterviews);
+            >(req, endpointConfig.archivedInterview.listInterviews, options);
         };
 
         const getArchivedInterviewSummary = async () => {

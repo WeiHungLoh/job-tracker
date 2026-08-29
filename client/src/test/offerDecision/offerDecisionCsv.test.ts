@@ -2,6 +2,8 @@ import { createOfferEvaluationCsvData } from '../../pages/offerDecision/offerDec
 import { groupOfferDecisionApplications } from '../../pages/offerDecision/offerDecisionGrouping';
 import type { CounterofferPlan, OfferDecisionApplication, OfferEvaluation } from '../../pages/offerDecision/models';
 
+const TEST_NOW = new Date('2026-08-01T00:00:00.000Z');
+
 const createEvaluation = (jobId: number, overrides: Partial<OfferEvaluation['details']> = {}): OfferEvaluation => ({
     job_id: jobId,
     ratings: {
@@ -54,10 +56,10 @@ const counterofferPlan: CounterofferPlan = {
 
 describe('offer evaluation CSV data', () => {
     test('omits the counteroffer table when the selected category has no counteroffer plans', () => {
-        const groups = groupOfferDecisionApplications([
-            createApplication(1, 'Offer', createEvaluation(1)),
-            createApplication(2, 'Offer', null),
-        ]);
+        const groups = groupOfferDecisionApplications(
+            [createApplication(1, 'Offer', createEvaluation(1)), createApplication(2, 'Offer', null)],
+            TEST_NOW
+        );
         const csvData = createOfferEvaluationCsvData(groups, ['Evaluated Offers']);
 
         expect(csvData).toHaveLength(3);
@@ -71,11 +73,14 @@ describe('offer evaluation CSV data', () => {
     });
 
     test('exports two selected categories as separate tables with headers and a blank separator', () => {
-        const groups = groupOfferDecisionApplications([
-            createApplication(1, 'Offer', createEvaluation(1), counterofferPlan),
-            createApplication(2, 'Accepted', createEvaluation(2)),
-            createApplication(3, 'Offer', createEvaluation(3)),
-        ]);
+        const groups = groupOfferDecisionApplications(
+            [
+                createApplication(1, 'Offer', createEvaluation(1), counterofferPlan),
+                createApplication(2, 'Accepted', createEvaluation(2)),
+                createApplication(3, 'Offer', createEvaluation(3)),
+            ],
+            TEST_NOW
+        );
         const csvData = createOfferEvaluationCsvData(groups, ['Evaluated Offers', 'Previous Evaluations']);
         const flattened = csvData.flat();
 
@@ -107,11 +112,14 @@ describe('offer evaluation CSV data', () => {
     });
 
     test('exports three non-empty categories in canonical order and skips empty selected categories', () => {
-        const groups = groupOfferDecisionApplications([
-            createApplication(1, 'Offer', createEvaluation(1)),
-            createApplication(2, 'Offer', createEvaluation(2, { decision_deadline: '2026-07-01T10:00:00.000Z' })),
-            createApplication(3, 'Accepted', createEvaluation(3)),
-        ]);
+        const groups = groupOfferDecisionApplications(
+            [
+                createApplication(1, 'Offer', createEvaluation(1)),
+                createApplication(2, 'Offer', createEvaluation(2, { decision_deadline: '2026-07-01T10:00:00.000Z' })),
+                createApplication(3, 'Accepted', createEvaluation(3)),
+            ],
+            TEST_NOW
+        );
         const csvData = createOfferEvaluationCsvData(groups, [
             'Previous Evaluations',
             'Offers to Evaluate',
@@ -135,7 +143,7 @@ describe('offer evaluation CSV data', () => {
     });
 
     test('returns no export rows when only Offers to Evaluate is selected', () => {
-        const groups = groupOfferDecisionApplications([createApplication(2, 'Offer', null)]);
+        const groups = groupOfferDecisionApplications([createApplication(2, 'Offer', null)], TEST_NOW);
 
         expect(createOfferEvaluationCsvData(groups, ['Offers to Evaluate'])).toEqual([]);
     });

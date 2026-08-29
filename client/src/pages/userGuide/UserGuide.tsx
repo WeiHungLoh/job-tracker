@@ -189,8 +189,8 @@ const guideSections: readonly UserGuideSection[] = [
                     <strong> Move to</strong> from the card menu. Both views use the same records, filters and actions.
                 </p>
                 <p>
-                    You can search, filter and sort your applications, pin important ones and choose whether notes are
-                    shown. Your List and Board choices are remembered separately for active and archived records.
+                    You can filter and sort your applications, pin important ones and choose whether notes are shown.
+                    Your List and Board choices are remembered separately for active and archived records.
                 </p>
 
                 <h3 id='application-statuses'>Application statuses</h3>
@@ -441,8 +441,8 @@ const guideSections: readonly UserGuideSection[] = [
                 <h3>Export what you are viewing</h3>
                 <p>
                     Open <strong>More</strong> and choose Export to download a CSV file. Application and interview
-                    exports follow your current search, filters and order. A Board export moves from the leftmost column
-                    to the rightmost column. Follow-up sent times are included when available.
+                    exports follow your current filters and order. A Board export moves from the leftmost column to the
+                    rightmost column. Follow-up sent times are included when available.
                 </p>
                 <p>
                     Offer Comparison exports the sections you selected and includes counteroffer plan details when they

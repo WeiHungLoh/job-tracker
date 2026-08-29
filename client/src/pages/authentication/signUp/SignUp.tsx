@@ -8,7 +8,7 @@ import type { SubmitEvent } from 'react';
 import { routes } from '../../../routes';
 import styles from '../Authentication.module.css';
 import { useJobTrackerAPI } from '../../../api/useJobTrackerAPI';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { getErrorToastMessage } from '../../../helper/getErrorToastMessage';
 import {
@@ -26,6 +26,7 @@ const SignUp = () => {
     const navigate = useNavigate();
     const [visible, setVisibility] = useState<boolean>(false);
     const [isPending, setIsPending] = useState<boolean>(false);
+    const redirectTimerRef = useRef<number | undefined>(undefined);
     const api = useJobTrackerAPI();
     const { showErrorToast, showSuccessToast } = useToast();
 
@@ -41,6 +42,15 @@ const SignUp = () => {
         void verifyAuth();
     }, [api.authentication, navigate]);
 
+    useEffect(
+        () => () => {
+            if (redirectTimerRef.current !== undefined) {
+                window.clearTimeout(redirectTimerRef.current);
+            }
+        },
+        []
+    );
+
     const handleSignUp = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
         const passwordValidationError = getPasswordValidationError(password);
@@ -55,18 +65,18 @@ const SignUp = () => {
             await api.authentication.signUp({ email: normalizeEmail(email), password });
 
             showSuccessToast('Sign up successful — redirecting you to sign-in page');
-            setTimeout(() => {
+            redirectTimerRef.current = window.setTimeout(() => {
+                redirectTimerRef.current = undefined;
                 navigate(routes.signIn);
             }, 1500);
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to create your account. Please try again.'));
-        } finally {
             setIsPending(false);
         }
     };
 
     return (
-        <AuthLayout>
+        <AuthLayout isAccountAccessPending={isPending}>
             <div className={`${styles.card} ${styles.signUpCard}`}>
                 <BrandMark className={styles.logoIcon} size='lg' />
                 <h2 className={`${styles.title} ${styles.titleWithDescription}`}>Create your account</h2>
@@ -79,6 +89,7 @@ const SignUp = () => {
                             id='email'
                             type='email'
                             autoComplete='email'
+                            disabled={isPending}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -93,6 +104,7 @@ const SignUp = () => {
                             id='password'
                             type={visible ? 'text' : 'password'}
                             autoComplete='new-password'
+                            disabled={isPending}
                             maxLength={PASSWORD_MAX_BYTES}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -103,6 +115,7 @@ const SignUp = () => {
                             variant='icon'
                             className={styles.toggleVisibility}
                             aria-label={visible ? 'Hide password' : 'Show password'}
+                            disabled={isPending}
                             onClick={() => setVisibility((isVisible) => !isVisible)}
                         >
                             <Icon name={visible ? 'visibility' : 'visibilityOff'} />
@@ -117,7 +130,17 @@ const SignUp = () => {
                         Sign up
                     </PrimaryButton>
 
-                    <Link className={styles.authLink} to={routes.signIn}>
+                    <Link
+                        aria-disabled={isPending || undefined}
+                        className={styles.authLink}
+                        onClick={(event) => {
+                            if (isPending) {
+                                event.preventDefault();
+                            }
+                        }}
+                        tabIndex={isPending ? -1 : undefined}
+                        to={routes.signIn}
+                    >
                         Already have an account? Sign in
                     </Link>
                 </form>

@@ -9,6 +9,7 @@ import { routes } from '../../../../routes';
 import styles from '../../InterviewListPage.module.css';
 import { useConfirm } from 'material-ui-confirm';
 import { useJobTrackerAPI } from '../../../../api/useJobTrackerAPI';
+import { isAbortError } from '../../../../api/api';
 import { useToast } from '../../../../components/toast/ToastProvider';
 import { useUserPreferences } from '../../../../components/userPreferences/UserPreferencesProvider';
 import { getErrorToastMessage } from '../../../../helper/getErrorToastMessage';
@@ -194,6 +195,7 @@ const ViewInterview = () => {
 
     useEffect(() => {
         let isActive = true;
+        const controller = new AbortController();
 
         const fetchInterviews = async () => {
             const initialTimeFilters = dashboardInterviewIdRef.current
@@ -201,7 +203,10 @@ const ViewInterview = () => {
                 : selectedTimeFilters;
 
             try {
-                const fetchedInterviews = await api.interview.listInterviews({ timeFilters: initialTimeFilters });
+                const fetchedInterviews = await api.interview.listInterviews(
+                    { timeFilters: initialTimeFilters },
+                    { signal: controller.signal }
+                );
                 const normalizedInterviews = filterAndSortInterviews(
                     Array.isArray(fetchedInterviews) ? fetchedInterviews : [],
                     INTERVIEW_TIME_FILTERS,
@@ -219,7 +224,7 @@ const ViewInterview = () => {
                     }
                 } else {
                     void api.interview
-                        .listInterviews({ timeFilters: ['Upcoming Interviews'] })
+                        .listInterviews({ timeFilters: ['Upcoming Interviews'] }, { signal: controller.signal })
                         .then((fetchedUpcomingInterviews) => {
                             if (isActive) {
                                 setUpcomingInterviews(
@@ -243,7 +248,9 @@ const ViewInterview = () => {
                         });
                 }
             } catch (error) {
-                showErrorToast(getErrorToastMessage(error, 'Unable to load interviews. Please try again.'));
+                if (isActive && !isAbortError(error)) {
+                    showErrorToast(getErrorToastMessage(error, 'Unable to load interviews. Please try again.'));
+                }
             } finally {
                 dashboardInterviewRequestSettledRef.current = true;
                 if (isActive && !dashboardViewUpdatePendingRef.current) {
@@ -255,6 +262,7 @@ const ViewInterview = () => {
         void fetchInterviews();
         return () => {
             isActive = false;
+            controller.abort();
         };
     }, []);
 

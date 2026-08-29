@@ -81,6 +81,9 @@ describe('Dashboard independent loading', () => {
         expect(apiMocks.listApplications).toHaveBeenCalledTimes(1);
         expect(apiMocks.listInterviews).toHaveBeenCalledTimes(1);
         expect(apiMocks.listWeeklyApplications).toHaveBeenCalledTimes(1);
+        expect(apiMocks.listWeeklyApplications).toHaveBeenCalledWith({
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        });
         expect(apiMocks.getActiveOfferDecisions).toHaveBeenCalledTimes(1);
     });
 

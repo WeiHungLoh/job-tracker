@@ -444,6 +444,16 @@ test('returns 422 for an unsupported active application status filter', async ()
     assert.deepEqual(await response.json(), { message: 'Each job status filter must be supported.' });
 });
 
+test('returns 422 for an unsupported weekly-count time zone', async () => {
+    const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
+    const response = await fetch(`${baseUrl}/job-applications/weekly-counts?timeZone=Definitely%2FNot-A-Zone`, {
+        headers: { Cookie: `access_token=${token}` },
+    });
+
+    assert.equal(response.status, 422);
+    assert.deepEqual(await response.json(), { message: 'Time zone must be a supported IANA time zone.' });
+});
+
 test('returns 422 for an unsupported archived application status filter', async () => {
     const token = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
     const response = await fetch(`${baseUrl}/archived-job-applications?jobStatuses=Unknown`, {

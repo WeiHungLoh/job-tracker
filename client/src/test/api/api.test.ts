@@ -41,6 +41,11 @@ describe('makeJobTrackerAPIRequest', () => {
         expect(endpointConfig.authentication.refresh).not.toHaveProperty('retry');
     });
 
+    test('keeps note updates alive while the page is leaving', () => {
+        expect(endpointConfig.application.updateNotes.keepalive).toBe(true);
+        expect(endpointConfig.interview.updateNotes.keepalive).toBe(true);
+    });
+
     test('declares active, archived, singular save, and delete offer comparison endpoints', () => {
         expect(endpointConfig.offerDecision).toEqual({
             getActive: {
@@ -99,6 +104,15 @@ describe('makeJobTrackerAPIRequest', () => {
             url: '/archived-job-interviews',
             verb: 'GET',
             fieldMap: { timeFilters: 'query' },
+            retry: true,
+        });
+    });
+
+    test('declares the dashboard week time zone as a query field', () => {
+        expect(endpointConfig.application.listWeeklyApplications).toEqual({
+            url: '/job-applications/weekly-counts',
+            verb: 'GET',
+            fieldMap: { timeZone: 'query' },
             retry: true,
         });
     });
@@ -171,6 +185,36 @@ describe('makeJobTrackerAPIRequest', () => {
         );
     });
 
+    test('forwards a caller abort signal to fetch', async () => {
+        const controller = new AbortController();
+
+        await makeJobTrackerAPIRequest(null, { url: '/job-applications', verb: 'GET' }, { signal: controller.signal });
+
+        expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications`, {
+            method: 'GET',
+            signal: controller.signal,
+        });
+    });
+
+    test('adds keepalive only when the endpoint opts in', async () => {
+        await makeJobTrackerAPIRequest(
+            { jobId: 7, notes: 'Latest notes' },
+            {
+                url: '/job-applications/:jobId/notes',
+                verb: 'PATCH',
+                fieldMap: { jobId: 'path' },
+                keepalive: true,
+            }
+        );
+
+        expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/7/notes`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: 'Latest notes' }),
+            keepalive: true,
+        });
+    });
+
     test('preserves an empty query selection', async () => {
         await makeJobTrackerAPIRequest(
             { jobStatuses: [] },
@@ -238,6 +282,26 @@ describe('makeJobTrackerAPIRequest', () => {
 
         await expect(request).resolves.toEqual({ applications: 2 });
         expect(fetch).toHaveBeenCalledTimes(4);
+    });
+
+    test('cancels an opted-in request during its retry delay', async () => {
+        vi.useFakeTimers();
+        const controller = new AbortController();
+        fetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+        const request = makeJobTrackerAPIRequest<null, never>(
+            null,
+            { url: '/applications', verb: 'GET', retry: true },
+            { signal: controller.signal }
+        );
+        const rejection = expect(request).rejects.toMatchObject({ name: 'AbortError' });
+        await vi.advanceTimersByTimeAsync(0);
+
+        controller.abort();
+        await vi.runAllTimersAsync();
+
+        await rejection;
+        expect(fetch).toHaveBeenCalledTimes(1);
     });
 
     test('retries opted-in requests after 408 and server-error responses', async () => {

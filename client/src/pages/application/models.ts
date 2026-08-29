@@ -113,7 +113,9 @@ export type ListApplicationsRequest = {
 };
 export type ListApplicationsResponse = JobApplication[];
 
-export type ListWeeklyApplicationsRequest = null;
+export type ListWeeklyApplicationsRequest = {
+    timeZone: string;
+};
 export type ListWeeklyApplicationsResponse = WeeklyApplicationCount[];
 
 export type GetDashboardApplicationSummaryRequest = null;

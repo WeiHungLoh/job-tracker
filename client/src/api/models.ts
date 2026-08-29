@@ -4,6 +4,7 @@ export type EndpointConfigEntry = {
     url: string;
     verb: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
     fieldMap?: Record<string, FieldType>;
+    keepalive?: boolean;
     retry?: boolean;
 };
 

@@ -212,7 +212,10 @@ const renderPendingApplicationStatusUpdate = (initialPreferences: Partial<UserPr
 const beginPendingListStatusUpdate = async () => {
     await screen.findByText(/ABC Pte Ltd/i);
     await userEvent.click(screen.getByRole('button', { name: /edit status/i }));
-    await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
+    await userEvent.selectOptions(
+        screen.getByRole('combobox', { name: /Application status for Software Engineer at ABC Pte Ltd/ }),
+        'Interview'
+    );
     await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 };
 
@@ -285,6 +288,36 @@ describe('Job application viewing flow', () => {
         vi.useRealTimers();
     });
 
+    test('aborts its initial application and interview requests when unmounted', async () => {
+        const pendingResponse = new Promise<never>(() => undefined);
+        fetch.mockImplementation(async (url: string) => {
+            if (url.includes('/job-applications?') || url.includes('/job-interviews')) {
+                return pendingResponse;
+            }
+            return response([]);
+        });
+
+        const { unmount } = render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(fetch.mock.calls.filter(([url]) => String(url).includes('/job-applications?'))).toHaveLength(1);
+            expect(fetch.mock.calls.filter(([url]) => String(url).includes('/job-interviews'))).toHaveLength(1);
+        });
+        const requestSignals = fetch.mock.calls
+            .filter(([url]) => String(url).includes('/job-applications?') || String(url).includes('/job-interviews'))
+            .map(([, init]) => (init as RequestInit | undefined)?.signal);
+
+        unmount();
+
+        expect(requestSignals).toHaveLength(2);
+        requestSignals.forEach((signal) => expect(signal).toBeInstanceOf(AbortSignal));
+        requestSignals.forEach((signal) => expect(signal?.aborted).toBe(true));
+    });
+
     test('displays job application details and action buttons', async () => {
         render(
             <MemoryRouter>
@@ -322,6 +355,7 @@ describe('Job application viewing flow', () => {
             }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
             {
                 method: 'GET',
+                signal: expect.any(AbortSignal),
             }
         );
     });
@@ -585,7 +619,10 @@ describe('Job application viewing flow', () => {
 
         await screen.findByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' });
         await userEvent.click(screen.getByRole('button', { name: 'Edit status' }));
-        await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
+        await userEvent.selectOptions(
+            screen.getByRole('combobox', { name: /Application status for Software Engineer at ABC Pte Ltd/ }),
+            'Interview'
+        );
         await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
         await waitFor(() => expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument());
@@ -1918,13 +1955,13 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: /edit status/i }));
 
         expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
-        expect(screen.getByRole('listbox')).toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: /Application status for/ })).toBeInTheDocument();
         expect(statusUpdateRequestCount(1)).toBe(statusUpdatesBeforeEditing);
 
         await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
         expect(screen.getByRole('button', { name: /edit status/i })).toBeInTheDocument();
-        expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+        expect(screen.queryByRole('combobox', { name: /Application status for/ })).not.toBeInTheDocument();
         expect(statusUpdateRequestCount(1)).toBe(statusUpdatesBeforeEditing);
     });
 
@@ -1953,11 +1990,11 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: /edit status/i }));
-        await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: /Application status for/ }), 'Interview');
         await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
         expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
-        expect(screen.getByRole('listbox')).toBeDisabled();
+        expect(screen.getByRole('combobox', { name: /Application status for/ })).toBeDisabled();
         expect(statusUpdateRequestCount(1)).toBe(1);
 
         await act(async () => resolveStatusUpdate(response(undefined, 204)));
@@ -1991,12 +2028,12 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: /edit status/i }));
-        await userEvent.selectOptions(screen.getByRole('listbox'), 'Interview');
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: /Application status for/ }), 'Interview');
         await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
         expect(await screen.findByText('Status update is temporarily unavailable')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
-        expect(screen.getByRole('listbox')).toHaveValue('Interview');
+        expect(screen.getByRole('combobox', { name: /Application status for/ })).toHaveValue('Interview');
         expect(screen.getByText(/^Job status: Applied$/)).toBeInTheDocument();
     });
 
@@ -2021,7 +2058,10 @@ describe('Job application viewing flow', () => {
 
             await screen.findByText(/ABC Pte Ltd/i);
             await userEvent.click(screen.getByRole('button', { name: /edit status/i }));
-            await userEvent.selectOptions(await screen.findByRole('listbox'), 'Interview');
+            await userEvent.selectOptions(
+                await screen.findByRole('combobox', { name: /Application status for/ }),
+                'Interview'
+            );
             await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
             await waitFor(() => expect(screen.getByText(/^Job status: Interview$/)).toBeInTheDocument());
@@ -2129,7 +2169,7 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: /edit status/i }));
-        await userEvent.selectOptions(await screen.findByRole('listbox'), 'Offer');
+        await userEvent.selectOptions(await screen.findByRole('combobox', { name: /Application status for/ }), 'Offer');
         await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
         await waitFor(() => expect(screen.queryByText(/ABC Pte Ltd/i)).not.toBeInTheDocument());
@@ -2179,7 +2219,7 @@ describe('Job application viewing flow', () => {
 
         await screen.findByText(/XYZ Pte Ltd/i);
         userEvent.click(screen.getAllByRole('button', { name: /edit status/i })[2]);
-        userEvent.selectOptions(await screen.findByRole('listbox'), 'Offer');
+        userEvent.selectOptions(await screen.findByRole('combobox', { name: /Application status for/ }), 'Offer');
         userEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
         await waitFor(() => {
@@ -2370,6 +2410,7 @@ describe('Job application viewing flow', () => {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ notes: 'Preserve this exact draft' }),
+                keepalive: true,
             })
         );
         expect(notesField).toBeDisabled();

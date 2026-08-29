@@ -7,6 +7,7 @@ import type {
     JobIdParams,
     ListApplicationsQuery,
     ListApplicationsResponse,
+    ListWeeklyApplicationsQuery,
     GetDashboardApplicationSummaryResponse,
     ListWeeklyApplicationsResponse,
     MarkApplicationFollowUpResponse,
@@ -40,6 +41,7 @@ import {
     isValidDate,
     toPositiveInteger,
     toJobStatusQueryValues,
+    toTimeZone,
     toTrimmedString,
 } from '../../http/validation.js';
 import express from 'express';
@@ -170,11 +172,22 @@ router.get(
 router.get(
     '/weekly-counts',
     async (
-        req: Request<Record<string, never>, ListWeeklyApplicationsResponse>,
+        req: Request<
+            Record<string, never>,
+            ListWeeklyApplicationsResponse,
+            Record<string, never>,
+            ListWeeklyApplicationsQuery
+        >,
         res: Response<ListWeeklyApplicationsResponse>
     ): Promise<void> => {
+        const timeZone = toTimeZone(req.query.timeZone);
+        if (timeZone === undefined) {
+            sendError(res, 422, 'Time zone must be a supported IANA time zone.');
+            return;
+        }
+
         try {
-            res.status(200).json(await getApplicationsForLatestEightWeeks(req.user.id));
+            res.status(200).json(await getApplicationsForLatestEightWeeks(req.user.id, timeZone));
         } catch (error: unknown) {
             handleRouteError(res, error, 'Unable to load weekly job application counts.');
         }

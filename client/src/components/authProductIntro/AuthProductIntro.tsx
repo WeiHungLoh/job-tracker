@@ -11,6 +11,7 @@ import DirectionalLink from '../directionalLink/DirectionalLink';
 
 type AuthProductIntroProps = {
     children: ReactNode;
+    isAccountAccessPending?: boolean;
 };
 
 export const AUTH_FOCUSED_MODE_STORAGE_KEY = 'jobTrackerAuthFocusedMode';
@@ -33,7 +34,7 @@ const getInitialFocusedMode = (): boolean => {
     }
 };
 
-const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
+const AuthProductIntro = ({ children, isAccountAccessPending = false }: AuthProductIntroProps) => {
     const location = useLocation();
     const [isFocusedMode, setIsFocusedMode] = useState<boolean>(getInitialFocusedMode);
     const accountTriggerRef = useRef<HTMLButtonElement>(null);
@@ -67,6 +68,10 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
     };
 
     const showProductOverview = useCallback(() => {
+        if (isAccountAccessPending) {
+            return;
+        }
+
         if (focusTimerRef.current !== undefined) {
             window.clearTimeout(focusTimerRef.current);
             focusTimerRef.current = undefined;
@@ -79,7 +84,7 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
         } catch {
             // The product stage still opens when storage is unavailable.
         }
-    }, []);
+    }, [isAccountAccessPending]);
 
     useEffect(
         () => () => {
@@ -198,7 +203,12 @@ const AuthProductIntro = ({ children }: AuthProductIntroProps) => {
                 inert={!isFocusedMode ? true : undefined}
             >
                 <div className={styles.authStage}>
-                    <button type='button' className={styles.restoreOverviewButton} onClick={showProductOverview}>
+                    <button
+                        type='button'
+                        className={styles.restoreOverviewButton}
+                        disabled={isAccountAccessPending}
+                        onClick={showProductOverview}
+                    >
                         <Icon name='arrowBack' />
                         <span>Back to product</span>
                     </button>

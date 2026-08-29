@@ -224,7 +224,7 @@ const offerDecisionData: OfferDecisionWorkspaceData = {
                     bonus: '15% target',
                     annual_leave_days: 21,
                     work_arrangement: 'Hybrid',
-                    decision_deadline: '2026-08-15T10:00:00.000Z',
+                    decision_deadline: '2099-08-15T10:00:00.000Z',
                     pros: 'Strong product ownership',
                     concerns: 'Two office days each week',
                 },

@@ -18,6 +18,10 @@ export type ListApplicationsQuery = {
     jobStatuses?: string | string[];
 };
 
+export type ListWeeklyApplicationsQuery = {
+    timeZone?: string | string[];
+};
+
 export type CreateApplicationRequest = {
     companyName: string;
     jobTitle: string;

@@ -2,10 +2,16 @@ import { getWeeklyInterviewCounts } from '../../pages/dashboard/dashboardSelecto
 import type { WeeklyApplicationCount } from '../../pages/application/models';
 import type { JobInterview } from '../../pages/interview/models';
 
-const weeks: WeeklyApplicationCount[] = Array.from({ length: 8 }, (_, index) => ({
-    start_of_week: new Date(Date.UTC(2026, 4, 18 + index * 7)).toISOString(),
-    applications_count: String(index),
-}));
+const weeks: WeeklyApplicationCount[] = [
+    '2026-05-18',
+    '2026-05-25',
+    '2026-06-01',
+    '2026-06-08',
+    '2026-06-15',
+    '2026-06-22',
+    '2026-06-29',
+    '2026-07-06',
+].map((startOfWeek, index) => ({ start_of_week: startOfWeek, applications_count: String(index) }));
 
 const interview = (interviewId: number, interviewDate: string): JobInterview => ({
     interview_id: interviewId,
@@ -22,10 +28,10 @@ const interview = (interviewId: number, interviewDate: string): JobInterview => 
 describe('dashboard selectors', () => {
     test('aligns interview starts to all eight existing half-open weekly buckets', () => {
         const interviews = [
-            interview(1, '2026-05-18T00:00:00.000Z'),
-            interview(2, '2026-05-24T23:59:59.999Z'),
-            interview(3, '2026-05-25T00:00:00.000Z'),
-            interview(4, '2026-07-06T12:00:00.000Z'),
+            interview(1, '2026-05-18T00:00:00.000'),
+            interview(2, '2026-05-24T23:59:59.999'),
+            interview(3, '2026-05-25T00:00:00.000'),
+            interview(4, '2026-07-06T12:00:00.000'),
         ];
 
         expect(getWeeklyInterviewCounts(interviews, weeks)).toEqual([2, 1, 0, 0, 0, 0, 0, 1]);
@@ -33,12 +39,22 @@ describe('dashboard selectors', () => {
 
     test('ignores interviews outside the supplied range and invalid dates', () => {
         const interviews = [
-            interview(1, '2026-05-17T23:59:59.999Z'),
-            interview(2, '2026-07-13T00:00:00.000Z'),
+            interview(1, '2026-05-17T23:59:59.999'),
+            interview(2, '2026-07-13T00:00:00.000'),
             interview(3, 'not-a-date'),
         ];
 
         expect(getWeeklyInterviewCounts(interviews, weeks)).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+    });
+
+    test('uses calendar week boundaries across a daylight-saving transition', () => {
+        const daylightSavingWeeks: WeeklyApplicationCount[] = [
+            { start_of_week: '2026-03-02', applications_count: '0' },
+            { start_of_week: '2026-03-09', applications_count: '0' },
+        ];
+        const interviews = [interview(1, '2026-03-08T23:59:59.999'), interview(2, '2026-03-09T00:00:00.000')];
+
+        expect(getWeeklyInterviewCounts(interviews, daylightSavingWeeks)).toEqual([1, 1]);
     });
 
     test('does not mutate weekly buckets or interview input', () => {

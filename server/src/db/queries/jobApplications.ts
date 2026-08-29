@@ -153,34 +153,44 @@ export const getDashboardApplicationSummary = async (userId: number): Promise<Da
     };
 };
 
-export const getApplicationsForLatestEightWeeks = async (userId: number): Promise<WeeklyApplicationCount[]> => {
+export const getApplicationsForLatestEightWeeks = async (
+    userId: number,
+    timeZone: string
+): Promise<WeeklyApplicationCount[]> => {
     const result = await pool.query<WeeklyApplicationCount>(
-        `WITH last_8_mondays AS (
+        `WITH bounds AS (
+            SELECT date_trunc('week', CURRENT_TIMESTAMP AT TIME ZONE $2)::date AS current_week_start
+        ),
+        last_8_mondays AS (
             SELECT generate_series(
-                date_trunc('week', CURRENT_DATE) - interval '7 weeks',
-                date_trunc('week', CURRENT_DATE),
+                bounds.current_week_start - interval '7 weeks',
+                bounds.current_week_start,
                 interval '1 week'
             )::date AS start_of_week
+            FROM bounds
         ),
         application_counts AS (
             SELECT
-                DATE_TRUNC('week', application_date)::date AS start_of_week,
+                date_trunc('week', applications.application_date AT TIME ZONE $2)::date AS start_of_week,
                 COUNT(*) AS applications_count
-            FROM job_applications
-            WHERE user_id = $1
-                AND is_archived = false
-                AND application_date >= date_trunc('week', CURRENT_DATE) - interval '7 weeks'
-                AND application_date < date_trunc('week', CURRENT_DATE) + interval '1 week'
+            FROM job_applications AS applications
+            CROSS JOIN bounds
+            WHERE applications.user_id = $1
+                AND applications.is_archived = false
+                AND applications.application_date >=
+                    (bounds.current_week_start - interval '7 weeks') AT TIME ZONE $2
+                AND applications.application_date <
+                    (bounds.current_week_start + interval '1 week') AT TIME ZONE $2
             GROUP BY start_of_week
         )
         SELECT
-            weeks.start_of_week,
+            TO_CHAR(weeks.start_of_week, 'YYYY-MM-DD') AS start_of_week,
             COALESCE(counts.applications_count, 0) AS applications_count
         FROM last_8_mondays AS weeks
         LEFT JOIN application_counts AS counts
             ON weeks.start_of_week = counts.start_of_week
         ORDER BY weeks.start_of_week ASC`,
-        [userId]
+        [userId, timeZone]
     );
     return result.rows;
 };

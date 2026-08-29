@@ -180,4 +180,31 @@ describe('useAutosaveNotes', () => {
         expect(saveNotes).toHaveBeenCalledWith(1, 'Save on navigation');
         expect(vi.getTimerCount()).toBe(0);
     });
+
+    test('flushes a pending draft when the page is hidden', async () => {
+        const saveNotes = vi.fn().mockResolvedValue(undefined);
+        const { result } = renderHook(() => useAutosaveNotes({ saveNotes }));
+
+        act(() => result.current.editNotes(1, 'Save before leaving'));
+        await act(async () => window.dispatchEvent(new Event('pagehide')));
+
+        expect(saveNotes).toHaveBeenCalledOnce();
+        expect(saveNotes).toHaveBeenCalledWith(1, 'Save before leaving');
+        await act(async () => vi.advanceTimersByTimeAsync(1_000));
+        expect(saveNotes).toHaveBeenCalledOnce();
+    });
+
+    test('does not report a failed unmount flush after the page is gone', async () => {
+        const save = createDeferredPromise();
+        const saveNotes = vi.fn().mockReturnValue(save.promise);
+        const onSaveError = vi.fn();
+        const { result, unmount } = renderHook(() => useAutosaveNotes({ onSaveError, saveNotes }));
+
+        act(() => result.current.editNotes(1, 'Save on unmount'));
+        unmount();
+        await act(async () => save.reject(new Error('Page already left')));
+
+        expect(saveNotes).toHaveBeenCalledWith(1, 'Save on unmount');
+        expect(onSaveError).not.toHaveBeenCalled();
+    });
 });

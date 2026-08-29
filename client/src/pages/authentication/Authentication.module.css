@@ -122,9 +122,14 @@
     text-decoration: none;
 }
 
-.authLink:hover {
+.authLink:hover:not([aria-disabled='true']) {
     color: var(--colorAuthLinkHover);
     text-decoration: underline;
+}
+
+.authLink[aria-disabled='true'] {
+    cursor: default;
+    opacity: 0.58;
 }
 
 @media (prefers-reduced-motion: reduce) {

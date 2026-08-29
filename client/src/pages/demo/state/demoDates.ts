@@ -20,6 +20,11 @@ export const weeksAgo = (now: Date, weeks: number, hour = 12): Date => daysAgo(n
 
 export const toDateString = (date: Date): string => date.toISOString();
 
+const padCalendarDatePart = (value: number): string => String(value).padStart(2, '0');
+
+export const toLocalDateString = (date: Date): string =>
+    `${date.getFullYear()}-${padCalendarDatePart(date.getMonth() + 1)}-${padCalendarDatePart(date.getDate())}`;
+
 export const startOfLocalWeek = (date: Date): Date => {
     const start = setLocalTime(date, 0);
     const day = start.getDay();

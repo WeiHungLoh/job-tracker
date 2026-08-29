@@ -10,6 +10,7 @@ import { routes } from '../../../../routes';
 import styles from '../../InterviewListPage.module.css';
 import { useConfirm } from 'material-ui-confirm';
 import { useJobTrackerAPI } from '../../../../api/useJobTrackerAPI';
+import { isAbortError } from '../../../../api/api';
 import { useToast } from '../../../../components/toast/ToastProvider';
 import { useUserPreferences } from '../../../../components/userPreferences/UserPreferencesProvider';
 import { getErrorToastMessage } from '../../../../helper/getErrorToastMessage';
@@ -119,12 +120,14 @@ const ViewArchivedInterview = () => {
 
     useEffect(() => {
         let isActive = true;
+        const controller = new AbortController();
 
         const fetchInterviews = async () => {
             try {
-                const fetchedInterviews = await api.archivedInterview.listInterviews({
-                    timeFilters: selectedTimeFilters,
-                });
+                const fetchedInterviews = await api.archivedInterview.listInterviews(
+                    { timeFilters: selectedTimeFilters },
+                    { signal: controller.signal }
+                );
                 if (isActive) {
                     setArchivedInterviews(
                         filterAndSortInterviews(
@@ -135,7 +138,11 @@ const ViewArchivedInterview = () => {
                     );
                 }
             } catch (error) {
-                showErrorToast(getErrorToastMessage(error, 'Unable to load archived interviews. Please try again.'));
+                if (isActive && !isAbortError(error)) {
+                    showErrorToast(
+                        getErrorToastMessage(error, 'Unable to load archived interviews. Please try again.')
+                    );
+                }
             } finally {
                 if (isActive) {
                     setIsLoading(false);
@@ -146,6 +153,7 @@ const ViewArchivedInterview = () => {
         void fetchInterviews();
         return () => {
             isActive = false;
+            controller.abort();
         };
     }, []);
 

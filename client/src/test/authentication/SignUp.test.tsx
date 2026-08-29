@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AUTH_FOCUSED_MODE_STORAGE_KEY } from '../../components/authProductIntro/AuthProductIntro';
 import SignUp from '../../pages/authentication/signUp/SignUp';
@@ -78,7 +78,20 @@ describe('User sign up flow', () => {
             expect(screen.getByText('Sign up successful — redirecting you to sign-in page')).toBeInTheDocument()
         );
 
-        const redirectTimerIndex = setTimeoutSpy.mock.calls.findIndex(([, delay]) => delay === 1500);
+        expect(screen.getByLabelText(/email/i)).toBeDisabled();
+        expect(screen.getByLabelText(/^password$/i)).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Show password' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Sign up' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Back to product' })).toBeDisabled();
+        const signInLink = screen.getByRole('link', { name: 'Already have an account? Sign in' });
+        expect(signInLink).toHaveAttribute('aria-disabled', 'true');
+        expect(signInLink).toHaveAttribute('tabindex', '-1');
+        expect(fireEvent.click(signInLink)).toBe(false);
+
+        const redirectTimerIndex = setTimeoutSpy.mock.calls.reduce(
+            (latestIndex, [, delay], index) => (delay === 1500 ? index : latestIndex),
+            -1
+        );
         const redirectTimer = setTimeoutSpy.mock.calls[redirectTimerIndex];
         expect(redirectTimer).toBeDefined();
 
@@ -96,7 +109,44 @@ describe('User sign up flow', () => {
         setTimeoutSpy.mockRestore();
     });
 
-    test('keeps the submit label in place while sign up is pending', async () => {
+    test('clears the delayed sign-in redirect when the page unmounts', async () => {
+        const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+        const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+        mockUnauthenticatedSession({
+            ok: true,
+            status: 201,
+            headers: new Headers({ 'content-type': 'text/plain' }),
+            text: async () => 'User successfully registered',
+        });
+
+        const { unmount } = render(
+            <MemoryRouter initialEntries={['/sign-up']}>
+                <SignUp />
+            </MemoryRouter>
+        );
+
+        await openSignUpPanel();
+        await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
+        await userEvent.type(screen.getByLabelText(/^password$/i), VALID_PASSWORD);
+        await userEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+        await screen.findByText('Sign up successful — redirecting you to sign-in page');
+
+        const redirectTimerIndex = setTimeoutSpy.mock.calls.reduce(
+            (latestIndex, [, delay], index) => (delay === 1500 ? index : latestIndex),
+            -1
+        );
+        const redirectTimerId = setTimeoutSpy.mock.results[redirectTimerIndex]?.value;
+        expect(redirectTimerId).toBeDefined();
+
+        unmount();
+
+        expect(clearTimeoutSpy).toHaveBeenCalledWith(redirectTimerId);
+        expect(mockNavigate).not.toHaveBeenCalledWith('/');
+        setTimeoutSpy.mockRestore();
+        clearTimeoutSpy.mockRestore();
+    });
+
+    test('locks account access while sign up is pending', async () => {
         let resolveSignUp: ((value: Response) => void) | undefined;
 
         globalThis.fetch.mockImplementation(async (url: string) => {
@@ -123,6 +173,11 @@ describe('User sign up flow', () => {
         const submitButton = await screen.findByRole('button', { name: 'Sign up' });
         expect(submitButton).toBeDisabled();
         expect(submitButton).toHaveAttribute('aria-busy', 'true');
+
+        const backToProductButton = screen.getByRole('button', { name: 'Back to product' });
+        expect(backToProductButton).toBeDisabled();
+        await userEvent.click(backToProductButton);
+        expect(screen.getByRole('region', { name: 'Account access' })).not.toHaveAttribute('inert');
 
         resolveSignUp?.(
             new Response('User successfully registered', {

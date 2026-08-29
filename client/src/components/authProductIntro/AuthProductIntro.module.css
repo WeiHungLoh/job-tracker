@@ -75,9 +75,14 @@
 }
 
 .accountTrigger:hover,
-.restoreOverviewButton:hover {
+.restoreOverviewButton:hover:not(:disabled) {
     border-color: var(--colorPrimary);
     color: var(--colorPrimary);
+}
+
+.restoreOverviewButton:disabled {
+    cursor: default;
+    opacity: 0.58;
 }
 
 .accountTrigger:focus-visible,

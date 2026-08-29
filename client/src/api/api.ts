@@ -15,7 +15,11 @@ type RequestDetails = {
     url: string;
 };
 
-export type AuthenticatedRequestOptions = {
+export type RequestOptions = {
+    signal?: AbortSignal;
+};
+
+export type AuthenticatedRequestOptions = RequestOptions & {
     onUnauthenticated?: () => void;
 };
 
@@ -33,7 +37,7 @@ const appendQueryValue = (query: URLSearchParams, field: string, value: unknown)
     value.forEach((item) => query.append(field, String(item)));
 };
 
-const buildRequest = (request: APIRequest, config: EndpointConfigEntry): RequestDetails => {
+const buildRequest = (request: APIRequest, config: EndpointConfigEntry, options: RequestOptions): RequestDetails => {
     let url = `${apiUrl.replace(/\/$/, '')}/${config.url.replace(/^\//, '')}`;
     const body: Record<string, unknown> = {};
     const query = new URLSearchParams();
@@ -60,6 +64,12 @@ const buildRequest = (request: APIRequest, config: EndpointConfigEntry): Request
     }
 
     const init: RequestInit = { method: config.verb };
+    if (config.keepalive) {
+        init.keepalive = true;
+    }
+    if (options.signal) {
+        init.signal = options.signal;
+    }
     if (formData) {
         init.body = formData;
     } else if (Object.keys(body).length > 0) {
@@ -112,6 +122,9 @@ const fetchResponse = async (url: string, init: RequestInit): Promise<Response> 
     try {
         return await fetch(url, init);
     } catch (error) {
+        if (isAbortError(error)) {
+            throw error;
+        }
         if (error instanceof TypeError) {
             throw new RetryableNetworkError(error);
         }
@@ -156,18 +169,45 @@ const isRetryableRequestError = (error: unknown): boolean => {
     return error instanceof RetryableNetworkError || error instanceof RetryableJobTrackerAPIError;
 };
 
-const wait = (delay: number): Promise<void> => {
-    return new Promise((resolve) => setTimeout(resolve, delay));
+export const isAbortError = (error: unknown): boolean => error instanceof Error && error.name === 'AbortError';
+
+const createAbortError = (): DOMException => new DOMException('The request was aborted.', 'AbortError');
+
+const throwIfAborted = (signal?: AbortSignal): void => {
+    if (signal?.aborted) {
+        throw createAbortError();
+    }
+};
+
+const wait = (delay: number, signal?: AbortSignal): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        if (signal?.aborted) {
+            reject(createAbortError());
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            signal?.removeEventListener('abort', handleAbort);
+            resolve();
+        }, delay);
+        const handleAbort = () => {
+            clearTimeout(timeout);
+            reject(createAbortError());
+        };
+        signal?.addEventListener('abort', handleAbort, { once: true });
+    });
 };
 
 export const makeJobTrackerAPIRequest = async <TRequest extends APIRequest, TResponse>(
     request: TRequest,
-    config: EndpointConfigEntry
+    config: EndpointConfigEntry,
+    options: RequestOptions = {}
 ): Promise<TResponse> => {
-    const requestDetails = buildRequest(request, config);
+    const requestDetails = buildRequest(request, config, options);
     let retriesRemaining = config.retry ? MAX_RETRIES : 0;
 
     while (true) {
+        throwIfAborted(options.signal);
         try {
             return await sendRequest<TResponse>(requestDetails);
         } catch (error) {
@@ -176,7 +216,7 @@ export const makeJobTrackerAPIRequest = async <TRequest extends APIRequest, TRes
             }
 
             retriesRemaining -= 1;
-            await wait(RETRY_DELAY_MS);
+            await wait(RETRY_DELAY_MS, options.signal);
         }
     }
 };
@@ -215,7 +255,7 @@ export const makeAuthenticatedJobTrackerAPIRequest = async <TRequest extends API
     options: AuthenticatedRequestOptions = {}
 ): Promise<TResponse> => {
     try {
-        return await makeJobTrackerAPIRequest<TRequest, TResponse>(request, config);
+        return await makeJobTrackerAPIRequest<TRequest, TResponse>(request, config, { signal: options.signal });
     } catch (error) {
         if (!isUnauthorizedError(error)) {
             throw error;
@@ -232,7 +272,7 @@ export const makeAuthenticatedJobTrackerAPIRequest = async <TRequest extends API
     }
 
     try {
-        return await makeJobTrackerAPIRequest<TRequest, TResponse>(request, config);
+        return await makeJobTrackerAPIRequest<TRequest, TResponse>(request, config, { signal: options.signal });
     } catch (error) {
         if (isUnauthorizedError(error)) {
             (options.onUnauthenticated ?? redirectToSignIn)();

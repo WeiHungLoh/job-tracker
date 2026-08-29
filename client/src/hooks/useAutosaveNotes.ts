@@ -132,7 +132,9 @@ const useAutosaveNotes = ({ onSaveError, saveNotes }: UseAutosaveNotesOptions) =
                     if (entriesRef.current[jobId] === entry && entry.draftRevision === revisionToSave) {
                         clearSavedStatusTimer(entry);
                         setNoteSaveStatus(jobId, entry, 'error');
-                        onSaveErrorRef.current?.(jobId, error);
+                        if (isMounted.current) {
+                            onSaveErrorRef.current?.(jobId, error);
+                        }
                     }
                 }
             }
@@ -285,8 +287,13 @@ const useAutosaveNotes = ({ onSaveError, saveNotes }: UseAutosaveNotesOptions) =
 
     useEffect(() => {
         isMounted.current = true;
+        const handlePageHide = () => {
+            void flushAllNotes();
+        };
+        window.addEventListener('pagehide', handlePageHide);
 
         return () => {
+            window.removeEventListener('pagehide', handlePageHide);
             isMounted.current = false;
             void flushAllNotes();
             Object.values(entriesRef.current).forEach(clearSavedStatusTimer);

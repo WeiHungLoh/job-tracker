@@ -24,6 +24,7 @@ import styles from './ViewApplication.module.css';
 import ToggleButton from '../../../../components/toggleButton/ToggleButton';
 import { useConfirm } from 'material-ui-confirm';
 import { useJobTrackerAPI } from '../../../../api/useJobTrackerAPI';
+import { isAbortError } from '../../../../api/api';
 import { useToast } from '../../../../components/toast/ToastProvider';
 import { useUserPreferences } from '../../../../components/userPreferences/UserPreferencesProvider';
 import { getErrorToastMessage } from '../../../../helper/getErrorToastMessage';
@@ -269,6 +270,7 @@ const ViewApplication = () => {
 
     useEffect(() => {
         let isActive = true;
+        const controller = new AbortController();
 
         const fetchData = async () => {
             const navigationJobStatus = navigationJobStatusRef.current;
@@ -287,14 +289,22 @@ const ViewApplication = () => {
                 const preferenceUpdate =
                     Object.keys(preferenceUpdates).length > 0
                         ? updatePreferences(preferenceUpdates).catch((error: unknown) => {
-                              showErrorToast(
-                                  getErrorToastMessage(error, 'Unable to filter job applications. Please try again.')
-                              );
+                              if (isActive) {
+                                  showErrorToast(
+                                      getErrorToastMessage(
+                                          error,
+                                          'Unable to filter job applications. Please try again.'
+                                      )
+                                  );
+                              }
                           })
                         : Promise.resolve();
                 const [jobApplications, jobInterviews] = await Promise.all([
-                    api.application.listApplications({ jobStatuses: initialJobStatuses }),
-                    api.interview.listInterviews({}),
+                    api.application.listApplications(
+                        { jobStatuses: initialJobStatuses },
+                        { signal: controller.signal }
+                    ),
+                    api.interview.listInterviews({}, { signal: controller.signal }),
                     preferenceUpdate,
                 ]);
 
@@ -303,9 +313,13 @@ const ViewApplication = () => {
                     setInterviews(Array.isArray(jobInterviews) ? jobInterviews : []);
                 }
             } catch (error) {
-                showErrorToast(getErrorToastMessage(error, 'Unable to load job application data. Please try again.'));
+                if (isActive && !isAbortError(error)) {
+                    showErrorToast(
+                        getErrorToastMessage(error, 'Unable to load job application data. Please try again.')
+                    );
+                }
             } finally {
-                if (navigationJobStatusRef.current && !navigationApplicationIdRef.current) {
+                if (isActive && navigationJobStatusRef.current && !navigationApplicationIdRef.current) {
                     navigationJobStatusRef.current = null;
                     navigate(location.pathname, { replace: true, state: null });
                 }
@@ -318,6 +332,7 @@ const ViewApplication = () => {
         void fetchData();
         return () => {
             isActive = false;
+            controller.abort();
         };
     }, []);
 

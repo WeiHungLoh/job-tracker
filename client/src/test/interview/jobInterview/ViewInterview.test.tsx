@@ -101,6 +101,34 @@ describe('Job interview viewer flow', () => {
         });
     });
 
+    test('aborts its initial interview request when unmounted', async () => {
+        const pendingResponse = new Promise<never>(() => undefined);
+        fetch.mockImplementation(async (url: string) => {
+            if (url.includes('/job-interviews?')) {
+                return pendingResponse;
+            }
+            return response([]);
+        });
+
+        const { unmount } = render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>
+        );
+
+        await waitFor(() =>
+            expect(fetch.mock.calls.some(([url]) => String(url).includes('/job-interviews?'))).toBe(true)
+        );
+        const requestInit = fetch.mock.calls.find(([url]) => String(url).includes('/job-interviews?'))?.[1] as
+            | RequestInit
+            | undefined;
+
+        unmount();
+
+        expect(requestInit?.signal).toBeInstanceOf(AbortSignal);
+        expect(requestInit?.signal?.aborted).toBe(true);
+    });
+
     test('displays job interview details and action buttons', async () => {
         render(
             <MemoryRouter>
@@ -511,7 +539,7 @@ describe('Job interview viewer flow', () => {
                 `${
                     import.meta.env.VITE_API_URL
                 }/job-interviews?timeFilters=Upcoming+Interviews&timeFilters=Past+Interviews`,
-                { method: 'GET' }
+                { method: 'GET', signal: expect.any(AbortSignal) }
             )
         );
         expect(screen.getAllByRole('status', { name: 'Loading results' })).toHaveLength(2);
@@ -842,7 +870,7 @@ describe('Job interview viewer flow', () => {
         expect(await screen.findByRole('article', { name: 'Server Filtered Company interview' })).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(
             `${import.meta.env.VITE_API_URL}/job-interviews?timeFilters=Past+Interviews`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
     });
 

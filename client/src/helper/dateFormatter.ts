@@ -5,6 +5,7 @@ export const MIN_DATETIME_LOCAL = '0001-01-01T00:00';
 export const MAX_DATETIME_LOCAL = '9999-12-31T23:59';
 
 const DATETIME_LOCAL_PATTERN = /^(\d{4,})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/;
+const CALENDAR_DATE_PATTERN = /^(\d{4,})-(\d{2})-(\d{2})(?:$|T)/;
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as const;
 const MAX_DATE_YEAR = 9999;
 
@@ -24,6 +25,26 @@ export const parseDatetimeLocal = (value: string): Date => {
     const date = new Date(0);
     date.setFullYear(Number(year), Number(month) - 1, Number(day));
     date.setHours(Number(hour), Number(minute), 0, 0);
+    return date;
+};
+
+export const parseCalendarDate = (value: string): Date => {
+    const match = CALENDAR_DATE_PATTERN.exec(value);
+    if (!match) {
+        return new Date(Number.NaN);
+    }
+
+    const [, yearValue, monthValue, dayValue] = match;
+    const year = Number(yearValue);
+    const month = Number(monthValue);
+    const day = Number(dayValue);
+    if (!isValidCalendarDate(year, month, day)) {
+        return new Date(Number.NaN);
+    }
+
+    const date = new Date(0);
+    date.setFullYear(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
     return date;
 };
 
@@ -112,7 +133,7 @@ export const isInvalidDatetimeLocalInput = (value: string, validity?: ValiditySt
     );
 };
 
-const formatDate = (dueDate: string) => {
+const formatDate = (dueDate: string | Date) => {
     const date = new Date(dueDate);
 
     const formattedDate = date.toLocaleString('en-GB', {

@@ -38,6 +38,7 @@ const ISO_DATE_PATTERN =
     /^(\d{4,})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/;
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] as const;
 const MAX_DATE_YEAR = 9999;
+const MAX_TIME_ZONE_LENGTH = 100;
 
 const isLeapYear = (year: number): boolean => year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 
@@ -97,6 +98,20 @@ export const toTrimmedString = (value: unknown, maxLength: number, allowEmpty = 
     }
 
     return trimmedValue;
+};
+
+export const toTimeZone = (value: unknown): string | undefined => {
+    const timeZone = toTrimmedString(value, MAX_TIME_ZONE_LENGTH);
+    if (!timeZone) {
+        return undefined;
+    }
+
+    try {
+        new Intl.DateTimeFormat('en-US', { timeZone }).format();
+        return timeZone;
+    } catch {
+        return undefined;
+    }
 };
 
 export const toPositiveInteger = (value: unknown): number | undefined => {

@@ -151,6 +151,34 @@ describe('Archived job application viewing flow', () => {
         });
     });
 
+    test('aborts its initial archived-application request when unmounted', async () => {
+        const pendingResponse = new Promise<never>(() => undefined);
+        fetch.mockImplementation(async (url: string) => {
+            if (url.includes('/archived-job-applications?')) {
+                return pendingResponse;
+            }
+            return response([]);
+        });
+
+        const { unmount } = render(
+            <MemoryRouter>
+                <ViewArchivedApplication />
+            </MemoryRouter>
+        );
+
+        await waitFor(() =>
+            expect(fetch.mock.calls.some(([url]) => String(url).includes('/archived-job-applications?'))).toBe(true)
+        );
+        const requestInit = fetch.mock.calls.find(([url]) =>
+            String(url).includes('/archived-job-applications?')
+        )?.[1] as RequestInit | undefined;
+
+        unmount();
+
+        expect(requestInit?.signal).toBeInstanceOf(AbortSignal);
+        expect(requestInit?.signal?.aborted).toBe(true);
+    });
+
     test('preserves Board mode and filters while revealing a corresponding archived application', async () => {
         const initialPreferences = {
             ...mockPreferences,
@@ -228,6 +256,7 @@ describe('Archived job application viewing flow', () => {
             }/archived-job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
             {
                 method: 'GET',
+                signal: expect.any(AbortSignal),
             }
         );
     });

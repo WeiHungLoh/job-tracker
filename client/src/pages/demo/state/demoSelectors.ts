@@ -7,7 +7,7 @@ import type {
 import { JOB_STATUSES } from '../../application/models';
 import { sortApplications } from '../../application/applicationSorting';
 import type { DemoState } from '../models';
-import { startOfLocalWeek, toDateString } from './demoDates';
+import { startOfLocalWeek, toLocalDateString } from './demoDates';
 import { getInterviewTiming } from '../../../helper/interviewTiming';
 import type { OfferDecisionApplication, OfferDecisionWorkspaceData } from '../../offerDecision/models';
 
@@ -142,7 +142,7 @@ export const selectWeeklyApplications = (state: DemoState, now = new Date()): We
         }).length;
 
         return {
-            start_of_week: toDateString(weekStart),
+            start_of_week: toLocalDateString(weekStart),
             applications_count: String(count),
         };
     });

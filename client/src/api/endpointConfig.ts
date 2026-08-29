@@ -13,7 +13,12 @@ export const endpointConfig = {
             fieldMap: { jobStatuses: 'query' },
             retry: true,
         },
-        listWeeklyApplications: { url: '/job-applications/weekly-counts', verb: 'GET', retry: true },
+        listWeeklyApplications: {
+            url: '/job-applications/weekly-counts',
+            verb: 'GET',
+            fieldMap: { timeZone: 'query' },
+            retry: true,
+        },
         getDashboardApplicationSummary: { url: '/job-applications/status-counts', verb: 'GET', retry: true },
         getSummary: { url: '/job-applications/summary', verb: 'GET', retry: true },
         getRelationSummary: {
@@ -33,6 +38,7 @@ export const endpointConfig = {
             url: '/job-applications/:jobId/notes',
             verb: 'PATCH',
             fieldMap: { jobId: 'path' },
+            keepalive: true,
             retry: true,
         },
         updateStatus: {
@@ -78,6 +84,7 @@ export const endpointConfig = {
             url: '/job-interviews/:interviewId/notes',
             verb: 'PATCH',
             fieldMap: { interviewId: 'path' },
+            keepalive: true,
             retry: true,
         },
         updatePin: {

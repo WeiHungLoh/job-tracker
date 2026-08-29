@@ -885,7 +885,7 @@ describe('OfferDecisionWorkspace', () => {
         ).toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
-            target: { value: '2026-08-20T10:00' },
+            target: { value: '2099-08-20T10:00' },
         });
         fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Beta Labs' }));
@@ -904,7 +904,7 @@ describe('OfferDecisionWorkspace', () => {
                 bonus: '',
                 annual_leave_days: null,
                 work_arrangement: '',
-                decision_deadline: parseDatetimeLocal('2026-08-20T10:00').toISOString(),
+                decision_deadline: parseDatetimeLocal('2099-08-20T10:00').toISOString(),
                 pros: '',
                 concerns: '',
             },
@@ -930,7 +930,7 @@ describe('OfferDecisionWorkspace', () => {
         HTMLElement.prototype.scrollIntoView = scrollIntoView;
         fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
         fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
-            target: { value: '2026-08-20T10:00' },
+            target: { value: '2099-08-20T10:00' },
         });
         fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
 
@@ -954,7 +954,7 @@ describe('OfferDecisionWorkspace', () => {
         HTMLElement.prototype.scrollIntoView = scrollIntoView;
         fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
         fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
-            target: { value: '2026-08-20T10:00' },
+            target: { value: '2099-08-20T10:00' },
         });
         fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
 
@@ -985,7 +985,7 @@ describe('OfferDecisionWorkspace', () => {
         ]);
 
         fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
-            target: { value: '2026-08-20T10:00' },
+            target: { value: '2099-08-20T10:00' },
         });
         fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
         const saveButton = screen.getByRole('button', { name: 'Save evaluation for Beta Labs' });
@@ -2511,7 +2511,7 @@ describe('OfferDecisionWorkspace', () => {
 
             fireEvent.click(screen.getByRole('button', { name: 'Add evaluation for Beta Labs' }));
             fireEvent.change(screen.getByLabelText('Beta Labs decision deadline'), {
-                target: { value: '2026-08-20T10:00' },
+                target: { value: '2099-08-20T10:00' },
             });
             fireEvent.change(screen.getByLabelText('Beta Labs monthly base salary'), { target: { value: '9000' } });
             fireEvent.click(screen.getByRole('button', { name: 'Save evaluation for Beta Labs' }));

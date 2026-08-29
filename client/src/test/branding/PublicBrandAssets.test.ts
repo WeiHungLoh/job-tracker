@@ -44,7 +44,7 @@ describe('public Job Tracker brand assets', () => {
         expect(browserIcon?.getAttribute('href')).toBe('/favicon.svg');
         expect(existsSync(resolve(clientRoot, 'public/favicon.svg'))).toBe(true);
 
-        expect(touchIcon?.sizes.value).toBe('180x180');
+        expect(touchIcon?.getAttribute('sizes')).toBe('180x180');
         expect(touchIcon?.getAttribute('href')).toBe('/apple-touch-icon.png');
         expect(getPngDimensions('/apple-touch-icon.png')).toEqual({ width: 180, height: 180 });
     });

@@ -60,6 +60,7 @@ const Dashboard = () => {
     const [weeklyApplications, setWeeklyApplications] = useState<DatasetState<WeeklyApplicationCount[]>>(() =>
         createDatasetState(true)
     );
+    const timeZoneRef = useRef(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
     const mountedRef = useRef(true);
     const statusPendingRef = useRef(false);
     const applicationsPendingRef = useRef(false);
@@ -254,7 +255,7 @@ const Dashboard = () => {
         weeklyApplicationsPendingRef.current = true;
         setWeeklyApplications((current) => ({ ...current, error: false, isLoading: true }));
         try {
-            const data = await api.application.listWeeklyApplications();
+            const data = await api.application.listWeeklyApplications({ timeZone: timeZoneRef.current });
             if (mountedRef.current) setWeeklyApplications({ data, error: false, isLoading: false });
         } catch (error) {
             if (mountedRef.current) setWeeklyApplications((current) => ({ ...current, error: true, isLoading: false }));

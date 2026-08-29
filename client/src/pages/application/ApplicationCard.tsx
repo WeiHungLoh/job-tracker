@@ -68,8 +68,8 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                         <ApplicationStatusBadge jobStatus={application.job_status} showLabel />
                         {variant === 'job' && props.isEditingStatus && (
                             <select
+                                aria-label={`Application status for ${application.job_title} at ${application.company_name}`}
                                 disabled={props.isUpdatingStatus}
-                                role='listbox'
                                 value={props.editedJobStatus}
                                 onChange={(event) => props.onJobStatusChange(event.target.value as JobStatus)}
                             >

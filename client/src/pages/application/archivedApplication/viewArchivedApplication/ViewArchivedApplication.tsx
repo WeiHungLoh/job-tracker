@@ -21,6 +21,7 @@ import ToggleButton from '../../../../components/toggleButton/ToggleButton';
 import styles from './ViewArchivedApplication.module.css';
 import { useConfirm } from 'material-ui-confirm';
 import { useJobTrackerAPI } from '../../../../api/useJobTrackerAPI';
+import { isAbortError } from '../../../../api/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '../../../../components/toast/ToastProvider';
 import { useUserPreferences } from '../../../../components/userPreferences/UserPreferencesProvider';
@@ -195,6 +196,7 @@ const ViewArchivedApplication = () => {
 
     useEffect(() => {
         let isActive = true;
+        const controller = new AbortController();
 
         const fetchApplications = async () => {
             const navigationJobStatus = navigationJobStatusRef.current;
@@ -213,25 +215,32 @@ const ViewArchivedApplication = () => {
                 const preferenceUpdate =
                     Object.keys(preferenceUpdates).length > 0
                         ? updatePreferences(preferenceUpdates).catch((error: unknown) => {
-                              showErrorToast(
-                                  getErrorToastMessage(
-                                      error,
-                                      'Unable to filter archived job applications. Please try again.'
-                                  )
-                              );
+                              if (isActive) {
+                                  showErrorToast(
+                                      getErrorToastMessage(
+                                          error,
+                                          'Unable to filter archived job applications. Please try again.'
+                                      )
+                                  );
+                              }
                           })
                         : Promise.resolve();
                 const [fetchedApplications] = await Promise.all([
-                    api.archivedApplication.listApplications({ jobStatuses: initialJobStatuses }),
+                    api.archivedApplication.listApplications(
+                        { jobStatuses: initialJobStatuses },
+                        { signal: controller.signal }
+                    ),
                     preferenceUpdate,
                 ]);
                 if (isActive) {
                     setArchivedApplications(Array.isArray(fetchedApplications) ? fetchedApplications : []);
                 }
             } catch (error) {
-                showErrorToast(
-                    getErrorToastMessage(error, 'Unable to load archived job applications. Please try again.')
-                );
+                if (isActive && !isAbortError(error)) {
+                    showErrorToast(
+                        getErrorToastMessage(error, 'Unable to load archived job applications. Please try again.')
+                    );
+                }
             } finally {
                 if (isActive) {
                     setIsLoading(false);
@@ -242,6 +251,7 @@ const ViewArchivedApplication = () => {
         void fetchApplications();
         return () => {
             isActive = false;
+            controller.abort();
         };
     }, []);
 

@@ -2,6 +2,7 @@ import type { JobStatusCount, WeeklyApplicationCount } from '../application/mode
 import type { JobInterview } from '../interview/models';
 import { getUpcomingInterviews as getUpcomingInterviewsByTiming } from '../../helper/interviewTiming';
 import type { StatusCountMap } from './dashboardTypes';
+import { parseCalendarDate } from '../../helper/dateFormatter';
 
 export const getStatusCountMap = (statusCounts: JobStatusCount[]): StatusCountMap => {
     const countByStatus: StatusCountMap = {};
@@ -22,13 +23,11 @@ export const getUpcomingInterviews = (interviews: JobInterview[], now = new Date
     return getUpcomingInterviewsByTiming(interviews, now);
 };
 
-const WEEK_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
-
 export const getWeeklyInterviewCounts = (
     interviews: readonly JobInterview[],
     weeks: readonly WeeklyApplicationCount[]
 ): number[] => {
-    const weekStarts = weeks.map((week) => Date.parse(week.start_of_week));
+    const weekStarts = weeks.map((week) => parseCalendarDate(week.start_of_week));
     const counts = weeks.map(() => 0);
 
     interviews.forEach((interview) => {
@@ -37,12 +36,15 @@ export const getWeeklyInterviewCounts = (
             return;
         }
 
-        const weekIndex = weekStarts.findIndex(
-            (weekStart) =>
-                Number.isFinite(weekStart) &&
-                interviewStart >= weekStart &&
-                interviewStart < weekStart + WEEK_DURATION_MS
-        );
+        const weekIndex = weekStarts.findIndex((weekStart) => {
+            if (Number.isNaN(weekStart.getTime())) {
+                return false;
+            }
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+            return interviewStart >= weekStart.getTime() && interviewStart < weekEnd.getTime();
+        });
         if (weekIndex >= 0) {
             counts[weekIndex] += 1;
         }

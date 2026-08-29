@@ -215,7 +215,7 @@ export type DashboardApplicationSummary = {
 };
 
 export type WeeklyApplicationCount = {
-    start_of_week: Date;
+    start_of_week: string;
     applications_count: string;
 };
 

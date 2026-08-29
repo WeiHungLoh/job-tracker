@@ -9,7 +9,7 @@ import {
     Tooltip,
 } from 'chart.js';
 import { useMemo, useState } from 'react';
-import formatDate from '../../../../helper/dateFormatter';
+import formatDate, { parseCalendarDate } from '../../../../helper/dateFormatter';
 import { Line } from 'react-chartjs-2';
 import DashboardCard from '../../shared/dashboardCard/DashboardCard';
 import LoadingSpinner from '../../../../components/loadingSpinner/LoadingSpinner';
@@ -46,7 +46,9 @@ const ApplicationsLineChart = ({
 
     const weeks = useMemo(() => {
         return [...weeklyApplications].sort(
-            (firstWeek, secondWeek) => Date.parse(firstWeek.start_of_week) - Date.parse(secondWeek.start_of_week)
+            (firstWeek, secondWeek) =>
+                parseCalendarDate(firstWeek.start_of_week).getTime() -
+                parseCalendarDate(secondWeek.start_of_week).getTime()
         );
     }, [weeklyApplications]);
 
@@ -84,7 +86,7 @@ const ApplicationsLineChart = ({
 
     const data = useMemo(() => {
         return {
-            labels: weeks.map((week) => formatDate(week.start_of_week).formattedDay),
+            labels: weeks.map((week) => formatDate(parseCalendarDate(week.start_of_week)).formattedDay),
             datasets: [
                 {
                     label: 'Applications',
