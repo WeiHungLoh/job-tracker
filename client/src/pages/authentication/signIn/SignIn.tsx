@@ -54,7 +54,7 @@ const SignIn = () => {
     };
 
     return (
-        <AuthLayout>
+        <AuthLayout isAccountAccessPending={isPending}>
             <div className={styles.card}>
                 <BrandMark className={styles.logoIcon} size='lg' />
                 <h2 className={styles.title}>Sign in to Job Tracker</h2>
@@ -66,6 +66,7 @@ const SignIn = () => {
                             id='email'
                             type='email'
                             autoComplete='email'
+                            disabled={isPending}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -79,6 +80,7 @@ const SignIn = () => {
                             id='password'
                             type={visible ? 'text' : 'password'}
                             autoComplete='current-password'
+                            disabled={isPending}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -88,6 +90,7 @@ const SignIn = () => {
                             variant='icon'
                             className={styles.toggleVisibility}
                             aria-label={visible ? 'Hide password' : 'Show password'}
+                            disabled={isPending}
                             onClick={() => setVisibility((isVisible) => !isVisible)}
                         >
                             <Icon name={visible ? 'visibility' : 'visibilityOff'} />
@@ -98,7 +101,17 @@ const SignIn = () => {
                         Sign in
                     </PrimaryButton>
 
-                    <Link className={styles.authLink} to={routes.signUp}>
+                    <Link
+                        aria-disabled={isPending || undefined}
+                        className={styles.authLink}
+                        onClick={(event) => {
+                            if (isPending) {
+                                event.preventDefault();
+                            }
+                        }}
+                        tabIndex={isPending ? -1 : undefined}
+                        to={routes.signUp}
+                    >
                         Don’t have an account? Create one
                     </Link>
                 </form>

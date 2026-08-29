@@ -84,7 +84,7 @@ describe('User sign in flow', () => {
         await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/application/add'));
     });
 
-    test('keeps the submit label in place while sign in is pending', async () => {
+    test('locks account access while sign in is pending', async () => {
         let resolveSignIn: ((value: Response) => void) | undefined;
 
         globalThis.fetch.mockImplementation(async (url: string) => {
@@ -104,13 +104,28 @@ describe('User sign in flow', () => {
         );
 
         await openSignInPanel();
-        await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
-        await userEvent.type(screen.getByLabelText(/^password$/i), 'password');
+        const emailInput = screen.getByLabelText(/email/i);
+        const passwordInput = screen.getByLabelText(/^password$/i);
+        await userEvent.type(emailInput, 'person@example.com');
+        await userEvent.type(passwordInput, 'password');
         await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
         const submitButton = await screen.findByRole('button', { name: 'Sign in' });
+        const backToProductButton = screen.getByRole('button', { name: 'Back to product' });
+        const createAccountLink = screen.getByRole('link', { name: 'Don’t have an account? Create one' });
+
+        expect(emailInput).toBeDisabled();
+        expect(passwordInput).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Show password' })).toBeDisabled();
         expect(submitButton).toBeDisabled();
         expect(submitButton).toHaveAttribute('aria-busy', 'true');
+        expect(backToProductButton).toBeDisabled();
+        expect(createAccountLink).toHaveAttribute('aria-disabled', 'true');
+        expect(createAccountLink).toHaveAttribute('tabindex', '-1');
+        expect(fireEvent.click(createAccountLink)).toBe(false);
+
+        await userEvent.click(backToProductButton);
+        expect(screen.getByRole('region', { name: 'Account access' })).not.toHaveAttribute('inert');
 
         resolveSignIn?.(
             new Response(JSON.stringify({ message: 'Successfully signed in' }), {
