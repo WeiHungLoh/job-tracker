@@ -192,6 +192,7 @@ const AddApplication = () => {
                             aria-controls='quick-capture-setup-content'
                             aria-expanded={isQuickCaptureSetupExpanded}
                             className={styles.quickCaptureSetupTrigger}
+                            disabled={isLoading}
                             type='button'
                             variant='navigation'
                             onClick={handleToggleQuickCaptureSetup}
@@ -228,6 +229,7 @@ const AddApplication = () => {
                     ref={companyNameInputRef}
                     aria-describedby={errors.companyName ? 'company-name-error' : undefined}
                     aria-invalid={errors.companyName ? true : undefined}
+                    disabled={isLoading}
                     id='company-name'
                     maxLength={FIELD_MAX_LENGTHS.companyName}
                     value={companyName}
@@ -246,6 +248,7 @@ const AddApplication = () => {
                     ref={jobTitleInputRef}
                     aria-describedby={errors.jobTitle ? 'job-title-error' : undefined}
                     aria-invalid={errors.jobTitle ? true : undefined}
+                    disabled={isLoading}
                     id='job-title'
                     maxLength={FIELD_MAX_LENGTHS.jobTitle}
                     value={jobTitle}
@@ -262,6 +265,7 @@ const AddApplication = () => {
                 <label htmlFor='job-status'>Job status</label>
                 <div className={styles.selectControl}>
                     <select
+                        disabled={isLoading}
                         id='job-status'
                         value={jobStatus}
                         onChange={(e) => setJobStatus(e.target.value as JobStatus)}
@@ -289,6 +293,7 @@ const AddApplication = () => {
                     ref={applicationDateInputRef}
                     aria-describedby={errors.applicationDate ? 'app-date-error' : undefined}
                     aria-invalid={errors.applicationDate ? true : undefined}
+                    disabled={isLoading}
                     id='app-date'
                     max={MAX_DATETIME_LOCAL}
                     min={MIN_DATETIME_LOCAL}
@@ -312,6 +317,7 @@ const AddApplication = () => {
                     ref={jobLocationInputRef}
                     aria-describedby={errors.jobLocation ? 'job-location-error' : undefined}
                     aria-invalid={errors.jobLocation ? true : undefined}
+                    disabled={isLoading}
                     id='job-location'
                     maxLength={FIELD_MAX_LENGTHS.location}
                     value={jobLocation}
@@ -331,6 +337,7 @@ const AddApplication = () => {
                     ref={jobURLInputRef}
                     aria-describedby={errors.jobURL ? 'job-url-error' : undefined}
                     aria-invalid={errors.jobURL ? true : undefined}
+                    disabled={isLoading}
                     id='job-url'
                     maxLength={FIELD_MAX_LENGTHS.jobURL}
                     value={jobURL}
@@ -346,7 +353,12 @@ const AddApplication = () => {
                 <PrimaryButton isLoading={isLoading} type='submit' variant='compact'>
                     Add application
                 </PrimaryButton>
-                <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.viewApplications)}>
+                <PrimaryButton
+                    disabled={isLoading}
+                    type='button'
+                    variant='secondary'
+                    onClick={() => navigate(routes.viewApplications)}
+                >
                     View applications
                 </PrimaryButton>
             </div>

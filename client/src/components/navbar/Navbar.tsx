@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Icon from '../icon/Icon';
 import BrandMark from '../brandMark/BrandMark';
 import PrimaryButton from '../button/PrimaryButton';
@@ -36,6 +36,8 @@ const Navbar = () => {
     const navigate = useNavigate();
     const archived = ARCHIVED_LOCATIONS.includes(currentLocation);
     const activeLinkRef = useRef<HTMLAnchorElement>(null);
+    const signOutPendingRef = useRef(false);
+    const [isSigningOut, setIsSigningOut] = useState(false);
     const api = useJobTrackerAPI();
     const { showErrorToast } = useToast();
     const { theme, toggleTheme } = useTheme();
@@ -58,11 +60,20 @@ const Navbar = () => {
     };
 
     const handleSignOut = async () => {
+        if (signOutPendingRef.current) {
+            return;
+        }
+
+        signOutPendingRef.current = true;
+        setIsSigningOut(true);
         try {
             await api.authentication.logout();
             navigate(routes.signIn, { state: { fromLogout: true } });
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to sign out. Please try again.'));
+        } finally {
+            signOutPendingRef.current = false;
+            setIsSigningOut(false);
         }
     };
 
@@ -113,6 +124,7 @@ const Navbar = () => {
 
                     <PrimaryButton
                         className={styles.utilityAction}
+                        isLoading={isSigningOut}
                         onClick={() => void handleSignOut()}
                         type='button'
                         variant='navigation'

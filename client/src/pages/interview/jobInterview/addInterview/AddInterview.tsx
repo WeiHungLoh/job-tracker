@@ -235,6 +235,7 @@ const AddInterview = () => {
                     ref={interviewDateInputRef}
                     aria-describedby={errors.interviewDate ? 'interview-date-error' : undefined}
                     aria-invalid={errors.interviewDate ? true : undefined}
+                    disabled={isLoading}
                     id='date'
                     max={MAX_DATETIME_LOCAL}
                     min={MIN_DATETIME_LOCAL}
@@ -257,6 +258,7 @@ const AddInterview = () => {
                     ref={interviewLocationInputRef}
                     aria-describedby={errors.interviewLocation ? 'interview-location-error' : undefined}
                     aria-invalid={errors.interviewLocation ? true : undefined}
+                    disabled={isLoading}
                     id='location'
                     maxLength={FIELD_MAX_LENGTHS.location}
                     value={interviewLocation}
@@ -276,6 +278,7 @@ const AddInterview = () => {
                     ref={interviewDurationInputRef}
                     aria-describedby={errors.interviewDurationMinutes ? 'interview-duration-error' : undefined}
                     aria-invalid={errors.interviewDurationMinutes ? true : undefined}
+                    disabled={isLoading}
                     id='duration'
                     max={INTERVIEW_DURATION_MINUTES_MAX}
                     min={INTERVIEW_DURATION_MINUTES_MIN}
@@ -299,6 +302,7 @@ const AddInterview = () => {
                     ref={interviewTypeInputRef}
                     aria-describedby={errors.interviewType ? 'interview-type-error' : undefined}
                     aria-invalid={errors.interviewType ? true : undefined}
+                    disabled={isLoading}
                     id='type'
                     maxLength={FIELD_MAX_LENGTHS.interviewType}
                     value={interviewType}
@@ -318,6 +322,7 @@ const AddInterview = () => {
                     ref={meetingURLInputRef}
                     aria-describedby={errors.meetingURL ? 'meeting-url-error' : undefined}
                     aria-invalid={errors.meetingURL ? true : undefined}
+                    disabled={isLoading}
                     id='meeting-url'
                     maxLength={FIELD_MAX_LENGTHS.meetingURL}
                     value={meetingURL}
@@ -337,6 +342,7 @@ const AddInterview = () => {
                     ref={notesInputRef}
                     aria-describedby={errors.notes ? 'interview-notes-error' : undefined}
                     aria-invalid={errors.notes ? true : undefined}
+                    disabled={isLoading}
                     id='notes'
                     maxLength={FIELD_MAX_LENGTHS.notes}
                     value={notes}
@@ -352,10 +358,15 @@ const AddInterview = () => {
                 <PrimaryButton isLoading={isLoading} type='submit' variant='compact' data-testid='add-interview'>
                     Add interview
                 </PrimaryButton>
-                <PrimaryButton type='button' variant='secondary' onClick={() => navigate(routes.viewInterviews)}>
+                <PrimaryButton
+                    disabled={isLoading}
+                    type='button'
+                    variant='secondary'
+                    onClick={() => navigate(routes.viewInterviews)}
+                >
                     View interviews
                 </PrimaryButton>
-                <PrimaryButton type='button' variant='secondary' onClick={handleBack}>
+                <PrimaryButton disabled={isLoading} type='button' variant='secondary' onClick={handleBack}>
                     Back
                 </PrimaryButton>
             </div>

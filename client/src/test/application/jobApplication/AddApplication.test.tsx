@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { createEvent, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, createEvent, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import AddApplication from '../../../pages/application/jobApplication/addApplication/AddApplication';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { render as renderWithToast } from '../../renderWithProviders';
@@ -138,6 +138,41 @@ describe('User add application flow', () => {
         expect(screen.getByLabelText(/application date/i)).toHaveValue('');
         expect(screen.getByLabelText(/job location/i)).toHaveValue('');
         expect(screen.getByLabelText(/job posting url/i)).toHaveValue('');
+    });
+
+    test('locks application controls while a create request is pending', async () => {
+        let resolveRequest: (value: ReturnType<typeof successResponse>) => void = () => undefined;
+        fetch.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveRequest = resolve;
+                })
+        );
+
+        render(
+            <MemoryRouter>
+                <AddApplication />
+            </MemoryRouter>
+        );
+
+        userEvent.type(screen.getByLabelText(/company name/i), 'ABC Pte Ltd');
+        userEvent.type(screen.getByLabelText(/job title/i), 'Cleaner');
+        await userEvent.click(screen.getByRole('button', { name: /^add application$/i }));
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+
+        [
+            screen.getByLabelText(/company name/i),
+            screen.getByLabelText(/job title/i),
+            screen.getByLabelText(/job status/i),
+            screen.getByLabelText(/application date/i),
+            screen.getByLabelText(/job location/i),
+            screen.getByLabelText(/job posting url/i),
+            screen.getByRole('button', { name: 'Quick Capture' }),
+            screen.getByRole('button', { name: 'View applications' }),
+        ].forEach((control) => expect(control).toBeDisabled());
+
+        await act(async () => resolveRequest(successResponse()));
+        await waitFor(() => expect(screen.getByLabelText(/company name/i)).toBeEnabled());
     });
 
     test('submits once when Enter is pressed in a form field', async () => {

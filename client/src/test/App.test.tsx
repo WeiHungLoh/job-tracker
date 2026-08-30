@@ -735,22 +735,68 @@ describe('App routing and authentication behavior', () => {
         });
     });
 
-    test('keeps the current page visible and shows the backend message when logout fails', async () => {
+    test('prevents duplicate sign-out requests while logout is pending', async () => {
+        let resolveLogout: (value: ReturnType<typeof response>) => void = () => undefined;
+        const logoutResponse = new Promise<ReturnType<typeof response>>((resolve) => {
+            resolveLogout = resolve;
+        });
         fetch.mockImplementation(async (url: string, init?: RequestInit) => {
             if (url.endsWith('/user-preferences')) {
                 return jsonResponse(mockPreferences);
             }
             if (url.endsWith('/authentication/sessions/current') && init?.method === 'DELETE') {
-                return jsonResponse({ message: 'Sign out is temporarily unavailable.' }, 503);
+                return await logoutResponse;
+            }
+            return response();
+        });
+        renderRoute('/interview/view');
+
+        await waitFor(() => expect(screen.getByRole('navigation')).toBeInTheDocument());
+        const signOutButton = screen.getByRole('button', { name: 'Sign out' });
+        act(() => {
+            signOutButton.click();
+            signOutButton.click();
+        });
+
+        expect(signOutButton).toBeDisabled();
+        expect(signOutButton).toHaveAttribute('aria-busy', 'true');
+        expect(
+            fetch.mock.calls.filter(
+                ([url, init]) =>
+                    url === `${import.meta.env.VITE_API_URL}/authentication/sessions/current` &&
+                    init?.method === 'DELETE'
+            )
+        ).toHaveLength(1);
+
+        await act(async () => resolveLogout(response()));
+        expect(await screen.findByText(/Sign in to Job Tracker/i)).toBeInTheDocument();
+    });
+
+    test('keeps the current page visible and shows the backend message when logout fails', async () => {
+        let resolveLogout: (value: ReturnType<typeof jsonResponse>) => void = () => undefined;
+        const logoutResponse = new Promise<ReturnType<typeof jsonResponse>>((resolve) => {
+            resolveLogout = resolve;
+        });
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/user-preferences')) {
+                return jsonResponse(mockPreferences);
+            }
+            if (url.endsWith('/authentication/sessions/current') && init?.method === 'DELETE') {
+                return await logoutResponse;
             }
             return response();
         });
         renderRoute(routes.addApplication);
 
         await screen.findByLabelText(/company name/i);
-        await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+        const signOutButton = screen.getByRole('button', { name: 'Sign out' });
+        await userEvent.click(signOutButton);
+        expect(signOutButton).toBeDisabled();
+
+        await act(async () => resolveLogout(jsonResponse({ message: 'Sign out is temporarily unavailable.' }, 503)));
 
         expect(await screen.findByText('Sign out is temporarily unavailable')).toBeInTheDocument();
+        expect(signOutButton).toBeEnabled();
         expect(screen.getByLabelText(/company name/i)).toBeInTheDocument();
         expect(screen.getByRole('navigation', { name: 'Primary navigation' })).toBeInTheDocument();
     });

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import AddInterview from '../../../pages/interview/jobInterview/addInterview/AddInterview';
 import ViewApplication from '../../../pages/application/jobApplication/viewApplication/ViewApplication';
 import { render as renderWithToast } from '../../renderWithProviders';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmProvider } from 'material-ui-confirm';
 import { defaultConfirmOptions } from '../../../components/confirmation/defaultConfirmOptions';
@@ -144,6 +144,42 @@ describe('AddInterview page', () => {
             expect(screen.getByLabelText('Additional notes (optional)')).toHaveValue('');
             expect(screen.getByLabelText('Duration (minutes)')).toHaveValue(60);
         });
+    });
+
+    test('locks interview controls while a create request is pending', async () => {
+        let resolveRequest: (value: ReturnType<typeof successResponse>) => void = () => undefined;
+        fetch.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveRequest = resolve;
+                })
+        );
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/interview/add', state: { app: mockApplication } }]}>
+                <Routes>
+                    <Route path='/interview/add' element={<AddInterview />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        fillCompleteInterviewForm();
+        await userEvent.click(screen.getByTestId('add-interview'));
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+
+        [
+            screen.getByLabelText('Interview date'),
+            screen.getByLabelText('Duration (minutes)'),
+            screen.getByLabelText('Interview location'),
+            screen.getByLabelText('Interview type (optional)'),
+            screen.getByLabelText('Meeting URL (optional)'),
+            screen.getByLabelText('Additional notes (optional)'),
+            screen.getByRole('button', { name: 'View interviews' }),
+            screen.getByRole('button', { name: 'Back' }),
+        ].forEach((control) => expect(control).toBeDisabled());
+
+        await act(async () => resolveRequest(successResponse()));
+        await waitFor(() => expect(screen.getByLabelText('Interview date')).toBeEnabled());
     });
 
     test('rejects a meeting URL without a valid suffix and focuses the field', async () => {
