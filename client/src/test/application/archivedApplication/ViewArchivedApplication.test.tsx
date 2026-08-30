@@ -238,7 +238,7 @@ describe('Archived job application viewing flow', () => {
             screen.queryByText(/no archived job applications match the selected job statuses/i)
         ).not.toBeInTheDocument();
         expect(screen.getByText(/software engineer/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^Delete application for / })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /unarchive/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Filter by' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
@@ -758,11 +758,25 @@ describe('Archived job application viewing flow', () => {
         expect(within(applicationCard).queryByText('Edit notes')).not.toBeInTheDocument();
         expect(within(applicationCard).queryByPlaceholderText('Add your notes here')).not.toBeInTheDocument();
 
-        await userEvent.click(within(applicationCard).getByText('Actions'));
+        const actions = within(applicationCard).getByText('Actions');
+        expect(actions).toHaveAccessibleName('Actions for Software Engineer at ABC Pte Ltd');
+        await userEvent.click(actions);
 
-        expect(within(applicationCard).getByRole('link', { name: 'View job posting' })).toBeInTheDocument();
-        expect(within(applicationCard).getByRole('button', { name: 'Unarchive' })).toBeInTheDocument();
-        expect(within(applicationCard).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+        expect(
+            within(applicationCard).getByRole('link', {
+                name: 'View job posting for Software Engineer at ABC Pte Ltd',
+            })
+        ).toBeInTheDocument();
+        expect(
+            within(applicationCard).getByRole('button', {
+                name: 'Unarchive application for Software Engineer at ABC Pte Ltd',
+            })
+        ).toHaveTextContent('Unarchive');
+        expect(
+            within(applicationCard).getByRole('button', {
+                name: 'Delete application for Software Engineer at ABC Pte Ltd',
+            })
+        ).toHaveTextContent('Delete');
     });
 
     test('shows archived board notes as read-only when enabled', async () => {
@@ -787,7 +801,9 @@ describe('Archived job application viewing flow', () => {
         await userEvent.click(within(applicationCard).getByText('Actions'));
 
         expect(within(applicationCard).getByText('Notes')).toBeInTheDocument();
-        expect(within(applicationCard).getByDisplayValue('Follow up after cooling period.')).toBeDisabled();
+        const notes = within(applicationCard).getByDisplayValue('Follow up after cooling period.');
+        expect(notes).not.toBeDisabled();
+        expect(notes).toHaveAttribute('readonly');
         expect(within(applicationCard).queryByText('Edit notes')).not.toBeInTheDocument();
     });
 
@@ -1006,7 +1022,7 @@ describe('Archived job application viewing flow', () => {
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
 
         // Simulates user clicking delete button and clicking confirm delete
-        userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        userEvent.click(screen.getByRole('button', { name: /^Delete application for / }));
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
@@ -1155,7 +1171,7 @@ describe('Archived job application viewing flow', () => {
             </MemoryRouter>
         );
 
-        const deleteButton = await screen.findByRole('button', { name: 'Delete' });
+        const deleteButton = await screen.findByRole('button', { name: /^Delete application for / });
         await clickConfirmedAction(deleteButton);
 
         expect(mockConfirm).toHaveBeenCalledOnce();
@@ -1186,7 +1202,7 @@ describe('Archived job application viewing flow', () => {
             </MemoryRouter>
         );
 
-        await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+        await userEvent.click(await screen.findByRole('button', { name: /^Delete application for / }));
 
         expect(await screen.findByText('Unable to inspect this archived application')).toBeInTheDocument();
         expect(mockConfirm).not.toHaveBeenCalled();
@@ -1209,7 +1225,7 @@ describe('Archived job application viewing flow', () => {
                 <ViewArchivedApplication />
             </MemoryRouter>
         );
-        const unarchiveButton = await screen.findByRole('button', { name: 'Unarchive' });
+        const unarchiveButton = await screen.findByRole('button', { name: /^Unarchive application for / });
 
         act(() => {
             unarchiveButton.click();

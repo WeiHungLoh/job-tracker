@@ -42,9 +42,14 @@ const renderJobCard = (interview: JobInterview = futureInterview, onDelete = vi.
     return { onDelete };
 };
 
-const getCalendarTrigger = () => screen.getByRole('button', { name: 'Add to calendar' });
+const interviewContext = 'Technical Interview for Software Engineer at Acme';
+const calendarGroupName = `Calendar options for ${interviewContext}`;
+const googleCalendarActionName = `Add to Google Calendar for ${interviewContext}`;
+const icsCalendarActionName = `Add to Apple Calendar / Outlook (.ics) for ${interviewContext}`;
 
-const queryCalendarTrigger = () => screen.queryByRole('button', { name: 'Add to calendar' });
+const getCalendarTrigger = () => screen.getByRole('button', { name: `Add ${interviewContext} to calendar` });
+
+const queryCalendarTrigger = () => screen.queryByRole('button', { name: `Add ${interviewContext} to calendar` });
 
 describe('InterviewCard calendar options', () => {
     beforeEach(() => {
@@ -187,10 +192,10 @@ describe('InterviewCard calendar options', () => {
 
         await userEvent.click(trigger);
 
-        const googleCalendarAction = screen.getByRole('button', { name: 'Add to Google Calendar' });
-        expect(screen.getByRole('group', { name: 'Calendar options' })).toBeInTheDocument();
+        const googleCalendarAction = screen.getByRole('button', { name: googleCalendarActionName });
+        expect(screen.getByRole('group', { name: calendarGroupName })).toBeInTheDocument();
         expect(googleCalendarAction).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Add to Apple Calendar / Outlook (.ics)' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: icsCalendarActionName })).toBeInTheDocument();
 
         await userEvent.tab();
         expect(googleCalendarAction).toHaveFocus();
@@ -201,7 +206,7 @@ describe('InterviewCard calendar options', () => {
             '_blank',
             'noopener,noreferrer'
         );
-        expect(screen.queryByRole('group', { name: 'Calendar options' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: calendarGroupName })).not.toBeInTheDocument();
         expect(trigger).toHaveFocus();
     });
 
@@ -219,13 +224,13 @@ describe('InterviewCard calendar options', () => {
         renderJobCard();
 
         await userEvent.click(getCalendarTrigger());
-        await userEvent.click(screen.getByRole('button', { name: 'Add to Apple Calendar / Outlook (.ics)' }));
+        await userEvent.click(screen.getByRole('button', { name: icsCalendarActionName }));
 
         expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
         expect(anchorClick).toHaveBeenCalledOnce();
         expect(downloadedFilename).toBe('Acme-Technical-Interview.ics');
         expect(revokeObjectURL).toHaveBeenCalledWith('blob:calendar-event');
-        expect(screen.queryByRole('group', { name: 'Calendar options' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: calendarGroupName })).not.toBeInTheDocument();
     });
 
     test('shows the standard frontend error toast when calendar creation fails', async () => {
@@ -238,10 +243,10 @@ describe('InterviewCard calendar options', () => {
         renderJobCard();
 
         await userEvent.click(getCalendarTrigger());
-        await userEvent.click(screen.getByRole('button', { name: 'Add to Apple Calendar / Outlook (.ics)' }));
+        await userEvent.click(screen.getByRole('button', { name: icsCalendarActionName }));
 
         expect(await screen.findByText('Unable to create the calendar event. Please try again')).toBeInTheDocument();
-        expect(screen.queryByRole('group', { name: 'Calendar options' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: calendarGroupName })).not.toBeInTheDocument();
     });
 
     test('closes on Escape, restores trigger focus, and closes on outside click', async () => {
@@ -251,19 +256,19 @@ describe('InterviewCard calendar options', () => {
         await userEvent.click(trigger);
         fireEvent.keyDown(document, { key: 'Escape' });
 
-        expect(screen.queryByRole('group', { name: 'Calendar options' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: calendarGroupName })).not.toBeInTheDocument();
         expect(trigger).toHaveFocus();
 
         await userEvent.click(trigger);
         fireEvent.mouseDown(document.body);
 
-        expect(screen.queryByRole('group', { name: 'Calendar options' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: calendarGroupName })).not.toBeInTheDocument();
     });
 
     test('preserves the existing Delete action', async () => {
         const { onDelete } = renderJobCard();
 
-        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        await userEvent.click(screen.getByRole('button', { name: `Delete ${interviewContext}` }));
 
         expect(onDelete).toHaveBeenCalledOnce();
     });
@@ -274,7 +279,7 @@ describe('InterviewCard calendar options', () => {
         const card = screen.getByRole('article', { name: 'Acme interview' });
         const timingBadge = screen.getByText(/^Starts in /);
         const notes = screen.getByRole('textbox', { name: 'Notes for Acme' });
-        const deleteButton = screen.getByRole('button', { name: 'Delete' });
+        const deleteButton = screen.getByRole('button', { name: `Delete ${interviewContext}` });
 
         expect(card).toHaveClass(interviewStyles.notesVisible);
         expect(timingBadge.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -312,7 +317,7 @@ describe('InterviewCard calendar options', () => {
         renderJobCard(interview);
 
         const listFollowUp = screen.getByRole('status');
-        const listMeetingURL = screen.getByRole('link', { name: 'Join meeting' });
+        const listMeetingURL = screen.getByRole('link', { name: `Join meeting for ${interviewContext}` });
         expect(listMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
         expect(listMeetingURL).toHaveAttribute('target', '_blank');
         expect(listFollowUp.compareDocumentPosition(listMeetingURL) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -336,20 +341,23 @@ describe('InterviewCard calendar options', () => {
 
         const boardCard = screen.getAllByRole('article', { name: 'Acme interview' })[1];
         const boardActions = within(boardCard).getByText('Actions').closest('details');
-        expect(within(boardCard).getByRole('link', { name: 'Join meeting' })).not.toBeVisible();
+        expect(within(boardCard).getByText('Actions')).toHaveAccessibleName(`Actions for ${interviewContext}`);
+        expect(within(boardCard).getByRole('link', { name: `Join meeting for ${interviewContext}` })).not.toBeVisible();
         await userEvent.click(within(boardCard).getByText('Actions'));
-        const boardMeetingURL = within(boardCard).getByRole('link', { name: 'Join meeting' });
+        const boardMeetingURL = within(boardCard).getByRole('link', { name: `Join meeting for ${interviewContext}` });
         expect(boardMeetingURL).toHaveAttribute('href', 'https://meet.example.com/room');
         expect(boardMeetingURL).toHaveAttribute('target', '_blank');
         const boardApplicationLink = within(boardCard).getByRole('link', {
-            name: 'View application',
+            name: 'View application for Software Engineer at Acme',
         });
         expect(boardApplicationLink).toHaveAttribute('href', '/application/view#7');
         expect(boardApplicationLink).toHaveClass(interviewStyles.boardActionLink);
         expect(boardMeetingURL).toHaveClass(interviewStyles.boardActionLink);
         const editNotes = within(boardCard).getByText('Edit notes');
         const boardNotes = within(boardCard).getByRole('textbox', { name: 'Notes for Acme' });
-        const actionButtons = within(boardCard).getByRole('button', { name: 'Delete' }).parentElement;
+        const actionButtons = within(boardCard).getByRole('button', {
+            name: `Delete ${interviewContext}`,
+        }).parentElement;
         expect(
             boardMeetingURL.compareDocumentPosition(boardApplicationLink) & Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy();
@@ -403,23 +411,23 @@ describe('InterviewCard calendar options', () => {
         expect(actions).toHaveAttribute('open');
         expect(screen.getByRole('link', { name: /view application/i })).toBeVisible();
         expect(getCalendarTrigger()).toBeInTheDocument();
-        const deleteButton = screen.getByRole('button', { name: 'Delete' });
+        const deleteButton = screen.getByRole('button', { name: `Delete ${interviewContext}` });
         expect(deleteButton.parentElement?.className).toContain('compactActions');
         expect(deleteButton.className).toContain('boardDeleteButton');
 
         await userEvent.click(getCalendarTrigger());
-        expect(screen.getByRole('group', { name: 'Calendar options' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Add to Google Calendar' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Add to Apple Calendar / Outlook (.ics)' })).toBeInTheDocument();
+        expect(screen.getByRole('group', { name: calendarGroupName })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: googleCalendarActionName })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: icsCalendarActionName })).toBeInTheDocument();
 
         const trigger = getCalendarTrigger();
-        await userEvent.click(screen.getByRole('button', { name: 'Add to Google Calendar' }));
+        await userEvent.click(screen.getByRole('button', { name: googleCalendarActionName }));
         expect(open).toHaveBeenCalledWith(
             expect.stringContaining('https://calendar.google.com/calendar/render?'),
             '_blank',
             'noopener,noreferrer'
         );
-        expect(screen.queryByRole('group', { name: 'Calendar options' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: calendarGroupName })).not.toBeInTheDocument();
         expect(trigger).toHaveFocus();
     });
 });

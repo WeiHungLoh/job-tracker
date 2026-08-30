@@ -333,7 +333,7 @@ describe('Job application viewing flow', () => {
             'aria-pressed',
             'false'
         );
-        expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^Delete application for / })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Filter by' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByRole('button', { name: 'Board' })).toHaveAttribute('aria-pressed', 'false');
@@ -618,12 +618,12 @@ describe('Job application viewing flow', () => {
         );
 
         await screen.findByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' });
-        await userEvent.click(screen.getByRole('button', { name: 'Edit status' }));
+        await userEvent.click(screen.getByRole('button', { name: /^Edit status for / }));
         await userEvent.selectOptions(
             screen.getByRole('combobox', { name: /Application status for Software Engineer at ABC Pte Ltd/ }),
             'Interview'
         );
-        await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await userEvent.click(screen.getByRole('button', { name: /^Save changes to status for / }));
 
         await waitFor(() => expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument());
         expect(fetch).toHaveBeenCalledWith(
@@ -1493,9 +1493,13 @@ describe('Job application viewing flow', () => {
             within(card).getByRole('button', { name: 'Drag ABC Pte Ltd Software Engineer application' })
         ).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Add your notes here')).not.toBeVisible();
-        await userEvent.click(screen.getByText('Actions'));
+        const actions = within(card).getByText('Actions');
+        expect(actions).toHaveAccessibleName('Actions for Software Engineer at ABC Pte Ltd');
+        await userEvent.click(actions);
 
-        expect(screen.getByRole('link', { name: 'View job posting' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: 'View job posting for Software Engineer at ABC Pte Ltd' })
+        ).toBeInTheDocument();
         const notesField = screen.getByPlaceholderText('Add your notes here');
         expect(notesField).toBeVisible();
         expect(notesField).toHaveAttribute('maxlength', '3000');
@@ -1505,8 +1509,12 @@ describe('Job application viewing flow', () => {
         expect(
             notesField.compareDocumentPosition(within(card).getByRole('status')) & Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy();
-        expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Archive application for Software Engineer at ABC Pte Ltd' })
+        ).toHaveTextContent('Archive');
+        expect(
+            screen.getByRole('button', { name: 'Delete application for Software Engineer at ABC Pte Ltd' })
+        ).toHaveTextContent('Delete');
     });
 
     test('fetches applications from the server when the status filter changes', async () => {
@@ -2264,7 +2272,7 @@ describe('Job application viewing flow', () => {
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
 
         // Simulates user clicking delete button and clicking confirm delete
-        userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        userEvent.click(screen.getByRole('button', { name: /^Delete application for / }));
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
@@ -2313,7 +2321,7 @@ describe('Job application viewing flow', () => {
         await screen.findByText(/ABC Pte Ltd/i);
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         await userEvent.click(screen.getByRole('switch', { name: 'Show archive' }));
-        await userEvent.click(screen.getByRole('button', { name: 'Archive' }));
+        await userEvent.click(screen.getByRole('button', { name: /^Archive application for / }));
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
@@ -2362,7 +2370,7 @@ describe('Job application viewing flow', () => {
         fireEvent.change(screen.getByPlaceholderText('Add your notes here'), {
             target: { value: 'Keep this draft when archived' },
         });
-        await userEvent.click(screen.getByRole('button', { name: 'Archive' }));
+        await userEvent.click(screen.getByRole('button', { name: /^Archive application for / }));
 
         expect(await screen.findByText('Preserve these notes before archiving')).toBeInTheDocument();
         expect(screen.getByText(/ABC Pte Ltd/i)).toBeInTheDocument();
@@ -2403,7 +2411,7 @@ describe('Job application viewing flow', () => {
         await screen.findByText(/ABC Pte Ltd/i);
         const notesField = screen.getByRole('textbox', { name: 'Notes for ABC Pte Ltd' });
         fireEvent.change(notesField, { target: { value: 'Preserve this exact draft' } });
-        await userEvent.click(screen.getByRole('button', { name: 'Archive' }));
+        await userEvent.click(screen.getByRole('button', { name: /^Archive application for / }));
 
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1/notes`, {
@@ -2443,7 +2451,7 @@ describe('Job application viewing flow', () => {
             </MemoryRouter>,
             { initialPreferences: { application_show_archive: true } }
         );
-        const archiveButton = await screen.findByRole('button', { name: 'Archive' });
+        const archiveButton = await screen.findByRole('button', { name: /^Archive application for / });
 
         act(() => {
             archiveButton.click();
@@ -2481,7 +2489,7 @@ describe('Job application viewing flow', () => {
             </MemoryRouter>
         );
 
-        await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+        await userEvent.click(await screen.findByRole('button', { name: /^Delete application for / }));
 
         expect(await screen.findByText('Unable to inspect this application')).toBeInTheDocument();
         expect(mockConfirm).not.toHaveBeenCalled();
@@ -2498,7 +2506,7 @@ describe('Job application viewing flow', () => {
             </MemoryRouter>
         );
 
-        const deleteButton = await screen.findByRole('button', { name: 'Delete' });
+        const deleteButton = await screen.findByRole('button', { name: /^Delete application for / });
         await clickConfirmedAction(deleteButton);
 
         expect(mockConfirm).toHaveBeenCalledOnce();

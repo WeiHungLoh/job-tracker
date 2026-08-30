@@ -3,6 +3,7 @@ import PrimaryButton from '../../components/button/PrimaryButton';
 import ControlDropdown from '../../components/activityControls/ControlDropdown';
 import { useToast } from '../../components/toast/ToastProvider';
 import formatDate from '../../helper/dateFormatter';
+import { getScrollBehavior } from '../../helper/scrollBehavior';
 import ApplicationStatusBadge from '../application/ApplicationStatusBadge';
 import { OFFER_DECISION_CATEGORIES } from './offerDecisionConfig';
 import { calculateOfferDecisionScore } from './offerEvaluation';
@@ -316,7 +317,7 @@ const OfferEvaluationCard = ({
     const editing = Boolean(draft);
     const scrollToCard = (block: ScrollLogicalPosition) => {
         window.setTimeout(() => {
-            cardRef.current?.scrollIntoView?.({ behavior: 'smooth', block });
+            cardRef.current?.scrollIntoView?.({ behavior: getScrollBehavior(), block });
         }, 0);
     };
     const handleCancel = () => {

@@ -119,7 +119,7 @@ describe('Add Interview origin-aware navigation', () => {
             pathname: routes.viewApplications,
         });
 
-        await userEvent.click(screen.getByRole('link', { name: 'Add interview' }));
+        await userEvent.click(screen.getByRole('link', { name: 'Add interview for Software Engineer at Acme' }));
         expect(screen.getByTestId('navigation-state')).toHaveTextContent(
             JSON.stringify({ app: application, origin: { kind: 'application-collection' } })
         );
@@ -131,7 +131,7 @@ describe('Add Interview origin-aware navigation', () => {
             true
         );
 
-        await userEvent.click(screen.getByRole('link', { name: 'Add interview' }));
+        await userEvent.click(screen.getByRole('link', { name: 'Add interview for Software Engineer at Acme' }));
         expect(screen.getByTestId('navigation-state')).toHaveTextContent(
             JSON.stringify({ app: application, origin: { kind: 'application-collection' } })
         );

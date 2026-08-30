@@ -32,6 +32,8 @@ const InterviewCard = (props: InterviewCardProps) => {
     const isOverdue = timing.hasEnded;
     const isBoardLayout = layout === 'board';
     const interviewId = variant === 'job' ? interview.interview_id : interview.archived_interview_id;
+    const interviewType = interview.interview_type.trim() || 'Interview';
+    const interviewContext = `${interviewType} for ${interview.job_title} at ${interview.company_name}`;
     const note = variant === 'job' ? props.note ?? interview.interview_notes : interview.interview_notes;
     const renderActiveNotesEditor = (className: string) =>
         variant === 'job' ? (
@@ -57,7 +59,6 @@ const InterviewCard = (props: InterviewCardProps) => {
             <textarea
                 aria-label={`Notes for ${interview.company_name}`}
                 className={className}
-                disabled
                 readOnly
                 value={interview.interview_notes.trim() === '' ? EMPTY_NOTES_MESSAGE : interview.interview_notes}
             />
@@ -154,6 +155,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                         </div>
                         {interview.meeting_url && (
                             <a
+                                aria-label={`Join meeting for ${interviewContext}`}
                                 className={`${styles.navigationLink} ${styles.externalLink}`}
                                 href={interview.meeting_url}
                                 rel='noreferrer noopener'
@@ -164,6 +166,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                             </a>
                         )}
                         <Link
+                            aria-label={`View application for ${interview.job_title} at ${interview.company_name}`}
                             className={styles.navigationLink}
                             to={`${applicationRoute}#${applicationId}`}
                             onClick={onViewApplicationClick}
@@ -180,6 +183,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                     <BoardCardActions
                         compactPanelSpacing
                         compactSizing
+                        summaryAriaLabel={`Actions for ${interviewContext}`}
                         onOpenChange={
                             variant === 'job'
                                 ? (isOpen) => props.onNotesVisibilityChange?.(interview.interview_id, isOpen)
@@ -187,8 +191,11 @@ const InterviewCard = (props: InterviewCardProps) => {
                         }
                         actions={
                             <>
-                                {showCalendarOptions && <CalendarOptions interview={interview} />}
+                                {showCalendarOptions && (
+                                    <CalendarOptions contextLabel={interviewContext} interview={interview} />
+                                )}
                                 <PrimaryButton
+                                    aria-label={`Delete ${interviewContext}`}
                                     className={styles.boardDeleteButton}
                                     isLoading={isDeleting}
                                     variant='destructive'
@@ -202,6 +209,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                     >
                         {interview.meeting_url && (
                             <a
+                                aria-label={`Join meeting for ${interviewContext}`}
                                 className={`${styles.boardActionLink} ${styles.externalLink}`}
                                 href={interview.meeting_url}
                                 rel='noreferrer noopener'
@@ -213,6 +221,7 @@ const InterviewCard = (props: InterviewCardProps) => {
                         )}
                         {variant === 'job' && (
                             <Link
+                                aria-label={`View application for ${interview.job_title} at ${interview.company_name}`}
                                 className={styles.boardActionLink}
                                 to={`${applicationRoute}#${applicationId}`}
                                 onClick={onViewApplicationClick}
@@ -236,8 +245,13 @@ const InterviewCard = (props: InterviewCardProps) => {
                 </>
             ) : (
                 <div className={styles.buttonGroup}>
-                    {showCalendarOptions && <CalendarOptions interview={interview} />}
-                    <PrimaryButton isLoading={isDeleting} variant='destructive' onClick={onDelete}>
+                    {showCalendarOptions && <CalendarOptions contextLabel={interviewContext} interview={interview} />}
+                    <PrimaryButton
+                        aria-label={`Delete ${interviewContext}`}
+                        isLoading={isDeleting}
+                        variant='destructive'
+                        onClick={onDelete}
+                    >
                         Delete
                     </PrimaryButton>
                 </div>

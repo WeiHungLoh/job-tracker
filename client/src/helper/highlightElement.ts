@@ -1,3 +1,5 @@
+import { getScrollBehavior } from './scrollBehavior';
+
 /**
  * Scroll to and highlight a DOM element, then remove the highlight after 4s.
  * Clears any existing timeout for the same element before applying the new one.
@@ -30,7 +32,7 @@ export const scrollAndHighlight = (
             element.classList.remove(...highlightClasses);
         }
         if (typeof element.scrollIntoView === 'function') {
-            element.scrollIntoView({ behavior: 'smooth', ...(block ? { block } : {}) });
+            element.scrollIntoView({ behavior: getScrollBehavior(), ...(block ? { block } : {}) });
         }
         if (highlightClasses.length === 0) {
             return;

@@ -42,6 +42,7 @@ const ApplicationBoardCard = ({
         id: String(application.job_id),
     });
     const formattedApplicationDate = formatDate(application.application_date);
+    const applicationContext = `${application.job_title} at ${application.company_name}`;
     const cardClassName = [
         styles.card,
         isDragging ? styles.cardDragging : '',
@@ -145,9 +146,11 @@ const ApplicationBoardCard = ({
                 compactPanelSpacing
                 compactSizing
                 onOpenChange={(isOpen) => onNotesVisibilityChange(application.job_id, isOpen)}
+                summaryAriaLabel={`Actions for ${applicationContext}`}
                 actions={
                     <>
                         <PrimaryButton
+                            aria-label={`Archive application for ${applicationContext}`}
                             isLoading={isArchiving}
                             onClick={() => onArchive(application.job_id)}
                             type='button'
@@ -156,6 +159,7 @@ const ApplicationBoardCard = ({
                             Archive
                         </PrimaryButton>
                         <PrimaryButton
+                            aria-label={`Delete application for ${applicationContext}`}
                             isLoading={isDeleting}
                             onClick={() => onDelete(application.job_id)}
                             type='button'
@@ -168,6 +172,7 @@ const ApplicationBoardCard = ({
             >
                 {application.job_posting_url !== '' && (
                     <a
+                        aria-label={`View job posting for ${applicationContext}`}
                         className={`${styles.navigationLink} ${styles.externalLink}`}
                         href={application.job_posting_url}
                         rel='noreferrer noopener'

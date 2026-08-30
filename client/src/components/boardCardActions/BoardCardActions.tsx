@@ -7,6 +7,7 @@ type BoardCardActionsProps = PropsWithChildren<{
     compactSizing?: boolean;
     compactPanelSpacing?: boolean;
     onOpenChange?: (isOpen: boolean) => void;
+    summaryAriaLabel: string;
 }>;
 
 const BoardCardActions = ({
@@ -16,6 +17,7 @@ const BoardCardActions = ({
     compactSizing = false,
     compactPanelSpacing = false,
     onOpenChange,
+    summaryAriaLabel,
 }: BoardCardActionsProps) => (
     <details
         className={[
@@ -27,7 +29,7 @@ const BoardCardActions = ({
             .join(' ')}
         onToggle={(event) => onOpenChange?.(event.currentTarget.open)}
     >
-        <summary>Actions</summary>
+        <summary aria-label={summaryAriaLabel}>Actions</summary>
         <div className={styles.actionPanel}>
             {children}
             <div className={`${styles.actionButtons} ${compactActions ? styles.compactActions : ''}`}>{actions}</div>

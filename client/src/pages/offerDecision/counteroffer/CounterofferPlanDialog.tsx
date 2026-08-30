@@ -11,6 +11,7 @@ import LoadingSpinner from '../../../components/loadingSpinner/LoadingSpinner';
 import { createDestructiveConfirmationButtonProps } from '../../../components/confirmation/destructiveConfirmationButtonProps';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { getErrorToastMessage } from '../../../helper/getErrorToastMessage';
+import { getScrollBehavior } from '../../../helper/scrollBehavior';
 import CounterofferCurrentOffer from './CounterofferCurrentOffer';
 import CounterofferIdealOffer from './CounterofferIdealOffer';
 import {
@@ -193,7 +194,7 @@ const CounterofferPlanDialog = ({
                 }`
             );
             target?.focus();
-            target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+            target?.scrollIntoView?.({ behavior: getScrollBehavior(), block: 'center' });
         }, 0);
     };
 

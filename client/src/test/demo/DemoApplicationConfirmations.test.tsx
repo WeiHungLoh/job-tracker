@@ -82,7 +82,7 @@ describe('demo single-application relation confirmations', () => {
         renderDemo(<DemoViewApplication />);
 
         await clickConfirmedAction(
-            within(getApplicationCard('Merlion Cloud')).getByRole('button', { name: 'Archive' })
+            within(getApplicationCard('Merlion Cloud')).getByRole('button', { name: /^Archive application for / })
         );
 
         expect(mockConfirm).toHaveBeenCalledWith({
@@ -105,7 +105,9 @@ describe('demo single-application relation confirmations', () => {
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         renderDemo(<DemoViewApplication />);
 
-        await clickConfirmedAction(within(getApplicationCard('Merlion Cloud')).getByRole('button', { name: 'Delete' }));
+        await clickConfirmedAction(
+            within(getApplicationCard('Merlion Cloud')).getByRole('button', { name: /^Delete application for / })
+        );
 
         expect(mockConfirm).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -129,7 +131,9 @@ describe('demo single-application relation confirmations', () => {
         renderDemo(<DemoViewArchivedApplication />);
 
         await clickConfirmedAction(
-            within(getApplicationCard('Riverlane Studio')).getByRole('button', { name: 'Unarchive' })
+            within(getApplicationCard('Riverlane Studio')).getByRole('button', {
+                name: /^Unarchive application for /,
+            })
         );
 
         expect(mockConfirm).toHaveBeenCalledWith({
@@ -153,7 +157,9 @@ describe('demo single-application relation confirmations', () => {
         renderDemo(<DemoViewArchivedApplication />);
 
         await clickConfirmedAction(
-            within(getApplicationCard('Riverlane Studio')).getByRole('button', { name: 'Delete' })
+            within(getApplicationCard('Riverlane Studio')).getByRole('button', {
+                name: /^Delete application for /,
+            })
         );
 
         expect(mockConfirm).toHaveBeenCalledWith(
@@ -181,7 +187,9 @@ describe('demo single-application relation confirmations', () => {
                 })
         );
         renderDemo(<DemoViewApplication />);
-        const archiveButton = within(getApplicationCard('HorizonAI Labs')).getByRole('button', { name: 'Archive' });
+        const archiveButton = within(getApplicationCard('HorizonAI Labs')).getByRole('button', {
+            name: /^Archive application for /,
+        });
 
         fireEvent.click(archiveButton);
         fireEvent.click(archiveButton);

@@ -1,3 +1,5 @@
+import { getScrollBehavior } from '../../../helper/scrollBehavior';
+
 export const BOARD_CARD_HIGHLIGHT_DURATION = 4000;
 
 export const getMaxBoardScrollLeft = (board: Pick<HTMLElement, 'clientWidth' | 'scrollWidth'>) =>
@@ -32,7 +34,7 @@ export const revealApplicationBoardTarget = (board: HTMLElement, target: HTMLEle
     const left = getCenteredBoardScrollLeft(board, board.getBoundingClientRect(), targetRect);
 
     if (typeof board.scrollTo === 'function') {
-        board.scrollTo({ behavior: 'smooth', left });
+        board.scrollTo({ behavior: getScrollBehavior(), left });
     } else {
         board.scrollLeft = left;
     }
@@ -44,6 +46,6 @@ export const revealApplicationBoardTarget = (board: HTMLElement, target: HTMLEle
             document.documentElement.scrollHeight,
             targetRect
         );
-        window.scrollTo({ behavior: 'smooth', top });
+        window.scrollTo({ behavior: getScrollBehavior(), top });
     }
 };

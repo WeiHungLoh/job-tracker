@@ -20,6 +20,7 @@ const ArchivedApplicationBoardCard = ({
     showNotes,
 }: ArchivedApplicationBoardCardProps) => {
     const formattedApplicationDate = formatDate(application.application_date);
+    const applicationContext = `${application.job_title} at ${application.company_name}`;
     const notesValue = application.notes.trim() === '' ? EMPTY_NOTES_MESSAGE : application.notes;
     const hasActions = application.job_posting_url !== '' || showNotes;
 
@@ -61,9 +62,11 @@ const ArchivedApplicationBoardCard = ({
             <BoardCardActions
                 compactActions
                 compactPanelSpacing
+                summaryAriaLabel={`Actions for ${applicationContext}`}
                 actions={
                     <>
                         <PrimaryButton
+                            aria-label={`Unarchive application for ${applicationContext}`}
                             isLoading={isUnarchiving}
                             onClick={() => onUnarchive(application.archived_job_id)}
                             type='button'
@@ -72,6 +75,7 @@ const ArchivedApplicationBoardCard = ({
                             Unarchive
                         </PrimaryButton>
                         <PrimaryButton
+                            aria-label={`Delete application for ${applicationContext}`}
                             isLoading={isDeleting}
                             onClick={() => onDelete(application.archived_job_id)}
                             type='button'
@@ -92,6 +96,7 @@ const ArchivedApplicationBoardCard = ({
                     <>
                         {application.job_posting_url !== '' && (
                             <a
+                                aria-label={`View job posting for ${applicationContext}`}
                                 className={`${styles.navigationLink} ${styles.externalLink}`}
                                 href={application.job_posting_url}
                                 rel='noreferrer noopener'
@@ -104,7 +109,7 @@ const ArchivedApplicationBoardCard = ({
                         {showNotes && (
                             <label className={`${styles.notesField} ${styles.readOnlyNotes}`}>
                                 <span>Notes</span>
-                                <textarea disabled readOnly value={notesValue} />
+                                <textarea readOnly value={notesValue} />
                             </label>
                         )}
                     </>

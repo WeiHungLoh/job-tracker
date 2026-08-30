@@ -1,6 +1,8 @@
 import { scrollAndHighlight } from '../../helper/highlightElement';
 
 describe('scrollAndHighlight', () => {
+    const originalMatchMedia = window.matchMedia;
+
     beforeEach(() => {
         vi.useFakeTimers();
         document.body.innerHTML = '';
@@ -9,6 +11,10 @@ describe('scrollAndHighlight', () => {
     afterEach(() => {
         vi.useRealTimers();
         document.body.innerHTML = '';
+        Object.defineProperty(window, 'matchMedia', {
+            configurable: true,
+            value: originalMatchMedia,
+        });
     });
 
     test('supports composed CSS module class names', () => {
@@ -65,5 +71,24 @@ describe('scrollAndHighlight', () => {
         expect(scrollIntoView).not.toHaveBeenCalled();
         expect(element).not.toHaveClass('highlight');
         expect(timeouts.target).toBeUndefined();
+    });
+
+    test('uses immediate scrolling when reduced motion is preferred', () => {
+        Object.defineProperty(window, 'matchMedia', {
+            configurable: true,
+            value: vi.fn().mockReturnValue({ matches: true }),
+        });
+        const element = document.createElement('div');
+        const scrollIntoView = vi.fn();
+        const timeouts: Record<string, ReturnType<typeof setTimeout>> = {};
+
+        element.id = 'target';
+        element.scrollIntoView = scrollIntoView;
+        document.body.append(element);
+
+        scrollAndHighlight('target', 'highlight', timeouts);
+        vi.advanceTimersByTime(100);
+
+        expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto' });
     });
 });

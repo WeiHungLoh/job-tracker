@@ -89,8 +89,17 @@ const createBoardProps = () => ({
 });
 
 describe('ApplicationBoard', () => {
+    const originalMatchMedia = window.matchMedia;
+
     beforeEach(() => {
         dndState.sensorOptions = [];
+    });
+
+    afterEach(() => {
+        Object.defineProperty(window, 'matchMedia', {
+            configurable: true,
+            value: originalMatchMedia,
+        });
     });
 
     test('allows horizontal auto-scroll while dragging a card', () => {
@@ -191,8 +200,12 @@ describe('ApplicationBoard', () => {
         expect(getCenteredPageScrollTop(1100, 800, 2000, { height: 100, top: 700 })).toBe(1200);
     });
 
-    test('scrolls to and briefly highlights each requested application', () => {
+    test('scrolls without animation and briefly highlights each requested application when reduced motion is preferred', () => {
         vi.useFakeTimers();
+        Object.defineProperty(window, 'matchMedia', {
+            configurable: true,
+            value: vi.fn().mockReturnValue({ matches: true }),
+        });
         const boardProps = createBoardProps();
         const { rerender } = render(<ApplicationBoard {...boardProps} applications={[boardApplication]} />);
         const board = screen.getByRole('region', { name: 'Application board' });
@@ -245,8 +258,8 @@ describe('ApplicationBoard', () => {
             />
         );
 
-        expect(scrollTo).toHaveBeenCalledWith({ behavior: 'smooth', left: 450 });
-        expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: 100 });
+        expect(scrollTo).toHaveBeenCalledWith({ behavior: 'auto', left: 450 });
+        expect(windowScrollTo).toHaveBeenCalledWith({ behavior: 'auto', top: 100 });
         expect(onTargetHandled).toHaveBeenCalledWith({ applicationId: 1, requestId: 1 });
         expect(card).toHaveClass('card-highlighted');
 

@@ -66,11 +66,11 @@ const renderDemo = (children: ReactNode, initialEntries: DemoInitialEntry[] = [r
 };
 
 const saveFirstDemoApplicationAsOffer = () => {
-    fireEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Edit status for / })[0]);
     fireEvent.change(screen.getByRole('combobox', { name: /Application status for/ }), {
         target: { value: 'Offer' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Save changes to status for / }));
 };
 
 const waitForScheduledApplicationAutoScroll = async () => {
@@ -470,7 +470,7 @@ describe('demo page interactions', () => {
             'aria-checked',
             'true'
         );
-        const firstApplicationCard = screen.getAllByRole('button', { name: 'Edit status' })[0].closest('[id]');
+        const firstApplicationCard = screen.getAllByRole('button', { name: /^Edit status for / })[0].closest('[id]');
         const firstApplicationId = firstApplicationCard?.id;
         expect(firstApplicationId).toBeTruthy();
         const firstNotesField = screen.getAllByPlaceholderText('Add your notes here')[0];
@@ -480,11 +480,11 @@ describe('demo page interactions', () => {
         expect(firstNotesField).toHaveValue('Demo note update');
         expect(screen.getAllByText('Saving…').length).toBeGreaterThan(0);
 
-        await userEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: /^Edit status for / })[0]);
         fireEvent.change(screen.getByRole('combobox', { name: /Application status for/ }), {
             target: { value: 'Offer' },
         });
-        await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await userEvent.click(screen.getByRole('button', { name: /^Save changes to status for / }));
         expect(screen.getAllByText(/Job status: Offer/i).length).toBeGreaterThan(0);
         await waitFor(() =>
             expect(document.getElementById(firstApplicationId || '')?.className).toContain('highlighted')
@@ -499,11 +499,11 @@ describe('demo page interactions', () => {
         await userEvent.click(screen.getByRole('radio', { name: /Company A/ }));
         await waitFor(() => expect(screen.getByRole('button', { name: 'Sort by' })).toBeEnabled());
 
-        await userEvent.click(screen.getAllByRole('button', { name: 'Edit status' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: /^Edit status for / })[0]);
         fireEvent.change(screen.getByRole('combobox', { name: /Application status for/ }), {
             target: { value: 'Interview' },
         });
-        await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+        await userEvent.click(screen.getByRole('button', { name: /^Save changes to status for / }));
         await act(async () => {
             await new Promise((resolve) => setTimeout(resolve, 150));
         });
@@ -633,7 +633,7 @@ describe('demo page interactions', () => {
         expect(screen.getAllByText(/Job status: Rejected/i).length).toBeGreaterThan(0);
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await clickConfirmedAction(screen.getAllByRole('button', { name: 'Archive' })[0]);
+        await clickConfirmedAction(screen.getAllByRole('button', { name: /^Archive application for / })[0]);
         expect(await screen.findByText('Job application archived')).toBeInTheDocument();
     });
 
@@ -656,7 +656,7 @@ describe('demo page interactions', () => {
 
         await userEvent.click(within(application).getByText('Actions'));
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await clickConfirmedAction(within(application).getByRole('button', { name: 'Unarchive' }));
+        await clickConfirmedAction(within(application).getByRole('button', { name: /^Unarchive application for / }));
 
         expect(
             within(board).queryByRole('article', { name: 'Riverlane Studio Frontend Developer' })
@@ -704,7 +704,7 @@ describe('demo page interactions', () => {
         expect(screen.getByRole('switch', { name: 'Show notes' })).toHaveAttribute('aria-checked', 'true');
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
-        await clickConfirmedAction(screen.getAllByRole('button', { name: 'Unarchive' })[0]);
+        await clickConfirmedAction(screen.getAllByRole('button', { name: /^Unarchive application for / })[0]);
         expect(await screen.findByText('Job application unarchived')).toBeInTheDocument();
 
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
@@ -995,7 +995,7 @@ describe('demo page interactions', () => {
             'href',
             routes.demoViewApplications
         );
-        expect(screen.queryByRole('link', { name: 'Add interview' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /^Add interview for / })).not.toBeInTheDocument();
     });
 
     test('switches demo interviews to the responsive Board without changing their order', async () => {

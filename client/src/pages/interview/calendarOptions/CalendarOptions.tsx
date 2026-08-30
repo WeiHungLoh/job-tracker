@@ -7,10 +7,11 @@ import { buildInterviewCalendarEvent, buildInterviewIcsFilename } from './interv
 import styles from './CalendarOptions.module.css';
 
 type CalendarOptionsProps = {
+    contextLabel: string;
     interview: JobInterview;
 };
 
-const CalendarOptions = ({ interview }: CalendarOptionsProps) => {
+const CalendarOptions = ({ contextLabel, interview }: CalendarOptionsProps) => {
     const { showErrorToast } = useToast();
 
     const handleGoogleCalendar = () => {
@@ -35,7 +36,7 @@ const CalendarOptions = ({ interview }: CalendarOptionsProps) => {
         <ControlDropdown
             closeOnSelect
             containerClassName={styles.container}
-            dropdownAriaLabel='Calendar options'
+            dropdownAriaLabel={`Calendar options for ${contextLabel}`}
             dropdownClassName={styles.menu}
             dropdownRole='group'
             id={`calendar-${interview.interview_id}`}
@@ -44,14 +45,24 @@ const CalendarOptions = ({ interview }: CalendarOptionsProps) => {
                     <Icon name='calendar' size={17} />
                 </>
             }
-            triggerAriaLabel='Add to calendar'
+            triggerAriaLabel={`Add ${contextLabel} to calendar`}
             triggerClassName={styles.trigger}
             triggerVariant='secondary'
         >
-            <button className={styles.menuItem} onClick={handleGoogleCalendar} type='button'>
+            <button
+                aria-label={`Add to Google Calendar for ${contextLabel}`}
+                className={styles.menuItem}
+                onClick={handleGoogleCalendar}
+                type='button'
+            >
                 Add to Google Calendar
             </button>
-            <button className={styles.menuItem} onClick={handleIcsDownload} type='button'>
+            <button
+                aria-label={`Add to Apple Calendar / Outlook (.ics) for ${contextLabel}`}
+                className={styles.menuItem}
+                onClick={handleIcsDownload}
+                type='button'
+            >
                 Add to Apple Calendar / Outlook (.ics)
             </button>
         </ControlDropdown>

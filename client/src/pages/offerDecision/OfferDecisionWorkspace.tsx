@@ -13,6 +13,7 @@ import { createDeleteAllOfferEvaluationsConfirmation } from '../../components/co
 import { createDeleteConfirmation } from '../../components/confirmation/deleteConfirmation';
 import { createDestructiveConfirmationButtonProps } from '../../components/confirmation/destructiveConfirmationButtonProps';
 import { toDatetimeLocalInputValue } from '../../helper/dateFormatter';
+import { getScrollBehavior } from '../../helper/scrollBehavior';
 import {
     ACTIVE_OFFER_DECISION_FILTERS,
     ARCHIVED_OFFER_DECISION_FILTERS,
@@ -337,7 +338,7 @@ const OfferDecisionWorkspace = ({
         if (viewMode === 'cards') {
             document
                 .getElementById(getEvaluationCardId(savedEvaluationJobId))
-                ?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
+                ?.scrollIntoView?.({ behavior: getScrollBehavior(), block: 'end' });
         }
         setSavedEvaluationJobId(undefined);
     }, [savedEvaluationJobId, viewMode]);

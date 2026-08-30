@@ -28,6 +28,7 @@ const JOB_STATUS_CARD_CLASS_MAP: Record<JobStatus, string> = {
 const ApplicationCard = (props: ApplicationCardProps) => {
     const { application, index, isDeleting, variant } = props;
     const applicationId = variant === 'job' ? application.job_id : application.archived_job_id;
+    const applicationContext = `${application.job_title} at ${application.company_name}`;
     const formattedApplicationDate = formatDate(application.application_date);
 
     return (
@@ -113,6 +114,7 @@ const ApplicationCard = (props: ApplicationCardProps) => {
 
                 {variant === 'job' && application.job_status === 'Interview' && (
                     <Link
+                        aria-label={`Add interview for ${applicationContext}`}
                         className={styles.navigationLink}
                         to={routes.addInterview}
                         state={
@@ -129,6 +131,7 @@ const ApplicationCard = (props: ApplicationCardProps) => {
 
                 {application.job_posting_url !== '' && (
                     <a
+                        aria-label={`View job posting for ${applicationContext}`}
                         className={`${styles.navigationLink} ${styles.externalLink}`}
                         href={application.job_posting_url}
                         rel='noreferrer noopener'
@@ -144,6 +147,9 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                 {variant === 'job' ? (
                     <>
                         <PrimaryButton
+                            aria-label={`${
+                                props.isEditingStatus ? 'Save changes to status' : 'Edit status'
+                            } for ${applicationContext}`}
                             isLoading={props.isUpdatingStatus}
                             variant='secondary'
                             onClick={() => props.onToggleStatusEditor(application)}
@@ -151,6 +157,7 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                             {props.isEditingStatus ? 'Save changes' : 'Edit status'}
                         </PrimaryButton>
                         <PrimaryButton
+                            aria-label={`Delete application for ${applicationContext}`}
                             isLoading={isDeleting}
                             variant='destructive'
                             onClick={() => props.onDelete(application.job_id)}
@@ -158,6 +165,7 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                             Delete
                         </PrimaryButton>
                         <PrimaryButton
+                            aria-label={`Archive application for ${applicationContext}`}
                             className={`${styles.archiveButton} ${!props.showArchive ? styles.archiveHidden : ''}`}
                             isLoading={props.isArchiving}
                             onClick={() => props.onArchive(application.job_id)}
@@ -169,6 +177,7 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                 ) : (
                     <>
                         <PrimaryButton
+                            aria-label={`Unarchive application for ${applicationContext}`}
                             isLoading={props.isUnarchiving}
                             variant='secondary'
                             onClick={() => props.onUnarchive(application.archived_job_id)}
@@ -176,6 +185,7 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                             Unarchive
                         </PrimaryButton>
                         <PrimaryButton
+                            aria-label={`Delete application for ${applicationContext}`}
                             isLoading={isDeleting}
                             variant='destructive'
                             onClick={() => props.onDelete(application.archived_job_id)}
@@ -208,7 +218,6 @@ const ApplicationCard = (props: ApplicationCardProps) => {
                     ) : (
                         <textarea
                             aria-label={`Notes for ${application.company_name}`}
-                            disabled
                             readOnly
                             value={
                                 !application.notes || application.notes.trim() === ''

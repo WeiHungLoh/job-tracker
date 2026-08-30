@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MdKeyboardArrowUp } from 'react-icons/md';
 import { useLocation } from 'react-router-dom';
+import { getScrollBehavior } from '../../helper/scrollBehavior';
 import { routes } from '../../routes';
 import styles from './PageScrollControls.module.css';
 
@@ -20,9 +21,6 @@ const PAGE_SCROLL_CONTROL_ROUTES = new Set<string>([
     routes.demoOfferDecisions,
     routes.demoArchivedOfferDecisions,
 ]);
-
-const getScrollBehavior = (): ScrollBehavior =>
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 
 const PageScrollControls = () => {
     const { pathname } = useLocation();

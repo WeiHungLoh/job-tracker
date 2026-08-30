@@ -113,7 +113,7 @@ describe('Archived job interview viewer flow', () => {
         expect(screen.getByText(/changi business park/i)).toBeInTheDocument();
         expect(screen.getByText(/hr/i)).toBeInTheDocument();
         expect(screen.getByRole('textbox', { name: 'Notes for ABC Pte Ltd' })).toHaveValue('Bring resume');
-        expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^Delete / })).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'More…' }));
         expect(screen.getByRole('button', { name: /delete all archived interviews/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Export filtered interviews as CSV' })).toBeInTheDocument();
@@ -133,8 +133,10 @@ describe('Archived job interview viewer flow', () => {
 
         const notes = await screen.findByRole('textbox', { name: 'Notes for ABC Pte Ltd' });
         expect(notes).toHaveValue('Bring resume');
-        expect(notes).toBeDisabled();
+        expect(notes).not.toBeDisabled();
         expect(notes).toHaveAttribute('readonly');
+        notes.focus();
+        expect(notes).toHaveFocus();
         await userEvent.click(screen.getByRole('button', { name: 'Display options' }));
         expect(screen.getByRole('switch', { name: 'Show notes' })).toBeChecked();
     });
@@ -152,9 +154,9 @@ describe('Archived job interview viewer flow', () => {
 
         const notes = within(interviews).getByRole('textbox', { name: 'Notes for ABC Pte Ltd' });
         expect(within(interviews).getByText('Notes')).toBeInTheDocument();
-        expect(notes).toBeDisabled();
+        expect(notes).not.toBeDisabled();
         expect(notes).toHaveAttribute('readonly');
-        expect(within(interviews).queryByRole('button', { name: 'Add to calendar' })).not.toBeInTheDocument();
+        expect(within(interviews).queryByRole('button', { name: / to calendar$/ })).not.toBeInTheDocument();
     });
 
     test('shows pinned archived interviews as read-only in list and board views', async () => {
@@ -207,7 +209,7 @@ describe('Archived job interview viewer flow', () => {
         // Simulates user confirming delete
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         // Simulates user clicking delete button and clicking confirm delete
-        await clickConfirmedAction(screen.getByRole('button', { name: 'Delete' }));
+        await clickConfirmedAction(screen.getByRole('button', { name: /^Delete / }));
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
@@ -369,7 +371,7 @@ describe('Archived job interview viewer flow', () => {
 
         await userEvent.click(within(interviews).getByText('Actions'));
         expect(actions).toHaveAttribute('open');
-        expect(within(interviews).getByRole('button', { name: 'Delete' }).parentElement?.className).toContain(
+        expect(within(interviews).getByRole('button', { name: /^Delete / }).parentElement?.className).toContain(
             'compactActions'
         );
         expect(fetch).toHaveBeenCalledTimes(1);

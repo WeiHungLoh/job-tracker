@@ -147,7 +147,7 @@ describe('Job interview viewer flow', () => {
         expect(screen.getByText(/changi business park/i)).toBeInTheDocument();
         expect(screen.getByText(/hr/i)).toBeInTheDocument();
         expect(screen.getByRole('textbox', { name: 'Notes for ABC Pte Ltd' })).toHaveValue('Bring resume');
-        expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^Delete / })).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Interview view' })).toBeInTheDocument();
         expect(screen.queryByRole('region', { name: 'Application board' })).not.toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: 'More…' }));
@@ -664,7 +664,7 @@ describe('Job interview viewer flow', () => {
         // Simulates user confirming delete
         mockConfirm.mockResolvedValueOnce({ confirmed: true });
         // Simulates user clicking delete button and clicking confirm delete
-        await clickConfirmedAction(screen.getByRole('button', { name: 'Delete' }));
+        await clickConfirmedAction(screen.getByRole('button', { name: /^Delete / }));
 
         await waitFor(() =>
             expect(mockConfirm).toHaveBeenCalledWith({
@@ -741,7 +741,7 @@ describe('Job interview viewer flow', () => {
         );
         expect(screen.getByText(/add interviews after creating a job application/i)).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'View applications' })).toHaveAttribute('href', '/application/view');
-        expect(screen.queryByRole('link', { name: 'Add interview' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /^Add interview for / })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
     });
 
