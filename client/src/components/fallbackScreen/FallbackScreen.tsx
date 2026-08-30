@@ -10,7 +10,7 @@ type FallbackContent = {
     graphicLabel: string;
     message: string;
     routeKind: 'application' | 'generic';
-    routeState: 'authenticationError' | 'moving' | 'notFound' | 'routeError';
+    routeState: 'authenticationError' | 'moving' | 'notFound' | 'preferencesError' | 'routeError';
     stages: readonly string[];
     title: string;
 };
@@ -70,6 +70,15 @@ const FALLBACK_CONTENT: Record<FallbackScreenVariant, FallbackContent> = {
         stages: APPLICATION_PIPELINE_STATUSES,
         title: 'Opening your tracker',
     },
+    preferencesError: {
+        actionLabel: 'Try again',
+        graphicLabel: 'Saved settings stopped at the Preferences checkpoint',
+        message: 'You’re signed in, but your display preferences aren’t available right now.',
+        routeKind: 'generic',
+        routeState: 'preferencesError',
+        stages: ['Signed in', 'Preferences', 'Ready'],
+        title: 'We couldn’t load your saved settings',
+    },
     routeError: {
         actionLabel: 'Reload page',
         graphicLabel: 'The page route is interrupted before Ready',
@@ -85,6 +94,7 @@ const ROUTE_STATE_STYLES: Record<FallbackContent['routeState'], string> = {
     authenticationError: styles.authenticationError,
     moving: styles.routeMoving,
     notFound: styles.notFound,
+    preferencesError: styles.preferencesError,
     routeError: styles.routeError,
 };
 

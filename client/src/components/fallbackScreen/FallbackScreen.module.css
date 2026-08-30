@@ -162,7 +162,8 @@
     vector-effect: non-scaling-stroke;
 }
 
-.authenticationError .routeActive {
+.authenticationError .routeActive,
+.preferencesError .routeActive {
     stroke-dasharray: 43 57;
 }
 
@@ -174,7 +175,8 @@
     stroke-dasharray: 78 22;
 }
 
-.authenticationError .ticket {
+.authenticationError .ticket,
+.preferencesError .ticket {
     transform: translate(151px, 40px) rotate(3deg);
 }
 
@@ -187,12 +189,14 @@
 }
 
 .authenticationError .errorMark,
+.preferencesError .errorMark,
 .routeError .routeBreak,
 .notFound .missingEnd {
     display: block;
 }
 
 .authenticationError .middleNode circle,
+.preferencesError .middleNode circle,
 .notFound .finalNode circle {
     opacity: 0;
 }

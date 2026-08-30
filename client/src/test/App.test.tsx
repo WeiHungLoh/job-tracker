@@ -285,6 +285,39 @@ describe('App routing and authentication behavior', () => {
         expect(fetch).toHaveBeenCalledTimes(4);
     });
 
+    test('shows a preferences retry state without telling an authenticated user their session failed', async () => {
+        let preferencesAvailable = false;
+        fetch.mockImplementation(async (url: string) => {
+            if (url.endsWith('/authentication/sessions/current')) {
+                return jsonResponse({ message: 'Authenticated user.' });
+            }
+            if (url.endsWith('/user-preferences')) {
+                return preferencesAvailable
+                    ? jsonResponse(mockPreferences)
+                    : jsonResponse({ message: 'Preferences are temporarily unavailable.' }, 400);
+            }
+            return response();
+        });
+
+        renderRoute('/application/add');
+
+        expect(
+            await screen.findByRole('heading', { name: 'We couldn’t load your saved settings' })
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('You’re signed in, but your display preferences aren’t available right now.')
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+        expect(screen.queryByText('Preferences are temporarily unavailable.')).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'We couldn’t confirm your session' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+
+        preferencesAvailable = true;
+        await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+        expect(await screen.findByLabelText(/company name/i)).toBeInTheDocument();
+    });
+
     test('renders only the fallback screen while authentication is pending', () => {
         fetch.mockReturnValueOnce(new Promise(() => undefined));
         renderRoute('/application/view');

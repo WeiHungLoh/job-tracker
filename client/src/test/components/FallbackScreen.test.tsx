@@ -45,6 +45,14 @@ describe('FallbackScreen', () => {
             stages: ['Sign in', 'Verify', 'Ready'],
         },
         {
+            variant: 'preferencesError' as const,
+            title: 'We couldn’t load your saved settings',
+            message: 'You’re signed in, but your display preferences aren’t available right now.',
+            action: 'Try again',
+            graphicLabel: 'Saved settings stopped at the Preferences checkpoint',
+            stages: ['Signed in', 'Preferences', 'Ready'],
+        },
+        {
             variant: 'routeError' as const,
             title: 'We couldn’t load this page',
             message: 'Reload the page to try again.',
@@ -117,7 +125,7 @@ describe('FallbackScreen', () => {
         expect(onSecondaryAction).toHaveBeenCalledOnce();
     });
 
-    test.each(['authenticationError', 'loading', 'notFound', 'pageLoading', 'routeError'] as const)(
+    test.each(['authenticationError', 'loading', 'notFound', 'pageLoading', 'preferencesError', 'routeError'] as const)(
         'uses and restores the Job Tracker document title for %s',
         (variant) => {
             document.title = 'Previous page';

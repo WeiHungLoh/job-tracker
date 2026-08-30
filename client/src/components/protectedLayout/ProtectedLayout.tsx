@@ -7,14 +7,11 @@ import { defaultConfirmOptions } from '../confirmation/defaultConfirmOptions';
 import type { UpdateUserPreferencesRequest, UserPreferences } from '../userPreferences/models';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
-import { useToast } from '../toast/ToastProvider';
-import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 import DeviceTimezoneNotice from '../deviceTimezoneNotice/DeviceTimezoneNotice';
 import PageScrollControls from '../pageScrollControls/PageScrollControls';
 
 const ProtectedLayout = () => {
     const api = useJobTrackerAPI();
-    const { showErrorToast } = useToast();
     const [preferences, setPreferences] = useState<UserPreferences | null>(null);
     const [preferencesError, setPreferencesError] = useState<boolean>(false);
     const preferenceUpdateQueue = useRef<Promise<void>>(Promise.resolve());
@@ -29,11 +26,10 @@ const ProtectedLayout = () => {
         setPreferencesError(false);
         try {
             await loadPreferences();
-        } catch (error) {
+        } catch {
             setPreferencesError(true);
-            showErrorToast(getErrorToastMessage(error, 'Unable to load user preferences. Please try again.'));
         }
-    }, [loadPreferences, showErrorToast]);
+    }, [loadPreferences]);
 
     const updatePreferences = useCallback(
         (updatedPreferences: UpdateUserPreferencesRequest): Promise<UserPreferences> => {
@@ -56,7 +52,7 @@ const ProtectedLayout = () => {
     }, [loadInitialPreferences]);
 
     if (preferencesError) {
-        return <FallbackScreen variant='authenticationError' onAction={() => void loadInitialPreferences()} />;
+        return <FallbackScreen variant='preferencesError' onAction={() => void loadInitialPreferences()} />;
     }
 
     if (!preferences) {

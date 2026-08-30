@@ -1,4 +1,10 @@
-export type FallbackScreenVariant = 'authenticationError' | 'loading' | 'notFound' | 'pageLoading' | 'routeError';
+export type FallbackScreenVariant =
+    | 'authenticationError'
+    | 'loading'
+    | 'notFound'
+    | 'pageLoading'
+    | 'preferencesError'
+    | 'routeError';
 
 export type FallbackScreenProps = {
     actionLabel?: string;
