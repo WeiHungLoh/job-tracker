@@ -1093,23 +1093,28 @@ describe('Rose Ledger visual contract', () => {
         );
         expect(narrowRules).toMatch(/\.board\s*\{[^}]*overflow:\s*visible;[^}]*padding-right:\s*var\(--spaceCard\);/s);
         expect(narrowRules).toMatch(/\.boardDeleteButton\s*\{[^}]*margin-right:\s*0;/s);
-        expect(wideRules).not.toContain('.listNotes textarea:focus-visible');
-
         const boardActionLinkRules = interviewCard.match(/\.boardActionLink\s*\{([^}]*)\}/)?.[1] ?? '';
         expect(boardActionLinkRules).not.toContain('margin-top');
         expect(boardActionLinkRules).not.toContain('margin-bottom');
-
-        const interviewBoardNotesRules = interviewCard.match(/\.boardNotesField textarea\s*\{([^}]*)\}/)?.[1] ?? '';
-        expect(interviewBoardNotesRules).toContain('outline: none;');
-        expect(interviewCard).not.toContain('.boardNotesField textarea:focus');
     });
 
-    it('keeps application and interview Board notes free of focus highlighting', () => {
+    it('keeps notes keyboard focus visible across application and interview layouts', () => {
+        const globalCss = readSource('src/index.css');
+        const applicationCard = readSource('src/pages/application/ApplicationCard.module.css');
         const applicationBoard = readSource('src/pages/application/applicationBoard/ApplicationBoard.module.css');
-        const applicationBoardNotesRules = applicationBoard.match(/\.notesField textarea\s*\{([^}]*)\}/)?.[1] ?? '';
+        const interviewCard = readSource('src/pages/interview/InterviewCard.module.css');
 
-        expect(applicationBoardNotesRules).toContain('outline: none;');
-        expect(applicationBoard).not.toContain('.notesField textarea:focus');
+        expect(globalCss).toContain('--colorNotesFocusOutline: #9b7000;');
+        expect(globalCss).toContain('--colorNotesFocusOutline: #f0c85a;');
+        expect(applicationCard).toMatch(
+            /\.notes textarea:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorNotesFocusOutline\);[^}]*outline-offset:\s*2px;/s
+        );
+        expect(applicationBoard).toMatch(
+            /\.notesField textarea:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorNotesFocusOutline\);[^}]*outline-offset:\s*2px;/s
+        );
+        expect(interviewCard).toMatch(
+            /\.listNotes textarea:focus-visible,\s*\.boardNotesField textarea:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--colorNotesFocusOutline\);[^}]*outline-offset:\s*2px;/s
+        );
     });
 
     it('freezes the other responsive layout boundaries', () => {

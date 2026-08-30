@@ -119,6 +119,12 @@
     resize: vertical;
 }
 
+.listNotes textarea:focus-visible,
+.boardNotesField textarea:focus-visible {
+    outline: 2px solid var(--colorNotesFocusOutline);
+    outline-offset: 2px;
+}
+
 .boardNotesField .notesEditor textarea {
     padding-bottom: 36px;
 }

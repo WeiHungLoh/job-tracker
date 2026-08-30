@@ -157,6 +157,7 @@
     /* Notes */
     --colorNotesBg: #fff7c8;
     --colorNotesBorder: #d5a82f;
+    --colorNotesFocusOutline: #9b7000;
     --colorNotesText: #4f4527;
     --colorNoteSavingText: #0b57d0;
     --colorNoteSavedText: #155724;
@@ -319,6 +320,7 @@
     /* Notes */
     --colorNotesBg: #3b331d;
     --colorNotesBorder: #d1a93e;
+    --colorNotesFocusOutline: #f0c85a;
     --colorNotesText: #f4e7bd;
     --colorNoteSavingText: #6ea8fe;
     --colorNoteSavedText: #75b798;
