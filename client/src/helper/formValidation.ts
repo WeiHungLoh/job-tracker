@@ -14,6 +14,7 @@ export const FIELD_MAX_LENGTHS = {
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 64;
 export const PASSWORD_MAX_BYTES = 72;
+export const EMAIL_MAX_LENGTH = 254;
 
 const HOSTNAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.[a-z0-9]+(?:-[a-z0-9]+)*)+$/i;
 

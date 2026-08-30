@@ -11,7 +11,7 @@ import styles from '../Authentication.module.css';
 import { useJobTrackerAPI } from '../../../api/useJobTrackerAPI';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { getErrorToastMessage } from '../../../helper/getErrorToastMessage';
-import { normalizeEmail } from '../../../helper/formValidation';
+import { EMAIL_MAX_LENGTH, normalizeEmail } from '../../../helper/formValidation';
 import type { AuthenticationNavigationState } from '../models';
 
 const SignIn = () => {
@@ -74,6 +74,7 @@ const SignIn = () => {
                             type='email'
                             autoComplete='email'
                             disabled={isPending}
+                            maxLength={EMAIL_MAX_LENGTH}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required

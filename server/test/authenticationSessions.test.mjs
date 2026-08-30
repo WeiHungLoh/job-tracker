@@ -118,7 +118,7 @@ test('runs expired-session cleanup once during server startup', async () => {
     assert.equal(source.match(/deleteExpiredAuthenticationSessions\(\)/g)?.length, 1);
 });
 
-test('creates matching session-bound JWT payloads and rejects invalid session IDs', () => {
+test('creates matching session-bound JWT payloads and rejects invalid session payloads', () => {
     const accessToken = createAccessToken(TEST_USER, process.env.ACCESS_TOKEN_SECRET);
     const refreshToken = createRefreshToken(TEST_USER, process.env.REFRESH_TOKEN_SECRET);
     const accessPayload = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
@@ -135,6 +135,14 @@ test('creates matching session-bound JWT payloads and rejects invalid session ID
                 process.env.ACCESS_TOKEN_SECRET
             ),
         /session/i
+    );
+    assert.throws(
+        () =>
+            createAccessToken(
+                { id: TEST_USER.id, email: `${'a'.repeat(249)}@b.com`, sessionId: TEST_SESSION_ID },
+                process.env.ACCESS_TOKEN_SECRET
+            ),
+        /payload/i
     );
 });
 

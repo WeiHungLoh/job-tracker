@@ -129,6 +129,21 @@ describe('User sign in flow', () => {
         expect(await screen.findByText(returnTo)).toBeInTheDocument();
     });
 
+    test('limits the email field to 254 characters', async () => {
+        const oversizedEmail = `${'a'.repeat(249)}@b.com`;
+
+        render(
+            <MemoryRouter>
+                <SignIn />
+            </MemoryRouter>
+        );
+
+        await openSignInPanel();
+        await userEvent.type(screen.getByLabelText(/email/i), oversizedEmail);
+
+        expect(screen.getByLabelText(/email/i)).toHaveValue(oversizedEmail.slice(0, 254));
+    });
+
     test('locks account access while sign in is pending', async () => {
         let resolveSignIn: ((value: Response) => void) | undefined;
 

@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { getErrorToastMessage } from '../../../helper/getErrorToastMessage';
 import {
+    EMAIL_MAX_LENGTH,
     getPasswordValidationError,
     normalizeEmail,
     PASSWORD_MAX_BYTES,
@@ -98,6 +99,7 @@ const SignUp = () => {
                             type='email'
                             autoComplete='email'
                             disabled={isPending}
+                            maxLength={EMAIL_MAX_LENGTH}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required

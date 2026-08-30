@@ -29,6 +29,7 @@ import {
     getPasswordValidationError,
     isCollectionViewMode,
     isValidDate,
+    isValidEmail,
     isValidHttpURL,
     normalizeEmail,
     toInterviewTimeFilterQueryValues,
@@ -220,6 +221,8 @@ test('fresh tables enforce the same bounded text and date inputs as the API', as
     assert.ok(interviewsTable);
 
     assert.match(usersTable, /users_email_check[\s\S]*?LOWER\(BTRIM\(email\)\)/);
+    assert.match(usersTable, /users_email_length_check[\s\S]*?EMAIL_MAX_LENGTH/);
+    assert.doesNotMatch(createTablesSource, /ALTER TABLE users/);
     assert.match(jobApplicationsTable, /job_applications_company_name_check[\s\S]*?FIELD_MAX_LENGTHS\.companyName/);
     assert.match(jobApplicationsTable, /job_applications_job_title_check[\s\S]*?FIELD_MAX_LENGTHS\.jobTitle/);
     assert.match(jobApplicationsTable, /job_applications_application_date_range_check/);
@@ -1578,9 +1581,16 @@ test('validates and trims shared text and URL inputs', () => {
     assert.equal(isValidHttpURL('javascript:alert(1)'), false);
 });
 
-test('normalizes email and validates the password policy', () => {
+test('normalizes email and validates the email and password policies', () => {
+    const maximumLengthEmail = `${'a'.repeat(248)}@b.com`;
+    const oversizedEmail = `${'a'.repeat(249)}@b.com`;
+
     assert.equal(normalizeEmail('  User@Example.COM  '), 'user@example.com');
     assert.equal(normalizeEmail(null), undefined);
+    assert.equal(maximumLengthEmail.length, 254);
+    assert.equal(oversizedEmail.length, 255);
+    assert.equal(isValidEmail(maximumLengthEmail), true);
+    assert.equal(isValidEmail(oversizedEmail), false);
     assert.equal(
         getPasswordValidationError('x'.repeat(PASSWORD_MIN_LENGTH - 1)),
         'Password must be at least 8 characters.'
@@ -1609,6 +1619,29 @@ test('rejects a short sign-up password before accessing the database', async () 
     assert.deepEqual(await response.json(), { message: 'Password must be at least 8 characters.' });
 });
 
+test('rejects an oversized sign-up email before accessing the database', async () => {
+    const originalConnect = pool.connect;
+    let databaseConnections = 0;
+    pool.connect = async () => {
+        databaseConnections += 1;
+        throw new Error('Unexpected database access');
+    };
+
+    try {
+        const response = await fetch(`${baseUrl}/authentication/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: `${'a'.repeat(249)}@b.com`, password: 'valid-password' }),
+        });
+
+        assert.equal(response.status, 422);
+        assert.deepEqual(await response.json(), { message: 'A valid email is required.' });
+        assert.equal(databaseConnections, 0);
+    } finally {
+        pool.connect = originalConnect;
+    }
+});
+
 test('validates calendar dates strictly', () => {
     assert.equal(isValidDate('2024-02-29T10:00:00.000Z'), true);
     assert.equal(isValidDate('2025-02-29T10:00:00.000Z'), false);
@@ -1633,6 +1666,29 @@ test('returns the generic authentication error for invalid credentials', async (
 
     assert.equal(response.status, 401);
     assert.deepEqual(await response.json(), { message: 'Invalid email or password.' });
+});
+
+test('rejects an oversized sign-in email before accessing the database', async () => {
+    const originalQuery = pool.query;
+    let databaseQueries = 0;
+    pool.query = async () => {
+        databaseQueries += 1;
+        return { rows: [] };
+    };
+
+    try {
+        const response = await fetch(`${baseUrl}/authentication/sessions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: `${'a'.repeat(249)}@b.com`, password: 'password' }),
+        });
+
+        assert.equal(response.status, 401);
+        assert.deepEqual(await response.json(), { message: 'Invalid email or password.' });
+        assert.equal(databaseQueries, 0);
+    } finally {
+        pool.query = originalQuery;
+    }
 });
 
 test('returns 503 when authentication configuration is unavailable', async () => {

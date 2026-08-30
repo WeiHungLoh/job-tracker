@@ -1,5 +1,6 @@
 import type { AuthenticatedUser } from './models.js';
 import { ACCESS_TOKEN_DURATION_SECONDS, REFRESH_TOKEN_DURATION_SECONDS } from '../config/auth.js';
+import { EMAIL_MAX_LENGTH } from '../config/validation.js';
 import jwt from 'jsonwebtoken';
 
 const AUTHENTICATION_TOKEN_ALGORITHM = 'HS256';
@@ -18,6 +19,7 @@ const isValidAuthenticatedUser = (user: {
         user.id > 0 &&
         typeof user.email === 'string' &&
         user.email.length > 0 &&
+        user.email.length <= EMAIL_MAX_LENGTH &&
         typeof user.sessionId === 'string' &&
         SESSION_ID_PATTERN.test(user.sessionId)
     );

@@ -14,6 +14,7 @@ import {
 } from '../models.js';
 import {
     DEFAULT_INTERVIEW_DURATION_MINUTES,
+    EMAIL_MAX_LENGTH,
     FIELD_MAX_LENGTHS,
     INTERVIEW_DURATION_MINUTES_MAX,
     INTERVIEW_DURATION_MINUTES_MIN,
@@ -68,7 +69,9 @@ const createTables = async (): Promise<void> => {
                 CHECK (
                     email = LOWER(BTRIM(email))
                     AND email ~ '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$'
-                ),
+                )
+                CONSTRAINT users_email_length_check
+                CHECK (CHAR_LENGTH(email) <= ${EMAIL_MAX_LENGTH}),
             hashed_password TEXT NOT NULL
                 CONSTRAINT users_hashed_password_check
                 CHECK (CHAR_LENGTH(hashed_password) > 0),

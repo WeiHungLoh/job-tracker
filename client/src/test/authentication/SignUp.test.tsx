@@ -171,6 +171,22 @@ describe('User sign up flow', () => {
         expect(await screen.findByText(returnTo)).toBeInTheDocument();
     });
 
+    test('limits the email field to 254 characters', async () => {
+        const oversizedEmail = `${'a'.repeat(249)}@b.com`;
+        mockUnauthenticatedSession({ ok: false, status: 401 });
+
+        render(
+            <MemoryRouter initialEntries={['/sign-up']}>
+                <SignUp />
+            </MemoryRouter>
+        );
+
+        await openSignUpPanel();
+        await userEvent.type(screen.getByLabelText(/email/i), oversizedEmail);
+
+        expect(screen.getByLabelText(/email/i)).toHaveValue(oversizedEmail.slice(0, 254));
+    });
+
     test('clears the delayed sign-in redirect when the page unmounts', async () => {
         const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
         const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');

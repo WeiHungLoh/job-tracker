@@ -28,6 +28,7 @@ import {
     OFFER_DECISION_VALUE_MIN,
     OFFER_DETAILS_MAX_LENGTHS,
     OFFER_MONTHLY_BASE_SALARY_MAX,
+    EMAIL_MAX_LENGTH,
     PASSWORD_MAX_BYTES,
     PASSWORD_MAX_LENGTH,
     PASSWORD_MIN_LENGTH,
@@ -241,7 +242,7 @@ export const isValidHttpURL = (value: string): boolean => {
 };
 
 export const isValidEmail = (value: unknown): value is string =>
-    typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    typeof value === 'string' && value.length <= EMAIL_MAX_LENGTH && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 export const isJobStatus = (value: unknown): value is JobStatus =>
     typeof value === 'string' && JOB_STATUSES.includes(value as JobStatus);

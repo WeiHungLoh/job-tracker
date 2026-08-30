@@ -34,3 +34,4 @@ export const NEEDS_ATTENTION_LIMITS = {
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 64;
 export const PASSWORD_MAX_BYTES = 72;
+export const EMAIL_MAX_LENGTH = 254;
