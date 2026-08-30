@@ -176,6 +176,10 @@ describe('OfferDecisionPage', () => {
         mocks.updateStatus.mockResolvedValue(null);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     test('requests the saved active filters initially', async () => {
         render(<OfferDecisionPage archived={false} />, {
             initialPreferences: { offer_decision_filters: ['Previous Evaluations'] },
@@ -183,6 +187,41 @@ describe('OfferDecisionPage', () => {
 
         expect(await screen.findByRole('heading', { name: 'Previous Evaluations' })).toBeInTheDocument();
         expect(mocks.getActive).toHaveBeenCalledWith({ filters: ['Previous Evaluations'] });
+    });
+
+    test('moves a loaded evaluated offer into the expired view when its deadline passes', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2030-01-01T10:00:00.000Z'));
+        const endingOffer = {
+            ...workspaceData.applications[0],
+            company_name: 'Deadline Boundary',
+            evaluation: {
+                ...createEvaluation(11),
+                details: {
+                    ...details,
+                    decision_deadline: '2030-01-01T10:00:20.000Z',
+                },
+            },
+        };
+        mocks.getActive.mockImplementation(async ({ filters }: { filters: string[] }) => ({
+            applications:
+                filters.includes('Evaluated Offers') && filters.includes('Expired Evaluated Offers')
+                    ? [endingOffer]
+                    : [],
+        }));
+
+        render(<OfferDecisionPage archived={false} />, {
+            initialPreferences: { offer_decision_filters: ['Expired Evaluated Offers'] },
+        });
+        await act(async () => vi.advanceTimersByTimeAsync(0));
+
+        expect(screen.queryByRole('article', { name: 'Deadline Boundary Engineer' })).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'No offer comparisons match your filters' })).toBeInTheDocument();
+
+        await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+        expect(screen.getByRole('heading', { name: 'Expired Evaluated Offers' })).toBeInTheDocument();
+        expect(screen.getByRole('article', { name: 'Deadline Boundary Engineer' })).toBeInTheDocument();
     });
 
     test('persists active and archived Table modes without refetching either workspace', async () => {
@@ -420,7 +459,7 @@ describe('OfferDecisionPage', () => {
 
         await waitFor(() =>
             expect(mocks.getActive).toHaveBeenCalledWith({
-                filters: ['Previous Evaluations', 'Evaluated Offers'],
+                filters: ['Previous Evaluations', 'Evaluated Offers', 'Expired Evaluated Offers'],
             })
         );
         await waitFor(() =>
@@ -607,13 +646,15 @@ describe('OfferDecisionPage', () => {
             ...workspaceData.applications[1],
             company_name: 'Latest Offer Result',
         };
-        mocks.getActive.mockImplementation(async ({ filters }: { filters: string[] }) => {
-            if (filters.length === 3 && !filters.includes('Offers to Evaluate')) {
+        let requestCount = 0;
+        mocks.getActive.mockImplementation(async () => {
+            requestCount += 1;
+            if (requestCount === 2) {
                 return new Promise((resolve) => {
                     resolveOlderFilter = resolve;
                 });
             }
-            if (filters.length === 2) {
+            if (requestCount === 3) {
                 return { applications: [latestApplication] };
             }
             return workspaceData;

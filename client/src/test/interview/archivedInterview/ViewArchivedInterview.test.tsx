@@ -67,6 +67,10 @@ describe('Archived job interview viewer flow', () => {
         });
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     test('aborts its initial archived-interview request when unmounted', async () => {
         const pendingResponse = new Promise<never>(() => undefined);
         fetch.mockImplementation(async (url: string) => {
@@ -392,13 +396,19 @@ describe('Archived job interview viewer flow', () => {
         expect(fetch).toHaveBeenCalledTimes(1);
     });
 
-    test('requests saved archived time filters initially and trusts the server response', async () => {
-        const serverFilteredInterview = {
+    test('loads both archived time buckets initially and applies the saved filter locally', async () => {
+        const pastInterview = {
             ...mockInterview,
-            company_name: 'Server Filtered Archived Company',
+            company_name: 'Past Archived Company',
+            interview_date: '2020-01-01T00:00:00.000Z',
+        };
+        const futureInterview = {
+            ...mockInterview,
+            archived_interview_id: 2,
+            company_name: 'Future Archived Company',
             interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         };
-        fetch.mockResolvedValue(response([serverFilteredInterview]));
+        fetch.mockResolvedValue(response([futureInterview, pastInterview]));
 
         render(
             <MemoryRouter>
@@ -407,13 +417,43 @@ describe('Archived job interview viewer flow', () => {
             { initialPreferences: { archived_interview_time_filters: ['Past Interviews'] } }
         );
 
-        expect(
-            await screen.findByRole('article', { name: 'Server Filtered Archived Company interview' })
-        ).toBeInTheDocument();
+        expect(await screen.findByRole('article', { name: 'Past Archived Company interview' })).toBeInTheDocument();
+        expect(screen.queryByRole('article', { name: 'Future Archived Company interview' })).not.toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(
-            `${import.meta.env.VITE_API_URL}/archived-job-interviews?timeFilters=Past+Interviews`,
+            `${
+                import.meta.env.VITE_API_URL
+            }/archived-job-interviews?timeFilters=Upcoming+Interviews&timeFilters=Past+Interviews`,
             { method: 'GET', signal: expect.any(AbortSignal) }
         );
+    });
+
+    test('adds an interview to the past view when it ends while the page remains open', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2030-01-01T10:00:00.000Z'));
+        const endingInterview = {
+            ...mockInterview,
+            company_name: 'Archived Boundary Company',
+            interview_date: '2030-01-01T09:59:20.000Z',
+            interview_duration_minutes: 1,
+        };
+        fetch.mockImplementation(async (url: string) =>
+            response(getTimeFilters(url).length === 2 ? [endingInterview] : [])
+        );
+
+        render(
+            <MemoryRouter>
+                <ViewArchivedInterview />
+            </MemoryRouter>,
+            { initialPreferences: { archived_interview_time_filters: ['Past Interviews'] } }
+        );
+        await act(async () => vi.advanceTimersByTimeAsync(0));
+
+        expect(screen.queryByRole('article', { name: 'Archived Boundary Company interview' })).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'No interviews match your filters' })).toBeInTheDocument();
+
+        await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+        expect(screen.getByRole('article', { name: 'Archived Boundary Company interview' })).toBeInTheDocument();
     });
 
     test('fetches archived interviews before saving each changed selection', async () => {
@@ -421,7 +461,7 @@ describe('Archived job interview viewer flow', () => {
         const filteredInterview = {
             ...mockInterview,
             company_name: 'Filtered Archived Response',
-            interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            interview_date: '2020-01-01T00:00:00.000Z',
         };
         const updatePreferences = vi.fn(async (updates: UpdateUserPreferencesRequest) => {
             requestOrder.push('preference');
@@ -430,8 +470,10 @@ describe('Archived job interview viewer flow', () => {
                 ...updates,
             };
         });
-        fetch.mockImplementation(async (url: string) => {
-            if (getTimeFilters(url).join(',') === 'Past Interviews') {
+        let interviewRequestCount = 0;
+        fetch.mockImplementation(async () => {
+            interviewRequestCount += 1;
+            if (interviewRequestCount === 2) {
                 requestOrder.push('filtered-get');
                 return response([filteredInterview]);
             }
@@ -458,8 +500,10 @@ describe('Archived job interview viewer flow', () => {
 
     test('shows the archived skeleton during a filter request without disabling rapid changes', async () => {
         let resolveFilter: (value: ReturnType<typeof response>) => void = () => undefined;
-        fetch.mockImplementation(async (url: string) => {
-            if (getTimeFilters(url).join(',') === 'Past Interviews') {
+        let interviewRequestCount = 0;
+        fetch.mockImplementation(async () => {
+            interviewRequestCount += 1;
+            if (interviewRequestCount === 2) {
                 return new Promise((resolve) => {
                     resolveFilter = resolve;
                 });
@@ -478,7 +522,16 @@ describe('Archived job interview viewer flow', () => {
 
         expect(screen.getAllByRole('status', { name: 'Loading results' })).toHaveLength(2);
         expect(screen.getByRole('button', { name: 'Filter by' })).toBeEnabled();
-        await act(async () => resolveFilter(response([])));
+        await act(async () =>
+            resolveFilter(
+                response([
+                    {
+                        ...mockInterview,
+                        interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                    },
+                ])
+            )
+        );
         expect(await screen.findByRole('heading', { name: 'No interviews match your filters' })).toBeInTheDocument();
     });
 
@@ -507,15 +560,20 @@ describe('Archived job interview viewer flow', () => {
     test('ignores an older archived filter response after a newer selection finishes', async () => {
         let resolveOlderFilter: (value: ReturnType<typeof response>) => void = () => undefined;
         const olderInterview = { ...mockInterview, company_name: 'Older Archived Result' };
-        const latestInterview = { ...mockInterview, company_name: 'Latest Archived Result' };
-        fetch.mockImplementation(async (url: string) => {
-            const timeFilters = getTimeFilters(url).join(',');
-            if (timeFilters === 'Past Interviews') {
+        const latestInterview = {
+            ...mockInterview,
+            company_name: 'Latest Archived Result',
+            interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        };
+        let interviewRequestCount = 0;
+        fetch.mockImplementation(async () => {
+            interviewRequestCount += 1;
+            if (interviewRequestCount === 2) {
                 return new Promise((resolve) => {
                     resolveOlderFilter = resolve;
                 });
             }
-            if (timeFilters === 'Upcoming Interviews') {
+            if (interviewRequestCount === 3) {
                 return response([latestInterview]);
             }
             return response([mockInterview]);

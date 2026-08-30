@@ -66,6 +66,7 @@ import {
     getOfferStatusActions,
     openOfferDeadlineInGoogleCalendar,
 } from './offerEvaluationActions';
+import useCurrentTime from '../../hooks/useCurrentTime';
 
 type DraftEvaluations = Record<number, OfferEvaluation>;
 type EvaluationErrors = Record<number, OfferEvaluationFormErrors>;
@@ -241,6 +242,7 @@ const OfferDecisionWorkspace = ({
     targetOfferJobId,
 }: OfferDecisionWorkspaceProps) => {
     const confirm = useConfirm();
+    const currentTime = useCurrentTime();
     const { preferences, updatePreferences } = useUserPreferences();
     const { showErrorToast } = useToast();
     const filterOptions = readOnly ? ARCHIVED_OFFER_DECISION_FILTERS : ACTIVE_OFFER_DECISION_FILTERS;
@@ -280,7 +282,7 @@ const OfferDecisionWorkspace = ({
     currentHighlightSurfaceRef.current = currentHighlightSurface;
     const processedTargetOfferJobIdRef = useRef<number | undefined>(undefined);
 
-    const groups = groupOfferDecisionApplications(data.applications);
+    const groups = groupOfferDecisionApplications(data.applications, currentTime);
     const offersToEvaluate = groups['Offers to Evaluate'];
     const evaluatedOffers = groups['Evaluated Offers'];
     const expiredEvaluatedOffers = groups['Expired Evaluated Offers'];

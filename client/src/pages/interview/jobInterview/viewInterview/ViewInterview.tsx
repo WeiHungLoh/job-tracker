@@ -28,7 +28,6 @@ import { scrollAndHighlight } from '../../../../helper/highlightElement';
 import CheckboxFilter from '../../../../components/activityControls/checkboxFilter/CheckboxFilter';
 import {
     filterAndSortInterviews,
-    getUpcomingInterviews,
     INTERVIEW_TIME_FILTERS,
     type InterviewTimeFilter,
 } from '../../../../helper/interviewTiming';
@@ -41,17 +40,11 @@ import { FIELD_MAX_LENGTHS } from '../../../../helper/formValidation';
 import DisplayOptions from '../../../../components/activityControls/displayOptions/DisplayOptions';
 import ToggleButton from '../../../../components/toggleButton/ToggleButton';
 
-type InterviewFilterResult = {
-    interviews: JobInterview[];
-    upcomingInterviews?: JobInterview[];
-};
-
 const ViewInterview = () => {
     const api = useJobTrackerAPI();
     const currentTime = useCurrentTime();
     const { preferences, updatePreferences } = useUserPreferences();
     const [interviews, setInterviews] = useState<JobInterview[]>([]);
-    const [upcomingInterviews, setUpcomingInterviews] = useState<JobInterview[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isFilteringInterviews, setIsFilteringInterviews] = useState<boolean>(false);
     const [isDeletingAll, setIsDeletingAll] = useState(false);
@@ -81,7 +74,7 @@ const ViewInterview = () => {
     const confirm = useConfirm();
     const navigate = useNavigate();
     const { showErrorToast, showSuccessToast } = useToast();
-    const filterRequest = useFilterRequest<InterviewFilterResult>();
+    const filterRequest = useFilterRequest<JobInterview[]>();
     const saveInterviewNotes = useCallback(
         async (interviewId: number, editedNotes: string) => {
             await api.interview.updateNotes({ interviewId, notes: editedNotes });
@@ -90,7 +83,6 @@ const ViewInterview = () => {
                     ? { ...interview, interview_notes: editedNotes.trim() }
                     : interview;
             setInterviews((current) => current.map(updateNotes));
-            setUpcomingInterviews((current) => current.map(updateNotes));
         },
         [api.interview]
     );
@@ -110,9 +102,13 @@ const ViewInterview = () => {
     isAutoScrollEnabledRef.current = isAutoScrollEnabled;
     const selectedTimeFilters = preferences.interview_time_filters;
     const isBoardView = viewMode === 'board';
-    const csvData = useMemo(() => createInterviewCsvData(interviews), [interviews]);
+    const displayedInterviews = useMemo(
+        () => filterAndSortInterviews(interviews, selectedTimeFilters, currentTime),
+        [currentTime, interviews, selectedTimeFilters]
+    );
+    const csvData = useMemo(() => createInterviewCsvData(displayedInterviews), [displayedInterviews]);
     const { exportUpcomingInterviews, upcomingInterviewCount } = useBulkInterviewCalendarExport(
-        upcomingInterviews,
+        interviews,
         currentTime
     );
 
@@ -147,28 +143,22 @@ const ViewInterview = () => {
         setIsFilteringInterviews(true);
 
         try {
-            const filteredInterviews = await api.interview.listInterviews({ timeFilters });
+            const fetchedInterviews = await api.interview.listInterviews({
+                timeFilters: [...INTERVIEW_TIME_FILTERS],
+            });
             if (!filterRequest.isLatestRequest(requestId)) {
                 return true;
             }
 
             await updatePreferences({ interview_time_filters: timeFilters });
             const normalizedInterviews = filterAndSortInterviews(
-                Array.isArray(filteredInterviews) ? filteredInterviews : [],
+                Array.isArray(fetchedInterviews) ? fetchedInterviews : [],
                 INTERVIEW_TIME_FILTERS,
                 currentTime
             );
-            const savedResult = filterRequest.saveResult(requestId, {
-                interviews: normalizedInterviews,
-                ...(timeFilters.includes('Upcoming Interviews')
-                    ? { upcomingInterviews: getUpcomingInterviews(normalizedInterviews, currentTime) }
-                    : {}),
-            });
-            if (savedResult) {
-                setInterviews(savedResult.interviews);
-                if (savedResult.upcomingInterviews) {
-                    setUpcomingInterviews(savedResult.upcomingInterviews);
-                }
+            const savedInterviews = filterRequest.saveResult(requestId, normalizedInterviews);
+            if (savedInterviews) {
+                setInterviews(savedInterviews);
             }
 
             return true;
@@ -177,12 +167,9 @@ const ViewInterview = () => {
                 return true;
             }
 
-            const savedResult = filterRequest.failRequest(requestId);
-            if (savedResult) {
-                setInterviews(savedResult.interviews);
-                if (savedResult.upcomingInterviews) {
-                    setUpcomingInterviews(savedResult.upcomingInterviews);
-                }
+            const savedInterviews = filterRequest.failRequest(requestId);
+            if (savedInterviews) {
+                setInterviews(savedInterviews);
             }
             showErrorToast(getErrorToastMessage(error, 'Unable to filter interviews. Please try again.'));
             return false;
@@ -198,13 +185,9 @@ const ViewInterview = () => {
         const controller = new AbortController();
 
         const fetchInterviews = async () => {
-            const initialTimeFilters = dashboardInterviewIdRef.current
-                ? [...INTERVIEW_TIME_FILTERS]
-                : selectedTimeFilters;
-
             try {
                 const fetchedInterviews = await api.interview.listInterviews(
-                    { timeFilters: initialTimeFilters },
+                    { timeFilters: [...INTERVIEW_TIME_FILTERS] },
                     { signal: controller.signal }
                 );
                 const normalizedInterviews = filterAndSortInterviews(
@@ -216,36 +199,6 @@ const ViewInterview = () => {
                     dashboardInterviewsRef.current = normalizedInterviews;
                 } else if (isActive && !dashboardViewUpdateFailedRef.current) {
                     setInterviews(normalizedInterviews);
-                }
-
-                if (initialTimeFilters.includes('Upcoming Interviews')) {
-                    if (isActive) {
-                        setUpcomingInterviews(getUpcomingInterviews(normalizedInterviews, currentTime));
-                    }
-                } else {
-                    void api.interview
-                        .listInterviews({ timeFilters: ['Upcoming Interviews'] }, { signal: controller.signal })
-                        .then((fetchedUpcomingInterviews) => {
-                            if (isActive) {
-                                setUpcomingInterviews(
-                                    filterAndSortInterviews(
-                                        Array.isArray(fetchedUpcomingInterviews) ? fetchedUpcomingInterviews : [],
-                                        ['Upcoming Interviews'],
-                                        currentTime
-                                    )
-                                );
-                            }
-                        })
-                        .catch((error: unknown) => {
-                            if (isActive) {
-                                showErrorToast(
-                                    getErrorToastMessage(
-                                        error,
-                                        'Unable to load upcoming interviews for calendar export. Please try again.'
-                                    )
-                                );
-                            }
-                        });
                 }
             } catch (error) {
                 if (isActive && !isAbortError(error)) {
@@ -292,7 +245,7 @@ const ViewInterview = () => {
                 dashboardViewUpdateFailedRef.current = true;
                 try {
                     const restoredInterviews = await api.interview.listInterviews({
-                        timeFilters: selectedTimeFilters,
+                        timeFilters: [...INTERVIEW_TIME_FILTERS],
                     });
                     setInterviews(
                         filterAndSortInterviews(
@@ -337,13 +290,13 @@ const ViewInterview = () => {
         }
 
         const targetId = String(interviewId);
-        if (interviews.some((interview) => interview.interview_id === interviewId)) {
+        if (displayedInterviews.some((interview) => interview.interview_id === interviewId)) {
             scrollAndHighlight(targetId, styles.highlighted, interviewHighlightTimeout.current);
         }
 
         dashboardInterviewIdRef.current = null;
         navigate(location.pathname, { replace: true, state: null });
-    }, [interviews, isLoading, location.pathname, navigate, selectedTimeFilters, viewMode]);
+    }, [displayedInterviews, isLoading, location.pathname, navigate, selectedTimeFilters, viewMode]);
 
     useEffect(() => {
         const highlightTimeouts = interviewHighlightTimeout.current;
@@ -364,9 +317,6 @@ const ViewInterview = () => {
             try {
                 await api.interview.deleteInterview({ interviewId });
                 setInterviews((current) => current.filter((interview) => interview.interview_id !== interviewId));
-                setUpcomingInterviews((current) =>
-                    current.filter((interview) => interview.interview_id !== interviewId)
-                );
                 showSuccessToast('Interview deleted.');
             } finally {
                 stopDeletingInterview(interviewId);
@@ -391,7 +341,6 @@ const ViewInterview = () => {
 
             if (summary.interview_count === 0) {
                 setInterviews([]);
-                setUpcomingInterviews([]);
                 return;
             }
 
@@ -405,7 +354,6 @@ const ViewInterview = () => {
 
             await api.interview.deleteAllInterviews();
             setInterviews([]);
-            setUpcomingInterviews([]);
             showSuccessToast('Interviews deleted.');
         } catch (error) {
             showErrorToast(
@@ -431,11 +379,6 @@ const ViewInterview = () => {
         try {
             await api.interview.undoFollowUp({ interviewId: interview.interview_id });
             setInterviews((current) =>
-                current.map((item) =>
-                    item.interview_id === interview.interview_id ? { ...item, follow_up_sent_at: null } : item
-                )
-            );
-            setUpcomingInterviews((current) =>
                 current.map((item) =>
                     item.interview_id === interview.interview_id ? { ...item, follow_up_sent_at: null } : item
                 )
@@ -467,9 +410,6 @@ const ViewInterview = () => {
             setInterviews((current) =>
                 filterAndSortInterviews(current.map(updatePin), INTERVIEW_TIME_FILTERS, currentTime)
             );
-            setUpcomingInterviews((current) =>
-                filterAndSortInterviews(current.map(updatePin), ['Upcoming Interviews'], currentTime)
-            );
             showSuccessToast(shouldPin ? 'Interview pinned.' : 'Interview unpinned.');
 
             if (isAutoScrollEnabledRef.current && viewModeRef.current === requestedViewMode) {
@@ -495,7 +435,8 @@ const ViewInterview = () => {
     };
 
     const hasInterviews = interviews.length > 0;
-    const filtersAreActive = selectedTimeFilters.length !== INTERVIEW_TIME_FILTERS.length;
+    const hasDisplayedInterviews = displayedInterviews.length > 0;
+    const filtersAreActive = hasInterviews && selectedTimeFilters.length !== INTERVIEW_TIME_FILTERS.length;
     const emptyState = createInterviewEmptyState({
         applicationsRoute: routes.viewApplications,
         filtersAreActive,
@@ -518,7 +459,7 @@ const ViewInterview = () => {
             <div className={styles.controlsRow}>
                 <ActivityControls
                     actions={
-                        !isLoading && hasInterviews ? (
+                        !isLoading && hasDisplayedInterviews ? (
                             <MoreOptions
                                 csvData={csvData}
                                 csvFilename='job_interviews.csv'
@@ -538,7 +479,9 @@ const ViewInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Interview view and management controls'
-                    mobileLayout={!isBoardView && hasInterviews ? 'collectionResponsive' : 'inlineWhenPossible'}
+                    mobileLayout={
+                        !isBoardView && hasDisplayedInterviews ? 'collectionResponsive' : 'inlineWhenPossible'
+                    }
                 >
                     <CollectionViewToggle
                         ariaLabel='Interview view'
@@ -553,7 +496,7 @@ const ViewInterview = () => {
                         options={INTERVIEW_TIME_FILTERS}
                         selectedOptions={selectedTimeFilters}
                     />
-                    {hasInterviews && !isBoardView && (
+                    {hasDisplayedInterviews && !isBoardView && (
                         <DisplayOptions id='interview-display-options'>
                             <ToggleButton toggled={showNotes} onToggle={handleShowNotesToggle} label='Show notes' />
                         </DisplayOptions>
@@ -571,11 +514,11 @@ const ViewInterview = () => {
                     </>
                 ))}
 
-            {!isLoading && !isFilteringInterviews && !hasInterviews && <EmptyState {...emptyState} />}
+            {!isLoading && !isFilteringInterviews && !hasDisplayedInterviews && <EmptyState {...emptyState} />}
 
-            {!isLoading && !isFilteringInterviews && hasInterviews && (
+            {!isLoading && !isFilteringInterviews && hasDisplayedInterviews && (
                 <InterviewGrid ariaLabel='Active interviews' layout={viewMode}>
-                    {interviews.map((interview, index) => (
+                    {displayedInterviews.map((interview, index) => (
                         <InterviewCard
                             applicationRoute={routes.viewApplications}
                             currentTime={currentTime}

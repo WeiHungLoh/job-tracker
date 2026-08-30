@@ -58,7 +58,11 @@ const ViewArchivedInterview = () => {
     const showNotes = preferences.archived_interview_show_notes;
     const selectedTimeFilters = preferences.archived_interview_time_filters;
     const isBoardView = viewMode === 'board';
-    const csvData = useMemo(() => createInterviewCsvData(archivedInterviews), [archivedInterviews]);
+    const displayedInterviews = useMemo(
+        () => filterAndSortInterviews(archivedInterviews, selectedTimeFilters, currentTime),
+        [archivedInterviews, currentTime, selectedTimeFilters]
+    );
+    const csvData = useMemo(() => createInterviewCsvData(displayedInterviews), [displayedInterviews]);
 
     const handleViewModeChange = async (nextViewMode: CollectionViewMode) => {
         try {
@@ -81,7 +85,9 @@ const ViewArchivedInterview = () => {
         setIsFilteringInterviews(true);
 
         try {
-            const filteredInterviews = await api.archivedInterview.listInterviews({ timeFilters });
+            const fetchedInterviews = await api.archivedInterview.listInterviews({
+                timeFilters: [...INTERVIEW_TIME_FILTERS],
+            });
             if (!filterRequest.isLatestRequest(requestId)) {
                 return true;
             }
@@ -90,7 +96,7 @@ const ViewArchivedInterview = () => {
             const savedInterviews = filterRequest.saveResult(
                 requestId,
                 filterAndSortInterviews(
-                    Array.isArray(filteredInterviews) ? filteredInterviews : [],
+                    Array.isArray(fetchedInterviews) ? fetchedInterviews : [],
                     INTERVIEW_TIME_FILTERS,
                     currentTime
                 )
@@ -125,7 +131,7 @@ const ViewArchivedInterview = () => {
         const fetchInterviews = async () => {
             try {
                 const fetchedInterviews = await api.archivedInterview.listInterviews(
-                    { timeFilters: selectedTimeFilters },
+                    { timeFilters: [...INTERVIEW_TIME_FILTERS] },
                     { signal: controller.signal }
                 );
                 if (isActive) {
@@ -225,7 +231,8 @@ const ViewArchivedInterview = () => {
     };
 
     const hasInterviews = archivedInterviews.length > 0;
-    const filtersAreActive = selectedTimeFilters.length !== INTERVIEW_TIME_FILTERS.length;
+    const hasDisplayedInterviews = displayedInterviews.length > 0;
+    const filtersAreActive = hasInterviews && selectedTimeFilters.length !== INTERVIEW_TIME_FILTERS.length;
     const emptyState = createInterviewEmptyState({
         activeInterviewsRoute: routes.viewInterviews,
         filtersAreActive,
@@ -248,7 +255,7 @@ const ViewArchivedInterview = () => {
             <div className={styles.controlsRow}>
                 <ActivityControls
                     actions={
-                        !isLoading && hasInterviews ? (
+                        !isLoading && hasDisplayedInterviews ? (
                             <MoreOptions
                                 csvData={csvData}
                                 csvFilename='archived_job_interviews.csv'
@@ -262,7 +269,9 @@ const ViewArchivedInterview = () => {
                         ) : undefined
                     }
                     ariaLabel='Archived interview view and management controls'
-                    mobileLayout={!isBoardView && hasInterviews ? 'collectionResponsive' : 'inlineWhenPossible'}
+                    mobileLayout={
+                        !isBoardView && hasDisplayedInterviews ? 'collectionResponsive' : 'inlineWhenPossible'
+                    }
                 >
                     <CollectionViewToggle
                         ariaLabel='Archived interview view'
@@ -277,7 +286,7 @@ const ViewArchivedInterview = () => {
                         options={INTERVIEW_TIME_FILTERS}
                         selectedOptions={selectedTimeFilters}
                     />
-                    {hasInterviews && !isBoardView && (
+                    {hasDisplayedInterviews && !isBoardView && (
                         <DisplayOptions id='archived-interview-display-options'>
                             <ToggleButton
                                 toggled={showNotes}
@@ -299,11 +308,11 @@ const ViewArchivedInterview = () => {
                     </>
                 ))}
 
-            {!isLoading && !isFilteringInterviews && !hasInterviews && <EmptyState {...emptyState} />}
+            {!isLoading && !isFilteringInterviews && !hasDisplayedInterviews && <EmptyState {...emptyState} />}
 
-            {!isLoading && !isFilteringInterviews && hasInterviews && (
+            {!isLoading && !isFilteringInterviews && hasDisplayedInterviews && (
                 <InterviewGrid ariaLabel='Archived interviews' layout={viewMode}>
-                    {archivedInterviews.map((interview, index) => (
+                    {displayedInterviews.map((interview, index) => (
                         <InterviewCard
                             applicationRoute={routes.archivedApplications}
                             currentTime={currentTime}

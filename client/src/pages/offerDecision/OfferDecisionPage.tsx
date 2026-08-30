@@ -23,6 +23,16 @@ type OfferDecisionPageProps = {
     archived: boolean;
 };
 
+const DEADLINE_BASED_OFFER_FILTERS = ['Evaluated Offers', 'Expired Evaluated Offers'] as const;
+
+const includeBothDeadlineBasedOfferFilters = (filters: OfferDecisionFilter[]): OfferDecisionFilter[] => {
+    if (!DEADLINE_BASED_OFFER_FILTERS.some((filter) => filters.includes(filter))) {
+        return filters;
+    }
+
+    return [...filters, ...DEADLINE_BASED_OFFER_FILTERS.filter((filter) => !filters.includes(filter))];
+};
+
 const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -57,13 +67,16 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
 
     const loadWorkspace = async (filters: OfferDecisionFilter[] = selectedFilters) => {
         const requestId = ++requestIdRef.current;
+        const requestFilters = includeBothDeadlineBasedOfferFilters(filters);
         setIsLoading(true);
         setLoadFailed(false);
 
         try {
             const workspace = archived
-                ? await api.offerDecision.getArchived({ filters: filters.filter(isArchivedOfferDecisionFilter) })
-                : await api.offerDecision.getActive({ filters });
+                ? await api.offerDecision.getArchived({
+                      filters: requestFilters.filter(isArchivedOfferDecisionFilter),
+                  })
+                : await api.offerDecision.getActive({ filters: requestFilters });
             if (requestId === requestIdRef.current) {
                 setData(workspace);
             }
@@ -111,12 +124,15 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
 
     const handleFilterSelection = async (filters: OfferDecisionFilter[]) => {
         const requestId = filterRequest.startRequest();
+        const requestFilters = includeBothDeadlineBasedOfferFilters(filters);
         setIsFiltering(true);
 
         try {
             const workspace = archived
-                ? await api.offerDecision.getArchived({ filters: filters.filter(isArchivedOfferDecisionFilter) })
-                : await api.offerDecision.getActive({ filters });
+                ? await api.offerDecision.getArchived({
+                      filters: requestFilters.filter(isArchivedOfferDecisionFilter),
+                  })
+                : await api.offerDecision.getActive({ filters: requestFilters });
             if (!filterRequest.isLatestRequest(requestId)) {
                 return true;
             }

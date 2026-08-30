@@ -101,6 +101,10 @@ describe('Job interview viewer flow', () => {
         });
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     test('aborts its initial interview request when unmounted', async () => {
         const pendingResponse = new Promise<never>(() => undefined);
         fetch.mockImplementation(async (url: string) => {
@@ -554,7 +558,9 @@ describe('Job interview viewer flow', () => {
             ).not.toBeInTheDocument()
         );
         expect(fetch).toHaveBeenCalledWith(
-            `${import.meta.env.VITE_API_URL}/job-interviews?timeFilters=Past+Interviews`,
+            `${
+                import.meta.env.VITE_API_URL
+            }/job-interviews?timeFilters=Upcoming+Interviews&timeFilters=Past+Interviews`,
             { method: 'GET' }
         );
     });
@@ -844,21 +850,19 @@ describe('Job interview viewer flow', () => {
         expect(fetch).toHaveBeenCalledTimes(1);
     });
 
-    test('requests saved time filters initially and trusts the server-filtered response', async () => {
-        const serverFilteredInterview = {
+    test('loads both time buckets initially and applies the saved time filter locally', async () => {
+        const pastInterview = {
             ...mockInterview,
-            company_name: 'Server Filtered Company',
+            company_name: 'Past Filtered Company',
+            interview_date: '2020-01-01T00:00:00.000Z',
+        };
+        const futureInterview = {
+            ...mockInterview,
+            interview_id: 2,
+            company_name: 'Future Hidden Company',
             interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         };
-        fetch.mockImplementation(async (url: string) => {
-            if (getTimeFilters(url).join(',') === 'Past Interviews') {
-                return response([serverFilteredInterview]);
-            }
-            if (getTimeFilters(url).join(',') === 'Upcoming Interviews') {
-                return response([]);
-            }
-            return response([]);
-        });
+        fetch.mockResolvedValue(response([futureInterview, pastInterview]));
 
         render(
             <MemoryRouter>
@@ -867,24 +871,61 @@ describe('Job interview viewer flow', () => {
             { initialPreferences: { interview_time_filters: ['Past Interviews'] } }
         );
 
-        expect(await screen.findByRole('article', { name: 'Server Filtered Company interview' })).toBeInTheDocument();
+        expect(await screen.findByRole('article', { name: 'Past Filtered Company interview' })).toBeInTheDocument();
+        expect(screen.queryByRole('article', { name: 'Future Hidden Company interview' })).not.toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(
-            `${import.meta.env.VITE_API_URL}/job-interviews?timeFilters=Past+Interviews`,
+            `${
+                import.meta.env.VITE_API_URL
+            }/job-interviews?timeFilters=Upcoming+Interviews&timeFilters=Past+Interviews`,
             { method: 'GET', signal: expect.any(AbortSignal) }
         );
     });
 
-    test('keeps the requested Past collection when the calendar-only Upcoming request fails', async () => {
+    test('removes an interview from the upcoming view when it ends while the page remains open', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2030-01-01T10:00:00.000Z'));
+        const endingInterview = {
+            ...mockInterview,
+            company_name: 'Boundary Company',
+            interview_date: '2030-01-01T09:59:20.000Z',
+            interview_duration_minutes: 1,
+        };
+        fetch.mockImplementation(async (url: string) => {
+            const timeFilters = getTimeFilters(url);
+            return response(
+                timeFilters.length === 2 || timeFilters.includes('Upcoming Interviews') ? [endingInterview] : []
+            );
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>,
+            { initialPreferences: { interview_time_filters: ['Upcoming Interviews'] } }
+        );
+        await act(async () => vi.advanceTimersByTimeAsync(0));
+
+        expect(screen.getByRole('article', { name: 'Boundary Company interview' })).toBeInTheDocument();
+
+        await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+        expect(screen.queryByRole('article', { name: 'Boundary Company interview' })).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'No interviews match your filters' })).toBeInTheDocument();
+    });
+
+    test('uses one complete request for the saved Past view and upcoming calendar scope', async () => {
         const pastInterview = {
             ...mockInterview,
             company_name: 'Past Collection Company',
+            interview_date: '2020-01-01T00:00:00.000Z',
         };
-        fetch.mockImplementation(async (url: string) => {
-            if (getTimeFilters(url).join(',') === 'Upcoming Interviews') {
-                throw new Error('calendar unavailable');
-            }
-            return response([pastInterview]);
-        });
+        const futureInterview = {
+            ...mockInterview,
+            interview_id: 2,
+            company_name: 'Calendar Company',
+            interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        };
+        fetch.mockResolvedValue(response([pastInterview, futureInterview]));
 
         render(
             <MemoryRouter>
@@ -894,9 +935,10 @@ describe('Job interview viewer flow', () => {
         );
 
         expect(await screen.findByRole('article', { name: 'Past Collection Company interview' })).toBeInTheDocument();
-        expect(
-            await screen.findByText('Unable to load upcoming interviews for calendar export. Please try again')
-        ).toBeInTheDocument();
+        expect(screen.queryByRole('article', { name: 'Calendar Company interview' })).not.toBeInTheDocument();
+        expect(fetch).toHaveBeenCalledOnce();
+        await userEvent.click(screen.getByRole('button', { name: 'More…' }));
+        expect(screen.getByRole('button', { name: 'Export all upcoming active interviews (.ics)' })).toBeEnabled();
     });
 
     test('fetches filtered interviews before saving each changed selection', async () => {
@@ -904,14 +946,16 @@ describe('Job interview viewer flow', () => {
         const filteredInterview = {
             ...mockInterview,
             company_name: 'Filtered Response Company',
-            interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            interview_date: '2020-01-01T00:00:00.000Z',
         };
         const updatePreferences = vi.fn(async (updates: UpdateUserPreferencesRequest) => {
             requestOrder.push('preference');
             return { ...mockPreferences, ...updates };
         });
-        fetch.mockImplementation(async (url: string) => {
-            if (getTimeFilters(url).join(',') === 'Past Interviews') {
+        let interviewRequestCount = 0;
+        fetch.mockImplementation(async () => {
+            interviewRequestCount += 1;
+            if (interviewRequestCount === 2) {
                 requestOrder.push('filtered-get');
                 return response([filteredInterview]);
             }
@@ -937,21 +981,23 @@ describe('Job interview viewer flow', () => {
     test('ignores an older interview filter response after a newer selection finishes', async () => {
         let resolveOlderFilter: (value: ReturnType<typeof response>) => void = () => undefined;
         const olderInterview = { ...mockInterview, company_name: 'Older Interview Result' };
-        const latestInterview = { ...mockInterview, company_name: 'Latest Interview Result' };
-        fetch.mockImplementation(async (url: string) => {
-            const timeFilters = getTimeFilters(url).join(',');
-            if (timeFilters === 'Past Interviews') {
+        const latestInterview = {
+            ...mockInterview,
+            company_name: 'Latest Interview Result',
+            interview_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        };
+        let interviewRequestCount = 0;
+        fetch.mockImplementation(async () => {
+            interviewRequestCount += 1;
+            if (interviewRequestCount === 2) {
                 return new Promise((resolve) => {
                     resolveOlderFilter = resolve;
                 });
             }
-            if (timeFilters === 'Upcoming Interviews') {
+            if (interviewRequestCount === 3) {
                 return response([latestInterview]);
             }
-            if (timeFilters === 'Upcoming Interviews,Past Interviews') {
-                return response([mockInterview]);
-            }
-            return response([]);
+            return response([mockInterview]);
         });
 
         render(
