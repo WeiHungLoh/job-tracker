@@ -21,3 +21,8 @@ export type RefreshAuthenticationResponse = AuthenticationMessageResponse;
 
 export type LogoutRequest = null;
 export type LogoutResponse = null;
+
+export type AuthenticationNavigationState = {
+    fromLogout?: boolean;
+    returnTo?: string;
+};

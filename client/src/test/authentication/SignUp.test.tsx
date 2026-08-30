@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AUTH_FOCUSED_MODE_STORAGE_KEY } from '../../components/authProductIntro/AuthProductIntro';
 import SignUp from '../../pages/authentication/signUp/SignUp';
 import { render } from '../renderWithProviders';
@@ -18,6 +18,11 @@ const VALID_PASSWORD = 'correct horse battery staple';
 
 const openSignUpPanel = async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+};
+
+const NavigationStateProbe = () => {
+    const location = useLocation();
+    return <span>{(location.state as { returnTo?: string } | null)?.returnTo}</span>;
 };
 
 const mockUnauthenticatedSession = (signUpResponse: object) => {
@@ -107,6 +112,63 @@ describe('User sign up flow', () => {
 
         expect(mockNavigate).toHaveBeenCalledWith('/');
         setTimeoutSpy.mockRestore();
+    });
+
+    test('preserves the protected destination in the delayed sign-in redirect', async () => {
+        const returnTo = '/application/add#jobURL=https%3A%2F%2Fexample.com%2Fjobs%2Fcaptured';
+        const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+        mockUnauthenticatedSession({
+            ok: true,
+            status: 201,
+            headers: new Headers({ 'content-type': 'text/plain' }),
+            text: async () => 'User successfully registered',
+        });
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/sign-up', state: { returnTo } }]}>
+                <SignUp />
+            </MemoryRouter>
+        );
+
+        await openSignUpPanel();
+        await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
+        await userEvent.type(screen.getByLabelText(/^password$/i), VALID_PASSWORD);
+        await userEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+        await screen.findByText('Sign up successful — redirecting you to sign-in page');
+
+        const redirectTimerIndex = setTimeoutSpy.mock.calls.reduce(
+            (latestIndex, [, delay], index) => (delay === 1500 ? index : latestIndex),
+            -1
+        );
+        const redirectToSignIn = setTimeoutSpy.mock.calls[redirectTimerIndex]?.[0];
+        const redirectTimerId = setTimeoutSpy.mock.results[redirectTimerIndex]?.value;
+        if (redirectTimerId !== undefined) {
+            clearTimeout(redirectTimerId);
+        }
+        expect(redirectToSignIn).toBeTypeOf('function');
+        if (typeof redirectToSignIn === 'function') {
+            redirectToSignIn();
+        }
+
+        expect(mockNavigate).toHaveBeenCalledWith('/', { state: { returnTo } });
+        setTimeoutSpy.mockRestore();
+    });
+
+    test('preserves the protected destination when linking directly to sign in', async () => {
+        const returnTo = '/application/add#jobURL=https%3A%2F%2Fexample.com%2Fjobs%2Fcaptured';
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/sign-up', state: { returnTo } }]}>
+                <Routes>
+                    <Route path='/sign-up' element={<SignUp />} />
+                    <Route path='/' element={<NavigationStateProbe />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        await openSignUpPanel();
+        await userEvent.click(screen.getByRole('link', { name: /already have an account/i }));
+
+        expect(await screen.findByText(returnTo)).toBeInTheDocument();
     });
 
     test('clears the delayed sign-in redirect when the page unmounts', async () => {

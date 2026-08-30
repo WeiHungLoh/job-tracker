@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AUTH_FOCUSED_MODE_STORAGE_KEY } from '../../components/authProductIntro/AuthProductIntro';
 import SignIn from '../../pages/authentication/signIn/SignIn';
 import { render } from '../renderWithProviders';
@@ -17,6 +17,11 @@ globalThis.fetch = vi.fn();
 
 const openSignInPanel = async () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+};
+
+const NavigationStateProbe = () => {
+    const location = useLocation();
+    return <span>{(location.state as { returnTo?: string } | null)?.returnTo}</span>;
 };
 
 const mockUnauthenticatedSession = (signInResponse: object) => {
@@ -82,6 +87,46 @@ describe('User sign in flow', () => {
         );
 
         await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/application/add'));
+    });
+
+    test('returns to the protected destination after signing in', async () => {
+        const returnTo = '/application/add#jobURL=https%3A%2F%2Fexample.com%2Fjobs%2Fcaptured';
+        mockUnauthenticatedSession({
+            ok: true,
+            status: 200,
+            headers: new Headers({ 'content-type': 'application/json' }),
+            json: async () => ({ message: 'Successfully signed in' }),
+        });
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/', state: { returnTo } }]}>
+                <SignIn />
+            </MemoryRouter>
+        );
+
+        await openSignInPanel();
+        await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
+        await userEvent.type(screen.getByLabelText(/^password$/i), 'password');
+        await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+        await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(returnTo, { replace: true }));
+    });
+
+    test('preserves the protected destination when linking to sign up', async () => {
+        const returnTo = '/application/add#jobURL=https%3A%2F%2Fexample.com%2Fjobs%2Fcaptured';
+        render(
+            <MemoryRouter initialEntries={[{ pathname: '/', state: { returnTo } }]}>
+                <Routes>
+                    <Route path='/' element={<SignIn />} />
+                    <Route path='/sign-up' element={<NavigationStateProbe />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        await openSignInPanel();
+        await userEvent.click(screen.getByRole('link', { name: /create one/i }));
+
+        expect(await screen.findByText(returnTo)).toBeInTheDocument();
     });
 
     test('locks account access while sign in is pending', async () => {

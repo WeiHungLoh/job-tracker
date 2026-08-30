@@ -117,6 +117,47 @@ describe('App routing and authentication behavior', () => {
         });
     });
 
+    test('restores Quick Capture data after an unauthenticated user signs in', async () => {
+        let isSignedIn = false;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/authentication/sessions/current')) {
+                return isSignedIn ? jsonResponse({ message: 'Authenticated user.' }) : response(false, 401);
+            }
+            if (url.endsWith('/authentication/sessions/refresh')) {
+                return response(false, 401);
+            }
+            if (url.endsWith('/authentication/sessions') && init?.method === 'POST') {
+                isSignedIn = true;
+                return jsonResponse({ message: 'Successfully signed in.' });
+            }
+            if (url.endsWith('/user-preferences')) {
+                return jsonResponse(mockPreferences);
+            }
+            return response();
+        });
+        const captureParameters = new URLSearchParams({
+            jobURL: 'https://example.com/jobs/captured',
+            pageTitle: 'Captured posting title',
+            companyName: 'Captured Company',
+            jobTitle: 'Captured Role',
+            jobLocation: 'Captured Location',
+        });
+
+        renderRoute(`/application/add#${captureParameters.toString()}`);
+
+        expect(await screen.findByText(/sign in to job tracker/i)).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+        await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
+        await userEvent.type(screen.getByLabelText(/^password$/i), 'password');
+        await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+        expect(await screen.findByLabelText(/job posting url/i)).toHaveValue('https://example.com/jobs/captured');
+        expect(screen.getByLabelText(/company name/i)).toHaveValue('Captured Company');
+        expect(screen.getByLabelText(/job title/i)).toHaveValue('Captured Role');
+        expect(screen.getByLabelText(/job location/i)).toHaveValue('Captured Location');
+        expect(screen.getByText('Captured posting title')).toBeVisible();
+    });
+
     test('refreshes an expired access token before rendering a protected route', async () => {
         fetch.mockResolvedValueOnce(response(false, 401));
         fetch.mockResolvedValueOnce(jsonResponse({ message: 'Access token refreshed.' }));

@@ -12,11 +12,14 @@ import { useJobTrackerAPI } from '../../../api/useJobTrackerAPI';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { getErrorToastMessage } from '../../../helper/getErrorToastMessage';
 import { normalizeEmail } from '../../../helper/formValidation';
+import type { AuthenticationNavigationState } from '../models';
 
 const SignIn = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const location = useLocation();
+    const navigationState = location.state as AuthenticationNavigationState | null;
+    const returnTo = navigationState?.returnTo;
     const navigate = useNavigate();
     const [visible, setVisibility] = useState<boolean>(false);
     const [isPending, setIsPending] = useState<boolean>(false);
@@ -24,20 +27,20 @@ const SignIn = () => {
     const { showErrorToast } = useToast();
 
     useEffect(() => {
-        if (location.state?.fromLogout) {
+        if (navigationState?.fromLogout) {
             return;
         }
 
         const verifyAuth = async () => {
             try {
                 await api.authentication.verify();
-                navigate(routes.viewApplications, { replace: true });
+                navigate(returnTo ?? routes.viewApplications, { replace: true });
             } catch {
                 // no valid token, stay on sign in
             }
         };
         void verifyAuth();
-    }, [api.authentication, navigate]);
+    }, [api.authentication, navigate, navigationState?.fromLogout, returnTo]);
 
     const handleSignIn = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -45,7 +48,11 @@ const SignIn = () => {
 
         try {
             await api.authentication.signIn({ email: normalizeEmail(email), password });
-            navigate(routes.addApplication);
+            if (returnTo) {
+                navigate(returnTo, { replace: true });
+            } else {
+                navigate(routes.addApplication);
+            }
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to sign in. Please try again.'));
         } finally {
@@ -109,6 +116,7 @@ const SignIn = () => {
                                 event.preventDefault();
                             }
                         }}
+                        state={returnTo ? { returnTo } : undefined}
                         tabIndex={isPending ? -1 : undefined}
                         to={routes.signUp}
                     >

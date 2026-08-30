@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../../components/authLayout/AuthLayout';
 import AuthRequestInfo from '../../../components/authRequestInfo/AuthRequestInfo';
 import Icon from '../../../components/icon/Icon';
@@ -19,10 +19,14 @@ import {
     PASSWORD_MIN_LENGTH,
 } from '../../../helper/formValidation';
 import PasswordStrengthMeter from '../../../components/passwordStrengthMeter/PasswordStrengthMeter';
+import type { AuthenticationNavigationState } from '../models';
 
 const SignUp = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+    const location = useLocation();
+    const navigationState = location.state as AuthenticationNavigationState | null;
+    const returnTo = navigationState?.returnTo;
     const navigate = useNavigate();
     const [visible, setVisibility] = useState<boolean>(false);
     const [isPending, setIsPending] = useState<boolean>(false);
@@ -34,13 +38,13 @@ const SignUp = () => {
         const verifyAuth = async () => {
             try {
                 await api.authentication.verify();
-                navigate(routes.viewApplications, { replace: true });
+                navigate(returnTo ?? routes.viewApplications, { replace: true });
             } catch {
                 // no valid token, stay on sign up
             }
         };
         void verifyAuth();
-    }, [api.authentication, navigate]);
+    }, [api.authentication, navigate, returnTo]);
 
     useEffect(
         () => () => {
@@ -67,7 +71,11 @@ const SignUp = () => {
             showSuccessToast('Sign up successful — redirecting you to sign-in page');
             redirectTimerRef.current = window.setTimeout(() => {
                 redirectTimerRef.current = undefined;
-                navigate(routes.signIn);
+                if (returnTo) {
+                    navigate(routes.signIn, { state: { returnTo } });
+                } else {
+                    navigate(routes.signIn);
+                }
             }, 1500);
         } catch (error) {
             showErrorToast(getErrorToastMessage(error, 'Unable to create your account. Please try again.'));
@@ -138,6 +146,7 @@ const SignUp = () => {
                                 event.preventDefault();
                             }
                         }}
+                        state={returnTo ? { returnTo } : undefined}
                         tabIndex={isPending ? -1 : undefined}
                         to={routes.signIn}
                     >

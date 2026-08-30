@@ -434,7 +434,7 @@ describe('demo page interactions', () => {
         await act(async () => {
             await userEvent.click(screen.getByRole('button', { name: 'Add evaluation for Greenhouse CloudOps' }));
             fireEvent.change(screen.getByLabelText('Greenhouse CloudOps decision deadline'), {
-                target: { value: '2026-08-20T10:00' },
+                target: { value: toDatetimeLocalInputValue(daysFromNow(new Date(), 4, 10).toISOString()) },
             });
             fireEvent.change(screen.getByLabelText('Greenhouse CloudOps monthly base salary'), {
                 target: { value: '10000' },

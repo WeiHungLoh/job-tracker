@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import FallbackScreen from '../fallbackScreen/FallbackScreen';
 import { JobTrackerAPIError } from '../../api/models';
@@ -12,13 +12,14 @@ const ProtectedRoutes = () => {
     const [authenticationError, setAuthenticationError] = useState<boolean>(false);
     const api = useJobTrackerAPI();
     const { showErrorToast } = useToast();
+    const location = useLocation();
 
     const checkIsAuth = async () => {
         setAuthenticationError(false);
         setIsAuthenticated(undefined);
 
         try {
-            await api.authentication.verify();
+            await api.authentication.verify({ onUnauthenticated: () => setIsAuthenticated(false) });
             setIsAuthenticated(true);
         } catch (error) {
             const isUnauthenticated =
@@ -50,7 +51,9 @@ const ProtectedRoutes = () => {
         return <FallbackScreen variant='loading' />;
     }
 
-    return isAuthenticated ? <Outlet /> : <Navigate to={routes.signIn} replace />;
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+
+    return isAuthenticated ? <Outlet /> : <Navigate state={{ returnTo }} to={routes.signIn} replace />;
 };
 
 export default ProtectedRoutes;

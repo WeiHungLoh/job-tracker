@@ -784,6 +784,7 @@ test('saves one offer evaluation at the application timestamp atomically', async
     assert.equal(calls[0].sql, 'BEGIN');
     assert.match(calls[1].sql, /applications\.is_archived = false/);
     assert.match(calls[1].sql, /applications\.job_id = \$2/);
+    assert.match(calls[1].sql, /applications\.job_status/);
     assert.match(calls[1].sql, /applications\.application_date/);
     assert.match(calls[1].sql, /FOR UPDATE OF applications/);
     assert.deepEqual(calls[1].values, [7, 11]);
@@ -853,6 +854,35 @@ test('saves evaluations for non-archived accepted and declined applications', as
             async () => {
                 assert.equal(await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest), 'saved');
             }
+        );
+    }
+});
+
+test('rejects offer evaluation saves for applications without an offer outcome status', async () => {
+    for (const jobStatus of ['Applied', 'Interview', 'Rejected', 'Withdrawn', 'Ghosted']) {
+        const calls = [];
+        await withMockedPoolClient(
+            async (sql) => {
+                calls.push(compactSQL(sql));
+                if (String(sql).includes('FOR UPDATE OF applications')) {
+                    return {
+                        rows: [{ job_id: 11, job_status: jobStatus, application_date: validDetails.decision_deadline }],
+                    };
+                }
+                return { rows: [], rowCount: 1 };
+            },
+            async () => {
+                assert.equal(
+                    await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest),
+                    'application_ineligible'
+                );
+            }
+        );
+
+        assert.equal(calls.at(-1), 'ROLLBACK');
+        assert.equal(
+            calls.some((sql) => sql.includes('INSERT INTO offer_evaluations')),
+            false
         );
     }
 });
@@ -1137,7 +1167,7 @@ test('rejects malformed per-offer saves before database access', async () => {
     assert.equal(connectCount, 0);
 });
 
-test('maps singular save results to unavailable, deadline, unchanged, counteroffer, and success responses', async () => {
+test('maps singular save results to unavailable, deadline, idempotent retry, counteroffer, and success responses', async () => {
     const handler = getRouteHandler('put', '/:jobId');
     assert.equal(typeof handler, 'function');
     const lockedRows = [
@@ -1206,11 +1236,8 @@ test('maps singular save results to unavailable, deadline, unchanged, counteroff
 
             const unchangedResponse = createResponse();
             await handler({ body: validRequest, params: { jobId: '11' }, user: { id: 7 } }, unchangedResponse);
-            assert.equal(unchangedResponse.statusCode, 422);
-            assert.deepEqual(unchangedResponse.body, {
-                code: 'OFFER_EVALUATION_UNCHANGED',
-                message: 'Change at least one evaluation field before saving.',
-            });
+            assert.equal(unchangedResponse.statusCode, 204);
+            assert.equal(unchangedResponse.body, undefined);
 
             const counterofferResponse = createResponse();
             await handler(
@@ -1229,6 +1256,46 @@ test('maps singular save results to unavailable, deadline, unchanged, counteroff
             assert.equal(successResponse.statusCode, 204);
             assert.equal(successResponse.body, undefined);
         }
+    );
+});
+
+test('rejects offer evaluation saves for an ineligible application status', async () => {
+    const handler = getRouteHandler('put', '/:jobId');
+    assert.equal(typeof handler, 'function');
+    const calls = [];
+
+    await withMockedPoolClient(
+        async (sql) => {
+            calls.push(compactSQL(sql));
+            if (String(sql).includes('FOR UPDATE OF applications')) {
+                return {
+                    rows: [
+                        {
+                            job_id: 11,
+                            job_status: 'Interview',
+                            application_date: validDetails.decision_deadline,
+                        },
+                    ],
+                };
+            }
+            return { rows: [], rowCount: 1 };
+        },
+        async () => {
+            const response = createResponse();
+            await handler({ body: validRequest, params: { jobId: '11' }, user: { id: 7 } }, response);
+
+            assert.equal(response.statusCode, 409);
+            assert.deepEqual(response.body, {
+                code: 'OFFER_EVALUATION_APPLICATION_INELIGIBLE',
+                message:
+                    'Offer evaluations can only be saved for applications with Offer, Accepted, or Declined status.',
+            });
+        }
+    );
+
+    assert.equal(
+        calls.some((sql) => sql.includes('INSERT INTO offer_evaluations')),
+        false
     );
 });
 
@@ -1333,6 +1400,60 @@ test('routes counteroffer plan reads, saves and deletion with stable error codes
                 code: 'COUNTEROFFER_PLAN_NOT_FOUND',
                 message: 'Counteroffer plan was not found.',
             });
+        }
+    );
+});
+
+test('treats an identical saved counteroffer plan as a successful retry', async () => {
+    const handler = getRouteHandler('put', '/:jobId/counteroffer-plan');
+    assert.equal(typeof handler, 'function');
+
+    await withMockedPoolClient(
+        async (sql) => {
+            if (String(sql).includes('FOR UPDATE OF applications, evaluations')) {
+                return {
+                    rows: [
+                        {
+                            job_id: 11,
+                            job_status: 'Offer',
+                            is_archived: false,
+                            decision_deadline: '2099-08-15T10:00:00.000Z',
+                            career_growth_rating: 3,
+                            company_culture_fit_rating: 3,
+                            work_life_balance_rating: 3,
+                            compensation_rating: 3,
+                            monthly_base_salary: 10000,
+                            bonus: '15% target',
+                            annual_leave_days: 21,
+                            work_arrangement: 'Hybrid',
+                        },
+                    ],
+                };
+            }
+            if (String(sql).includes('FROM offer_counteroffer_plans AS plans')) {
+                return {
+                    rows: [
+                        {
+                            monthly_base_salary: validCounterofferRequest.monthly_base_salary,
+                            bonus: validCounterofferRequest.bonus,
+                            annual_leave_days: validCounterofferRequest.annual_leave_days,
+                            work_arrangement: validCounterofferRequest.work_arrangement,
+                            career_growth_rating: validCounterofferRequest.ratings.career_growth,
+                            company_culture_fit_rating: validCounterofferRequest.ratings.company_culture_fit,
+                            work_life_balance_rating: validCounterofferRequest.ratings.work_life_balance,
+                            compensation_rating: validCounterofferRequest.ratings.compensation,
+                        },
+                    ],
+                };
+            }
+            return { rows: [], rowCount: 1 };
+        },
+        async () => {
+            const response = createResponse();
+            await handler({ body: validCounterofferRequest, params: { jobId: '11' }, user: { id: 7 } }, response);
+
+            assert.equal(response.statusCode, 204);
+            assert.equal(response.body, undefined);
         }
     );
 });

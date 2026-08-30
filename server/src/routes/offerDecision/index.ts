@@ -169,13 +169,17 @@ router.put(
                 );
                 return;
             }
-            if (result === 'unchanged_from_current' || result === 'unchanged_from_saved') {
+            if (result === 'unchanged_from_current') {
                 sendCodedError(
                     res,
                     422,
                     'COUNTEROFFER_PLAN_UNCHANGED',
                     'Change at least one term or rating for the Ideal offer.'
                 );
+                return;
+            }
+            if (result === 'unchanged_from_saved') {
+                res.sendStatus(204);
                 return;
             }
 
@@ -233,6 +237,15 @@ router.put(
                 sendError(res, 409, 'Only active applications can be saved.');
                 return;
             }
+            if (result === 'application_ineligible') {
+                sendCodedError(
+                    res,
+                    409,
+                    'OFFER_EVALUATION_APPLICATION_INELIGIBLE',
+                    'Offer evaluations can only be saved for applications with Offer, Accepted, or Declined status.'
+                );
+                return;
+            }
             if (result === 'deadline_before_application') {
                 sendError(res, 422, 'Decision deadline cannot be earlier than the application date.');
                 return;
@@ -247,12 +260,7 @@ router.put(
                 return;
             }
             if (result === 'unchanged') {
-                sendCodedError(
-                    res,
-                    422,
-                    'OFFER_EVALUATION_UNCHANGED',
-                    'Change at least one evaluation field before saving.'
-                );
+                res.sendStatus(204);
                 return;
             }
 

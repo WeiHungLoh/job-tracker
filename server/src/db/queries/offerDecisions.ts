@@ -45,6 +45,7 @@ type OfferDecisionRow = {
 
 type LockedApplicationRow = {
     job_id: number;
+    job_status: JobStatus;
     application_date: Date | string;
 };
 
@@ -84,6 +85,7 @@ type LockedCounterofferEvaluationRow = CounterofferPlanRow & {
 export type SaveOfferEvaluationResult =
     | 'saved'
     | 'application_unavailable'
+    | 'application_ineligible'
     | 'evaluation_above_counteroffer'
     | 'unchanged'
     | 'deadline_before_application';
@@ -554,6 +556,7 @@ export const saveOfferEvaluation = async (
         const applicationsResult = await client.query<LockedApplicationRow>(
             `SELECT
                 applications.job_id,
+                applications.job_status,
                 applications.application_date
             FROM job_applications AS applications
             WHERE applications.user_id = $1
@@ -567,6 +570,15 @@ export const saveOfferEvaluation = async (
         if (!application) {
             await client.query('ROLLBACK');
             return 'application_unavailable';
+        }
+
+        if (
+            application.job_status !== 'Offer' &&
+            application.job_status !== 'Accepted' &&
+            application.job_status !== 'Declined'
+        ) {
+            await client.query('ROLLBACK');
+            return 'application_ineligible';
         }
 
         if (new Date(request.details.decision_deadline).getTime() < new Date(application.application_date).getTime()) {
