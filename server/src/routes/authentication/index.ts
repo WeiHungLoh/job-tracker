@@ -237,8 +237,9 @@ router.delete(
             if (user) {
                 try {
                     await deleteAuthenticationSession(user.sessionId, user.id);
-                } catch {
-                    console.error('Unable to delete the current authentication session.');
+                } catch (error: unknown) {
+                    handleRouteError(res, error, 'Unable to sign out. Please try again.');
+                    return;
                 }
             }
         }

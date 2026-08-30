@@ -497,23 +497,38 @@ test('a malformed logout token cannot delete another session', async () => {
     }
 });
 
-test('logout clears cookies when current-session deletion fails', async () => {
+test('logout preserves cookies so current-session deletion can be retried', async () => {
     const originalQuery = pool.query;
     const originalConsoleError = console.error;
     const refreshToken = createRefreshToken(TEST_USER, process.env.REFRESH_TOKEN_SECRET);
+    let queryCount = 0;
     console.error = () => undefined;
     pool.query = async () => {
-        throw new Error('delete failed');
+        queryCount += 1;
+        if (queryCount === 1) {
+            throw new Error('delete failed');
+        }
+        return { rows: [], rowCount: 1 };
     };
 
     try {
-        const response = await fetch(`${baseUrl}/authentication/sessions/current`, {
+        const failedResponse = await fetch(`${baseUrl}/authentication/sessions/current`, {
             method: 'DELETE',
             headers: { Cookie: `refresh_token=${refreshToken}` },
         });
 
-        assert.equal(response.status, 204);
-        const setCookieHeader = getSetCookieHeader(response);
+        assert.equal(failedResponse.status, 500);
+        assert.deepEqual(await failedResponse.json(), { message: 'Unable to sign out. Please try again.' });
+        assert.equal(getSetCookieHeader(failedResponse), '');
+
+        const retryResponse = await fetch(`${baseUrl}/authentication/sessions/current`, {
+            method: 'DELETE',
+            headers: { Cookie: `refresh_token=${refreshToken}` },
+        });
+
+        assert.equal(retryResponse.status, 204);
+        assert.equal(queryCount, 2);
+        const setCookieHeader = getSetCookieHeader(retryResponse);
         assert.match(setCookieHeader, /access_token=;/);
         assert.match(setCookieHeader, /refresh_token=;/);
     } finally {
