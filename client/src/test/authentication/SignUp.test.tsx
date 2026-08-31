@@ -85,7 +85,7 @@ describe('User sign up flow', () => {
 
         expect(screen.getByLabelText(/email/i)).toBeDisabled();
         expect(screen.getByLabelText(/^password$/i)).toBeDisabled();
-        expect(screen.getByRole('button', { name: 'Show password' })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Show password' })).toBeEnabled();
         expect(screen.getByRole('button', { name: 'Sign up' })).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Back to product' })).toBeDisabled();
         const signInLink = screen.getByRole('link', { name: 'Already have an account? Sign in' });
@@ -245,12 +245,18 @@ describe('User sign up flow', () => {
 
         await openSignUpPanel();
         await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
-        await userEvent.type(screen.getByLabelText(/^password$/i), VALID_PASSWORD);
+        const passwordInput = screen.getByLabelText(/^password$/i);
+        await userEvent.type(passwordInput, VALID_PASSWORD);
         await userEvent.click(screen.getByRole('button', { name: 'Sign up' }));
 
         const submitButton = await screen.findByRole('button', { name: 'Sign up' });
+        const passwordVisibilityButton = screen.getByRole('button', { name: 'Show password' });
         expect(submitButton).toBeDisabled();
         expect(submitButton).toHaveAttribute('aria-busy', 'true');
+        expect(passwordVisibilityButton).toBeEnabled();
+        await userEvent.click(passwordVisibilityButton);
+        expect(passwordInput).toHaveAttribute('type', 'text');
+        expect(screen.getByRole('button', { name: 'Hide password' })).toBeEnabled();
 
         const backToProductButton = screen.getByRole('button', { name: 'Back to product' });
         expect(backToProductButton).toBeDisabled();

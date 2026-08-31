@@ -125,7 +125,6 @@ const SignUp = () => {
                             variant='icon'
                             className={styles.toggleVisibility}
                             aria-label={visible ? 'Hide password' : 'Show password'}
-                            disabled={isPending}
                             onClick={() => setVisibility((isVisible) => !isVisible)}
                         >
                             <Icon name={visible ? 'visibility' : 'visibilityOff'} />

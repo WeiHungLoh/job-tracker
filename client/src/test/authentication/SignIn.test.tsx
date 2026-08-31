@@ -173,10 +173,14 @@ describe('User sign in flow', () => {
         const submitButton = await screen.findByRole('button', { name: 'Sign in' });
         const backToProductButton = screen.getByRole('button', { name: 'Back to product' });
         const createAccountLink = screen.getByRole('link', { name: 'Don’t have an account? Create one' });
+        const passwordVisibilityButton = screen.getByRole('button', { name: 'Show password' });
 
         expect(emailInput).toBeDisabled();
         expect(passwordInput).toBeDisabled();
-        expect(screen.getByRole('button', { name: 'Show password' })).toBeDisabled();
+        expect(passwordVisibilityButton).toBeEnabled();
+        await userEvent.click(passwordVisibilityButton);
+        expect(passwordInput).toHaveAttribute('type', 'text');
+        expect(screen.getByRole('button', { name: 'Hide password' })).toBeEnabled();
         expect(submitButton).toBeDisabled();
         expect(submitButton).toHaveAttribute('aria-busy', 'true');
         expect(backToProductButton).toBeDisabled();

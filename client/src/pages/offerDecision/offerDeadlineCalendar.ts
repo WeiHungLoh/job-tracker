@@ -2,6 +2,7 @@ import { buildCalendarFilename, type CalendarEventDetails } from '../../helper/c
 import type { OfferDecisionApplication } from './models';
 
 const OFFER_CALENDAR_UID_DOMAIN = 'jobtracker.weihungloh.com';
+const OFFER_DEADLINE_EVENT_DURATION_MS = 60_000;
 export const BULK_OFFER_DEADLINE_ICS_FILENAME = 'job-tracker-active-offer-deadlines.ics';
 
 export const buildOfferDeadlineCalendarEvent = (application: OfferDecisionApplication): CalendarEventDetails => {
@@ -12,7 +13,7 @@ export const buildOfferDeadlineCalendarEvent = (application: OfferDecisionApplic
 
     return {
         description: `Job title: ${application.job_title.trim()}\n\nDecision deadline for this offer. Review the saved evaluation in Job Tracker before responding.`,
-        end: deadline,
+        end: new Date(deadline.getTime() + OFFER_DEADLINE_EVENT_DURATION_MS),
         location: '',
         start: new Date(deadline.getTime()),
         title: `Offer decision deadline — ${application.company_name.trim()}`,

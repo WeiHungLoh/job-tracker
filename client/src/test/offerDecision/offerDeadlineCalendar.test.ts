@@ -33,11 +33,11 @@ const application: OfferDecisionApplication = {
 };
 
 describe('offer deadline calendar events', () => {
-    test('uses the saved deadline exactly for both event timestamps', () => {
+    test('uses the saved deadline as the start of a one-minute event', () => {
         const event = buildOfferDeadlineCalendarEvent(application);
 
         expect(event.start.toISOString()).toBe('2026-08-15T09:00:00.000Z');
-        expect(event.end.toISOString()).toBe('2026-08-15T09:00:00.000Z');
+        expect(event.end.toISOString()).toBe('2026-08-15T09:01:00.000Z');
         expect(event.title).toBe('Offer decision deadline — Acme, Inc.');
         expect(event.description).toBe(
             'Job title: Software Engineer\n\nDecision deadline for this offer. Review the saved evaluation in Job Tracker before responding.'
@@ -53,11 +53,11 @@ describe('offer deadline calendar events', () => {
         const googleUrl = new URL(buildGoogleCalendarUrl(event));
         const content = buildIcsContent(event, new Date('2026-07-29T00:00:00.000Z'));
 
-        expect(googleUrl.searchParams.get('dates')).toBe('20260815T090000Z/20260815T090000Z');
+        expect(googleUrl.searchParams.get('dates')).toBe('20260815T090000Z/20260815T090100Z');
         expect(googleUrl.searchParams.get('location')).toBe('');
         expect(content).toContain('UID:offer-decision-42@jobtracker.weihungloh.com\r\n');
         expect(content).toContain('DTSTART:20260815T090000Z\r\n');
-        expect(content).toContain('DTEND:20260815T090000Z\r\n');
+        expect(content).toContain('DTEND:20260815T090100Z\r\n');
         expect(content).toContain('SUMMARY:Offer decision deadline — Acme\\, Inc.\r\n');
         expect(content).toContain('LOCATION:\r\n');
         expect(content).not.toContain('\r\nURL:');
