@@ -597,6 +597,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1/follow-up`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
         await waitFor(() => expect(screen.queryByRole('button', { name: /undo follow-up/i })).not.toBeInTheDocument());
@@ -1160,6 +1161,7 @@ describe('Job application viewing flow', () => {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ jobStatus: 'Interview' }),
+                signal: expect.any(AbortSignal),
             })
         );
         expect(screen.getByRole('heading', { name: 'Applied 0' })).toBeInTheDocument();
@@ -1198,6 +1200,7 @@ describe('Job application viewing flow', () => {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ jobStatus: 'Interview' }),
+                signal: expect.any(AbortSignal),
             })
         );
         expect(screen.getByRole('heading', { name: 'Interview 1' })).toBeInTheDocument();
@@ -1542,6 +1545,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications?jobStatuses=Offer`, {
                 method: 'GET',
+                signal: expect.any(AbortSignal),
             })
         );
         expect(fetch.mock.calls.length).toBeGreaterThan(callsBeforeSelectingOffer);
@@ -1554,6 +1558,7 @@ describe('Job application viewing flow', () => {
                 `${import.meta.env.VITE_API_URL}/job-applications?jobStatuses=Offer&jobStatuses=Accepted`,
                 {
                     method: 'GET',
+                    signal: expect.any(AbortSignal),
                 }
             )
         );
@@ -2287,11 +2292,13 @@ describe('Job application viewing flow', () => {
 
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1/relation-summary`, {
             method: 'GET',
+            signal: expect.any(AbortSignal),
         });
 
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -2334,12 +2341,14 @@ describe('Job application viewing flow', () => {
         );
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1/relation-summary`, {
             method: 'GET',
+            signal: expect.any(AbortSignal),
         });
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ jobId: 1 }),
+                signal: expect.any(AbortSignal),
             })
         );
         await waitFor(() => expect(screen.queryByText(/ABC Pte Ltd/i)).not.toBeInTheDocument());
@@ -2378,6 +2387,7 @@ describe('Job application viewing flow', () => {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobId: 1 }),
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -2419,6 +2429,7 @@ describe('Job application viewing flow', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ notes: 'Preserve this exact draft' }),
                 keepalive: true,
+                signal: expect.any(AbortSignal),
             })
         );
         expect(notesField).toBeDisabled();
@@ -2433,6 +2444,7 @@ describe('Job application viewing flow', () => {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ jobId: 1 }),
+                signal: expect.any(AbortSignal),
             })
         );
     });
@@ -2495,6 +2507,7 @@ describe('Job application viewing flow', () => {
         expect(mockConfirm).not.toHaveBeenCalled();
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1`, {
             method: 'DELETE',
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -2512,9 +2525,11 @@ describe('Job application viewing flow', () => {
         expect(mockConfirm).toHaveBeenCalledOnce();
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1/relation-summary`, {
             method: 'GET',
+            signal: expect.any(AbortSignal),
         });
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications/1`, {
             method: 'DELETE',
+            signal: expect.any(AbortSignal),
         });
         expect(screen.getByText(/ABC Pte Ltd/i)).toBeInTheDocument();
         await waitFor(() => expect(deleteButton).toBeEnabled());
@@ -2674,7 +2689,7 @@ describe('Job application viewing flow', () => {
             `${
                 import.meta.env.VITE_API_URL
             }/job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
@@ -2756,6 +2771,7 @@ describe('Job application viewing flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -2817,6 +2833,7 @@ describe('Job application viewing flow', () => {
         );
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications/archive-all`, {
             method: 'PATCH',
+            signal: expect.any(AbortSignal),
         });
         expect(await screen.findByRole('heading', { name: 'No active applications yet' })).toBeInTheDocument();
     });
@@ -2869,7 +2886,7 @@ describe('Job application viewing flow', () => {
 
         expect(fetch).not.toHaveBeenCalledWith(
             `${import.meta.env.VITE_API_URL}/archived-job-applications/archive-all`,
-            { method: 'PATCH' }
+            { method: 'PATCH', signal: expect.any(AbortSignal) }
         );
         expect(screen.getByText(/ABC Pte Ltd/i)).toBeInTheDocument();
     });
@@ -2924,6 +2941,7 @@ describe('Job application viewing flow', () => {
         expect(mockConfirm).not.toHaveBeenCalled();
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications`, {
             method: 'DELETE',
+            signal: expect.any(AbortSignal),
         });
     });
 

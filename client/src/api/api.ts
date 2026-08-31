@@ -8,6 +8,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 const PUBLIC_ROUTES = new Set<string>([routes.signIn, routes.signUp, routes.userGuide]);
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 3000;
+const REQUEST_TIMEOUT_MS = 30_000;
 let activeRefreshRequest: Promise<RefreshAuthenticationResponse> | undefined;
 
 type RequestDetails = {
@@ -122,6 +123,9 @@ const fetchResponse = async (url: string, init: RequestInit): Promise<Response> 
     try {
         return await fetch(url, init);
     } catch (error) {
+        if (init.signal?.aborted) {
+            throw getSignalAbortReason(init.signal);
+        }
         if (isAbortError(error)) {
             throw error;
         }
@@ -169,20 +173,50 @@ const isRetryableRequestError = (error: unknown): boolean => {
     return error instanceof RetryableNetworkError || error instanceof RetryableJobTrackerAPIError;
 };
 
-export const isAbortError = (error: unknown): boolean => error instanceof Error && error.name === 'AbortError';
+const isErrorLike = (error: unknown): error is { message: string; name: string } =>
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string' &&
+    'name' in error &&
+    typeof error.name === 'string';
+
+export const isAbortError = (error: unknown): boolean => isErrorLike(error) && error.name === 'AbortError';
 
 const createAbortError = (): DOMException => new DOMException('The request was aborted.', 'AbortError');
 
+const createTimeoutError = (): DOMException =>
+    new DOMException('The request timed out. Please try again.', 'TimeoutError');
+
+const getSignalAbortReason = (signal?: AbortSignal | null): unknown =>
+    isErrorLike(signal?.reason) ? signal.reason : createAbortError();
+
+const createRequestAbortContext = (callerSignal?: AbortSignal): { cleanup: () => void; signal: AbortSignal } => {
+    const controller = new AbortController();
+    const handleCallerAbort = () => controller.abort(getSignalAbortReason(callerSignal));
+    callerSignal?.addEventListener('abort', handleCallerAbort, { once: true });
+
+    const timeout = setTimeout(() => controller.abort(createTimeoutError()), REQUEST_TIMEOUT_MS);
+
+    return {
+        cleanup: () => {
+            clearTimeout(timeout);
+            callerSignal?.removeEventListener('abort', handleCallerAbort);
+        },
+        signal: controller.signal,
+    };
+};
+
 const throwIfAborted = (signal?: AbortSignal): void => {
     if (signal?.aborted) {
-        throw createAbortError();
+        throw getSignalAbortReason(signal);
     }
 };
 
 const wait = (delay: number, signal?: AbortSignal): Promise<void> => {
     return new Promise((resolve, reject) => {
         if (signal?.aborted) {
-            reject(createAbortError());
+            reject(getSignalAbortReason(signal));
             return;
         }
 
@@ -192,7 +226,7 @@ const wait = (delay: number, signal?: AbortSignal): Promise<void> => {
         }, delay);
         const handleAbort = () => {
             clearTimeout(timeout);
-            reject(createAbortError());
+            reject(getSignalAbortReason(signal));
         };
         signal?.addEventListener('abort', handleAbort, { once: true });
     });
@@ -203,21 +237,28 @@ export const makeJobTrackerAPIRequest = async <TRequest extends APIRequest, TRes
     config: EndpointConfigEntry,
     options: RequestOptions = {}
 ): Promise<TResponse> => {
-    const requestDetails = buildRequest(request, config, options);
-    let retriesRemaining = config.retry ? MAX_RETRIES : 0;
+    throwIfAborted(options.signal);
+    const requestAbortContext = createRequestAbortContext(options.signal);
 
-    while (true) {
-        throwIfAborted(options.signal);
-        try {
-            return await sendRequest<TResponse>(requestDetails);
-        } catch (error) {
-            if (retriesRemaining === 0 || !isRetryableRequestError(error)) {
-                throw error;
+    try {
+        const requestDetails = buildRequest(request, config, { signal: requestAbortContext.signal });
+        let retriesRemaining = config.retry ? MAX_RETRIES : 0;
+
+        while (true) {
+            throwIfAborted(requestAbortContext.signal);
+            try {
+                return await sendRequest<TResponse>(requestDetails);
+            } catch (error) {
+                if (retriesRemaining === 0 || !isRetryableRequestError(error)) {
+                    throw error;
+                }
+
+                retriesRemaining -= 1;
+                await wait(RETRY_DELAY_MS, requestAbortContext.signal);
             }
-
-            retriesRemaining -= 1;
-            await wait(RETRY_DELAY_MS, options.signal);
         }
+    } finally {
+        requestAbortContext.cleanup();
     }
 };
 

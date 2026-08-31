@@ -4,14 +4,11 @@ import FallbackScreen from '../fallbackScreen/FallbackScreen';
 import { JobTrackerAPIError } from '../../api/models';
 import { routes } from '../../routes';
 import { useJobTrackerAPI } from '../../api/useJobTrackerAPI';
-import { useToast } from '../toast/ToastProvider';
-import { getErrorToastMessage } from '../../helper/getErrorToastMessage';
 
 const ProtectedRoutes = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | undefined>(undefined);
     const [authenticationError, setAuthenticationError] = useState<boolean>(false);
     const api = useJobTrackerAPI();
-    const { showErrorToast } = useToast();
     const location = useLocation();
 
     const checkIsAuth = async () => {
@@ -32,7 +29,6 @@ const ProtectedRoutes = () => {
             }
 
             setAuthenticationError(true);
-            showErrorToast(getErrorToastMessage(error, 'Unable to verify authentication. Please try again.'));
         }
     };
 

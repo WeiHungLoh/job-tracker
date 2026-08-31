@@ -93,11 +93,8 @@ const invalidForm = <TErrors>(errors: TErrors): InvalidForm<TErrors> => ({ error
 
 export const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 
-export const getPasswordValidationError = (value: string): string | undefined => {
+export const getPasswordMaximumValidationError = (value: string): string | undefined => {
     const passwordLength = [...value].length;
-    if (passwordLength < PASSWORD_MIN_LENGTH) {
-        return `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
-    }
     if (passwordLength > PASSWORD_MAX_LENGTH) {
         return `Password must be ${PASSWORD_MAX_LENGTH} characters or fewer.`;
     }
@@ -105,6 +102,13 @@ export const getPasswordValidationError = (value: string): string | undefined =>
         return 'Password is too long when encoded. Use fewer Unicode characters.';
     }
     return undefined;
+};
+
+export const getPasswordValidationError = (value: string): string | undefined => {
+    if ([...value].length < PASSWORD_MIN_LENGTH) {
+        return `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+    }
+    return getPasswordMaximumValidationError(value);
 };
 
 export const isValidHttpURL = (value: string): boolean => {

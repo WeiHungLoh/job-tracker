@@ -572,9 +572,10 @@ describe('CounterofferPlanDialog', () => {
         const onGet = vi.fn().mockRejectedValue(new Error('offline'));
         renderDialog({ hasPlan: true, onGet });
 
-        expect(await screen.findAllByText('Unable to load the counteroffer plan. Please try again.')).not.toHaveLength(
-            0
-        );
+        expect(await screen.findAllByText('Unable to load the counteroffer plan. Please try again.')).toHaveLength(1);
+        expect(screen.getByText('Unable to load the counteroffer plan. Please try again')).toBeInTheDocument();
+        expect(screen.getByTestId('toast')).toHaveTextContent('Unable to load the counteroffer plan. Please try again');
+        expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(screen.getByRole('button', { name: 'Try again' })).toHaveClass(primaryButtonStyles.primary);
         expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(primaryButtonStyles.secondary);
     });

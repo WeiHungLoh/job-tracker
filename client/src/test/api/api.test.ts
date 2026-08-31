@@ -165,6 +165,7 @@ describe('makeJobTrackerAPIRequest', () => {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ notes: 'Updated' }),
+                signal: expect.any(AbortSignal),
             }
         );
     });
@@ -181,19 +182,98 @@ describe('makeJobTrackerAPIRequest', () => {
 
         expect(fetch).toHaveBeenCalledWith(
             `${import.meta.env.VITE_API_URL}/job-applications?jobStatuses=Accepted&jobStatuses=Offer`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
     });
 
-    test('forwards a caller abort signal to fetch', async () => {
+    test('composes a caller abort signal with the request deadline', async () => {
         const controller = new AbortController();
-
-        await makeJobTrackerAPIRequest(null, { url: '/job-applications', verb: 'GET' }, { signal: controller.signal });
-
-        expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications`, {
-            method: 'GET',
-            signal: controller.signal,
+        let requestSignal: AbortSignal | undefined;
+        fetch.mockImplementationOnce((_url: string, init?: RequestInit) => {
+            requestSignal = init?.signal ?? undefined;
+            return new Promise<Response>((_resolve, reject) => {
+                requestSignal?.addEventListener('abort', () => reject(requestSignal?.reason), { once: true });
+            });
         });
+
+        const request = makeJobTrackerAPIRequest(
+            null,
+            { url: '/job-applications', verb: 'GET' },
+            { signal: controller.signal }
+        );
+        const rejection = expect(request).rejects.toMatchObject({ name: 'AbortError' });
+
+        expect(requestSignal).toBeInstanceOf(AbortSignal);
+        expect(requestSignal).not.toBe(controller.signal);
+
+        controller.abort();
+
+        await rejection;
+        expect(requestSignal?.aborted).toBe(true);
+    });
+
+    test('aborts a stalled request after the 30-second request deadline', async () => {
+        vi.useFakeTimers();
+        let requestSignal: AbortSignal | undefined;
+        fetch.mockImplementationOnce((_url: string, init?: RequestInit) => {
+            requestSignal = init?.signal ?? undefined;
+            if (!requestSignal) {
+                return new Promise<Response>(() => undefined);
+            }
+
+            return new Promise<Response>((_resolve, reject) => {
+                requestSignal?.addEventListener(
+                    'abort',
+                    () => reject(new DOMException('The operation was aborted.', 'AbortError')),
+                    { once: true }
+                );
+            });
+        });
+
+        const request = makeJobTrackerAPIRequest<null, never>(null, {
+            url: '/job-applications',
+            verb: 'GET',
+        });
+        expect(requestSignal).toBeInstanceOf(AbortSignal);
+
+        const rejection = request.catch((error: unknown) => error);
+
+        await vi.advanceTimersByTimeAsync(29_999);
+        expect(requestSignal?.aborted).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(1);
+
+        await expect(rejection).resolves.toMatchObject({
+            message: 'The request timed out. Please try again.',
+            name: 'TimeoutError',
+        });
+        expect(requestSignal?.aborted).toBe(true);
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test('preserves the timeout reason when a browser reports an aborted fetch as a network error', async () => {
+        vi.useFakeTimers();
+        fetch.mockImplementationOnce((_url: string, init?: RequestInit) => {
+            return new Promise<Response>((_resolve, reject) => {
+                init?.signal?.addEventListener('abort', () => reject(new TypeError('Load failed')), { once: true });
+            });
+        });
+
+        const request = makeJobTrackerAPIRequest<null, never>(null, {
+            url: '/job-applications',
+            verb: 'GET',
+            retry: true,
+        });
+        const rejection = request.catch((error: unknown) => error);
+
+        await vi.advanceTimersByTimeAsync(30_000);
+
+        await expect(rejection).resolves.toMatchObject({
+            message: 'The request timed out. Please try again.',
+            name: 'TimeoutError',
+        });
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(vi.getTimerCount()).toBe(0);
     });
 
     test('adds keepalive only when the endpoint opts in', async () => {
@@ -212,6 +292,7 @@ describe('makeJobTrackerAPIRequest', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ notes: 'Latest notes' }),
             keepalive: true,
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -227,6 +308,7 @@ describe('makeJobTrackerAPIRequest', () => {
 
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-applications?jobStatuses=`, {
             method: 'GET',
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -508,9 +590,12 @@ describe('makeJobTrackerAPIRequest', () => {
 
         expect(result).toEqual({ applications: 2 });
         expect(fetch.mock.calls).toEqual([
-            [`${import.meta.env.VITE_API_URL}/job-applications`, { method: 'GET' }],
-            [`${import.meta.env.VITE_API_URL}/authentication/sessions/refresh`, { method: 'POST' }],
-            [`${import.meta.env.VITE_API_URL}/job-applications`, { method: 'GET' }],
+            [`${import.meta.env.VITE_API_URL}/job-applications`, { method: 'GET', signal: expect.any(AbortSignal) }],
+            [
+                `${import.meta.env.VITE_API_URL}/authentication/sessions/refresh`,
+                { method: 'POST', signal: expect.any(AbortSignal) },
+            ],
+            [`${import.meta.env.VITE_API_URL}/job-applications`, { method: 'GET', signal: expect.any(AbortSignal) }],
         ]);
     });
 

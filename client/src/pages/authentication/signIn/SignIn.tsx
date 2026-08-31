@@ -11,7 +11,12 @@ import styles from '../Authentication.module.css';
 import { useJobTrackerAPI } from '../../../api/useJobTrackerAPI';
 import { useToast } from '../../../components/toast/ToastProvider';
 import { getErrorToastMessage } from '../../../helper/getErrorToastMessage';
-import { EMAIL_MAX_LENGTH, normalizeEmail } from '../../../helper/formValidation';
+import {
+    EMAIL_MAX_LENGTH,
+    getPasswordMaximumValidationError,
+    normalizeEmail,
+    PASSWORD_MAX_BYTES,
+} from '../../../helper/formValidation';
 import type { AuthenticationNavigationState } from '../models';
 
 const SignIn = () => {
@@ -44,6 +49,11 @@ const SignIn = () => {
 
     const handleSignIn = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (getPasswordMaximumValidationError(password)) {
+            showErrorToast('Invalid email or password.');
+            return;
+        }
+
         setIsPending(true);
 
         try {
@@ -54,7 +64,13 @@ const SignIn = () => {
                 navigate(routes.addApplication);
             }
         } catch (error) {
-            showErrorToast(getErrorToastMessage(error, 'Unable to sign in. Please try again.'));
+            showErrorToast(
+                getErrorToastMessage(
+                    error,
+                    'Unable to sign in. Please try again.',
+                    'Sign in took too long. Please try again.'
+                )
+            );
         } finally {
             setIsPending(false);
         }
@@ -89,6 +105,7 @@ const SignIn = () => {
                             type={visible ? 'text' : 'password'}
                             autoComplete='current-password'
                             disabled={isPending}
+                            maxLength={PASSWORD_MAX_BYTES}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required

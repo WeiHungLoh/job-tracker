@@ -13,4 +13,31 @@ describe('getErrorToastMessage', () => {
             'Unable to reach the server.'
         );
     });
+
+    test('identifies a client request timeout with actionable copy', () => {
+        const timeoutError = new DOMException('The request timed out.', 'TimeoutError');
+
+        expect(getErrorToastMessage(timeoutError, 'Unable to reach the server.')).toBe(
+            'The request took too long. Please try again.'
+        );
+    });
+
+    test('supports contextual timeout copy without changing other frontend failures', () => {
+        const timeoutError = new DOMException('The request timed out.', 'TimeoutError');
+
+        expect(
+            getErrorToastMessage(
+                timeoutError,
+                'Unable to sign in. Please try again.',
+                'Sign in took too long. Please try again.'
+            )
+        ).toBe('Sign in took too long. Please try again.');
+        expect(
+            getErrorToastMessage(
+                new TypeError('Failed to fetch'),
+                'Unable to sign in. Please try again.',
+                'Sign in took too long. Please try again.'
+            )
+        ).toBe('Unable to sign in. Please try again.');
+    });
 });

@@ -1691,6 +1691,35 @@ test('rejects an oversized sign-in email before accessing the database', async (
     }
 });
 
+test('rejects oversized sign-in passwords generically before accessing the database', async () => {
+    const originalQuery = pool.query;
+    let databaseQueries = 0;
+    pool.query = async () => {
+        databaseQueries += 1;
+        return { rows: [] };
+    };
+
+    try {
+        for (const password of [
+            'x'.repeat(PASSWORD_MAX_LENGTH + 1),
+            '😀'.repeat(Math.floor(PASSWORD_MAX_BYTES / 4) + 1),
+        ]) {
+            const response = await fetch(`${baseUrl}/authentication/sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: 'test@example.com', password }),
+            });
+
+            assert.equal(response.status, 401);
+            assert.deepEqual(await response.json(), { message: 'Invalid email or password.' });
+        }
+
+        assert.equal(databaseQueries, 0);
+    } finally {
+        pool.query = originalQuery;
+    }
+});
+
 test('returns 503 when authentication configuration is unavailable', async () => {
     const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
     delete process.env.ACCESS_TOKEN_SECRET;

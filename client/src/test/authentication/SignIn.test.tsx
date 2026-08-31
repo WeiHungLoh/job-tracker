@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AUTH_FOCUSED_MODE_STORAGE_KEY } from '../../components/authProductIntro/AuthProductIntro';
 import SignIn from '../../pages/authentication/signIn/SignIn';
@@ -55,6 +55,7 @@ describe('User sign in flow', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         localStorage.removeItem(AUTH_FOCUSED_MODE_STORAGE_KEY);
         localStorage.removeItem('theme');
     });
@@ -83,6 +84,7 @@ describe('User sign in flow', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: 'starboy98@hotmail.com', password: '123456' }),
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -110,6 +112,41 @@ describe('User sign in flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
         await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(returnTo, { replace: true }));
+    });
+
+    test('explains when sign in takes too long', async () => {
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/authentication/sessions/current') || url.endsWith('/authentication/sessions/refresh')) {
+                return {
+                    headers: new Headers({ 'content-type': 'application/json' }),
+                    json: async () => ({ message: 'Invalid email or password.' }),
+                    ok: false,
+                    status: 401,
+                    statusText: 'Unauthorized',
+                };
+            }
+
+            return await new Promise<Response>((_resolve, reject) => {
+                init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
+            });
+        });
+
+        render(
+            <MemoryRouter>
+                <SignIn />
+            </MemoryRouter>
+        );
+
+        await openSignInPanel();
+        fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'person@example.com' } });
+        fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'password' } });
+
+        vi.useFakeTimers();
+        fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+        await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+        expect(screen.getByRole('alert')).toHaveTextContent('Sign in took too long. Please try again');
+        expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled();
     });
 
     test('preserves the protected destination when linking to sign up', async () => {
@@ -142,6 +179,44 @@ describe('User sign in flow', () => {
         await userEvent.type(screen.getByLabelText(/email/i), oversizedEmail);
 
         expect(screen.getByLabelText(/email/i)).toHaveValue(oversizedEmail.slice(0, 254));
+    });
+
+    test('uses the same password input ceiling as sign up', async () => {
+        render(
+            <MemoryRouter>
+                <SignIn />
+            </MemoryRouter>
+        );
+
+        await openSignInPanel();
+
+        expect(screen.getByLabelText(/^password$/i)).toHaveAttribute('maxlength', '72');
+    });
+
+    test.each([
+        ['more than 64 characters', 'x'.repeat(65)],
+        ['more than 72 UTF-8 bytes', '😀'.repeat(19)],
+    ])('rejects a password with %s before calling the sign-in endpoint', async (_case, oversizedPassword) => {
+        mockUnauthenticatedSession({
+            ok: true,
+            status: 200,
+            headers: new Headers({ 'content-type': 'application/json' }),
+            json: async () => ({ message: 'Successfully signed in' }),
+        });
+
+        render(
+            <MemoryRouter>
+                <SignIn />
+            </MemoryRouter>
+        );
+
+        await openSignInPanel();
+        fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'person@example.com' } });
+        fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: oversizedPassword } });
+        await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+        expect(await screen.findByText('Invalid email or password')).toBeInTheDocument();
+        expect(fetch.mock.calls.filter(([url]) => String(url).endsWith('/authentication/sessions'))).toHaveLength(0);
     });
 
     test('locks account access while sign in is pending', async () => {
@@ -223,6 +298,7 @@ describe('User sign in flow', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: 'starboy98@hotmail.com', password: '123456' }),
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -255,6 +331,7 @@ describe('User sign in flow', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: 'starboy98@hotmail.com', password: '123456' }),
+                signal: expect.any(AbortSignal),
             })
         );
 

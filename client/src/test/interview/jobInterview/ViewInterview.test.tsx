@@ -415,6 +415,7 @@ describe('Job interview viewer flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-interviews/1/follow-up`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
         expect(
@@ -561,7 +562,7 @@ describe('Job interview viewer flow', () => {
             `${
                 import.meta.env.VITE_API_URL
             }/job-interviews?timeFilters=Upcoming+Interviews&timeFilters=Past+Interviews`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
     });
 
@@ -680,6 +681,7 @@ describe('Job interview viewer flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-interviews/1`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -720,6 +722,7 @@ describe('Job interview viewer flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/job-interviews`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 

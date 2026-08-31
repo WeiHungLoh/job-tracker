@@ -76,6 +76,7 @@ describe('User sign up flow', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: 'starboy98@hotmail.com', password: VALID_PASSWORD }),
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -295,6 +296,7 @@ describe('User sign up flow', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: 'starboy98@hotmail.com', password: VALID_PASSWORD }),
+                signal: expect.any(AbortSignal),
             })
         );
 

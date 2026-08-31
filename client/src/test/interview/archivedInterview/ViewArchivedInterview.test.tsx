@@ -225,6 +225,7 @@ describe('Archived job interview viewer flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-interviews/1`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -265,6 +266,7 @@ describe('Archived job interview viewer flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-interviews`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 

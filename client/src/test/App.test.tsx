@@ -114,6 +114,7 @@ describe('App routing and authentication behavior', () => {
         await waitFor(() => expect(screen.getByText(/sign in to job tracker/i)).toBeInTheDocument());
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/current`, {
             method: 'GET',
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -169,6 +170,7 @@ describe('App routing and authentication behavior', () => {
         expect(screen.getByRole('heading', { level: 1, name: 'Job Tracker' })).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/refresh`, {
             method: 'POST',
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -281,7 +283,7 @@ describe('App routing and authentication behavior', () => {
         expect(screen.getByText(/Try again to continue to Job Tracker./i)).toBeInTheDocument();
         expect(screen.queryByText(/sign in to job tracker/i)).not.toBeInTheDocument();
         expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-        expect(screen.getByText('Authentication is temporarily unavailable')).toBeInTheDocument();
+        expect(screen.queryByText('Authentication is temporarily unavailable')).not.toBeInTheDocument();
         expect(fetch).toHaveBeenCalledTimes(4);
     });
 
@@ -334,6 +336,7 @@ describe('App routing and authentication behavior', () => {
         await waitFor(() => expect(screen.getByText(/company name/i)).toBeInTheDocument());
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/current`, {
             method: 'GET',
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -753,6 +756,7 @@ describe('App routing and authentication behavior', () => {
         expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/current`, {
             method: 'GET',
+            signal: expect.any(AbortSignal),
         });
     });
 
@@ -806,6 +810,7 @@ describe('App routing and authentication behavior', () => {
         await waitFor(() => expect(screen.getByText(/Sign in to job tracker/i)).toBeInTheDocument());
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/authentication/sessions/current`, {
             method: 'DELETE',
+            signal: expect.any(AbortSignal),
         });
     });
 

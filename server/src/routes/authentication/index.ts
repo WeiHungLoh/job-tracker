@@ -33,7 +33,13 @@ import {
 } from '../../db/queries/authenticationSessions.js';
 import { findUserInfo, insertUser } from '../../db/queries/users.js';
 import { handleRouteError, sendError } from '../../http/responses.js';
-import { getPasswordValidationError, isNonEmptyString, isValidEmail, normalizeEmail } from '../../http/validation.js';
+import {
+    getPasswordMaximumValidationError,
+    getPasswordValidationError,
+    isNonEmptyString,
+    isValidEmail,
+    normalizeEmail,
+} from '../../http/validation.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import express from 'express';
@@ -104,7 +110,7 @@ router.post(
         const email = normalizeEmail(req.body.email);
         const { password } = req.body;
 
-        if (!isValidEmail(email) || !isNonEmptyString(password)) {
+        if (!isValidEmail(email) || !isNonEmptyString(password) || getPasswordMaximumValidationError(password)) {
             sendError(res, 401, 'Invalid email or password.');
             return;
         }

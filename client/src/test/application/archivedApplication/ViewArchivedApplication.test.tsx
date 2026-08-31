@@ -849,6 +849,7 @@ describe('Archived job application viewing flow', () => {
                 `${import.meta.env.VITE_API_URL}/archived-job-applications?jobStatuses=Offer`,
                 {
                     method: 'GET',
+                    signal: expect.any(AbortSignal),
                 }
             )
         );
@@ -1037,12 +1038,13 @@ describe('Archived job application viewing flow', () => {
 
         expect(fetch).toHaveBeenCalledWith(
             `${import.meta.env.VITE_API_URL}/archived-job-applications/1/relation-summary`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
 
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications/1`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -1084,6 +1086,7 @@ describe('Archived job application viewing flow', () => {
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications`, {
                 method: 'DELETE',
+                signal: expect.any(AbortSignal),
             })
         );
 
@@ -1117,6 +1120,7 @@ describe('Archived job application viewing flow', () => {
         );
         expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications/unarchive-all`, {
             method: 'PATCH',
+            signal: expect.any(AbortSignal),
         });
         expect(await screen.findByRole('heading', { name: 'No archived applications yet' })).toBeInTheDocument();
     });
@@ -1153,11 +1157,12 @@ describe('Archived job application viewing flow', () => {
         );
         expect(fetch).toHaveBeenCalledWith(
             `${import.meta.env.VITE_API_URL}/archived-job-applications/1/relation-summary`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
         await waitFor(() =>
             expect(fetch).toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications/1/restore`, {
                 method: 'PATCH',
+                signal: expect.any(AbortSignal),
             })
         );
         await waitFor(() => expect(screen.queryByText(/ABC Pte Ltd/i)).not.toBeInTheDocument());
@@ -1177,10 +1182,11 @@ describe('Archived job application viewing flow', () => {
         expect(mockConfirm).toHaveBeenCalledOnce();
         expect(fetch).toHaveBeenCalledWith(
             `${import.meta.env.VITE_API_URL}/archived-job-applications/1/relation-summary`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications/1`, {
             method: 'DELETE',
+            signal: expect.any(AbortSignal),
         });
         expect(screen.getByText(/ABC Pte Ltd/i)).toBeInTheDocument();
         await waitFor(() => expect(deleteButton).toBeEnabled());
@@ -1208,6 +1214,7 @@ describe('Archived job application viewing flow', () => {
         expect(mockConfirm).not.toHaveBeenCalled();
         expect(fetch).not.toHaveBeenCalledWith(`${import.meta.env.VITE_API_URL}/archived-job-applications/1`, {
             method: 'DELETE',
+            signal: expect.any(AbortSignal),
         });
         expect(screen.getByText(/ABC Pte Ltd/i)).toBeInTheDocument();
     });
@@ -1294,7 +1301,7 @@ describe('Archived job application viewing flow', () => {
             `${
                 import.meta.env.VITE_API_URL
             }/archived-job-applications?jobStatuses=Accepted&jobStatuses=Applied&jobStatuses=Declined&jobStatuses=Ghosted&jobStatuses=Interview&jobStatuses=Offer&jobStatuses=Rejected&jobStatuses=Withdrawn`,
-            { method: 'GET' }
+            { method: 'GET', signal: expect.any(AbortSignal) }
         );
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         expect(screen.getByRole('checkbox', { name: 'Show all' })).toBeChecked();
