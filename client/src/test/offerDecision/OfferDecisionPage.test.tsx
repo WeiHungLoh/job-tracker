@@ -671,6 +671,57 @@ describe('OfferDecisionPage', () => {
         expect(screen.queryByRole('article', { name: 'Older Offer Result Developer' })).not.toBeInTheDocument();
     });
 
+    test('refetches a filter that started before an offer status update committed', async () => {
+        let resolveStatusUpdate: () => void = () => undefined;
+        let resolveStaleFilter: (value: OfferDecisionWorkspaceData) => void = () => undefined;
+        let workspaceRequestCount = 0;
+        const updatedWorkspace = {
+            applications: workspaceData.applications.map((application) =>
+                application.job_id === 11 ? { ...application, job_status: 'Accepted' } : application
+            ),
+        } satisfies OfferDecisionWorkspaceData;
+
+        mocks.updateStatus.mockImplementation(
+            () =>
+                new Promise<void>((resolve) => {
+                    resolveStatusUpdate = resolve;
+                })
+        );
+        mocks.getActive.mockImplementation(async () => {
+            workspaceRequestCount += 1;
+            if (workspaceRequestCount === 2) {
+                return new Promise((resolve) => {
+                    resolveStaleFilter = resolve;
+                });
+            }
+            return workspaceRequestCount === 3 ? updatedWorkspace : workspaceData;
+        });
+
+        render(<OfferDecisionPage archived={false} />);
+        await waitForActiveWorkspace();
+
+        fireEvent.click(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Accept offer from Acme',
+            })
+        );
+        await waitFor(() => expect(mocks.updateStatus).toHaveBeenCalledOnce());
+
+        fireEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'Offers to Evaluate' }));
+        await waitFor(() => expect(workspaceRequestCount).toBe(2));
+
+        await act(async () => resolveStatusUpdate());
+        await act(async () => resolveStaleFilter(workspaceData));
+
+        await waitFor(() => expect(workspaceRequestCount).toBe(3));
+        expect(
+            within(openOfferActions('Acme')).getByRole('menuitem', {
+                name: 'Change to Offer for Acme',
+            })
+        ).toBeInTheDocument();
+    });
+
     test('restores saved offer filters when the filtered GET fails', async () => {
         mocks.getActive.mockImplementation(async ({ filters }: { filters: string[] }) => {
             if (filters.length === 3) {

@@ -80,21 +80,27 @@ const ViewArchivedInterview = () => {
         }
     };
 
-    const handleTimeFilterChange = async (timeFilters: InterviewTimeFilter[]) => {
-        const requestId = filterRequest.startRequest();
+    const handleTimeFilterChange = async (timeFilters: InterviewTimeFilter[]): Promise<boolean> => {
+        const request = filterRequest.startRequest();
         setIsFilteringInterviews(true);
 
         try {
             const fetchedInterviews = await api.archivedInterview.listInterviews({
                 timeFilters: [...INTERVIEW_TIME_FILTERS],
             });
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleTimeFilterChange(timeFilters);
+            }
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
             await updatePreferences({ archived_interview_time_filters: timeFilters });
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleTimeFilterChange(timeFilters);
+            }
             const savedInterviews = filterRequest.saveResult(
-                requestId,
+                request,
                 filterAndSortInterviews(
                     Array.isArray(fetchedInterviews) ? fetchedInterviews : [],
                     INTERVIEW_TIME_FILTERS,
@@ -107,18 +113,18 @@ const ViewArchivedInterview = () => {
 
             return true;
         } catch (error) {
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
-            const savedInterviews = filterRequest.failRequest(requestId);
+            const savedInterviews = filterRequest.failRequest(request);
             if (savedInterviews) {
                 setArchivedInterviews(savedInterviews);
             }
             showErrorToast(getErrorToastMessage(error, 'Unable to filter archived interviews. Please try again.'));
             return false;
         } finally {
-            if (filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.isLatestRequest(request)) {
                 setIsFilteringInterviews(false);
             }
         }
@@ -174,6 +180,7 @@ const ViewArchivedInterview = () => {
             startDeletingInterview(archivedInterviewId);
             try {
                 await api.archivedInterview.deleteInterview({ archivedInterviewId });
+                filterRequest.markMutationCommitted();
                 setArchivedInterviews((current) =>
                     current.filter((interview) => interview.archived_interview_id !== archivedInterviewId)
                 );
@@ -213,6 +220,7 @@ const ViewArchivedInterview = () => {
             }
 
             await api.archivedInterview.deleteAllInterviews();
+            filterRequest.markMutationCommitted();
             setArchivedInterviews([]);
             showSuccessToast('Archived interviews deleted.');
         } catch (error) {

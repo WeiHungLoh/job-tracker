@@ -146,19 +146,25 @@ const ViewArchivedApplication = () => {
         }
     };
 
-    const handleJobStatusChange = async (jobStatuses: JobStatus[]) => {
-        const requestId = filterRequest.startRequest();
+    const handleJobStatusChange = async (jobStatuses: JobStatus[]): Promise<boolean> => {
+        const request = filterRequest.startRequest();
         setIsFilteringApplications(true);
 
         try {
             const archivedApplications = await api.archivedApplication.listApplications({ jobStatuses });
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleJobStatusChange(jobStatuses);
+            }
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
             await updatePreferences({ archived_application_job_statuses: jobStatuses });
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleJobStatusChange(jobStatuses);
+            }
             const savedApplications = filterRequest.saveResult(
-                requestId,
+                request,
                 Array.isArray(archivedApplications) ? archivedApplications : []
             );
             if (savedApplications) {
@@ -167,11 +173,11 @@ const ViewArchivedApplication = () => {
 
             return true;
         } catch (error) {
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
-            const savedApplications = filterRequest.failRequest(requestId);
+            const savedApplications = filterRequest.failRequest(request);
             if (savedApplications) {
                 setArchivedApplications(savedApplications);
             }
@@ -180,7 +186,7 @@ const ViewArchivedApplication = () => {
             );
             return false;
         } finally {
-            if (filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.isLatestRequest(request)) {
                 setIsFilteringApplications(false);
             }
         }
@@ -347,6 +353,7 @@ const ViewArchivedApplication = () => {
                 await api.archivedApplication.deleteApplication({ archivedJobId });
             }
 
+            filterRequest.markMutationCommitted();
             setArchivedApplications((current) =>
                 current.filter((application) => application.archived_job_id !== archivedJobId)
             );
@@ -415,6 +422,7 @@ const ViewArchivedApplication = () => {
                 await api.archivedApplication.deleteAllApplications();
             }
 
+            filterRequest.markMutationCommitted();
             setArchivedApplications([]);
             showSuccessToast(action === 'unarchive' ? 'Job applications unarchived.' : 'Job applications deleted.');
         } catch (error) {

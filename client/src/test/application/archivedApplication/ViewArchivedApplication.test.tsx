@@ -934,6 +934,65 @@ describe('Archived job application viewing flow', () => {
         expect(screen.getByRole('heading', { level: 2, name: '1. Latest result' })).toBeInTheDocument();
     });
 
+    test('refetches a filter that started before an application was unarchived', async () => {
+        let resolveRestore: (value: ReturnType<typeof response>) => void = () => undefined;
+        let resolveStaleFilter: (value: ReturnType<typeof response>) => void = () => undefined;
+        let offerFilterRequestCount = 0;
+
+        mockConfirm.mockResolvedValue({ confirmed: true });
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/archived-job-applications/summary')) {
+                return response({ application_count: 1, related_interview_count: 0 });
+            }
+            if (url.endsWith('/archived-job-applications/1/relation-summary')) {
+                return response({ related_interview_count: 0 });
+            }
+            if (url.endsWith('/archived-job-applications/1/restore')) {
+                return new Promise((resolve) => {
+                    resolveRestore = resolve;
+                });
+            }
+            if (url.endsWith('/archived-job-applications?jobStatuses=Offer')) {
+                offerFilterRequestCount += 1;
+                if (offerFilterRequestCount === 1) {
+                    return new Promise((resolve) => {
+                        resolveStaleFilter = resolve;
+                    });
+                }
+                return response([]);
+            }
+            return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewArchivedApplication />
+            </MemoryRouter>
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: /^Unarchive application for / }));
+        await waitFor(() =>
+            expect(fetch).toHaveBeenCalledWith(
+                `${import.meta.env.VITE_API_URL}/archived-job-applications/1/restore`,
+                expect.objectContaining({ method: 'PATCH' })
+            )
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
+        await waitFor(() => expect(offerFilterRequestCount).toBe(1));
+
+        await act(async () => resolveRestore(response(undefined, 204)));
+        await act(async () => resolveStaleFilter(response([mockApplication])));
+
+        await waitFor(() => expect(offerFilterRequestCount).toBe(2));
+        expect(
+            await screen.findByRole('heading', { name: 'No archived applications match your filters' })
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/ABC Pte Ltd/i)).not.toBeInTheDocument();
+    });
+
     test('restores the newest persisted filter result when a later filter request fails', async () => {
         let resolveOlderPreference: (preferences: UserPreferences) => void = () => undefined;
         let resolveLatestFilter: (value: ReturnType<typeof response>) => void = () => undefined;

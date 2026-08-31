@@ -122,8 +122,8 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
         }
     }, [clearTarget, hasOfferDecisionTarget, targetOfferJobId]);
 
-    const handleFilterSelection = async (filters: OfferDecisionFilter[]) => {
-        const requestId = filterRequest.startRequest();
+    const handleFilterSelection = async (filters: OfferDecisionFilter[]): Promise<boolean> => {
+        const request = filterRequest.startRequest();
         const requestFilters = includeBothDeadlineBasedOfferFilters(filters);
         setIsFiltering(true);
 
@@ -133,7 +133,10 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
                       filters: requestFilters.filter(isArchivedOfferDecisionFilter),
                   })
                 : await api.offerDecision.getActive({ filters: requestFilters });
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleFilterSelection(filters);
+            }
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
@@ -142,18 +145,21 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
                     ? { archived_offer_decision_filters: filters.filter(isArchivedOfferDecisionFilter) }
                     : { offer_decision_filters: filters }
             );
-            const savedWorkspace = filterRequest.saveResult(requestId, workspace);
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleFilterSelection(filters);
+            }
+            const savedWorkspace = filterRequest.saveResult(request, workspace);
             if (savedWorkspace) {
                 setData(savedWorkspace);
             }
             setNavigationFilters(undefined);
             return true;
         } catch (error) {
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
-            const savedWorkspace = filterRequest.failRequest(requestId);
+            const savedWorkspace = filterRequest.failRequest(request);
             if (savedWorkspace) {
                 setData(savedWorkspace);
             }
@@ -163,7 +169,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             showErrorToast(getErrorToastMessage(error, fallback));
             return false;
         } finally {
-            if (filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.isLatestRequest(request)) {
                 setIsFiltering(false);
             }
         }
@@ -193,6 +199,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             data?.applications.some((application) => application.job_id === jobId && !application.evaluation) ?? false;
         try {
             await api.offerDecision.saveEvaluation({ jobId, ...request });
+            filterRequest.markMutationCommitted();
             setData((current) => {
                 if (!current) {
                     return current;
@@ -232,6 +239,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
     const deleteEvaluation = async (jobId: number) => {
         try {
             await api.offerDecision.deleteEvaluation({ jobId });
+            filterRequest.markMutationCommitted();
             setData((current) => {
                 if (!current) {
                     return current;
@@ -270,6 +278,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
             } else {
                 await api.offerDecision.deleteAllActiveEvaluations();
             }
+            filterRequest.markMutationCommitted();
             setData((current) => {
                 if (!current) {
                     return current;
@@ -334,11 +343,13 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
 
     const saveCounterofferPlan = async (jobId: number, request: SaveCounterofferPlanRequest) => {
         await api.offerDecision.saveCounterofferPlan({ jobId, ...request });
+        filterRequest.markMutationCommitted();
         setCounterofferPlan(jobId, request);
     };
 
     const deleteCounterofferPlan = async (jobId: number) => {
         await api.offerDecision.deleteCounterofferPlan({ jobId });
+        filterRequest.markMutationCommitted();
         setCounterofferPlan(jobId, null);
     };
 
@@ -348,6 +359,7 @@ const OfferDecisionPage = ({ archived }: OfferDecisionPageProps) => {
                 jobId: application.job_id,
                 jobStatus: status,
             });
+            filterRequest.markMutationCommitted();
             setData((current) =>
                 current
                     ? {

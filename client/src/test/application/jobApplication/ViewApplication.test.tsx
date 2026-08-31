@@ -1429,6 +1429,152 @@ describe('Job application viewing flow', () => {
         expect(windowScrollTo).not.toHaveBeenCalled();
     });
 
+    test('locks conflicting card mutations while a board status update is pending', async () => {
+        let resolveStatusUpdate: (value: ReturnType<typeof response>) => void = () => undefined;
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/status') && init?.method === 'PATCH') {
+                return new Promise((resolve) => {
+                    resolveStatusUpdate = resolve;
+                });
+            }
+            return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>,
+            { initialPreferences: { application_view_mode: 'board' } }
+        );
+
+        await userEvent.selectOptions(
+            await screen.findByRole('combobox', { name: 'Move ABC Pte Ltd to status' }),
+            'Interview'
+        );
+        await waitFor(() => expect(statusUpdateRequestCount(1)).toBe(1));
+
+        const card = screen.getByRole('article', { name: 'ABC Pte Ltd Software Engineer' });
+        await userEvent.click(within(card).getByText('Actions'));
+
+        expect(within(card).getByRole('button', { name: 'Pin ABC Pte Ltd application' })).toBeDisabled();
+        expect(
+            within(card).getByRole('button', { name: 'Archive application for Software Engineer at ABC Pte Ltd' })
+        ).toBeDisabled();
+        expect(
+            within(card).getByRole('button', { name: 'Delete application for Software Engineer at ABC Pte Ltd' })
+        ).toBeDisabled();
+        expect(within(card).getByRole('textbox', { name: 'Edit notes' })).toBeDisabled();
+
+        await act(async () => resolveStatusUpdate(response(undefined, 204)));
+        await waitFor(() =>
+            expect(within(card).getByRole('button', { name: 'Pin ABC Pte Ltd application' })).toBeEnabled()
+        );
+    });
+
+    test('a failed board status update preserves newer application fields from a filter response', async () => {
+        let resolveStatusUpdate: (value: ReturnType<typeof response>) => void = () => undefined;
+        let applicationRequestCount = 0;
+        const newerApplication = {
+            ...mockApplication,
+            is_pinned: true,
+            job_status: 'Interview',
+            notes: 'Newer server notes',
+        };
+
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/status') && init?.method === 'PATCH') {
+                return new Promise((resolve) => {
+                    resolveStatusUpdate = resolve;
+                });
+            }
+            if (url.includes('/job-applications?') && init?.method === 'GET') {
+                applicationRequestCount += 1;
+                return response(applicationRequestCount === 1 ? [mockApplication] : [newerApplication]);
+            }
+            return response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>,
+            { initialPreferences: { application_view_mode: 'board' } }
+        );
+
+        await userEvent.selectOptions(
+            await screen.findByRole('combobox', { name: 'Move ABC Pte Ltd to status' }),
+            'Interview'
+        );
+        await waitFor(() => expect(statusUpdateRequestCount(1)).toBe(1));
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Accepted' }));
+        await waitFor(() => expect(applicationRequestCount).toBe(2));
+
+        await act(async () =>
+            resolveStatusUpdate(response({ message: 'Status update is temporarily unavailable.' }, 400))
+        );
+
+        expect(await screen.findByText('Status update is temporarily unavailable')).toBeInTheDocument();
+        const card = screen.getByRole('article', { name: 'ABC Pte Ltd Software Engineer' });
+        expect(within(card).getByRole('button', { name: 'Unpin ABC Pte Ltd application' })).toHaveAttribute(
+            'aria-pressed',
+            'true'
+        );
+        await userEvent.click(within(card).getByText('Actions'));
+        expect(within(card).getByRole('textbox', { name: 'Edit notes' })).toHaveValue('Newer server notes');
+    });
+
+    test('a failed board status update does not restore an application removed by a newer response', async () => {
+        let resolveStatusUpdate: (value: ReturnType<typeof response>) => void = () => undefined;
+        let applicationRequestCount = 0;
+
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/status') && init?.method === 'PATCH') {
+                return new Promise((resolve) => {
+                    resolveStatusUpdate = resolve;
+                });
+            }
+            if (url.includes('/job-applications?') && init?.method === 'GET') {
+                applicationRequestCount += 1;
+                return response(applicationRequestCount === 1 ? [mockApplication] : []);
+            }
+            return response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>,
+            { initialPreferences: { application_view_mode: 'board' } }
+        );
+
+        await userEvent.selectOptions(
+            await screen.findByRole('combobox', { name: 'Move ABC Pte Ltd to status' }),
+            'Interview'
+        );
+        await waitFor(() => expect(statusUpdateRequestCount(1)).toBe(1));
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Accepted' }));
+        expect(await screen.findByRole('heading', { name: 'No applications match your filters' })).toBeInTheDocument();
+
+        await act(async () =>
+            resolveStatusUpdate(response({ message: 'Status update is temporarily unavailable.' }, 400))
+        );
+
+        expect(await screen.findByText('Status update is temporarily unavailable')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'No applications match your filters' })).toBeInTheDocument();
+        expect(screen.queryByRole('article', { name: 'ABC Pte Ltd Software Engineer' })).not.toBeInTheDocument();
+    });
+
     test('keeps a board status rollback within the current status filter', async () => {
         let resolveStatusUpdate: ((value: ReturnType<typeof response>) => void) | undefined;
         fetch.mockImplementation(async (url: string, init?: RequestInit) => {
@@ -1823,6 +1969,61 @@ describe('Job application viewing flow', () => {
             expect(screen.queryByRole('heading', { level: 2, name: '1. Older result' })).not.toBeInTheDocument()
         );
         expect(screen.getByRole('heading', { level: 2, name: '1. Latest result' })).toBeInTheDocument();
+    });
+
+    test('refetches a filter that started before an application pin committed', async () => {
+        let resolvePin: (value: ReturnType<typeof response>) => void = () => undefined;
+        let resolveStaleFilter: (value: ReturnType<typeof response>) => void = () => undefined;
+        let offerFilterRequestCount = 0;
+
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews')) {
+                return response([]);
+            }
+            if (url.endsWith('/job-applications/1/pin')) {
+                return new Promise((resolve) => {
+                    resolvePin = resolve;
+                });
+            }
+            if (url.endsWith('/job-applications?jobStatuses=Offer')) {
+                offerFilterRequestCount += 1;
+                if (offerFilterRequestCount === 1) {
+                    return new Promise((resolve) => {
+                        resolveStaleFilter = resolve;
+                    });
+                }
+                return response([{ ...mockApplication, is_pinned: true }]);
+            }
+            return init?.method === 'GET' ? response([mockApplication]) : response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewApplication />
+            </MemoryRouter>
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd application' }));
+        await waitFor(() =>
+            expect(fetch).toHaveBeenCalledWith(
+                `${import.meta.env.VITE_API_URL}/job-applications/1/pin`,
+                expect.objectContaining({ method: 'PATCH' })
+            )
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Show all' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Offer' }));
+        await waitFor(() => expect(offerFilterRequestCount).toBe(1));
+
+        await act(async () => resolvePin(response({ job_id: 1, is_pinned: true })));
+        await act(async () => resolveStaleFilter(response([mockApplication])));
+
+        await waitFor(() => expect(offerFilterRequestCount).toBe(2));
+        expect(await screen.findByRole('button', { name: 'Unpin ABC Pte Ltd application' })).toHaveAttribute(
+            'aria-pressed',
+            'true'
+        );
     });
 
     test('restores the newest persisted filter result when a later filter request fails', async () => {

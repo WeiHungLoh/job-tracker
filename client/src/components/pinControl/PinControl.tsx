@@ -5,6 +5,7 @@ import styles from './PinControl.module.css';
 type PinControlSubject = 'application' | 'interview';
 
 type PinControlProps = {
+    disabled?: boolean;
     itemLabel: string;
     subject: PinControlSubject;
     isPending?: boolean;
@@ -13,7 +14,15 @@ type PinControlProps = {
     size: 'board' | 'list';
 };
 
-const PinControl = ({ itemLabel, subject, isPending = false, isPinned, onToggle, size }: PinControlProps) => {
+const PinControl = ({
+    disabled = false,
+    itemLabel,
+    subject,
+    isPending = false,
+    isPinned,
+    onToggle,
+    size,
+}: PinControlProps) => {
     if (!onToggle) {
         return isPinned ? (
             <span
@@ -33,7 +42,7 @@ const PinControl = ({ itemLabel, subject, isPending = false, isPinned, onToggle,
             aria-label={`${action} ${itemLabel} ${subject}`}
             aria-pressed={isPinned}
             className={`${styles.button} ${styles[size]} ${isPinned ? styles.pinned : styles.unpinned}`}
-            disabled={isPending}
+            disabled={disabled || isPending}
             onClick={(event) => {
                 event.stopPropagation();
                 void onToggle();

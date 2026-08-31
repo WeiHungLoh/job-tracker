@@ -74,6 +74,7 @@ const ApplicationBoardCard = ({
                 <h3>{application.company_name}</h3>
                 <div className={styles.cardHeaderControls}>
                     <PinControl
+                        disabled={isUpdatingStatus}
                         itemLabel={application.company_name}
                         isPending={isUpdatingPin}
                         isPinned={application.is_pinned}
@@ -151,6 +152,7 @@ const ApplicationBoardCard = ({
                     <>
                         <PrimaryButton
                             aria-label={`Archive application for ${applicationContext}`}
+                            disabled={isUpdatingStatus}
                             isLoading={isArchiving}
                             onClick={() => onArchive(application.job_id)}
                             type='button'
@@ -160,6 +162,7 @@ const ApplicationBoardCard = ({
                         </PrimaryButton>
                         <PrimaryButton
                             aria-label={`Delete application for ${applicationContext}`}
+                            disabled={isUpdatingStatus}
                             isLoading={isDeleting}
                             onClick={() => onDelete(application.job_id)}
                             type='button'
@@ -187,7 +190,7 @@ const ApplicationBoardCard = ({
                     <div className={styles.notesEditor}>
                         <textarea
                             id={`application-notes-${application.job_id}`}
-                            disabled={isArchiving}
+                            disabled={isArchiving || isUpdatingStatus}
                             maxLength={FIELD_MAX_LENGTHS.notes}
                             onChange={(event) => onEditNotes(application.job_id, event.target.value)}
                             onBlur={() => onNotesBlur(application.job_id)}

@@ -78,13 +78,14 @@ const ViewInterview = () => {
     const saveInterviewNotes = useCallback(
         async (interviewId: number, editedNotes: string) => {
             await api.interview.updateNotes({ interviewId, notes: editedNotes });
+            filterRequest.markMutationCommitted();
             const updateNotes = (interview: JobInterview): JobInterview =>
                 interview.interview_id === interviewId
                     ? { ...interview, interview_notes: editedNotes.trim() }
                     : interview;
             setInterviews((current) => current.map(updateNotes));
         },
-        [api.interview]
+        [api.interview, filterRequest]
     );
     const handleNoteSaveError = useCallback(
         (_interviewId: number, error: unknown) => {
@@ -138,43 +139,49 @@ const ViewInterview = () => {
         notesAutosave.editNotes(interviewId, editedNotes);
     };
 
-    const handleTimeFilterChange = async (timeFilters: InterviewTimeFilter[]) => {
-        const requestId = filterRequest.startRequest();
+    const handleTimeFilterChange = async (timeFilters: InterviewTimeFilter[]): Promise<boolean> => {
+        const request = filterRequest.startRequest();
         setIsFilteringInterviews(true);
 
         try {
             const fetchedInterviews = await api.interview.listInterviews({
                 timeFilters: [...INTERVIEW_TIME_FILTERS],
             });
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleTimeFilterChange(timeFilters);
+            }
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
             await updatePreferences({ interview_time_filters: timeFilters });
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleTimeFilterChange(timeFilters);
+            }
             const normalizedInterviews = filterAndSortInterviews(
                 Array.isArray(fetchedInterviews) ? fetchedInterviews : [],
                 INTERVIEW_TIME_FILTERS,
                 currentTime
             );
-            const savedInterviews = filterRequest.saveResult(requestId, normalizedInterviews);
+            const savedInterviews = filterRequest.saveResult(request, normalizedInterviews);
             if (savedInterviews) {
                 setInterviews(savedInterviews);
             }
 
             return true;
         } catch (error) {
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
-            const savedInterviews = filterRequest.failRequest(requestId);
+            const savedInterviews = filterRequest.failRequest(request);
             if (savedInterviews) {
                 setInterviews(savedInterviews);
             }
             showErrorToast(getErrorToastMessage(error, 'Unable to filter interviews. Please try again.'));
             return false;
         } finally {
-            if (filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.isLatestRequest(request)) {
                 setIsFilteringInterviews(false);
             }
         }
@@ -316,6 +323,7 @@ const ViewInterview = () => {
             startDeletingInterview(interviewId);
             try {
                 await api.interview.deleteInterview({ interviewId });
+                filterRequest.markMutationCommitted();
                 setInterviews((current) => current.filter((interview) => interview.interview_id !== interviewId));
                 showSuccessToast('Interview deleted.');
             } finally {
@@ -353,6 +361,7 @@ const ViewInterview = () => {
             }
 
             await api.interview.deleteAllInterviews();
+            filterRequest.markMutationCommitted();
             setInterviews([]);
             showSuccessToast('Interviews deleted.');
         } catch (error) {
@@ -378,6 +387,7 @@ const ViewInterview = () => {
         startUndoingFollowUp(interview.interview_id);
         try {
             await api.interview.undoFollowUp({ interviewId: interview.interview_id });
+            filterRequest.markMutationCommitted();
             setInterviews((current) =>
                 current.map((item) =>
                     item.interview_id === interview.interview_id ? { ...item, follow_up_sent_at: null } : item
@@ -404,6 +414,7 @@ const ViewInterview = () => {
                 interviewId: interview.interview_id,
                 isPinned: shouldPin,
             });
+            filterRequest.markMutationCommitted();
             const updatePin = (item: JobInterview): JobInterview =>
                 item.interview_id === interview.interview_id ? { ...item, is_pinned: updatedPin.is_pinned } : item;
 

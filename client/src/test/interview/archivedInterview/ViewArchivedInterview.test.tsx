@@ -599,6 +599,59 @@ describe('Archived job interview viewer flow', () => {
         expect(screen.queryByRole('article', { name: 'Older Archived Result interview' })).not.toBeInTheDocument();
     });
 
+    test('refetches a filter that started before an archived interview was deleted', async () => {
+        let resolveDelete: (value: ReturnType<typeof response>) => void = () => undefined;
+        let resolveStaleFilter: (value: ReturnType<typeof response>) => void = () => undefined;
+        let interviewRequestCount = 0;
+
+        mockConfirm.mockResolvedValue({ confirmed: true });
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/archived-job-interviews/summary')) {
+                return response({ interview_count: 1 });
+            }
+            if (url.endsWith('/archived-job-interviews/1') && init?.method === 'DELETE') {
+                return new Promise((resolve) => {
+                    resolveDelete = resolve;
+                });
+            }
+            if (url.includes('/archived-job-interviews?') && init?.method === 'GET') {
+                interviewRequestCount += 1;
+                if (interviewRequestCount === 2) {
+                    return new Promise((resolve) => {
+                        resolveStaleFilter = resolve;
+                    });
+                }
+                return response(interviewRequestCount === 3 ? [] : [mockInterview]);
+            }
+            return response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewArchivedInterview />
+            </MemoryRouter>
+        );
+
+        await clickConfirmedAction(await screen.findByRole('button', { name: /^Delete / }));
+        await waitFor(() =>
+            expect(fetch).toHaveBeenCalledWith(
+                `${import.meta.env.VITE_API_URL}/archived-job-interviews/1`,
+                expect.objectContaining({ method: 'DELETE' })
+            )
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Upcoming Interviews' }));
+        await waitFor(() => expect(interviewRequestCount).toBe(2));
+
+        await act(async () => resolveDelete(response(undefined, 204)));
+        await act(async () => resolveStaleFilter(response([mockInterview])));
+
+        await waitFor(() => expect(interviewRequestCount).toBe(3));
+        expect(await screen.findByRole('heading', { name: 'No archived interviews yet' })).toBeInTheDocument();
+        expect(screen.queryByRole('article', { name: 'ABC Pte Ltd interview' })).not.toBeInTheDocument();
+    });
+
     test('filters archived Board display and exports CSV from the same collection', async () => {
         const now = Date.now();
         const interviews = [

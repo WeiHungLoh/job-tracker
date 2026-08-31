@@ -110,13 +110,14 @@ const ViewApplication = () => {
     const saveApplicationNotes = useCallback(
         async (jobId: number, editedNotes: string) => {
             await api.application.updateNotes({ jobId, notes: editedNotes });
+            filterRequest.markMutationCommitted();
             setApplications((current) =>
                 current.map((application) =>
                     application.job_id === jobId ? { ...application, notes: editedNotes } : application
                 )
             );
         },
-        [api.application]
+        [api.application, filterRequest]
     );
     const handleNoteSaveError = useCallback(
         (_jobId: number, error: unknown) => {
@@ -215,20 +216,26 @@ const ViewApplication = () => {
         }
     };
 
-    const handleJobStatusChange = async (jobStatuses: JobStatus[]) => {
-        const requestId = filterRequest.startRequest();
+    const handleJobStatusChange = async (jobStatuses: JobStatus[]): Promise<boolean> => {
+        const request = filterRequest.startRequest();
         closeStatusEditor();
         setIsFilteringApplications(true);
 
         try {
             const jobApplications = await api.application.listApplications({ jobStatuses });
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleJobStatusChange(jobStatuses);
+            }
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
             await updatePreferences({ application_job_statuses: jobStatuses });
+            if (filterRequest.shouldRefresh(request)) {
+                return await handleJobStatusChange(jobStatuses);
+            }
             const savedApplications = filterRequest.saveResult(
-                requestId,
+                request,
                 Array.isArray(jobApplications) ? jobApplications : []
             );
             if (savedApplications) {
@@ -237,18 +244,18 @@ const ViewApplication = () => {
 
             return true;
         } catch (error) {
-            if (!filterRequest.isLatestRequest(requestId)) {
+            if (!filterRequest.isLatestRequest(request)) {
                 return true;
             }
 
-            const savedApplications = filterRequest.failRequest(requestId);
+            const savedApplications = filterRequest.failRequest(request);
             if (savedApplications) {
                 setApplications(savedApplications);
             }
             showErrorToast(getErrorToastMessage(error, 'Unable to filter job applications. Please try again.'));
             return false;
         } finally {
-            if (filterRequest.isLatestRequest(requestId)) {
+            if (filterRequest.isLatestRequest(request)) {
                 setIsFilteringApplications(false);
             }
         }
@@ -441,6 +448,7 @@ const ViewApplication = () => {
                 await api.application.deleteApplication({ jobId });
             }
 
+            filterRequest.markMutationCommitted();
             notesAutosave.clearNoteState(jobId);
             setApplications((current) => current.filter((application) => application.job_id !== jobId));
             setInterviews((current) => current.filter((interview) => interview.job_id !== jobId));
@@ -472,6 +480,7 @@ const ViewApplication = () => {
         startUndoingFollowUp(application.job_id);
         try {
             await api.application.undoFollowUp({ jobId: application.job_id });
+            filterRequest.markMutationCommitted();
             setApplications((current) =>
                 current.map((item) =>
                     item.job_id === application.job_id ? { ...item, application_follow_up_sent_at: null } : item
@@ -500,6 +509,7 @@ const ViewApplication = () => {
                 jobId: application.job_id,
                 isPinned: shouldPin,
             });
+            filterRequest.markMutationCommitted();
             setApplications((current) =>
                 current.map((item) =>
                     item.job_id === updatedPin.job_id ? { ...item, is_pinned: updatedPin.is_pinned } : item
@@ -592,6 +602,7 @@ const ViewApplication = () => {
                 await api.application.deleteAllApplications();
             }
 
+            filterRequest.markMutationCommitted();
             notesAutosave.clearAllNoteStates();
             setApplications([]);
             setInterviews([]);
@@ -639,6 +650,7 @@ const ViewApplication = () => {
                 jobStatus: newStatus,
             });
 
+            filterRequest.markMutationCommitted();
             closeStatusEditor();
             setApplications((current) =>
                 current
@@ -695,18 +707,16 @@ const ViewApplication = () => {
         updatingStatusApplicationIdRef.current.add(application.job_id);
         startUpdatingApplicationStatus(application.job_id);
         setApplications((current) =>
-            current
-                .map((item) =>
-                    item.job_id === application.job_id
-                        ? {
-                              ...item,
-                              job_status: newStatus,
-                              application_follow_up_sent_at:
-                                  newStatus === 'Applied' ? item.application_follow_up_sent_at ?? null : null,
-                          }
-                        : item
-                )
-                .filter((item) => selectedJobStatuses.includes(item.job_status))
+            current.map((item) =>
+                item.job_id === application.job_id
+                    ? {
+                          ...item,
+                          job_status: newStatus,
+                          application_follow_up_sent_at:
+                              newStatus === 'Applied' ? item.application_follow_up_sent_at ?? null : null,
+                      }
+                    : item
+            )
         );
 
         try {
@@ -714,6 +724,21 @@ const ViewApplication = () => {
                 jobId: application.job_id,
                 jobStatus: newStatus,
             });
+            filterRequest.markMutationCommitted();
+            setApplications((current) =>
+                current
+                    .map((item) =>
+                        item.job_id === application.job_id
+                            ? {
+                                  ...item,
+                                  job_status: newStatus,
+                                  application_follow_up_sent_at:
+                                      newStatus === 'Applied' ? item.application_follow_up_sent_at ?? null : null,
+                              }
+                            : item
+                    )
+                    .filter((item) => selectedJobStatusesRef.current.includes(item.job_status))
+            );
             showSuccessToast('Job application status updated.');
             if (
                 isAutoScrollEnabledRef.current &&
@@ -726,14 +751,17 @@ const ViewApplication = () => {
                 });
             }
         } catch (error) {
-            setApplications((current) => {
-                const applicationStillVisible = current.some((item) => item.job_id === application.job_id);
-                const restoredApplications = applicationStillVisible
-                    ? current.map((item) => (item.job_id === application.job_id ? application : item))
-                    : [...current, application];
-
-                return restoredApplications.filter((item) => selectedJobStatusesRef.current.includes(item.job_status));
-            });
+            setApplications((current) =>
+                current.map((item) =>
+                    item.job_id === application.job_id && item.job_status === newStatus
+                        ? {
+                              ...item,
+                              job_status: oldStatus,
+                              application_follow_up_sent_at: application.application_follow_up_sent_at,
+                          }
+                        : item
+                )
+            );
             showErrorToast(
                 getErrorToastMessage(error, 'Unable to update the job application status. Please try again.')
             );
@@ -743,7 +771,9 @@ const ViewApplication = () => {
         }
     };
 
-    const hasApplications = applications.length > 0;
+    const hasApplications = isBoardView
+        ? displayedApplications.some((application) => selectedJobStatuses.includes(application.job_status))
+        : displayedApplications.length > 0;
     const filtersAreActive = selectedJobStatuses.length !== JOB_STATUSES.length;
     const emptyState = createApplicationEmptyState({
         actionRoute: routes.addApplication,

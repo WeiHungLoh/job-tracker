@@ -1020,6 +1020,60 @@ describe('Job interview viewer flow', () => {
         expect(screen.queryByRole('article', { name: 'Older Interview Result interview' })).not.toBeInTheDocument();
     });
 
+    test('refetches a filter that started before an interview pin committed', async () => {
+        let resolvePin: (value: ReturnType<typeof response>) => void = () => undefined;
+        let resolveStaleFilter: (value: ReturnType<typeof response>) => void = () => undefined;
+        let interviewRequestCount = 0;
+
+        fetch.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.endsWith('/job-interviews/summary')) {
+                return response({ interview_count: 1 });
+            }
+            if (url.endsWith('/job-interviews/1/pin')) {
+                return new Promise((resolve) => {
+                    resolvePin = resolve;
+                });
+            }
+            if (url.includes('/job-interviews?') && init?.method === 'GET') {
+                interviewRequestCount += 1;
+                if (interviewRequestCount === 2) {
+                    return new Promise((resolve) => {
+                        resolveStaleFilter = resolve;
+                    });
+                }
+                return response([interviewRequestCount === 3 ? { ...mockInterview, is_pinned: true } : mockInterview]);
+            }
+            return response(undefined, 204);
+        });
+
+        render(
+            <MemoryRouter>
+                <ViewInterview />
+            </MemoryRouter>
+        );
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pin ABC Pte Ltd interview' }));
+        await waitFor(() =>
+            expect(fetch).toHaveBeenCalledWith(
+                `${import.meta.env.VITE_API_URL}/job-interviews/1/pin`,
+                expect.objectContaining({ method: 'PATCH' })
+            )
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Upcoming Interviews' }));
+        await waitFor(() => expect(interviewRequestCount).toBe(2));
+
+        await act(async () => resolvePin(response({ interview_id: 1, is_pinned: true })));
+        await act(async () => resolveStaleFilter(response([mockInterview])));
+
+        await waitFor(() => expect(interviewRequestCount).toBe(3));
+        expect(await screen.findByRole('button', { name: 'Unpin ABC Pte Ltd interview' })).toHaveAttribute(
+            'aria-pressed',
+            'true'
+        );
+    });
+
     test('uses one filtered collection for display and CSV while bulk calendar and Delete all keep full scope', async () => {
         const now = Date.now();
         const interviews = [
