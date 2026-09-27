@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { pool } from '../dist/db/connectDB.js';
-import { getInterviewOfferDeadlineWarnings, getInterviewSchedulingConflicts } from '../dist/db/queries/interviews.js';
-import interviewRouter from '../dist/routes/interview/index.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import { getInterviewOfferDeadlineWarnings } from '../dist/modules/offers/repository.js';
+import { getInterviewSchedulingConflicts } from '../dist/modules/interviews/repository.js';
+import interviewRouter from '../dist/modules/interviews/routes.js';
 
 const VALID_INTERVIEW = {
     jobId: 11,

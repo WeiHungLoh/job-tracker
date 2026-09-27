@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { pool } from '../dist/db/connectDB.js';
+import { pool } from '../dist/shared/db/connectDB.js';
 import {
     getApplicationsForLatestEightWeeks,
     getDashboardApplicationSummary,
-} from '../dist/db/queries/jobApplications.js';
+} from '../dist/modules/applications/repository.js';
 
 test('dashboard application summary counts recorded interview evidence once and keeps status counts independent', async () => {
     const originalQuery = pool.query;

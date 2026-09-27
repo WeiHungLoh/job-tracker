@@ -1,42 +1,32 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { ACCESS_TOKEN_COOKIE_OPTIONS, REFRESH_TOKEN_COOKIE_OPTIONS } from '../dist/config/auth.js';
-import { hashRefreshToken } from '../dist/auth/refreshTokenHash.js';
-import { createAccessToken, createRefreshToken } from '../dist/auth/tokens.js';
+import { ACCESS_TOKEN_COOKIE_OPTIONS, REFRESH_TOKEN_COOKIE_OPTIONS } from '../dist/modules/authentication/config.js';
+import { hashRefreshToken } from '../dist/modules/authentication/refreshTokenHash.js';
+import { createAccessToken, createRefreshToken } from '../dist/modules/authentication/tokens.js';
 import { createApp } from '../dist/app.js';
-import { pool } from '../dist/db/connectDB.js';
-import { handleRouteError } from '../dist/http/responses.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import { handleRouteError } from '../dist/shared/http/responses.js';
 import {
     archiveJobApplication,
     getArchivedJobApplications,
     unarchiveJobApplication,
-} from '../dist/db/queries/archivedJobApplications.js';
-import { getJobApplications } from '../dist/db/queries/jobApplications.js';
-import { getArchivedJobInterviews } from '../dist/db/queries/archivedInterviews.js';
-import { getInterviews } from '../dist/db/queries/interviews.js';
+} from '../dist/modules/applications/archivedRepository.js';
+import { getJobApplications } from '../dist/modules/applications/repository.js';
+import { getArchivedJobInterviews } from '../dist/modules/interviews/archivedRepository.js';
+import { getInterviews } from '../dist/modules/interviews/repository.js';
 import jwt from 'jsonwebtoken';
-import { AUTHENTICATED_API_RATE_LIMIT, SIGN_IN_EMAIL_IP_LIMIT } from '../dist/config/server.js';
-import {
-    FIELD_MAX_LENGTHS,
-    INTERVIEW_DURATION_MINUTES_MAX,
-    INTERVIEW_DURATION_MINUTES_MIN,
-    PASSWORD_MAX_BYTES,
-    PASSWORD_MAX_LENGTH,
-    PASSWORD_MIN_LENGTH,
-} from '../dist/config/validation.js';
-import {
-    getPasswordValidationError,
-    isCollectionViewMode,
-    isValidDate,
-    isValidEmail,
-    isValidHttpURL,
-    normalizeEmail,
-    toInterviewTimeFilterQueryValues,
-    toJobStatusQueryValues,
-    toOfferDecisionFilterQueryValues,
-    toTrimmedString,
-} from '../dist/http/validation.js';
+import { AUTHENTICATED_API_RATE_LIMIT } from '../dist/shared/config/server.js';
+import { SIGN_IN_EMAIL_IP_LIMIT } from '../dist/modules/authentication/config.js';
+import { FIELD_MAX_LENGTHS } from '../dist/shared/config/validation.js';
+import { INTERVIEW_DURATION_MINUTES_MAX, INTERVIEW_DURATION_MINUTES_MIN } from '../dist/modules/interviews/config.js';
+import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../dist/modules/authentication/config.js';
+import { getPasswordValidationError, isValidEmail, normalizeEmail } from '../dist/modules/authentication/validation.js';
+import { isCollectionViewMode } from '../dist/modules/userPreferences/validation.js';
+import { isValidDate, isValidHttpURL, toTrimmedString } from '../dist/shared/http/validation.js';
+import { toInterviewTimeFilterQueryValues } from '../dist/modules/interviews/validation.js';
+import { toJobStatusQueryValues } from '../dist/modules/applications/validation.js';
+import { toOfferDecisionFilterQueryValues } from '../dist/modules/offers/validation.js';
 
 process.env.ACCESS_TOKEN_SECRET = 'test-only-secret';
 process.env.REFRESH_TOKEN_SECRET = 'different-test-only-refresh-secret';
@@ -102,7 +92,7 @@ test('rejects unconfigured non-loopback origins', async () => {
 });
 
 test('creates new user preference rows with enabled display defaults', async () => {
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const createTablesSource = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const userPreferencesTable = createTablesSource.match(
         /CREATE TABLE IF NOT EXISTS user_preferences \([\s\S]*?\n\s*\)`/
     )?.[0];
@@ -151,7 +141,7 @@ test('keeps live Offer Comparison view preference migration separate from fresh-
         new URL('../sql/add_offer_decision_view_preferences.sql', import.meta.url),
         'utf8'
     );
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const createTablesSource = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
 
     assert.match(migrationSource, /ADD COLUMN IF NOT EXISTS offer_decision_view_mode/);
     assert.match(migrationSource, /ADD COLUMN IF NOT EXISTS archived_offer_decision_view_mode/);
@@ -165,7 +155,7 @@ test('keeps live Offer Comparison view preference migration separate from fresh-
 });
 
 test('creates job applications with a persistent false pin default without startup migration SQL', async () => {
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const createTablesSource = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const jobApplicationsTable = createTablesSource.match(
         /CREATE TABLE IF NOT EXISTS job_applications \([\s\S]*?\n\s*\)`/
     )?.[0];
@@ -179,13 +169,13 @@ test('creates job applications with a persistent false pin default without start
 });
 
 test('creates the optional interview meeting URL field without startup migration SQL', async () => {
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const createTablesSource = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const activeInterviewQuerySource = await readFile(
-        new URL('../src/db/queries/interviews.ts', import.meta.url),
+        new URL('../src/modules/interviews/repository.ts', import.meta.url),
         'utf8'
     );
     const archivedInterviewQuerySource = await readFile(
-        new URL('../src/db/queries/archivedInterviews.ts', import.meta.url),
+        new URL('../src/modules/interviews/archivedRepository.ts', import.meta.url),
         'utf8'
     );
     const interviewsTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS interviews \([\s\S]*?\n\s*\)`/)?.[0];
@@ -201,7 +191,7 @@ test('creates the optional interview meeting URL field without startup migration
 });
 
 test('fresh tables enforce the same bounded text and date inputs as the API', async () => {
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const createTablesSource = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const usersTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS users \([\s\S]*?\n\s*\)`/)?.[0];
     const jobApplicationsTable = createTablesSource.match(
         /CREATE TABLE IF NOT EXISTS job_applications \([\s\S]*?\n\s*\)`/
@@ -243,7 +233,7 @@ test('fresh tables enforce the same bounded text and date inputs as the API', as
 });
 
 test('creates persistent interview pinning and returns pinned interviews first after time filtering', async () => {
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const createTablesSource = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const interviewsTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS interviews \([\s\S]*?\n\s*\)`/)?.[0];
     const originalQuery = pool.query;
     const queries = [];
@@ -324,7 +314,7 @@ test('archiving and restoring an application leave its pin state unchanged', asy
 });
 
 test('creates fresh interview duration and time-filter columns without adding startup migration SQL', async () => {
-    const createTablesSource = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const createTablesSource = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const interviewsTable = createTablesSource.match(/CREATE TABLE IF NOT EXISTS interviews \([\s\S]*?\n\s*\)`/)?.[0];
 
     assert.ok(interviewsTable);

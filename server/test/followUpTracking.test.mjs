@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import { pool } from '../dist/db/connectDB.js';
-import { clearApplicationFollowUpSent, markApplicationFollowUpSent } from '../dist/db/queries/jobApplications.js';
-import { clearInterviewFollowUpSent, markInterviewFollowUpSent } from '../dist/db/queries/interviews.js';
-import applicationRouter from '../dist/routes/application/index.js';
-import interviewRouter from '../dist/routes/interview/index.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import { clearApplicationFollowUpSent, markApplicationFollowUpSent } from '../dist/modules/applications/repository.js';
+import { clearInterviewFollowUpSent, markInterviewFollowUpSent } from '../dist/modules/interviews/repository.js';
+import applicationRouter from '../dist/modules/applications/routes.js';
+import interviewRouter from '../dist/modules/interviews/routes.js';
 
 const readSource = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
@@ -41,15 +41,15 @@ const createResponse = () => {
 };
 
 test('adds nullable follow-up timestamps to fresh application and interview tables', async () => {
-    const source = await readSource('../src/db/queries/createTables.ts');
+    const source = await readSource('../src/schema.ts');
 
     assert.match(source, /application_follow_up_sent_at TIMESTAMPTZ/);
     assert.match(source, /follow_up_sent_at TIMESTAMPTZ/);
 });
 
 test('keeps follow-up mutations user-scoped, active-only, and server timestamped', async () => {
-    const applicationQueries = await readSource('../src/db/queries/jobApplications.ts');
-    const interviewQueries = await readSource('../src/db/queries/interviews.ts');
+    const applicationQueries = await readSource('../src/modules/applications/repository.ts');
+    const interviewQueries = await readSource('../src/modules/interviews/repository.ts');
 
     assert.match(
         applicationQueries,
@@ -71,10 +71,10 @@ test('keeps follow-up mutations user-scoped, active-only, and server timestamped
 });
 
 test('returns follow-up timestamps from active and archived collection queries', async () => {
-    const activeApplications = await readSource('../src/db/queries/jobApplications.ts');
-    const archivedApplications = await readSource('../src/db/queries/archivedJobApplications.ts');
-    const activeInterviews = await readSource('../src/db/queries/interviews.ts');
-    const archivedInterviews = await readSource('../src/db/queries/archivedInterviews.ts');
+    const activeApplications = await readSource('../src/modules/applications/repository.ts');
+    const archivedApplications = await readSource('../src/modules/applications/archivedRepository.ts');
+    const activeInterviews = await readSource('../src/modules/interviews/repository.ts');
+    const archivedInterviews = await readSource('../src/modules/interviews/archivedRepository.ts');
 
     assert.match(activeApplications, /application_follow_up_sent_at/);
     assert.match(archivedApplications, /application_follow_up_sent_at/);
@@ -83,7 +83,7 @@ test('returns follow-up timestamps from active and archived collection queries',
 });
 
 test('atomically clears an application follow-up when status leaves Applied', async () => {
-    const source = await readSource('../src/db/queries/jobApplications.ts');
+    const source = await readSource('../src/modules/applications/repository.ts');
 
     assert.match(
         source,
@@ -92,8 +92,8 @@ test('atomically clears an application follow-up when status leaves Applied', as
 });
 
 test('exposes resource-oriented follow-up endpoints before generic id routes', async () => {
-    const applicationRoutes = await readSource('../src/routes/application/index.ts');
-    const interviewRoutes = await readSource('../src/routes/interview/index.ts');
+    const applicationRoutes = await readSource('../src/modules/applications/routes.ts');
+    const interviewRoutes = await readSource('../src/modules/interviews/routes.ts');
 
     assert.match(applicationRoutes, /router\.put\(\s*'\/:jobId\/follow-up'/);
     assert.match(applicationRoutes, /router\.delete\(\s*'\/:jobId\/follow-up'/);
@@ -180,7 +180,7 @@ test('rejects marking an interview follow-up before the interview has finished',
 });
 
 test('archive and restore queries do not clear either follow-up timestamp', async () => {
-    const source = await readSource('../src/db/queries/archivedJobApplications.ts');
+    const source = await readSource('../src/modules/applications/archivedRepository.ts');
 
     assert.doesNotMatch(source, /SET application_follow_up_sent_at/);
     assert.doesNotMatch(source, /SET follow_up_sent_at/);

@@ -5,29 +5,27 @@ import {
     APPLICATION_LIST_SORT_ORDERS,
     DEFAULT_APPLICATION_BOARD_SORT_ORDER,
     DEFAULT_APPLICATION_LIST_SORT_ORDER,
-    JOB_STATUSES,
     NEEDS_ATTENTION_CATEGORIES,
     DEFAULT_NEEDS_ATTENTION_SETTINGS,
-    OFFER_DECISION_FILTERS,
-    ARCHIVED_OFFER_DECISION_FILTERS,
-} from '../dist/db/models.js';
-import { pool } from '../dist/db/connectDB.js';
-import createTables from '../dist/db/queries/createTables.js';
-import { getUserPreferences, updateUserPreferences } from '../dist/db/queries/userPreferences.js';
+} from '../dist/modules/userPreferences/models.js';
+import { JOB_STATUSES } from '../dist/modules/applications/models.js';
+import { OFFER_DECISION_FILTERS, ARCHIVED_OFFER_DECISION_FILTERS } from '../dist/modules/offers/models.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import createTables from '../dist/schema.js';
+import { getUserPreferences, updateUserPreferences } from '../dist/modules/userPreferences/repository.js';
 import {
     isApplicationBoardSortOrder,
     isApplicationListSortOrder,
-    isInterviewTimeFilterArray,
-    isArchivedOfferDecisionFilterArray,
-    isOfferDecisionFilterArray,
     isNeedsAttentionCategoryArray,
-    isOptionalIntegerInRange,
     isOptionalApplicationBoardSortOrder,
     isOptionalApplicationListSortOrder,
     isOfferDecisionViewMode,
     isOptionalOfferDecisionViewMode,
     isOptionalOfferDecisionTableOrientation,
-} from '../dist/http/validation.js';
+} from '../dist/modules/userPreferences/validation.js';
+import { isInterviewTimeFilterArray } from '../dist/modules/interviews/validation.js';
+import { isArchivedOfferDecisionFilterArray, isOfferDecisionFilterArray } from '../dist/modules/offers/validation.js';
+import { isOptionalIntegerInRange } from '../dist/shared/http/validation.js';
 
 test('Needs Attention preference validators enforce categories and timing boundaries', () => {
     assert.equal(isNeedsAttentionCategoryArray([...NEEDS_ATTENTION_CATEGORIES]), true);
@@ -62,7 +60,7 @@ test('interview time filter validator accepts only supported arrays', () => {
 });
 
 test('application status preference validator rejects duplicates', async () => {
-    const { isJobStatusArray } = await import('../dist/http/validation.js');
+    const { isJobStatusArray } = await import('../dist/modules/applications/validation.js');
 
     assert.equal(isJobStatusArray(['Applied', 'Interview']), true);
     assert.equal(isJobStatusArray([]), true);

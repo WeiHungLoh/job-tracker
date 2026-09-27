@@ -1,7 +1,7 @@
 import { createApp } from './app.js';
-import { connectDB } from './db/connectDB.js';
-import { deleteExpiredAuthenticationSessions } from './db/queries/authenticationSessions.js';
-import createTables from './db/queries/createTables.js';
+import { deleteExpiredAuthenticationSessions } from './modules/authentication/api.js';
+import createTables from './schema.js';
+import { connectDB } from './shared/db/connectDB.js';
 
 const startServer = async (): Promise<void> => {
     await connectDB();

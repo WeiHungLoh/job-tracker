@@ -1,18 +1,21 @@
-import { isAllowedOrigin } from './config/server.js';
-import applicationRoute from './routes/application/index.js';
-import archivedApplicationRoute from './routes/archivedApplication/index.js';
-import archivedInterviewRoute from './routes/archivedInterview/index.js';
-import authRoute from './routes/authentication/index.js';
-import authenticateAccessToken from './middleware/authenticateAccessToken.js';
-import authenticatedApiRateLimiter from './middleware/authenticatedApiRateLimiter.js';
+// Preserve CORS initialization before domain modules load dotenv.
+import { isAllowedOrigin } from './shared/config/server.js';
+
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import { errorHandler, type MiddlewareError, notFoundHandler } from './middleware/errorHandlers.js';
-import interviewRoute from './routes/interview/index.js';
-import offerDecisionRoute from './routes/offerDecision/index.js';
-import userPreferencesRoute from './routes/userPreferences/index.js';
+import archivedApplicationRoute from './modules/applications/archivedRoutes.js';
+import applicationRoute from './modules/applications/routes.js';
+import { authenticateAccessToken } from './modules/authentication/api.js';
+import authRoute from './modules/authentication/routes.js';
+import archivedInterviewRoute from './modules/interviews/archivedRoutes.js';
+import interviewRoute from './modules/interviews/routes.js';
+import offerDecisionRoute from './modules/offers/routes.js';
+import userPreferencesRoute from './modules/userPreferences/routes.js';
+import authenticatedApiRateLimiter from './shared/middleware/authenticatedApiRateLimiter.js';
+import type { MiddlewareError } from './shared/middleware/errorHandlers.js';
+import { errorHandler, notFoundHandler } from './shared/middleware/errorHandlers.js';
 
 export const createApp = (): express.Express => {
     const app = express();

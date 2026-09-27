@@ -1,0 +1,165 @@
+import type { PoolClient } from 'pg';
+import { pool } from '../../shared/db/connectDB.js';
+import type { UserPreferences } from './models.js';
+
+export const initializeUserPreferences = async (userId: number, client: PoolClient): Promise<void> => {
+    await client.query(`INSERT INTO user_preferences (user_id) VALUES ($1)`, [userId]);
+};
+
+export const getUserPreferences = async (userId: number): Promise<UserPreferences | undefined> => {
+    const result = await pool.query<UserPreferences>(
+        `SELECT
+            application_job_statuses,
+            application_show_notes,
+            application_show_archive,
+            application_enable_scroll,
+            application_view_mode,
+            application_list_sort_order,
+            application_board_sort_order,
+            archived_application_job_statuses,
+            archived_application_show_notes,
+            archived_application_view_mode,
+            archived_application_list_sort_order,
+            archived_application_board_sort_order,
+            interview_view_mode,
+            interview_show_notes,
+            archived_interview_view_mode,
+            archived_interview_show_notes,
+            interview_time_filters,
+            archived_interview_time_filters,
+            offer_decision_filters,
+            archived_offer_decision_filters,
+            offer_decision_view_mode,
+            archived_offer_decision_view_mode,
+            offer_decision_table_orientation,
+            archived_offer_decision_table_orientation,
+            needs_attention_categories,
+            needs_attention_max_items,
+            needs_attention_offer_due_days,
+            needs_attention_offer_overdue_days,
+            needs_attention_post_interview_stale_days,
+            needs_attention_post_interview_follow_up_days,
+            needs_attention_application_stale_days,
+            needs_attention_application_follow_up_days
+         FROM user_preferences
+         WHERE user_id = $1`,
+        [userId]
+    );
+
+    return result.rows[0];
+};
+
+export const updateUserPreferences = async (
+    userId: number,
+    preferences: Partial<UserPreferences>
+): Promise<UserPreferences | undefined> => {
+    const result = await pool.query<UserPreferences>(
+        `UPDATE user_preferences
+         SET
+            application_job_statuses = COALESCE($2, application_job_statuses),
+            application_show_notes = COALESCE($3, application_show_notes),
+            application_show_archive = COALESCE($4, application_show_archive),
+            application_enable_scroll = COALESCE($5, application_enable_scroll),
+            application_view_mode = COALESCE($6, application_view_mode),
+            application_list_sort_order = COALESCE($7, application_list_sort_order),
+            application_board_sort_order = COALESCE($8, application_board_sort_order),
+            archived_application_job_statuses = COALESCE($9, archived_application_job_statuses),
+            archived_application_show_notes = COALESCE($10, archived_application_show_notes),
+            archived_application_view_mode = COALESCE($11, archived_application_view_mode),
+            archived_application_list_sort_order = COALESCE($12, archived_application_list_sort_order),
+            archived_application_board_sort_order = COALESCE($13, archived_application_board_sort_order),
+            interview_view_mode = COALESCE($14, interview_view_mode),
+            interview_show_notes = COALESCE($15, interview_show_notes),
+            archived_interview_view_mode = COALESCE($16, archived_interview_view_mode),
+            archived_interview_show_notes = COALESCE($17, archived_interview_show_notes),
+            interview_time_filters = COALESCE($18, interview_time_filters),
+            archived_interview_time_filters = COALESCE($19, archived_interview_time_filters),
+            offer_decision_filters = COALESCE($20, offer_decision_filters),
+            archived_offer_decision_filters = COALESCE($21, archived_offer_decision_filters),
+            offer_decision_view_mode = COALESCE($22, offer_decision_view_mode),
+            archived_offer_decision_view_mode = COALESCE($23, archived_offer_decision_view_mode),
+            offer_decision_table_orientation = COALESCE($24, offer_decision_table_orientation),
+            archived_offer_decision_table_orientation = COALESCE($25, archived_offer_decision_table_orientation),
+            needs_attention_categories = COALESCE($26, needs_attention_categories),
+            needs_attention_max_items = COALESCE($27, needs_attention_max_items),
+            needs_attention_offer_due_days = COALESCE($28, needs_attention_offer_due_days),
+            needs_attention_offer_overdue_days = COALESCE($29, needs_attention_offer_overdue_days),
+            needs_attention_post_interview_stale_days = COALESCE($30, needs_attention_post_interview_stale_days),
+            needs_attention_post_interview_follow_up_days =
+                COALESCE($31, needs_attention_post_interview_follow_up_days),
+            needs_attention_application_stale_days = COALESCE($32, needs_attention_application_stale_days),
+            needs_attention_application_follow_up_days =
+                COALESCE($33, needs_attention_application_follow_up_days)
+         WHERE user_id = $1
+         RETURNING
+            application_job_statuses,
+            application_show_notes,
+            application_show_archive,
+            application_enable_scroll,
+            application_view_mode,
+            application_list_sort_order,
+            application_board_sort_order,
+            archived_application_job_statuses,
+            archived_application_show_notes,
+            archived_application_view_mode,
+            archived_application_list_sort_order,
+            archived_application_board_sort_order,
+            interview_view_mode,
+            interview_show_notes,
+            archived_interview_view_mode,
+            archived_interview_show_notes,
+            interview_time_filters,
+            archived_interview_time_filters,
+            offer_decision_filters,
+            archived_offer_decision_filters,
+            offer_decision_view_mode,
+            archived_offer_decision_view_mode,
+            offer_decision_table_orientation,
+            archived_offer_decision_table_orientation,
+            needs_attention_categories,
+            needs_attention_max_items,
+            needs_attention_offer_due_days,
+            needs_attention_offer_overdue_days,
+            needs_attention_post_interview_stale_days,
+            needs_attention_post_interview_follow_up_days,
+            needs_attention_application_stale_days,
+            needs_attention_application_follow_up_days`,
+        [
+            userId,
+            preferences.application_job_statuses,
+            preferences.application_show_notes,
+            preferences.application_show_archive,
+            preferences.application_enable_scroll,
+            preferences.application_view_mode,
+            preferences.application_list_sort_order,
+            preferences.application_board_sort_order,
+            preferences.archived_application_job_statuses,
+            preferences.archived_application_show_notes,
+            preferences.archived_application_view_mode,
+            preferences.archived_application_list_sort_order,
+            preferences.archived_application_board_sort_order,
+            preferences.interview_view_mode,
+            preferences.interview_show_notes,
+            preferences.archived_interview_view_mode,
+            preferences.archived_interview_show_notes,
+            preferences.interview_time_filters,
+            preferences.archived_interview_time_filters,
+            preferences.offer_decision_filters,
+            preferences.archived_offer_decision_filters,
+            preferences.offer_decision_view_mode,
+            preferences.archived_offer_decision_view_mode,
+            preferences.offer_decision_table_orientation,
+            preferences.archived_offer_decision_table_orientation,
+            preferences.needs_attention_categories,
+            preferences.needs_attention_max_items,
+            preferences.needs_attention_offer_due_days,
+            preferences.needs_attention_offer_overdue_days,
+            preferences.needs_attention_post_interview_stale_days,
+            preferences.needs_attention_post_interview_follow_up_days,
+            preferences.needs_attention_application_stale_days,
+            preferences.needs_attention_application_follow_up_days,
+        ]
+    );
+
+    return result.rows[0];
+};

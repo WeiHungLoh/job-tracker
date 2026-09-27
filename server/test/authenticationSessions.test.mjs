@@ -7,11 +7,11 @@ import { createApp } from '../dist/app.js';
 import {
     deleteExpiredAuthenticationSessions,
     insertAuthenticationSession,
-} from '../dist/db/queries/authenticationSessions.js';
-import { pool } from '../dist/db/connectDB.js';
-import { hashRefreshToken, refreshTokenHashesMatch } from '../dist/auth/refreshTokenHash.js';
-import { createAccessToken, createRefreshToken } from '../dist/auth/tokens.js';
-import { REFRESH_TOKEN_DURATION_SECONDS } from '../dist/config/auth.js';
+} from '../dist/modules/authentication/sessionsRepository.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import { hashRefreshToken, refreshTokenHashesMatch } from '../dist/modules/authentication/refreshTokenHash.js';
+import { createAccessToken, createRefreshToken } from '../dist/modules/authentication/tokens.js';
+import { REFRESH_TOKEN_DURATION_SECONDS } from '../dist/modules/authentication/config.js';
 
 process.env.ACCESS_TOKEN_SECRET = 'authentication-session-access-secret';
 process.env.REFRESH_TOKEN_SECRET = 'authentication-session-refresh-secret';
@@ -46,7 +46,7 @@ after(async () => {
 });
 
 test('declares the authentication session table after users with cascade deletion and idempotent indexes', async () => {
-    const source = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const source = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const usersPosition = source.indexOf('CREATE TABLE IF NOT EXISTS users');
     const sessionsPosition = source.indexOf('CREATE TABLE IF NOT EXISTS authentication_sessions');
 

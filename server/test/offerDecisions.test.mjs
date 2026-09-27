@@ -1,11 +1,12 @@
+import * as offerDecisionService from '../dist/modules/offers/service.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import * as validationConfig from '../dist/config/validation.js';
-import * as httpValidation from '../dist/http/validation.js';
-import { pool } from '../dist/db/connectDB.js';
-import * as offerDecisionQueries from '../dist/db/queries/offerDecisions.js';
-import offerDecisionRouter from '../dist/routes/offerDecision/index.js';
+import * as validationConfig from '../dist/modules/offers/config.js';
+import * as httpValidation from '../dist/modules/offers/validation.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import * as offerDecisionQueries from '../dist/modules/offers/repository.js';
+import offerDecisionRouter from '../dist/modules/offers/routes.js';
 
 const compactSQL = (sql) => sql.replace(/\s+/g, ' ').trim();
 
@@ -126,7 +127,7 @@ test('declares shared offer evaluation limits without an equity limit', () => {
 });
 
 test('declares the constrained offer evaluation table after job applications without repair SQL', async () => {
-    const source = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const source = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const table = source.match(/CREATE TABLE IF NOT EXISTS offer_evaluations \([\s\S]*?\n\s*\)`/)?.[0];
     const setupQueries = source.match(/const setupQueries = \[[\s\S]*?\n\s*\];/)?.[0];
 
@@ -166,7 +167,7 @@ test('declares the constrained offer evaluation table after job applications wit
 });
 
 test('declares one constrained counteroffer plan row per evaluation', async () => {
-    const source = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const source = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
     const table = source.match(/CREATE TABLE IF NOT EXISTS offer_counteroffer_plans \([\s\S]*?\n\s*\)`/)?.[0];
     const setupQueries = source.match(/const setupQueries = \[[\s\S]*?\n\s*\];/)?.[0];
 
@@ -449,7 +450,7 @@ test('atomically saves one Ideal offer plan', async () => {
             return { rows: [], rowCount: 1 };
         },
         async (wasReleased) => {
-            assert.equal(await offerDecisionQueries.saveCounterofferPlan(7, 11, validCounterofferRequest), 'saved');
+            assert.equal(await offerDecisionService.saveCounterofferPlan(7, 11, validCounterofferRequest), 'saved');
             assert.equal(wasReleased(), true);
         }
     );
@@ -502,7 +503,7 @@ test('allows an individual rating trade-off when the Ideal offer fit does not fa
             return { rows: [], rowCount: 1 };
         },
         async () => {
-            assert.equal(await offerDecisionQueries.saveCounterofferPlan(7, 11, tradeOffRequest), 'saved');
+            assert.equal(await offerDecisionService.saveCounterofferPlan(7, 11, tradeOffRequest), 'saved');
         }
     );
 });
@@ -541,7 +542,7 @@ test('rolls back the whole counteroffer save when the Ideal fit is below the cur
             return { rows: [], rowCount: 1 };
         },
         async () => {
-            assert.equal(await offerDecisionQueries.saveCounterofferPlan(7, 11, request), 'fit_below_current');
+            assert.equal(await offerDecisionService.saveCounterofferPlan(7, 11, request), 'fit_below_current');
         }
     );
 
@@ -581,7 +582,7 @@ test('rolls back when the Ideal offer exactly matches the current offer', async 
         },
         async () => {
             assert.equal(
-                await offerDecisionQueries.saveCounterofferPlan(7, 11, validCounterofferRequest),
+                await offerDecisionService.saveCounterofferPlan(7, 11, validCounterofferRequest),
                 'unchanged_from_current'
             );
         }
@@ -639,7 +640,7 @@ test('rolls back when an edited Ideal offer matches its saved plan', async () =>
         },
         async () => {
             assert.equal(
-                await offerDecisionQueries.saveCounterofferPlan(7, 11, validCounterofferRequest),
+                await offerDecisionService.saveCounterofferPlan(7, 11, validCounterofferRequest),
                 'unchanged_from_saved'
             );
         }
@@ -712,7 +713,7 @@ test('rejects unavailable, archived, previous and expired counteroffer saves bef
             },
             async () => {
                 assert.equal(
-                    await offerDecisionQueries.saveCounterofferPlan(7, 11, validCounterofferRequest),
+                    await offerDecisionService.saveCounterofferPlan(7, 11, validCounterofferRequest),
                     expectedResult
                 );
             }
@@ -760,7 +761,7 @@ test('loads only saved archived evaluations and returns an empty application lis
 });
 
 test('saves one offer evaluation at the application timestamp atomically', async () => {
-    assert.equal(typeof offerDecisionQueries.saveOfferEvaluation, 'function');
+    assert.equal(typeof offerDecisionService.saveOfferEvaluation, 'function');
     const calls = [];
     await withMockedPoolClient(
         async (sql, values) => {
@@ -776,7 +777,7 @@ test('saves one offer evaluation at the application timestamp atomically', async
             return { rows: [], rowCount: 1 };
         },
         async (wasReleased) => {
-            assert.equal(await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest), 'saved');
+            assert.equal(await offerDecisionService.saveOfferEvaluation(7, 11, validRequest), 'saved');
             assert.equal(wasReleased(), true);
         }
     );
@@ -826,7 +827,7 @@ test('rolls back when an edited offer evaluation has not changed', async () => {
             return { rows: [], rowCount: 1 };
         },
         async () => {
-            assert.equal(await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest), 'unchanged');
+            assert.equal(await offerDecisionService.saveOfferEvaluation(7, 11, validRequest), 'unchanged');
         }
     );
 
@@ -852,7 +853,7 @@ test('saves evaluations for non-archived accepted and declined applications', as
                 return { rows: [], rowCount: 1 };
             },
             async () => {
-                assert.equal(await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest), 'saved');
+                assert.equal(await offerDecisionService.saveOfferEvaluation(7, 11, validRequest), 'saved');
             }
         );
     }
@@ -873,7 +874,7 @@ test('rejects offer evaluation saves for applications without an offer outcome s
             },
             async () => {
                 assert.equal(
-                    await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest),
+                    await offerDecisionService.saveOfferEvaluation(7, 11, validRequest),
                     'application_ineligible'
                 );
             }
@@ -917,7 +918,7 @@ test('requires confirmation before saving an evaluation above its counteroffer f
         },
         async () => {
             assert.equal(
-                await offerDecisionQueries.saveOfferEvaluation(7, 11, higherCounterofferRequest),
+                await offerDecisionService.saveOfferEvaluation(7, 11, higherCounterofferRequest),
                 'evaluation_above_counteroffer'
             );
         }
@@ -964,7 +965,7 @@ test('atomically deletes the counteroffer before saving a confirmed higher evalu
         },
         async () => {
             assert.equal(
-                await offerDecisionQueries.saveOfferEvaluation(7, 11, {
+                await offerDecisionService.saveOfferEvaluation(7, 11, {
                     ...higherCounterofferRequest,
                     deleteCounterofferPlan: true,
                 }),
@@ -1010,7 +1011,7 @@ test('saves equal and lower evaluation fit ratings without deleting the countero
                 return { rows: [], rowCount: 1 };
             },
             async () => {
-                assert.equal(await offerDecisionQueries.saveOfferEvaluation(7, 11, request), 'saved');
+                assert.equal(await offerDecisionService.saveOfferEvaluation(7, 11, request), 'saved');
             }
         );
 
@@ -1038,7 +1039,7 @@ test('rolls back before upsert when the deadline is earlier than the application
         },
         async (wasReleased) => {
             assert.equal(
-                await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest),
+                await offerDecisionService.saveOfferEvaluation(7, 11, validRequest),
                 'deadline_before_application'
             );
             assert.equal(wasReleased(), true);
@@ -1060,7 +1061,7 @@ test('rolls back without upserting when the application is unavailable', async (
         },
         async () => {
             assert.equal(
-                await offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest),
+                await offerDecisionService.saveOfferEvaluation(7, 11, validRequest),
                 'application_unavailable'
             );
         }
@@ -1087,7 +1088,7 @@ test('rolls back, rethrows, and releases after a save error', async () => {
             return { rows: [] };
         },
         async (wasReleased) => {
-            await assert.rejects(offerDecisionQueries.saveOfferEvaluation(7, 11, validRequest), expectedError);
+            await assert.rejects(offerDecisionService.saveOfferEvaluation(7, 11, validRequest), expectedError);
             assert.equal(wasReleased(), true);
         }
     );

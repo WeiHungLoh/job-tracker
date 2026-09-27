@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { pool } from '../dist/db/connectDB.js';
-import { findPotentialDuplicateApplication } from '../dist/db/queries/jobApplications.js';
-import applicationRouter from '../dist/routes/application/index.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import { findPotentialDuplicateApplication } from '../dist/modules/applications/repository.js';
+import applicationRouter from '../dist/modules/applications/routes.js';
 
 const VALID_APPLICATION = {
     companyName: 'Morgan Stanley',

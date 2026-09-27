@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import { pool } from '../dist/db/connectDB.js';
-import { archiveAllJobApplications, unarchiveAllJobApplications } from '../dist/db/queries/archivedJobApplications.js';
+import { pool } from '../dist/shared/db/connectDB.js';
 import {
-    getApplicationCollectionSummary,
-    getInterviewCollectionSummary,
-} from '../dist/db/queries/collectionSummaries.js';
+    archiveAllJobApplications,
+    unarchiveAllJobApplications,
+} from '../dist/modules/applications/archivedRepository.js';
+import { getApplicationCollectionSummary } from '../dist/modules/applications/summariesRepository.js';
+import { getInterviewCollectionSummary } from '../dist/modules/interviews/summariesRepository.js';
 
 const withMockPoolConnect = async (query, operation) => {
     const originalConnect = pool.connect;
@@ -129,13 +130,13 @@ test('collection summaries use one aggregate query with matching user and archiv
 
 test('static bulk routes precede parameterized application and interview routes', async () => {
     const archivedApplicationRoutes = await readFile(
-        new URL('../src/routes/archivedApplication/index.ts', import.meta.url),
+        new URL('../src/modules/applications/archivedRoutes.ts', import.meta.url),
         'utf8'
     );
-    const applicationRoutes = await readFile(new URL('../src/routes/application/index.ts', import.meta.url), 'utf8');
-    const interviewRoutes = await readFile(new URL('../src/routes/interview/index.ts', import.meta.url), 'utf8');
+    const applicationRoutes = await readFile(new URL('../src/modules/applications/routes.ts', import.meta.url), 'utf8');
+    const interviewRoutes = await readFile(new URL('../src/modules/interviews/routes.ts', import.meta.url), 'utf8');
     const archivedInterviewRoutes = await readFile(
-        new URL('../src/routes/archivedInterview/index.ts', import.meta.url),
+        new URL('../src/modules/interviews/archivedRoutes.ts', import.meta.url),
         'utf8'
     );
 
@@ -153,17 +154,23 @@ test('static bulk routes precede parameterized application and interview routes'
 });
 
 test('existing Delete All queries remain user-scoped and archive-scoped with application cascades', async () => {
-    const activeApplications = await readFile(new URL('../src/db/queries/jobApplications.ts', import.meta.url), 'utf8');
+    const activeApplications = await readFile(
+        new URL('../src/modules/applications/repository.ts', import.meta.url),
+        'utf8'
+    );
     const archivedApplications = await readFile(
-        new URL('../src/db/queries/archivedJobApplications.ts', import.meta.url),
+        new URL('../src/modules/applications/archivedRepository.ts', import.meta.url),
         'utf8'
     );
-    const activeInterviews = await readFile(new URL('../src/db/queries/interviews.ts', import.meta.url), 'utf8');
+    const activeInterviews = await readFile(
+        new URL('../src/modules/interviews/repository.ts', import.meta.url),
+        'utf8'
+    );
     const archivedInterviews = await readFile(
-        new URL('../src/db/queries/archivedInterviews.ts', import.meta.url),
+        new URL('../src/modules/interviews/archivedRepository.ts', import.meta.url),
         'utf8'
     );
-    const schema = await readFile(new URL('../src/db/queries/createTables.ts', import.meta.url), 'utf8');
+    const schema = await readFile(new URL('../src/schema.ts', import.meta.url), 'utf8');
 
     assert.match(activeApplications, /DELETE FROM job_applications WHERE user_id = \$1 AND is_archived = false/);
     assert.match(archivedApplications, /DELETE FROM job_applications WHERE user_id = \$1 AND is_archived = true/);

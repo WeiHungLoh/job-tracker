@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { pool } from '../dist/db/connectDB.js';
-import * as collectionSummaries from '../dist/db/queries/collectionSummaries.js';
-import applicationRouter from '../dist/routes/application/index.js';
-import archivedApplicationRouter from '../dist/routes/archivedApplication/index.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import * as collectionSummaries from '../dist/modules/applications/summariesRepository.js';
+import applicationRouter from '../dist/modules/applications/routes.js';
+import archivedApplicationRouter from '../dist/modules/applications/archivedRoutes.js';
 
 const compactSQL = (sql) => sql.replace(/\s+/g, ' ').trim();
 

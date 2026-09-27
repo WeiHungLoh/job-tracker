@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { createAccessToken } from '../dist/auth/tokens.js';
+import { createAccessToken } from '../dist/modules/authentication/tokens.js';
 import { createApp } from '../dist/app.js';
+import { AUTHENTICATED_API_RATE_LIMIT, AUTHENTICATED_API_RATE_LIMIT_WINDOW_MS } from '../dist/shared/config/server.js';
 import {
-    AUTHENTICATED_API_RATE_LIMIT,
-    AUTHENTICATED_API_RATE_LIMIT_WINDOW_MS,
     SIGN_IN_EMAIL_IP_LIMIT,
     SIGN_IN_IP_LIMIT,
     SIGN_IN_RATE_LIMIT_WINDOW_MS,
@@ -12,7 +11,7 @@ import {
     SIGN_UP_DAILY_RATE_LIMIT_WINDOW_MS,
     SIGN_UP_HOURLY_IP_LIMIT,
     SIGN_UP_HOURLY_RATE_LIMIT_WINDOW_MS,
-} from '../dist/config/server.js';
+} from '../dist/modules/authentication/config.js';
 
 process.env.ACCESS_TOKEN_SECRET = 'test-only-secret';
 

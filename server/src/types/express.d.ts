@@ -1,4 +1,4 @@
-import type { AuthenticatedUser } from '../auth/models.js';
+import type { AuthenticatedUser } from '../modules/authentication/api.js';
 
 declare global {
     namespace Express {

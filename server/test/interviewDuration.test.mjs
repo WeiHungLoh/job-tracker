@@ -4,11 +4,11 @@ import {
     DEFAULT_INTERVIEW_DURATION_MINUTES,
     INTERVIEW_DURATION_MINUTES_MAX,
     INTERVIEW_DURATION_MINUTES_MIN,
-} from '../dist/config/validation.js';
-import { pool } from '../dist/db/connectDB.js';
-import { getArchivedJobInterviews } from '../dist/db/queries/archivedInterviews.js';
-import { getInterviews, insertInterview } from '../dist/db/queries/interviews.js';
-import { toIntegerInRange } from '../dist/http/validation.js';
+} from '../dist/modules/interviews/config.js';
+import { pool } from '../dist/shared/db/connectDB.js';
+import { getArchivedJobInterviews } from '../dist/modules/interviews/archivedRepository.js';
+import { getInterviews, insertInterview } from '../dist/modules/interviews/repository.js';
+import { toIntegerInRange } from '../dist/shared/http/validation.js';
 
 test('interview duration constants and integer validation agree', () => {
     assert.equal(INTERVIEW_DURATION_MINUTES_MIN, 1);
