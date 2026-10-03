@@ -43,6 +43,6 @@ jobs:
 
     steps:
       - name: Deploy to Netlify via webhook
-        run: curl --fail-with-body "$NETLIFY_DEPLOY_WEBHOOK_URL"
+        run: curl --fail-with-body --request POST "$NETLIFY_DEPLOY_WEBHOOK_URL"
         env:
           NETLIFY_DEPLOY_WEBHOOK_URL: ${{ secrets.NETLIFY_DEPLOY_WEBHOOK_URL }}
