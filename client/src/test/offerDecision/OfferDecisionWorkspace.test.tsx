@@ -1007,7 +1007,7 @@ describe('OfferDecisionWorkspace', () => {
 
         fireEvent.keyDown(pros, { key: 'Enter', shiftKey: true });
         await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
-        expect(screen.queryByLabelText('Acme pros')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByLabelText('Acme pros')).not.toBeInTheDocument());
 
         rerender(<WorkspaceHarness />);
         editOfferEvaluation('Acme');
@@ -1046,7 +1046,7 @@ describe('OfferDecisionWorkspace', () => {
         fireEvent.click(saveButton);
 
         await waitFor(() => expect(onSave).toHaveBeenCalledWith(11, expect.any(Object)));
-        expect(screen.queryByLabelText('Acme monthly base salary')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByLabelText('Acme monthly base salary')).not.toBeInTheDocument());
         expect(screen.getByRole('button', { name: 'More actions for Acme' })).toBeInTheDocument();
         expect(screen.getByText('SGD 11,000')).toBeInTheDocument();
     });
@@ -1116,7 +1116,7 @@ describe('OfferDecisionWorkspace', () => {
         );
         await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
         expect(onSave.mock.calls[1][1]).toEqual(expect.objectContaining({ deleteCounterofferPlan: true }));
-        expect(screen.queryByLabelText('Acme Career Growth rating')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByLabelText('Acme Career Growth rating')).not.toBeInTheDocument());
         expect(
             within(openOfferActions('Acme')).getByRole('menuitem', {
                 name: 'Plan counteroffer for Acme',

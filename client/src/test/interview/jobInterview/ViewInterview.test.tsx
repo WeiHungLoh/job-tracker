@@ -418,9 +418,11 @@ describe('Job interview viewer flow', () => {
                 signal: expect.any(AbortSignal),
             })
         );
-        expect(
-            screen.queryByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' })
-        ).not.toBeInTheDocument();
+        await waitFor(() =>
+            expect(
+                screen.queryByRole('button', { name: 'Undo follow-up for Software Engineer at ABC Pte Ltd' })
+            ).not.toBeInTheDocument()
+        );
         expect(
             screen.getByRole('button', { name: 'Undo follow-up for Software Engineer at Second Company' })
         ).toBeInTheDocument();
