@@ -40,6 +40,10 @@ Job Tracker is a full-stack PERN application for managing job applications, inte
 -   JWT authentication with access and refresh tokens stored in Secure, HttpOnly, SameSite cookies
 -   bcrypt password hashing, rate limiting, Helmet, CORS, and user-scoped database queries
 
+## Deployment
+
+GitHub Actions runs frontend and backend CI for pull requests and pushes to `main`. After successful CI on a push to `main`, each workflow triggers its deployment: the frontend through the Netlify deploy webhook and the backend through the Render deploy hook. Pull requests run CI only. See [backend deployment setup](server/README.md#deployment).
+
 ## Local development with Docker
 
 With Docker running and `server/.env` configured with the existing Neon `PG_URI` and authentication secrets, run from the repository root:

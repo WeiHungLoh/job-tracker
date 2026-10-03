@@ -71,6 +71,14 @@ Compose loads `.env`, uses the existing hosted Neon database and runs `npm run d
 
 Use [root Compose](../README.md#local-development-with-docker) to run both services, or for dependency rebuild and environment-change instructions. Backend production deployment remains Render; the existing Dockerfile is unchanged.
 
+## Deployment
+
+GitHub Actions runs backend lint, build and tests on Node.js 20 and 22 for pull requests and pushes to `main`. On pushes to `main`, the Render deployment job runs only after both CI matrix runs succeed. Pull requests and failed CI runs do not trigger deployment.
+
+In GitHub, add the existing Render Deploy Hook URL as a repository Actions secret named `RENDER_DEPLOY_HOOK_URL`. In Render, keep the service linked to `main` and set **Auto-Deploy** to **Off** so GitHub Actions is the only automatic deployment trigger. The workflow sends a POST request to the hook and fails if the request fails.
+
+A successful webhook request confirms the deployment was triggered or queued; check Render's deployment events for the final result. Docker and Compose remain for local development.
+
 ## API documentation
 
 Swagger UI documents all 51 endpoints and runs with the same Express backend, locally and on Render.
