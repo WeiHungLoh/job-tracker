@@ -43,6 +43,6 @@ jobs:
 
     steps:
       - name: Deploy to Render via webhook
-        run: curl --fail-with-body --request POST "$RENDER_DEPLOY_HOOK_URL"
+        run: curl --fail-with-body --request POST "$RENDER_DEPLOY_WEBHOOK_URL"
         env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_WEBOOK_URL }}
