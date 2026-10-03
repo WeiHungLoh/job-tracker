@@ -12,7 +12,7 @@ export const openapiDocument: OpenAPIV3.Document = {
         title: 'Job Tracker API',
         version: '1.0.0',
     },
-    servers: [{ url: '/api', description: 'Job Tracker API' }],
+    servers: [{ url: '/', description: 'Job Tracker API' }],
     security: [{ HTTPBearer: [] }, { accessCookie: [] }],
     tags: [
         { name: 'Authentication' },

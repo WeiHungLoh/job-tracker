@@ -41,7 +41,8 @@ describe('Netlify production configuration', () => {
 
         expect(redirects).toEqual([
             '/api/* https://job-tracker-300j.onrender.com/:splat 200',
-            '/api-docs /api-docs/ 301',
+            '/api-docs/openapi.json https://job-tracker-300j.onrender.com/api-docs/openapi.json?proxy=true 200',
+            '/api-docs https://job-tracker-300j.onrender.com/api-docs/ 200',
             '/api-docs/* https://job-tracker-300j.onrender.com/api-docs/:splat 200',
             '/* /index.html 200',
         ]);

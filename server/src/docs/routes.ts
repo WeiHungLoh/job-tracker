@@ -20,30 +20,20 @@ const bearerAuthorizationPlugin = {
     },
 };
 
-router.get(['/openapi.json', '/api-docs/openapi.json'], (_req, res) => {
-    res.json(openapiDocument);
+router.get(['/openapi.json', '/api-docs/openapi.json'], (req, res) => {
+    res.json(
+        req.query.proxy === 'true'
+            ? { ...openapiDocument, servers: [{ url: '/api', description: 'Job Tracker API' }] }
+            : openapiDocument
+    );
 });
 
-router.get('/api-docs', (req, res, next) => {
-    if (!req.path.endsWith('/')) {
-        // A relative redirect keeps the frontend proxy prefix when present.
-        res.redirect('api-docs/');
-        return;
-    }
-    next();
-});
-
-router.use(
-    '/api-docs',
-    helmet.contentSecurityPolicy({
-        directives: { upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null },
-    }),
-    swaggerUi.serve,
-    swaggerUi.setup(null, {
+const documentationHtml = swaggerUi
+    .generateHTML(undefined, {
         customSiteTitle: 'Job Tracker API',
         customCss: '.swagger-ui .servers, .swagger-ui .servers-title { display: none; }',
         swaggerOptions: {
-            url: './openapi.json',
+            url: '/api-docs/openapi.json',
             withCredentials: true,
             persistAuthorization: false,
             validatorUrl: null,
@@ -51,6 +41,20 @@ router.use(
             plugins: [bearerAuthorizationPlugin],
         },
     })
+    // Netlify treats both slash variants as the same path, so assets need a fixed base.
+    .replace('<head>', '<head>\n<base href="/api-docs/">');
+
+router.use(
+    '/api-docs',
+    helmet.contentSecurityPolicy({
+        directives: { upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null },
+    })
 );
+
+router.get('/api-docs', (_req, res) => {
+    res.send(documentationHtml);
+});
+
+router.use('/api-docs', swaggerUi.serve);
 
 export default router;

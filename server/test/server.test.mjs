@@ -93,6 +93,28 @@ test('allows both deployed documentation origins without bypassing authenticatio
     }
 });
 
+test('serves documentation at both slash variants with a stable asset base', async () => {
+    for (const path of ['/api-docs', '/api-docs/']) {
+        const response = await fetch(`${baseUrl}${path}`, { redirect: 'manual' });
+
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get('location'), null);
+        assert.match(await response.text(), /<base href="\/api-docs\/">/);
+    }
+});
+
+test('uses the correct API base for direct and proxied documentation', async () => {
+    const proxied = await fetch(`${baseUrl}/api-docs/openapi.json?proxy=true`);
+    assert.equal(proxied.status, 200);
+    assert.equal((await proxied.json()).servers[0].url, '/api');
+
+    for (const path of ['/api-docs/openapi.json', '/openapi.json', '/api-docs/openapi.json?proxy=false']) {
+        const response = await fetch(`${baseUrl}${path}`);
+        assert.equal(response.status, 200);
+        assert.equal((await response.json()).servers[0].url, '/');
+    }
+});
+
 test('rejects unconfigured non-loopback origins', async () => {
     const response = await fetch(`${baseUrl}/authentication/sessions/current`, {
         headers: { Origin: 'https://untrusted.example' },

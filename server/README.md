@@ -81,7 +81,7 @@ For cookie authentication, sign in normally or execute `POST /authentication/ses
 
 For Bearer authentication, click **Authorize** and paste an access token without the `Bearer` prefix. The header takes precedence over the access cookie; an invalid header returns `401`. Tokens entered in Swagger are not persisted across reloads. Refresh and sign-out continue to use cookies; Swagger does not automatically refresh expired tokens or retry requests.
 
-The OpenAPI document is at `/api-docs/openapi.json`, and also at `/openapi.json` on the backend. Deploy the backend normally on Render and the frontend on Netlify to publish the `/api-docs` rewrite. No separate Swagger service or CORS change is needed.
+The OpenAPI document is at `/api-docs/openapi.json`, and also at `/openapi.json` on the backend. Direct Render docs use unprefixed endpoints and support Bearer access tokens; use the frontend docs for cookie authentication. Deploy the backend on Render and the frontend on Netlify to publish documentation changes.
 
 ## Verification
 

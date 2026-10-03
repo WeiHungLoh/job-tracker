@@ -10,6 +10,11 @@ export default defineConfig(({ mode }) => {
         plugins: [react()],
         server: {
             proxy: {
+                '/api-docs/openapi.json': {
+                    target: proxyTarget,
+                    changeOrigin: true,
+                    rewrite: () => '/api-docs/openapi.json?proxy=true',
+                },
                 '/api-docs': {
                     target: proxyTarget,
                     changeOrigin: true,
