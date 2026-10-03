@@ -55,23 +55,21 @@ These are enforced source-code boundaries, not isolated database schemas. Some e
 
 These operations retain their existing queries and transaction ordering. Splitting them into independent calls would change concurrency behavior. Future changes to these shared relationships require reviewing both affected modules. This design does not claim independent module databases or effortless extraction into microservices.
 
-## Run with Docker Compose
+## Local development with Docker
 
-Configure this directory's `.env` with your Neon `PG_URI`, `ACCESS_TOKEN_SECRET` and a different `REFRESH_TOKEN_SECRET`. With Docker running, build and start the backend from this directory:
-
-```sh
-docker compose up --build
-```
-
-Compose uses the existing Dockerfile, passes `.env` into the container and sets `PORT=5005` to match the published port. The backend connects to Neon; no database container is created. Re-run the command after backend code changes to rebuild the image.
-
-Stop and remove the Compose container with:
+Configure `server/.env` with your existing Neon `PG_URI`, `ACCESS_TOKEN_SECRET` and a different `REFRESH_TOKEN_SECRET`. For backend-only development, run from `server/`:
 
 ```sh
-docker compose down
+docker compose up --build   # First build and start
+docker compose up           # Later starts
+docker compose down         # Stop
 ```
 
-Run the frontend separately from the `client` directory with `npm ci` followed by `npm run dev`. Its existing Vite proxy forwards API requests to the backend on port 5005.
+Backend: http://localhost:5005
+
+Compose loads `.env`, uses the existing hosted Neon database and runs `npm run dev` (`tsx watch ./src/server.ts`). Source bind mounts let normal TypeScript edits restart Express automatically without restarting Compose. A separate volume preserves container `node_modules`.
+
+Use [root Compose](../README.md#local-development-with-docker) to run both services, or for dependency rebuild and environment-change instructions. Backend production deployment remains Render; the existing Dockerfile is unchanged.
 
 ## Verification
 

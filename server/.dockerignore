@@ -1,8 +1,11 @@
 # Will be rebuilt in image
 node_modules
+dist
+coverage
 
 # Exclude environment files
 .env
+.env.*
 
 # Exclude git files
 .git

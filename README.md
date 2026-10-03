@@ -38,3 +38,29 @@ Job Tracker is a full-stack PERN application for managing job applications, inte
 -   Save user display preferences
 -   JWT authentication with access and refresh tokens stored in Secure, HttpOnly, SameSite cookies
 -   bcrypt password hashing, rate limiting, Helmet, CORS, and user-scoped database queries
+
+## Local development with Docker
+
+With Docker running and `server/.env` configured with the existing Neon `PG_URI` and authentication secrets, run from the repository root:
+
+```sh
+docker compose up --build   # First build and start
+docker compose up           # Later starts
+docker compose down         # Stop both services
+```
+
+-   Frontend: http://localhost:5173
+-   Backend: http://localhost:5005
+
+Root Compose starts both services. Vite proxies `/api` to the backend container, which connects to hosted Neon. Source bind mounts enable Vite HMR and backend restarts through `tsx watch`; normal source edits do not require rebuilding or restarting Compose. Each container keeps its own `node_modules` volume.
+
+After dependency or lockfile changes, refresh those dependency volumes and rebuild:
+
+```sh
+docker compose down --volumes
+docker compose up --build
+```
+
+Dockerfile changes require `docker compose up --build`. After Compose or environment changes, recreate containers with `docker compose up --force-recreate`; `.env` changes do not hot reload.
+
+For one service only, see the [frontend](client/README.md) or [backend](server/README.md) instructions. This Compose setup is for local development. Production remains Netlify, Render and Neon.
