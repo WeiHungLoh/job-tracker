@@ -6,9 +6,16 @@ import { clearAccessTokenCookie } from './cookies.js';
 import { verifyAccessToken } from './tokens.js';
 
 const authenticateAccessToken = (req: Request, res: Response<ErrorResponse>, next: NextFunction): void => {
-    const accessToken = req.cookies[ACCESS_TOKEN_COOKIE_NAME] as unknown;
+    const authorization = req.get('authorization');
+    const usesAuthorizationHeader = authorization !== undefined;
+    const accessToken = usesAuthorizationHeader
+        ? /^Bearer +([^\s]+)$/i.exec(authorization)?.[1]
+        : (req.cookies[ACCESS_TOKEN_COOKIE_NAME] as unknown);
+
     if (typeof accessToken !== 'string' || !accessToken) {
-        clearAccessTokenCookie(res);
+        if (!usesAuthorizationHeader) {
+            clearAccessTokenCookie(res);
+        }
         sendError(res, 401, 'No authentication token found. Please sign in.');
         return;
     }
@@ -25,7 +32,9 @@ const authenticateAccessToken = (req: Request, res: Response<ErrorResponse>, nex
         next();
     } catch (error: unknown) {
         console.warn('Access token verification failed.', error);
-        clearAccessTokenCookie(res);
+        if (!usesAuthorizationHeader) {
+            clearAccessTokenCookie(res);
+        }
         sendError(res, 401, 'Invalid or expired token. Please sign in.');
     }
 };
