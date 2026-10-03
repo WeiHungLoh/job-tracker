@@ -33,12 +33,17 @@ describe('Netlify production configuration', () => {
         expect(themeInit).toContain("window.matchMedia('(prefers-color-scheme: dark)')");
     });
 
-    test('keeps the API proxy before the SPA fallback', () => {
+    test('keeps the API and documentation proxies before the SPA fallback', () => {
         const redirects = readClientFile('public/_redirects')
             .trim()
             .split('\n')
             .map((line) => line.trim());
 
-        expect(redirects).toEqual(['/api/* https://job-tracker-300j.onrender.com/:splat 200', '/* /index.html 200']);
+        expect(redirects).toEqual([
+            '/api/* https://job-tracker-300j.onrender.com/:splat 200',
+            '/api-docs /api-docs/ 301',
+            '/api-docs/* https://job-tracker-300j.onrender.com/api-docs/:splat 200',
+            '/* /index.html 200',
+        ]);
     });
 });

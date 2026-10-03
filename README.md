@@ -9,6 +9,7 @@
 Job Tracker is a full-stack PERN application for managing job applications, interviews, and structured offer comparisons. It supports status tracking, equal-weight offer scoring, archiving, CSV export, user preferences, and secure authentication.
 
 -   Site: https://jobtracker.weihungloh.com/
+-   API Docs: https://jobtracker.weihungloh.com/api-docs/
 -   User Guide: https://jobtracker.weihungloh.com/user-guide/
 -   Explore Demo: https://jobtracker.weihungloh.com/demo/application/view
 

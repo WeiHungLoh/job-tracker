@@ -1,2 +1,4 @@
 /api/* https://job-tracker-300j.onrender.com/:splat 200
+/api-docs /api-docs/ 301
+/api-docs/* https://job-tracker-300j.onrender.com/api-docs/:splat 200
 /* /index.html 200

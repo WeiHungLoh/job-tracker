@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import documentationRoute from './docs/routes.js';
 import archivedApplicationRoute from './modules/applications/archivedRoutes.js';
 import applicationRoute from './modules/applications/routes.js';
 import { authenticateAccessToken } from './modules/authentication/api.js';
@@ -53,6 +54,8 @@ export const createApp = (): express.Express => {
     app.use('/archived-job-interviews', authenticateAccessToken, authenticatedApiRateLimiter, archivedInterviewRoute);
     app.use('/offer-decisions', authenticateAccessToken, authenticatedApiRateLimiter, offerDecisionRoute);
     app.use('/user-preferences', authenticateAccessToken, authenticatedApiRateLimiter, userPreferencesRoute);
+
+    app.use(documentationRoute);
 
     app.use(notFoundHandler);
     app.use(errorHandler);

@@ -71,6 +71,18 @@ Compose loads `.env`, uses the existing hosted Neon database and runs `npm run d
 
 Use [root Compose](../README.md#local-development-with-docker) to run both services, or for dependency rebuild and environment-change instructions. Backend production deployment remains Render; the existing Dockerfile is unchanged.
 
+## API documentation
+
+Swagger UI documents all 51 endpoints and runs with the same Express backend, locally and on Render.
+
+Open http://localhost:5173/api-docs/ locally, or https://jobtracker.weihungloh.com/api-docs/ after deployment. Both cookies and Bearer tokens work through the existing `/api` proxy. Run the frontend and backend together locally with root Compose.
+
+For cookie authentication, sign in normally or execute `POST /authentication/sessions` in the frontend docs. The browser sends the HttpOnly cookies; only Bearer tokens appear in the Authorize dialog. Direct backend requests do not match the cookies' `/api` path.
+
+For Bearer authentication, click **Authorize** and paste an access token without the `Bearer` prefix. The header takes precedence over the access cookie; an invalid header returns `401`. Tokens entered in Swagger are not persisted across reloads. Refresh and sign-out continue to use cookies; Swagger does not automatically refresh expired tokens or retry requests.
+
+The OpenAPI document is at `/api-docs/openapi.json`, and also at `/openapi.json` on the backend. Deploy the backend normally on Render and the frontend on Netlify to publish the `/api-docs` rewrite. No separate Swagger service or CORS change is needed.
+
 ## Verification
 
 ```sh
