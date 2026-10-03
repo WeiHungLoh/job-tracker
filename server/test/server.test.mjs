@@ -81,6 +81,18 @@ test('allows loopback development origins on any local port', async () => {
     assert.equal(response.headers.get('access-control-allow-credentials'), 'true');
 });
 
+test('allows both deployed documentation origins without bypassing authentication', async () => {
+    for (const origin of ['https://jobtracker.weihungloh.com', 'https://job-tracker-300j.onrender.com']) {
+        const response = await fetch(`${baseUrl}/authentication/sessions/current`, {
+            headers: { Origin: origin },
+        });
+
+        assert.equal(response.status, 401);
+        assert.equal(response.headers.get('access-control-allow-origin'), origin);
+        assert.equal(response.headers.get('access-control-allow-credentials'), 'true');
+    }
+});
+
 test('rejects unconfigured non-loopback origins', async () => {
     const response = await fetch(`${baseUrl}/authentication/sessions/current`, {
         headers: { Origin: 'https://untrusted.example' },

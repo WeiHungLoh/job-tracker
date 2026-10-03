@@ -1,6 +1,7 @@
 const PRODUCTION_ORIGINS = [
     'https://jobtracker-whloh.netlify.app',
     'https://jobtracker.weihungloh.com',
+    'https://job-tracker-300j.onrender.com',
     'https://weihungloh.com',
 ] as const;
 
