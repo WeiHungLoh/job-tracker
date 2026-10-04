@@ -2341,6 +2341,7 @@ describe('Job application viewing flow', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Filter by' }));
         await userEvent.click(screen.getByRole('checkbox', { name: 'Interview' }));
         await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Interview' })).not.toBeChecked());
+        await screen.findByRole('heading', { level: 2, name: /ABC Pte Ltd/i });
 
         await act(async () => resolveStatusUpdate());
 
